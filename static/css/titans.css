@@ -189,3 +189,87 @@ button { font-family: Inter, sans-serif; }
 ::-webkit-scrollbar-thumb:hover {
   background: #2D6B54;
 }
+
+/* Head-to-Head (H2H) Modal */
+.h2h-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 26, 21, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+}
+
+.h2h-modal {
+  background: #0F2E24;
+  border: 1px solid #2B5746;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  padding: 24px;
+  color: #F4F2EA;
+}
+
+.form-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.form-badge.W { background: #22C55E; color: #052E16; }
+.form-badge.D { background: #EAB308; color: #422006; }
+.form-badge.L { background: #EF4444; color: #450A0A; }
+
+.btn-pill-action {
+  background: #163E31;
+  border: 1px solid #2B5746;
+  color: #DDE6DF;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.btn-pill-action:hover {
+  background: #C9A227;
+  color: #16201B;
+  border-color: #C9A227;
+}
+
+.csv-export-btn {
+  background: transparent;
+  border: 1px solid #2B5746;
+  color: #C9A227;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.csv-export-btn:hover {
+  background: #C9A227;
+  color: #16201B;
+}
+
+

@@ -520,3 +520,374 @@ def export_state_from_db():
         "categories": categories,
         "activeCategory": active_cat_key,
     }
+
+
+def compute_h2h_comparison(category, team1_id, team2_id):
+    """
+    Computes comprehensive Head-to-Head (H2H) records and form comparison
+    between team1 and team2 in the specified category.
+    """
+    team1 = category.teams.filter(team_id=team1_id).first()
+    team2 = category.teams.filter(team_id=team2_id).first()
+
+    if not team1 or not team2:
+        return None
+
+    all_fixtures = list(category.fixtures.all().order_by("id"))
+
+    # 1. Past H2H encounters
+    h2h_matches = []
+    t1_wins = 0
+    t2_wins = 0
+    draws = 0
+    t1_goals = 0
+    t2_goals = 0
+
+    for f in all_fixtures:
+        h_id = f.home_team.team_id if f.home_team else ""
+        a_id = f.away_team.team_id if f.away_team else ""
+
+        is_h2h = (h_id == team1_id and a_id == team2_id) or (h_id == team2_id and a_id == team1_id)
+        if not is_h2h:
+            continue
+
+        hs, as_score = f.score
+        is_played = f.played or (f.walkover_winner is not None)
+
+        match_info = {
+            "fixture_id": f.fixture_id,
+            "date": f.date,
+            "phase": f.get_phase_display(),
+            "home_id": h_id,
+            "home_name": f.home_team.name if f.home_team else "TBD",
+            "away_id": a_id,
+            "away_name": f.away_team.name if f.away_team else "TBD",
+            "home_score": hs,
+            "away_score": as_score,
+            "played": is_played,
+            "walkover": f.walkover_winner.team_id if f.walkover_winner else None,
+        }
+
+        if is_played:
+            if h_id == team1_id:
+                t1_g, t2_g = hs, as_score
+            else:
+                t1_g, t2_g = as_score, hs
+
+            t1_goals += t1_g
+            t2_goals += t2_g
+
+            if t1_g > t2_g:
+                t1_wins += 1
+                match_info["winner"] = team1_id
+            elif t2_g > t1_g:
+                t2_wins += 1
+                match_info["winner"] = team2_id
+            else:
+                draws += 1
+                match_info["winner"] = "draw"
+
+        h2h_matches.append(match_info)
+
+    # 2. Form (last 5 matches for each team across the tournament)
+    def get_team_form(t_id):
+        team_fixtures = [
+            f for f in all_fixtures
+            if (f.played or f.walkover_winner) and (
+                (f.home_team and f.home_team.team_id == t_id) or
+                (f.away_team and f.away_team.team_id == t_id)
+            )
+        ]
+        # Sort by fixture id or sequence
+        recent = team_fixtures[-5:] if len(team_fixtures) >= 5 else team_fixtures
+        form_list = []
+        for f in reversed(recent):
+            hs, as_score = f.score
+            is_home = (f.home_team and f.home_team.team_id == t_id)
+            opp = f.away_team if is_home else f.home_team
+            team_g = hs if is_home else as_score
+            opp_g = as_score if is_home else hs
+
+            if team_g > opp_g:
+                result = "W"
+            elif team_g < opp_g:
+                result = "L"
+            else:
+                result = "D"
+
+            form_list.append({
+                "fixture_id": f.fixture_id,
+                "date": f.date,
+                "result": result,
+                "score": f"{team_g}-{opp_g}",
+                "is_home": is_home,
+                "opponent_id": opp.team_id if opp else "TBD",
+                "opponent_name": opp.name if opp else "TBD",
+            })
+        return form_list
+
+    # 3. Full season stats comparison
+    def get_team_season_stats(team_obj):
+        t_id = team_obj.team_id
+        matches = [
+            f for f in all_fixtures
+            if (f.played or f.walkover_winner) and (
+                (f.home_team and f.home_team.team_id == t_id) or
+                (f.away_team and f.away_team.team_id == t_id)
+            )
+        ]
+        mp = len(matches)
+        w, d, l, gf, ga, cs = 0, 0, 0, 0, 0, 0
+        for f in matches:
+            hs, as_score = f.score
+            is_home = (f.home_team and f.home_team.team_id == t_id)
+            tg = hs if is_home else as_score
+            og = as_score if is_home else hs
+            gf += tg
+            ga += og
+            if og == 0:
+                cs += 1
+            if tg > og:
+                w += 1
+            elif tg < og:
+                l += 1
+            else:
+                d += 1
+
+        yellows = MatchEvent.objects.filter(fixture__category=category, team=team_obj, event_type="yellow").count()
+        reds = MatchEvent.objects.filter(fixture__category=category, team=team_obj, event_type="red").count()
+
+        return {
+            "id": t_id,
+            "name": team_obj.name,
+            "color": team_obj.color,
+            "played": mp,
+            "won": w,
+            "drawn": d,
+            "lost": l,
+            "goals_for": gf,
+            "goals_against": ga,
+            "goal_diff": gf - ga,
+            "points": (w * 3) + d,
+            "clean_sheets": cs,
+            "avg_goals": round(gf / mp, 1) if mp > 0 else 0.0,
+            "yellow_cards": yellows,
+            "red_cards": reds,
+        }
+
+    return {
+        "team1": get_team_season_stats(team1),
+        "team2": get_team_season_stats(team2),
+        "h2h_summary": {
+            "total_matches": len([m for m in h2h_matches if m["played"]]),
+            "team1_wins": t1_wins,
+            "team2_wins": t2_wins,
+            "draws": draws,
+            "team1_goals": t1_goals,
+            "team2_goals": t2_goals,
+        },
+        "team1_form": get_team_form(team1_id),
+        "team2_form": get_team_form(team2_id),
+        "past_matches": h2h_matches,
+    }
+
+
+def generate_standings_csv_data(category):
+    """Generates rows for Standings CSV export."""
+    from .views import StandingsAPIView
+    # Calculate standings using category fixtures
+    fixtures = category.fixtures.filter(phase="league") if category.mode == "league" else category.fixtures.all()
+    teams = category.teams.all()
+
+    table = {
+        t.team_id: {
+            "id": t.team_id,
+            "name": t.name,
+            "P": 0, "W": 0, "D": 0, "L": 0, "GF": 0, "GA": 0, "GD": 0, "Pts": 0,
+        }
+        for t in teams
+    }
+
+    for f in fixtures:
+        if not f.played:
+            continue
+        hs, as_score = f.score
+        h_id = f.home_team.team_id if f.home_team else None
+        a_id = f.away_team.team_id if f.away_team else None
+
+        if h_id and h_id in table and a_id and a_id in table:
+            table[h_id]["P"] += 1
+            table[a_id]["P"] += 1
+            table[h_id]["GF"] += hs
+            table[h_id]["GA"] += as_score
+            table[a_id]["GF"] += as_score
+            table[a_id]["GA"] += hs
+
+            if hs > as_score:
+                table[h_id]["W"] += 1
+                table[h_id]["Pts"] += 3
+                table[a_id]["L"] += 1
+            elif hs < as_score:
+                table[a_id]["W"] += 1
+                table[a_id]["Pts"] += 3
+                table[h_id]["L"] += 1
+            else:
+                table[h_id]["D"] += 1
+                table[a_id]["D"] += 1
+                table[h_id]["Pts"] += 1
+                table[a_id]["Pts"] += 1
+
+    rows = list(table.values())
+    for r in rows:
+        r["GD"] = r["GF"] - r["GA"]
+    rows.sort(key=lambda x: (x["Pts"], x["GD"], x["GF"]), reverse=True)
+
+    header = ["Rank", "Team Code", "Team Name", "MP", "W", "D", "L", "GF", "GA", "GD", "Pts"]
+    data = [header]
+    for i, r in enumerate(rows, 1):
+        data.append([
+            i,
+            r["id"],
+            r["name"],
+            r["P"],
+            r["W"],
+            r["D"],
+            r["L"],
+            r["GF"],
+            r["GA"],
+            r["GD"],
+            r["Pts"],
+        ])
+    return data
+
+
+def generate_fixtures_csv_data(category):
+    """Generates rows for Fixtures CSV export."""
+    fixtures = category.fixtures.all().order_by("id")
+    header = [
+        "Fixture ID",
+        "Phase",
+        "Date",
+        "Home Team Code",
+        "Home Team Name",
+        "Away Team Code",
+        "Away Team Name",
+        "Status",
+        "Home Score",
+        "Away Score",
+        "Walkover",
+        "Referee",
+    ]
+    data = [header]
+    for f in fixtures:
+        hs, as_score = f.score
+        score_h = hs if f.played else ""
+        score_a = as_score if f.played else ""
+        data.append([
+            f.fixture_id,
+            f.get_phase_display(),
+            f.date,
+            f.home_team.team_id if f.home_team else "TBD",
+            f.home_team.name if f.home_team else "TBD",
+            f.away_team.team_id if f.away_team else "TBD",
+            f.away_team.name if f.away_team else "TBD",
+            "Played" if f.played else "Upcoming / Scheduled",
+            score_h,
+            score_a,
+            f.walkover_winner.name if f.walkover_winner else "",
+            f.referee or "",
+        ])
+    return data
+
+
+def generate_players_csv_data(category):
+    """Generates rows for Players & Stats CSV export."""
+    header = [
+        "Player ID",
+        "Player Name",
+        "Team Code",
+        "Team Name",
+        "Position",
+        "Goals",
+        "Assists",
+        "Yellow Cards",
+        "Red Cards",
+    ]
+    data = [header]
+
+    for team in category.teams.all().order_by("name"):
+        for p in team.players.filter(is_unknown=False).order_by("name"):
+            goals = MatchEvent.objects.filter(fixture__category=category, player=p, event_type="goal").count()
+            assists = MatchEvent.objects.filter(fixture__category=category, assist_player=p, event_type="goal").count()
+            yellows = MatchEvent.objects.filter(fixture__category=category, player=p, event_type="yellow").count()
+            reds = MatchEvent.objects.filter(fixture__category=category, player=p, event_type="red").count()
+
+            data.append([
+                p.player_id,
+                p.name,
+                team.team_id,
+                team.name,
+                p.position or "-",
+                goals,
+                assists,
+                yellows,
+                reds,
+            ])
+    return data
+
+
+def get_fixture_match_sheet_context(fixture_id):
+    """
+    Constructs the template context for a professional printable Match Day Sheet.
+    """
+    fixture = Fixture.objects.filter(fixture_id=fixture_id).first()
+    if not fixture:
+        return None
+
+    cat = fixture.category
+    home = fixture.home_team
+    away = fixture.away_team
+
+    home_players = list(home.players.filter(is_unknown=False).order_by("jersey_number", "name")) if home else []
+    away_players = list(away.players.filter(is_unknown=False).order_by("jersey_number", "name")) if away else []
+
+    # Check for active suspensions for this fixture
+    # Red cards or every 3rd yellow
+    suspensions = []
+    for team in [home, away]:
+        if not team:
+            continue
+        for p in team.players.filter(is_unknown=False):
+            # Check red cards or yellow counts in previous matches
+            prior_events = MatchEvent.objects.filter(
+                fixture__category=cat,
+                player=p,
+                fixture__id__lt=fixture.id,
+            )
+            red_count = prior_events.filter(event_type="red").count()
+            yellow_count = prior_events.filter(event_type="yellow").count()
+            # If carded in immediate prior match or 3rd yellow
+            if red_count > 0 or yellow_count >= 3:
+                # Add notice
+                reason = "Red Card" if red_count > 0 else f"{yellow_count} Yellow Cards Accumulation"
+                suspensions.append({
+                    "team": team.name,
+                    "player": p.name,
+                    "reason": reason,
+                })
+
+    hs, as_score = fixture.score
+
+    return {
+        "fixture": fixture,
+        "category": cat,
+        "home": home,
+        "away": away,
+        "home_players": home_players,
+        "away_players": away_players,
+        "suspensions": suspensions,
+        "home_score": hs if fixture.played else "",
+        "away_score": as_score if fixture.played else "",
+    }
+
+

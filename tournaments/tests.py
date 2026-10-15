@@ -151,3 +151,72 @@ class TournamentAPITests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertTrue(Category.objects.filter(label="Youth Cup").exists())
+
+    def test_h2h_api(self):
+        # Query H2H between Oxford and Super Strikers
+        response = self.client.get(
+            reverse("tournaments:api_category_h2h", kwargs={"key": "open"}),
+            {"team1": "OXF", "team2": "SS"},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("team1", data)
+        self.assertIn("team2", data)
+        self.assertIn("h2h_summary", data)
+        self.assertIn("team1_form", data)
+        self.assertIn("past_matches", data)
+        self.assertEqual(data["team1"]["id"], "OXF")
+        self.assertEqual(data["team2"]["id"], "SS")
+
+    def test_h2h_missing_parameters(self):
+        response = self.client.get(
+            reverse("tournaments:api_category_h2h", kwargs={"key": "open"}),
+            {"team1": "OXF"},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_export_standings_csv(self):
+        response = self.client.get(
+            reverse("tournaments:api_export_standings_csv", kwargs={"key": "open"})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn("attachment; filename=", response["Content-Disposition"])
+        content = response.content.decode("utf-8")
+        self.assertIn("Rank,Team Code,Team Name,MP,W,D,L,GF,GA,GD,Pts", content)
+        self.assertIn("Mancheli", content)
+        self.assertIn("Oxford", content)
+
+    def test_export_fixtures_csv(self):
+        response = self.client.get(
+            reverse("tournaments:api_export_fixtures_csv", kwargs={"key": "open"})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn("attachment; filename=", response["Content-Disposition"])
+        content = response.content.decode("utf-8")
+        self.assertIn("Fixture ID,Phase,Date,Home Team Code", content)
+        self.assertIn("REAL-F1", content)
+
+    def test_export_players_csv(self):
+        response = self.client.get(
+            reverse("tournaments:api_export_players_csv", kwargs={"key": "open"})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn("attachment; filename=", response["Content-Disposition"])
+        content = response.content.decode("utf-8")
+        self.assertIn("Player ID,Player Name,Team Code,Team Name,Position,Goals", content)
+        self.assertIn("Jimmy", content)
+
+    def test_printable_match_sheet_view(self):
+        response = self.client.get(
+            reverse("tournaments:fixture_match_sheet", kwargs={"fixture_id": "REAL-F1"})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Official Match Day Sheet")
+        self.assertContains(response, "Ruiru Titans")
+        self.assertContains(response, "Super Strikers")
+        self.assertContains(response, "Mancheli")
+        self.assertContains(response, "Center Referee Signature")
+

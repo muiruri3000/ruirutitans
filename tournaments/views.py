@@ -194,3 +194,100 @@ class StandingsAPIView(views.APIView):
 
         rows.sort(key=lambda x: (x["Pts"], x["GD"], x["GF"]), reverse=True)
         return Response(rows)
+
+
+class H2HComparisonAPIView(views.APIView):
+    """
+    Returns Head-to-Head (H2H) comparison and form records between two teams.
+    Query params: team1, team2
+    """
+
+    def get(self, request, key):
+        category = get_object_or_404(Category, key=key)
+        team1_id = request.query_params.get("team1", "").strip()
+        team2_id = request.query_params.get("team2", "").strip()
+
+        if not team1_id or not team2_id:
+            return Response(
+                {"error": "Both 'team1' and 'team2' query parameters are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from .services import compute_h2h_comparison
+        data = compute_h2h_comparison(category, team1_id, team2_id)
+        if not data:
+            return Response({"error": "One or both teams not found in this category."}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(data)
+
+
+class ExportStandingsCSVView(views.View):
+    """
+    Streams CSV export of the league / tournament standings table.
+    """
+
+    def get(self, request, key):
+        import csv
+        category = get_object_or_404(Category, key=key)
+        from .services import generate_standings_csv_data
+        rows = generate_standings_csv_data(category)
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="ruiru_titans_{category.key}_standings.csv"'
+
+        writer = csv.writer(response)
+        for r in rows:
+            writer.writerow(r)
+        return response
+
+
+class ExportFixturesCSVView(views.View):
+    """
+    Streams CSV export of all fixtures and results.
+    """
+
+    def get(self, request, key):
+        import csv
+        category = get_object_or_404(Category, key=key)
+        from .services import generate_fixtures_csv_data
+        rows = generate_fixtures_csv_data(category)
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="ruiru_titans_{category.key}_fixtures.csv"'
+
+        writer = csv.writer(response)
+        for r in rows:
+            writer.writerow(r)
+        return response
+
+
+class ExportPlayersCSVView(views.View):
+    """
+    Streams CSV export of player statistics (goals, assists, cards).
+    """
+
+    def get(self, request, key):
+        import csv
+        category = get_object_or_404(Category, key=key)
+        from .services import generate_players_csv_data
+        rows = generate_players_csv_data(category)
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="ruiru_titans_{category.key}_players.csv"'
+
+        writer = csv.writer(response)
+        for r in rows:
+            writer.writerow(r)
+        return response
+
+
+def match_sheet_view(request, fixture_id):
+    """
+    Renders an official, printable Match Day Sheet (designed for both screen view and PDF print).
+    """
+    from .services import get_fixture_match_sheet_context
+    context = get_fixture_match_sheet_context(fixture_id)
+    if not context:
+        return HttpResponse("Fixture not found", status=404)
+    return render(request, "match_sheet.html", context)
+

@@ -26,3 +26,4 @@ class Command(BaseCommand):
                 f"Match Events: {event_count}"
             )
         )
+

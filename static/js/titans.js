@@ -78,6 +78,230 @@ function emptyCategory(label, mode, format) {
 
 // League mode: flat round robin across every team (no groups, no knockout).
 // "double": every pair plays twice (home & away swapped). "single": once each.
+
+// ============================================================
+// HEAD-TO-HEAD (H2H) & FORM MODAL
+// ============================================================
+
+let activeH2HData = null;
+let loadingH2H = false;
+
+function closeH2HModal() {
+  activeH2HData = null;
+  loadingH2H = false;
+  const existing = document.getElementById("h2h-modal-overlay");
+  if (existing) existing.remove();
+}
+
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeH2HModal();
+});
+
+async function openH2HModal(team1Id, team2Id) {
+  if (!team1Id || !team2Id) return;
+  const catKey = state.data.activeCategory;
+  loadingH2H = true;
+  activeH2HData = null;
+  renderH2HModal(team1Id, team2Id);
+
+  try {
+    const res = await fetch("/api/categories/" + catKey + "/h2h/?team1=" + encodeURIComponent(team1Id) + "&team2=" + encodeURIComponent(team2Id));
+    if (res.ok) {
+      activeH2HData = await res.json();
+    } else {
+      activeH2HData = { error: "Could not load H2H comparison." };
+    }
+  } catch (err) {
+    activeH2HData = { error: "Network error loading H2H data." };
+  }
+  loadingH2H = false;
+  renderH2HModal(team1Id, team2Id);
+}
+
+function renderH2HModal(team1Id, team2Id) {
+  let overlay = document.getElementById("h2h-modal-overlay");
+  if (!overlay) {
+    overlay = el("div", {
+      id: "h2h-modal-overlay",
+      className: "h2h-overlay",
+      onclick: (e) => {
+        if (e.target.id === "h2h-modal-overlay") closeH2HModal();
+      },
+    });
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = "";
+
+  const closeBtn = el("button", {
+    style: {
+      background: "none",
+      border: "none",
+      color: "#8FA89B",
+      fontSize: "20px",
+      cursor: "pointer",
+      padding: "4px 8px",
+      borderRadius: "4px",
+    },
+    onclick: closeH2HModal,
+  }, ["✕"]);
+
+  const header = el("div", {
+    style: { display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #1E4636", paddingBottom: "12px", marginBottom: "16px" }
+  }, [
+    el("div", {}, [
+      el("div", { style: { color: "#C9A227", fontSize: "11px", fontWeight: "700", letterSpacing: "0.15em", textTransform: "uppercase" } }, ["MATCH PREVIEW"]),
+      el("h2", { className: "scoreboard", style: { margin: "2px 0 0", fontSize: "24px", color: "#F4F2EA" } }, ["HEAD-TO-HEAD & RECENT FORM"]),
+    ]),
+    closeBtn
+  ]);
+
+  let body;
+  if (loadingH2H) {
+    body = el("div", { style: { textAlign: "center", padding: "40px 0", color: "#8FA89B" } }, [
+      el("div", { style: { fontSize: "28px", marginBottom: "8px" } }, ["⚔️"]),
+      el("div", { style: { fontSize: "13px" } }, ["Analyzing clash history and form statistics…"]),
+    ]);
+  } else if (!activeH2HData || activeH2HData.error) {
+    body = el("div", { style: { textAlign: "center", padding: "30px", color: "#EF4444" } }, [
+      el("div", {}, [activeH2HData ? activeH2HData.error : "Failed to load comparison."]),
+    ]);
+  } else {
+    const d = activeH2HData;
+    const t1 = d.team1;
+    const t2 = d.team2;
+    const sum = d.h2h_summary;
+
+    const clashBanner = el("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        background: "#082820",
+        border: "1px solid #1E4636",
+        borderRadius: "10px",
+        padding: "16px 20px",
+        marginBottom: "18px",
+      }
+    }, [
+      el("div", { style: { textAlign: "center", flex: "1" } }, [
+        el("div", { style: { width: "16px", height: "16px", borderRadius: "50", background: t1.color, margin: "0 auto 6px" } }),
+        el("div", { className: "scoreboard", style: { fontSize: "22px", color: "#F4F2EA" } }, [t1.name]),
+        el("div", { style: { fontSize: "11.5px", color: "#8FA89B" } }, [t1.points + " pts · W" + t1.won + " D" + t1.drawn + " L" + t1.lost]),
+      ]),
+      el("div", { style: { textAlign: "center", padding: "0 16px" } }, [
+        el("div", { className: "scoreboard", style: { fontSize: "28px", color: "#C9A227", lineHeight: "1" } }, [
+          sum.team1_wins + " - " + sum.draws + " - " + sum.team2_wins
+        ]),
+        el("div", { style: { fontSize: "10px", color: "#8FA89B", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: "4px" } }, [
+          sum.total_matches + " previous match" + (sum.total_matches === 1 ? "" : "es")
+        ]),
+      ]),
+      el("div", { style: { textAlign: "center", flex: "1" } }, [
+        el("div", { style: { width: "16px", height: "16px", borderRadius: "50%", background: t2.color, margin: "0 auto 6px" } }),
+        el("div", { className: "scoreboard", style: { fontSize: "22px", color: "#F4F2EA" } }, [t2.name]),
+        el("div", { style: { fontSize: "11.5px", color: "#8FA89B" } }, [t2.points + " pts · W" + t2.won + " D" + t2.drawn + " L" + t2.lost]),
+      ]),
+    ]);
+
+    const renderFormBadges = (formList) => {
+      if (!formList || formList.length === 0) {
+        return el("div", { style: { fontSize: "12px", color: "#6E9080", fontStyle: "italic" } }, ["No matches played yet"]);
+      }
+      return el("div", { style: { display: "flex", gap: "6px", alignItems: "center" } },
+        formList.map((m) => el("span", {
+          className: "form-badge " + m.result,
+          title: m.date + ": vs " + m.opponent_name + " (" + m.score + ")",
+        }, [m.result]))
+      );
+    };
+
+    const formSection = el("div", {
+      style: {
+        background: "#082820",
+        border: "1px solid #1E4636",
+        borderRadius: "10px",
+        padding: "14px 16px",
+        marginBottom: "18px",
+      }
+    }, [
+      el("div", { style: { fontSize: "12px", fontWeight: "700", color: "#C9A227", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.05em" } }, ["Recent Form (Last 5 Matches)"]),
+      el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", paddingBottom: "8px", borderBottom: "1px solid #16352A" } }, [
+        el("span", { style: { fontSize: "13px", fontWeight: "600", color: "#DDE6DF" } }, [t1.name]),
+        renderFormBadges(d.team1_form),
+      ]),
+      el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, [
+        el("span", { style: { fontSize: "13px", fontWeight: "600", color: "#DDE6DF" } }, [t2.name]),
+        renderFormBadges(d.team2_form),
+      ]),
+    ]);
+
+    const metricRow = (label, val1, val2) => el("div", {
+      style: { display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #16352A", fontSize: "12.5px" }
+    }, [
+      el("span", { style: { fontWeight: "700", color: "#F4F2EA", width: "40px" } }, [String(val1)]),
+      el("span", { style: { color: "#8FA89B", textAlign: "center", flex: "1" } }, [label]),
+      el("span", { style: { fontWeight: "700", color: "#F4F2EA", width: "40px", textAlign: "right" } }, [String(val2)]),
+    ]);
+
+    const statsComparison = el("div", {
+      style: {
+        background: "#082820",
+        border: "1px solid #1E4636",
+        borderRadius: "10px",
+        padding: "14px 16px",
+        marginBottom: "18px",
+      }
+    }, [
+      el("div", { style: { fontSize: "12px", fontWeight: "700", color: "#C9A227", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.05em" } }, ["Season Comparative Metrics"]),
+      metricRow("Goals Scored", t1.goals_for, t2.goals_for),
+      metricRow("Goals Conceded", t1.goals_against, t2.goals_against),
+      metricRow("Avg Goals / Match", t1.avg_goals, t2.avg_goals),
+      metricRow("Clean Sheets", t1.clean_sheets, t2.clean_sheets),
+      metricRow("Yellow Cards", t1.yellow_cards, t2.yellow_cards),
+      metricRow("Red Cards", t1.red_cards, t2.red_cards),
+    ]);
+
+    const pastEncountersList = (d.past_matches && d.past_matches.length > 0)
+      ? d.past_matches.map((m) => el("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "8px 10px",
+            borderBottom: "1px solid #16352A",
+            fontSize: "12px",
+          }
+        }, [
+          el("span", { style: { color: "#8FA89B", width: "60px" } }, [m.date]),
+          el("span", { style: { fontWeight: m.home_id === t1.id ? "700" : "400", color: m.home_id === t1.id ? "#C9A227" : "#DDE6DF" } }, [m.home_name]),
+          el("span", { className: "scoreboard", style: { fontSize: "16px", color: "#F4F2EA", padding: "0 8px" } }, [
+            m.played ? (m.home_score + " – " + m.away_score) : "vs"
+          ]),
+          el("span", { style: { fontWeight: m.away_id === t1.id ? "700" : "400", color: m.away_id === t1.id ? "#C9A227" : "#DDE6DF" } }, [m.away_name]),
+        ]))
+      : el("div", { style: { padding: "12px", fontSize: "12px", color: "#6E9080", textAlign: "center", fontStyle: "italic" } }, [
+          "No previous meetings between these two teams on record."
+        ]);
+
+    const pastSection = el("div", {
+      style: {
+        background: "#082820",
+        border: "1px solid #1E4636",
+        borderRadius: "10px",
+        padding: "14px 16px",
+      }
+    }, [
+      el("div", { style: { fontSize: "12px", fontWeight: "700", color: "#C9A227", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" } }, ["Previous Meetings"]),
+      pastEncountersList
+    ]);
+
+    body = el("div", {}, [clashBanner, formSection, statsComparison, pastSection]);
+  }
+
+  const modalBox = el("div", { className: "h2h-modal" }, [header, body]);
+  overlay.appendChild(modalBox);
+}
+
 // ============================================================
 // FIXTURE SCHEDULING — each category has its own schedule (cat.schedule: a kickoff time,
 // and a per-weekday match count), set in Manage. Dates are assigned automatically to any
@@ -1399,7 +1623,18 @@ function FixtureCard(fixture, homeTeam, awayTeam, ctx, suspendedList, teamsById,
       el("button", {
         style: { background: "none", border: "none", color: "#6E9080", fontSize: "11.5px", cursor: "pointer" },
         onclick: () => { const next = Object.assign({}, state.openFixtureIds); next[fixture.id] = !isOpen; setState({ openFixtureIds: next, pendingGoal: null }); },
-      }, [isOpen ? "Hide match events ▲" : "Add goal / assist / card ▾"]),
+      }, [isOpen ? "Hide events ▲" : "Add events ▾"]),
+      homeTeam && awayTeam ? el("button", {
+        className: "btn-pill-action",
+        onclick: () => openH2HModal(homeTeam.id, awayTeam.id),
+        title: "Head-to-head records and recent form",
+      }, ["⚔️ H2H"]) : null,
+      el("a", {
+        href: "/fixtures/" + fixture.id + "/sheet/",
+        target: "_blank",
+        className: "btn-pill-action",
+        title: "Open printable official Match Day Sheet (PDF)",
+      }, ["📄 Sheet"]),
     ]),
     WalkoverPanel(ctx, fixture, homeTeam, awayTeam),
   ];
@@ -1447,7 +1682,18 @@ function LeagueTableView(table, teamCount) {
     ]),
     el("tbody", {}, rows),
   ]);
+  const activeCatKey = state.data.activeCategory;
+  const tableHeaderBar = el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderBottom: "1px solid #1E4636", background: "#0A241C" } }, [
+    el("span", { style: { fontWeight: "700", color: "#C9A227", fontSize: "13px", letterSpacing: "0.05em" } }, ["STANDINGS TABLE"]),
+    el("a", {
+      href: "/api/categories/" + activeCatKey + "/export/standings-csv/",
+      className: "csv-export-btn",
+      title: "Download standings table as CSV spreadsheet",
+    }, ["📥 Export Table CSV"]),
+  ]);
+
   return el("div", { style: { background: "#0F2E24", border: "1px solid #1E4636", borderRadius: "12px", overflow: "hidden" } }, [
+    tableHeaderBar,
     el("div", { style: { overflowX: "auto" } }, [tbl]),
     anyTied ? el("div", { style: { padding: "8px 12px", fontSize: "10.5px", color: "#5E7A6C", borderTop: "1px solid #1E4636" } }, [
       "\"=\" marks teams level on points, goal difference, and goals scored — a genuine tie, neither ranked above the other.",
@@ -1457,8 +1703,17 @@ function LeagueTableView(table, teamCount) {
 
 function LeagueFixturesView(fixtures, teamsById, suspensions, referees) {
   if (fixtures.length === 0) return EmptyState("No fixtures yet in this category — add teams under Manage and fixtures generate automatically.");
+  const activeCatKey = state.data.activeCategory;
+  const fixturesHeaderBar = el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", paddingBottom: "8px", borderBottom: "1px solid #1E4636" } }, [
+    el("span", { style: { fontWeight: "700", color: "#C9A227", fontSize: "13px", letterSpacing: "0.05em" } }, ["FIXTURES & RESULTS"]),
+    el("a", {
+      href: "/api/categories/" + activeCatKey + "/export/fixtures-csv/",
+      className: "csv-export-btn",
+      title: "Download fixtures schedule and results as CSV",
+    }, ["📥 Export Fixtures CSV"]),
+  ]);
   const cards = fixtures.map((f) => FixtureCard(f, teamsById[f.home], teamsById[f.away], { kind: "league", fixtureId: f.id }, (suspensions || {})[f.id], teamsById, referees));
-  return el("div", { style: { background: "#0F2E24", border: "1px solid #1E4636", borderRadius: "12px", padding: "12px" } }, cards);
+  return el("div", { style: { background: "#0F2E24", border: "1px solid #1E4636", borderRadius: "12px", padding: "12px" } }, [fixturesHeaderBar, ...cards]);
 }
 
 function GroupView(cat, teamsById, groupSuspensions, groupComplete, hasKnockout) {
