@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="csrf-token" content="{{ csrf_token }}" />
+  <title>Ruiru Titans — Football Leagues &amp; Cups</title>
+  <link rel="icon" type="image/jpeg" href="{% static 'images/club-logo.jpg' %}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/titans.css' %}" />
+</head>
+<body>
+  <div id="root">
+    <div style="font-family: 'Inter', sans-serif; padding: 40px; color: #8FA89B; text-align: center;">
+      <img src="{% static 'images/club-logo.jpg' %}" alt="Ruiru Titans" style="width: 64px; height: 64px; margin-bottom: 16px; object-fit: contain;" />
+      <div style="color: #F4F2EA; font-weight: 600; font-size: 16px;">Loading Ruiru Titans Tournament Platform…</div>
+    </div>
+  </div>
+
+  <noscript>
+    <div style="padding: 20px; color: #EF4444; text-align: center;">
+      JavaScript is required to run the Ruiru Titans tournament platform.
+    </div>
+  </noscript>
+
+  <script>
+    window.CLUB_LOGO_URL = "{% static 'images/club-logo.jpg' %}";
+  </script>
+  <script src="{% static 'js/titans.js' %}"></script>
+</body>
+</html>
