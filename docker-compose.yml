@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ruirutitans-mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: ruirutitans
+      MYSQL_USER: titans_user
+      MYSQL_PASSWORD: titans_pass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: ruirutitans-backend
+    restart: always
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      - USE_MYSQL=True
+      - MYSQL_DATABASE=ruirutitans
+      - MYSQL_USER=titans_user
+      - MYSQL_PASSWORD=titans_pass
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: ruirutitans-frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
