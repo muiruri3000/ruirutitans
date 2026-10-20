@@ -1,14 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-function LeaderboardCard({ title, list, countKey, activeCategoryKey }) {
+function LeaderboardCard({ title, list, countKey }) {
   return (
     <div
       style={{
-        background: '#0F2E24',
+        background: '#0A241C',
         border: '1px solid #1E4636',
         borderRadius: '12px',
         padding: '14px',
-        marginBottom: '16px',
       }}
     >
       <div
@@ -33,11 +32,11 @@ function LeaderboardCard({ title, list, countKey, activeCategoryKey }) {
               justifyContent: 'space-between',
               padding: '6px 8px',
               borderRadius: '6px',
-              background: i === 0 ? 'rgba(201,162,39,0.08)' : '#0B231B',
+              background: i === 0 ? 'rgba(201,162,39,0.1)' : '#071B15',
               fontSize: '12.5px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '11px', color: '#6E9080', width: '14px', textAlign: 'right' }}>
                 {i + 1}
               </span>
@@ -50,7 +49,21 @@ function LeaderboardCard({ title, list, countKey, activeCategoryKey }) {
                   display: 'inline-block',
                 }}
               />
-              <span style={{ fontWeight: 600, color: '#F4F2EA' }}>{p.name}</span>
+              <span style={{ fontWeight: 700, color: '#F4F2EA' }}>{p.name}</span>
+              {p.position && (
+                <span
+                  style={{
+                    fontSize: '9.5px',
+                    fontWeight: 800,
+                    background: '#13382B',
+                    color: '#C9A227',
+                    padding: '1px 5px',
+                    borderRadius: '4px',
+                  }}
+                >
+                  {p.position}
+                </span>
+              )}
               <span style={{ fontSize: '11px', color: '#8FA89B' }}>({p.teamName})</span>
             </div>
             <div
@@ -64,7 +77,7 @@ function LeaderboardCard({ title, list, countKey, activeCategoryKey }) {
 
         {(!list || list.length === 0) && (
           <div style={{ fontSize: '11.5px', color: '#6E9080', textAlign: 'center', padding: '12px 0' }}>
-            No records logged yet.
+            No records logged in this category yet.
           </div>
         )}
       </div>
@@ -72,46 +85,205 @@ function LeaderboardCard({ title, list, countKey, activeCategoryKey }) {
   );
 }
 
-export default function StatsView({ leaderboards, activeCategoryKey }) {
+export default function StatsView({
+  categories = {},
+  leaderboardsByCategory = {},
+  leaderboards,
+  activeCategoryKey = 'open',
+}) {
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
+
+  const categoryEntries = Object.entries(categories);
+  // Fallback if categories prop wasn't passed
+  if (categoryEntries.length === 0 && leaderboards) {
+    return (
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '14px' }}>
+          <a
+            href={`/api/categories/${activeCategoryKey}/export/players-csv/`}
+            className="csv-export-btn"
+            title="Download player goals, assists, and disciplinary stats as CSV"
+          >
+            📥 Export Player Stats CSV
+          </a>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+          <LeaderboardCard title="Top Scorers (Golden Boot)" list={leaderboards?.scorers} countKey="goal" />
+          <LeaderboardCard title="Top Assists (Playmaker)" list={leaderboards?.assists} countKey="assist" />
+          <LeaderboardCard title="Yellow Cards (Discipline)" list={leaderboards?.yellows} countKey="yellow" />
+          <LeaderboardCard title="Red Cards (Expulsions)" list={leaderboards?.reds} countKey="red" />
+        </div>
+      </div>
+    );
+  }
+
+  const visibleCategories =
+    selectedCategoryFilter === 'all'
+      ? categoryEntries
+      : categoryEntries.filter(([k]) => k === selectedCategoryFilter);
+
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '14px' }}>
-        <a
-          href={`/api/categories/${activeCategoryKey}/export/players-csv/`}
-          className="csv-export-btn"
-          title="Download player goals, assists, and disciplinary stats as CSV"
-        >
-          📥 Export Player Stats CSV
-        </a>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+      {/* Top Filter Bar for Category-Grouped Player Stats */}
+      <div
+        style={{
+          background: '#0F2E24',
+          border: '1px solid #1E4636',
+          borderRadius: '14px',
+          padding: '16px 18px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#C9A227', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            📊 OFFICIAL PLAYER STATISTICS BY CATEGORY
+          </div>
+          <h2 className="scoreboard" style={{ margin: '2px 0 0', fontSize: '26px', color: '#F4F2EA', letterSpacing: '0.04em' }}>
+            PLAYER STATS GROUPED BY COMPETITION CATEGORY
+          </h2>
+        </div>
+
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryFilter('all')}
+            style={{
+              background: selectedCategoryFilter === 'all' ? '#C9A227' : '#0A241C',
+              color: selectedCategoryFilter === 'all' ? '#16201B' : '#DDE6DF',
+              border: '1px solid #2B5746',
+              borderRadius: '999px',
+              padding: '6px 14px',
+              fontSize: '12px',
+              fontWeight: 800,
+              cursor: 'pointer',
+            }}
+          >
+            📚 All Categories ({categoryEntries.length})
+          </button>
+          {categoryEntries.map(([catKey, catObj]) => (
+            <button
+              key={catKey}
+              type="button"
+              onClick={() => setSelectedCategoryFilter(catKey)}
+              style={{
+                background: selectedCategoryFilter === catKey ? '#C9A227' : '#0A241C',
+                color: selectedCategoryFilter === catKey ? '#16201B' : '#DDE6DF',
+                border: '1px solid #2B5746',
+                borderRadius: '999px',
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {catObj.mode === 'cup' ? '🏆' : '⚽'} {catObj.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
-        <LeaderboardCard
-          title="Top Scorers (Golden Boot)"
-          list={leaderboards?.scorers}
-          countKey="goal"
-          activeCategoryKey={activeCategoryKey}
-        />
-        <LeaderboardCard
-          title="Top Assists (Playmaker)"
-          list={leaderboards?.assists}
-          countKey="assist"
-          activeCategoryKey={activeCategoryKey}
-        />
-        <LeaderboardCard
-          title="Yellow Cards (Discipline)"
-          list={leaderboards?.yellows}
-          countKey="yellow"
-          activeCategoryKey={activeCategoryKey}
-        />
-        <LeaderboardCard
-          title="Red Cards (Expulsions)"
-          list={leaderboards?.reds}
-          countKey="red"
-          activeCategoryKey={activeCategoryKey}
-        />
-      </div>
+      {/* Category Groups */}
+      {visibleCategories.map(([catKey, catObj]) => {
+        const catStats = leaderboardsByCategory[catKey] || {
+          scorers: [],
+          assists: [],
+          yellows: [],
+          reds: [],
+          totals: { goals: 0, assists: 0, yellows: 0, reds: 0 },
+        };
+        const teamCount = (catObj.teams || []).length;
+        const playerCount = (catObj.teams || []).reduce(
+          (sum, t) => sum + (t.players || []).filter((p) => !p.unknown).length,
+          0
+        );
+
+        return (
+          <section
+            key={catKey}
+            style={{
+              background: '#0F2E24',
+              border: '1px solid #23503F',
+              borderRadius: '16px',
+              padding: '18px',
+              boxShadow: '0 10px 26px rgba(0, 0, 0, 0.22)',
+            }}
+          >
+            {/* Category Group Header */}
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '12px',
+                paddingBottom: '14px',
+                marginBottom: '16px',
+                borderBottom: '1px solid #1E4636',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span
+                  style={{
+                    background: catObj.mode === 'cup' ? 'rgba(201, 162, 39, 0.2)' : 'rgba(92, 214, 133, 0.16)',
+                    border: `1px solid ${catObj.mode === 'cup' ? '#C9A227' : '#5CD685'}`,
+                    color: catObj.mode === 'cup' ? '#C9A227' : '#5CD685',
+                    fontSize: '10.5px',
+                    fontWeight: 800,
+                    padding: '3px 10px',
+                    borderRadius: '999px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  {catObj.mode === 'cup' ? '🏆 Cup Category' : '📊 League Category'}
+                </span>
+                <h3 className="scoreboard" style={{ margin: 0, fontSize: '24px', color: '#F4F2EA', letterSpacing: '0.04em' }}>
+                  {catObj.label}
+                </h3>
+                <span style={{ fontSize: '12px', color: '#8FA89B' }}>
+                  • {teamCount} Teams · {playerCount} Registered Players · {catStats.totals?.goals || 0} Goals Logged
+                </span>
+              </div>
+
+              <a
+                href={`/api/categories/${catKey}/export/players-csv/`}
+                className="csv-export-btn"
+                title={`Download ${catObj.label} player stats as CSV`}
+              >
+                📥 Export {catObj.label} CSV
+              </a>
+            </div>
+
+            {/* 4 Leaderboards for this Category */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(255px, 1fr))', gap: '14px' }}>
+              <LeaderboardCard
+                title="Top Scorers (Golden Boot)"
+                list={catStats.scorers}
+                countKey="goal"
+              />
+              <LeaderboardCard
+                title="Top Assists (Playmaker)"
+                list={catStats.assists}
+                countKey="assist"
+              />
+              <LeaderboardCard
+                title="Yellow Cards (Discipline)"
+                list={catStats.yellows}
+                countKey="yellow"
+              />
+              <LeaderboardCard
+                title="Red Cards (Expulsions)"
+                list={catStats.reds}
+                countKey="red"
+              />
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }
-

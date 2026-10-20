@@ -5,6 +5,59 @@
 }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 * { box-sizing: border-box; }
+img {
+  max-width: 100%;
+  height: auto;
+  box-sizing: border-box;
+}
+
+/* 100% Width Carousels & Stacked Full-Width Sidebar */
+.club-home-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  gap: 24px !important;
+  box-sizing: border-box !important;
+}
+
+.club-home-sidebar {
+  width: 100% !important;
+  max-width: 100% !important;
+  position: static !important;
+  box-sizing: border-box !important;
+}
+
+.hero-slide-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+.hero-slide-container img {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+}
+
+.jersey-slide-card {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.jersey-slide-card img {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+}
+
+@media (max-width: 768px) {
+  .jersey-slide-card {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -200,6 +253,57 @@ button { font-family: Inter, sans-serif; }
   color: #F4F2EA;
 }
 
+/* Team Detail Analytics Modal */
+.team-modal {
+  background: #0F2E24;
+  border: 1px solid #2B5746;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 860px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  padding: 24px;
+  color: #F4F2EA;
+}
+
+@media (max-width: 640px) {
+  .team-modal {
+    padding: 16px;
+    max-height: 94vh;
+    border-radius: 12px;
+  }
+}
+
+/* Team Clickable Links across the App */
+.team-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(201, 162, 39, 0.4);
+  text-underline-offset: 3px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.team-link-btn:hover {
+  color: #C9A227 !important;
+  text-decoration-color: #C9A227;
+}
+.team-link-btn:focus-visible {
+  outline: 2px solid #C9A227;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+
 .form-badge {
   display: inline-flex;
   align-items: center;
@@ -271,4 +375,81 @@ button { font-family: Inter, sans-serif; }
 ::-webkit-scrollbar-thumb:hover {
   background: #2D6B54;
 }
+
+/* ==========================================================================
+   MOBILE-FIRST RESPONSIVE STYLES & TOUCH OPTIMIZATIONS
+   ========================================================================== */
+
+/* Touch-friendly target minimums for mobile / touch screens */
+@media (pointer: coarse) {
+  button, .btn-pill-action, .tab-btn, .played-toggle, .stat-btn, .admin-link, select, input[type="button"], input[type="submit"] {
+    min-height: 40px;
+  }
+}
+
+/* Base mobile container padding & fluidity */
+main {
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  /* Prevent iOS Safari auto-zooming on focus */
+  input.form-input, select.form-input, textarea.form-input {
+    font-size: 16px !important;
+  }
+
+  .top-nav-bar {
+    padding: 8px 10px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .hero-banner {
+    padding: 16px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Scoreboard numbers scaling on small screens */
+  .scoreboard {
+    font-size: clamp(20px, 6vw, 32px);
+  }
+
+  /* Horizontal scrolling navigation tabs on mobile */
+  nav[aria-label="Club Homepage Sections"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  nav[aria-label="Club Homepage Sections"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Full-width touch cards */
+  .fixture-card, .tie-card {
+    padding: 12px 10px !important;
+  }
+
+  /* Table responsive wrapper */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+
+  /* Reschedule dialogs on mobile */
+  .reschedule-panel {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+}
+
+/* Active tap feedback */
+button:active, .tab-btn:active, .btn-pill-action:active {
+  transform: scale(0.97);
+}
+
 

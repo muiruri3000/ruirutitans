@@ -33,6 +33,7 @@ class MatchEventSerializer(serializers.ModelSerializer):
             "assist_player",
             "assist_player_code",
             "is_penalty",
+            "is_interference",
             "minute",
             "order",
         ]

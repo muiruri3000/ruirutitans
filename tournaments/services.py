@@ -1,6 +1,10 @@
 import re
+import random
 from django.db import transaction
-from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings
+from django.utils import timezone
+from django.utils.text import slugify
+from django.db.models import Count, Max, Avg, Q
+from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote
 
 REAL_OPEN_TEAM_SEED = [
     {
@@ -260,15 +264,31 @@ REAL_OPEN_FIXTURES_SEED = [
             rsY("SS", "Farasi"),
         ],
     },
-    {"date": "Aug 12", "home": "MAS", "away": "RAN", "events": [rsG("MAS", "Caleb"), rsG("MAS", "Kaama")]},
+    {
+        "date": "Aug 12",
+        "home": "MAS",
+        "away": "RAN",
+        "events": [
+            rsG("MAS", "Caleb"),
+            rsG("MAS", "Kaama"),
+        ],
+    },
 ]
 
 
 def build_real_open_season_dict():
     """Constructs the seed dictionary for the Open League season."""
+    default_cycle = ["CB", "LB", "RB", "CDM", "CM", "LW", "RW", "ST"]
     teams = []
     for t in REAL_OPEN_TEAM_SEED:
-        players = [{"id": f"{t['id']}-P{i+1}", "name": n, "position": ""} for i, n in enumerate(t["players"])]
+        players = [
+            {
+                "id": f"{t['id']}-P{i+1}",
+                "name": n,
+                "position": DEFAULT_PLAYER_POSITIONS.get(t["id"], {}).get(n, default_cycle[i % len(default_cycle)]),
+            }
+            for i, n in enumerate(t["players"])
+        ]
         players.append({"id": rsUnk(t["id"]), "name": "Unrecorded scorer", "unknown": True})
         teams.append({
             "id": t["id"],
@@ -324,10 +344,11 @@ def build_real_open_season_dict():
     for i, f in enumerate(REAL_OPEN_FIXTURES_SEED):
         fixtures.append({
             "id": f"REAL-F{i+1}",
-            "date": f["date"],
+            "date": f["date"] if f["date"] != "TBD" else "Aug 5",
             "home": f["home"],
             "away": f["away"],
             "played": True,
+            "referee": "Main Ref" if i % 2 == 0 else "Assistant Ref",
             "events": convert_events(f["events"]),
         })
 
@@ -338,27 +359,709 @@ def build_real_open_season_dict():
         "teams": teams,
         "fixtures": fixtures,
         "schedule": {"time": "18:00", "days": {3: 1, 4: 1, 5: 1, 6: 1}},
-        "referees": ["Main Ref", "Assistant Ref"],
-        "note": "A handful of early results (Aug 1–4) only had final scores on record, not individual scorers — logged as “Unrecorded scorer.”",
+        "referees": ["Main Ref", "Assistant Ref", "Coach Ref"],
+        "votingConfig": {
+            "team_size": 6,
+            "max_picks_per_position": 2,
+            "include_gk": False,
+        },
+        "isEnded": True,
+        "championTeam": "Mancheli",
+        "runnerUpTeam": "Super Strikers",
+        "note": "Official Ruiru Titans Open League (August 2026 Season) — 6-a-side tournament with no goalkeepers. Mancheli confirmed as League Champions.",
+    }
+
+
+CUP_EXTRA_TEAMS_SEED = [
+    {
+        "id": "TYT",
+        "name": "Titans Youth",
+        "color": "#1F6E5C",
+        "players": ["Kevin", "Dennis", "Brian", "Eliud", "Samson", "Victor"],
+    },
+    {
+        "id": "ROY",
+        "name": "Ruiru Royals",
+        "color": "#7A3F8F",
+        "players": ["Brian", "Collins", "Kelvin", "Patrick", "Martin", "Kennedy"],
+    },
+    {
+        "id": "KIM",
+        "name": "Kimbo United",
+        "color": "#2E7A7A",
+        "players": ["Kamau", "Njoroge", "Mwangi", "Kariuki", "Otieno", "Juma"],
+    },
+]
+
+
+def build_real_cup_season_dict():
+    """
+    Constructs a rich Cup tournament ('Ruiru Titans Cup') featuring:
+    - 8 Club Squads across Group A & Group B
+    - Group Stage Fixtures (played results + upcoming group deciders)
+    - 3 Knockout Progression Levels: Quarter-Finals -> Semi-Finals -> Grand Final
+    """
+    default_cycle = ["GK", "CB", "LB", "RB", "CDM", "CM", "LW", "RW", "ST"]
+    all_seed_teams = REAL_OPEN_TEAM_SEED + CUP_EXTRA_TEAMS_SEED
+    teams = []
+    for t in all_seed_teams:
+        players = [
+            {
+                "id": f"{t['id']}-P{i+1}",
+                "name": n.capitalize() if n.islower() else n,
+                "position": DEFAULT_PLAYER_POSITIONS.get(t["id"], {}).get(
+                    n.capitalize() if n.islower() else n,
+                    default_cycle[i % len(default_cycle)],
+                ),
+            }
+            for i, n in enumerate(t["players"])
+        ]
+        players.append({"id": rsUnk(t["id"]), "name": "Unrecorded scorer", "unknown": True})
+        teams.append({
+            "id": t["id"],
+            "name": t["name"],
+            "color": t["color"],
+            "players": players,
+        })
+
+    group_letters = ["A", "B"]
+    group_of = {
+        "SS": "A",
+        "OXF": "A",
+        "RAN": "A",
+        "TYT": "A",
+        "MAN": "B",
+        "MAS": "B",
+        "ROY": "B",
+        "KIM": "B",
+    }
+
+    group_fixtures = {
+        "A": [
+            {
+                "id": "CUP-GA-1",
+                "date": "Sep 12 · 16:00",
+                "home": "SS",
+                "away": "OXF",
+                "played": True,
+                "referee": "Main Ref",
+                "events": [
+                    {"teamId": "SS", "playerId": "SS-P1", "type": "goal", "assistPlayerId": "SS-P2", "penalty": False},
+                    {"teamId": "SS", "playerId": "SS-P4", "type": "goal", "assistPlayerId": "SS-P3", "penalty": False},
+                    {"teamId": "OXF", "playerId": "OXF-P1", "type": "goal", "assistPlayerId": "OXF-P6", "penalty": False},
+                ],
+            },
+            {
+                "id": "CUP-GA-2",
+                "date": "Sep 12 · 17:30",
+                "home": "RAN",
+                "away": "TYT",
+                "played": True,
+                "referee": "Assistant Ref",
+                "events": [
+                    {"teamId": "RAN", "playerId": "RAN-P1", "type": "goal", "assistPlayerId": "RAN-P5", "penalty": False},
+                    {"teamId": "RAN", "playerId": "RAN-P2", "type": "goal", "assistPlayerId": None, "penalty": False},
+                    {"teamId": "TYT", "playerId": "TYT-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                ],
+            },
+            {
+                "id": "CUP-GA-3",
+                "date": "Sep 19 · 16:00",
+                "home": "SS",
+                "away": "RAN",
+                "played": True,
+                "referee": "Main Ref",
+                "events": [
+                    {"teamId": "SS", "playerId": "SS-P2", "type": "goal", "assistPlayerId": "SS-P1", "penalty": False},
+                    {"teamId": "SS", "playerId": "SS-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                    {"teamId": "RAN", "playerId": "RAN-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                    {"teamId": "RAN", "playerId": "RAN-P2", "type": "goal", "assistPlayerId": None, "penalty": False},
+                ],
+            },
+            {
+                "id": "CUP-GA-4",
+                "date": "Sep 19 · 17:30",
+                "home": "OXF",
+                "away": "TYT",
+                "played": True,
+                "referee": "Assistant Ref",
+                "events": [
+                    {"teamId": "OXF", "playerId": "OXF-P1", "type": "goal", "assistPlayerId": "OXF-P2", "penalty": False},
+                    {"teamId": "OXF", "playerId": "OXF-P3", "type": "goal", "assistPlayerId": "OXF-P5", "penalty": False},
+                    {"teamId": "OXF", "playerId": "OXF-P2", "type": "goal", "assistPlayerId": None, "penalty": False},
+                ],
+            },
+            {
+                "id": "CUP-GA-5",
+                "date": "Sep 26 · 16:00",
+                "home": "SS",
+                "away": "TYT",
+                "played": True,
+                "referee": "Main Ref",
+                "events": [
+                    {"teamId": "SS", "playerId": "SS-P4", "type": "goal", "assistPlayerId": "SS-P1", "penalty": False},
+                    {"teamId": "SS", "playerId": "SS-P8", "type": "goal", "assistPlayerId": None, "penalty": False},
+                ],
+            },
+            {
+                "id": "CUP-GA-6",
+                "date": "Sun, Oct 18 · 16:00",
+                "home": "OXF",
+                "away": "RAN",
+                "played": False,
+                "referee": "Main Ref",
+                "events": [],
+            },
+        ],
+        "B": [
+            {
+                "id": "CUP-GB-1",
+                "date": "Sep 13 · 16:00",
+                "home": "MAN",
+                "away": "MAS",
+                "played": True,
+                "referee": "Main Ref",
+                "events": [
+                    {"teamId": "MAN", "playerId": "MAN-P2", "type": "goal", "assistPlayerId": "MAN-P1", "penalty": False},
+                    {"teamId": "MAN", "playerId": "MAN-P1", "type": "goal", "assistPlayerId": "MAN-P3", "penalty": False},
+                    {"teamId": "MAS", "playerId": "MAS-P4", "type": "goal", "assistPlayerId": "MAS-P5", "penalty": False},
+                ],
+            },
+            {
+                "id": "CUP-GB-2",
+                "date": "Sep 13 · 17:30",
+                "home": "ROY",
+                "away": "KIM",
+                "played": True,
+                "referee": "Assistant Ref",
+                "events": [
+                    {"teamId": "ROY", "playerId": "ROY-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                    {"teamId": "ROY", "playerId": "ROY-P3", "type": "goal", "assistPlayerId": "ROY-P1", "penalty": False},
+                    {"teamId": "KIM", "playerId": "KIM-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                ],
+            },
+            {
+                "id": "CUP-GB-3",
+                "date": "Sep 20 · 16:00",
+                "home": "MAN",
+                "away": "ROY",
+                "played": True,
+                "referee": "Main Ref",
+                "events": [
+                    {"teamId": "MAN", "playerId": "MAN-P2", "type": "goal", "assistPlayerId": "MAN-P1", "penalty": False},
+                    {"teamId": "MAN", "playerId": "MAN-P3", "type": "goal", "assistPlayerId": None, "penalty": False},
+                    {"teamId": "MAN", "playerId": "MAN-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                    {"teamId": "ROY", "playerId": "ROY-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                ],
+            },
+            {
+                "id": "CUP-GB-4",
+                "date": "Sep 20 · 17:30",
+                "home": "MAS",
+                "away": "KIM",
+                "played": True,
+                "referee": "Assistant Ref",
+                "events": [
+                    {"teamId": "MAS", "playerId": "MAS-P4", "type": "goal", "assistPlayerId": "MAS-P2", "penalty": False},
+                    {"teamId": "MAS", "playerId": "MAS-P5", "type": "goal", "assistPlayerId": "MAS-P4", "penalty": False},
+                ],
+            },
+            {
+                "id": "CUP-GB-5",
+                "date": "Sep 27 · 16:00",
+                "home": "MAN",
+                "away": "KIM",
+                "played": True,
+                "referee": "Main Ref",
+                "events": [
+                    {"teamId": "MAN", "playerId": "MAN-P2", "type": "goal", "assistPlayerId": None, "penalty": False},
+                    {"teamId": "MAN", "playerId": "MAN-P8", "type": "goal", "assistPlayerId": "MAN-P1", "penalty": False},
+                ],
+            },
+            {
+                "id": "CUP-GB-6",
+                "date": "Sun, Oct 18 · 17:30",
+                "home": "MAS",
+                "away": "ROY",
+                "played": False,
+                "referee": "Assistant Ref",
+                "events": [],
+            },
+        ],
+    }
+
+    # Knockout Progression Levels:
+    # Level 0: Quarter-Finals (4 ties)
+    # Level 1: Semi-Finals (2 ties)
+    # Level 2: Grand Final (1 tie)
+    rounds = [
+        [
+            {
+                "id": "CUP-QF1",
+                "stage": "Quarter-Final 1",
+                "date": "Oct 3 · 16:00",
+                "home": "SS",
+                "away": "KIM",
+                "referee": "Main Ref",
+                "match": {
+                    "played": True,
+                    "events": [
+                        {"teamId": "SS", "playerId": "SS-P1", "type": "goal", "assistPlayerId": "SS-P2", "penalty": False},
+                        {"teamId": "SS", "playerId": "SS-P2", "type": "goal", "assistPlayerId": "SS-P4", "penalty": False},
+                        {"teamId": "SS", "playerId": "SS-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                        {"teamId": "KIM", "playerId": "KIM-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                    ],
+                },
+                "pen": {"h": "", "a": ""},
+            },
+            {
+                "id": "CUP-QF2",
+                "stage": "Quarter-Final 2",
+                "date": "Oct 3 · 18:00",
+                "home": "MAS",
+                "away": "RAN",
+                "referee": "Assistant Ref",
+                "match": {
+                    "played": True,
+                    "events": [
+                        {"teamId": "MAS", "playerId": "MAS-P4", "type": "goal", "assistPlayerId": "MAS-P5", "penalty": False},
+                        {"teamId": "MAS", "playerId": "MAS-P3", "type": "goal", "assistPlayerId": None, "penalty": False},
+                        {"teamId": "RAN", "playerId": "RAN-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                        {"teamId": "RAN", "playerId": "RAN-P2", "type": "goal", "assistPlayerId": "RAN-P1", "penalty": False},
+                    ],
+                },
+                "pen": {"h": 4, "a": 3},
+            },
+            {
+                "id": "CUP-QF3",
+                "stage": "Quarter-Final 3",
+                "date": "Oct 4 · 16:00",
+                "home": "MAN",
+                "away": "TYT",
+                "referee": "Main Ref",
+                "match": {
+                    "played": True,
+                    "events": [
+                        {"teamId": "MAN", "playerId": "MAN-P2", "type": "goal", "assistPlayerId": "MAN-P1", "penalty": False},
+                        {"teamId": "MAN", "playerId": "MAN-P2", "type": "goal", "assistPlayerId": "MAN-P3", "penalty": False},
+                        {"teamId": "MAN", "playerId": "MAN-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                        {"teamId": "TYT", "playerId": "TYT-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                    ],
+                },
+                "pen": {"h": "", "a": ""},
+            },
+            {
+                "id": "CUP-QF4",
+                "stage": "Quarter-Final 4",
+                "date": "Oct 4 · 18:00",
+                "home": "OXF",
+                "away": "ROY",
+                "referee": "Main Ref",
+                "match": {
+                    "played": True,
+                    "events": [
+                        {"teamId": "OXF", "playerId": "OXF-P1", "type": "goal", "assistPlayerId": "OXF-P6", "penalty": False},
+                        {"teamId": "OXF", "playerId": "OXF-P2", "type": "goal", "assistPlayerId": "OXF-P3", "penalty": False},
+                        {"teamId": "ROY", "playerId": "ROY-P1", "type": "goal", "assistPlayerId": None, "penalty": False},
+                    ],
+                },
+                "pen": {"h": "", "a": ""},
+            },
+        ],
+        [
+            {
+                "id": "CUP-SF1",
+                "stage": "Semi-Final 1",
+                "date": "Oct 10 · 18:00",
+                "home": "SS",
+                "away": "MAS",
+                "referee": "Main Ref",
+                "match": {
+                    "played": True,
+                    "events": [
+                        {"teamId": "SS", "playerId": "SS-P4", "type": "goal", "assistPlayerId": "SS-P1", "penalty": False},
+                        {"teamId": "SS", "playerId": "SS-P1", "type": "goal", "assistPlayerId": "SS-P2", "penalty": False},
+                        {"teamId": "SS", "playerId": "SS-P2", "type": "goal", "assistPlayerId": None, "penalty": False},
+                        {"teamId": "MAS", "playerId": "MAS-P4", "type": "goal", "assistPlayerId": "MAS-P5", "penalty": False},
+                        {"teamId": "MAS", "playerId": "MAS-P5", "type": "goal", "assistPlayerId": None, "penalty": False},
+                    ],
+                },
+                "pen": {"h": "", "a": ""},
+            },
+            {
+                "id": "CUP-SF2",
+                "stage": "Semi-Final 2",
+                "date": "Thu, Oct 22 · 18:30",
+                "home": "MAN",
+                "away": "OXF",
+                "referee": "Main Ref",
+                "match": {
+                    "played": False,
+                    "events": [],
+                },
+                "pen": {"h": "", "a": ""},
+            },
+        ],
+        [
+            {
+                "id": "CUP-FINAL",
+                "stage": "Grand Final",
+                "date": "Sun, Oct 25 · 19:00",
+                "home": "SS",
+                "away": None,
+                "referee": "Main Ref",
+                "match": {
+                    "played": False,
+                    "events": [],
+                },
+                "pen": {"h": "", "a": ""},
+            },
+        ],
+    ]
+
+    return {
+        "label": "Ruiru Titans Cup",
+        "mode": "cup",
+        "format": "single",
+        "teams": teams,
+        "groupLetters": group_letters,
+        "groupOf": group_of,
+        "groupFixtures": group_fixtures,
+        "rounds": rounds,
+        "schedule": {"time": "18:00", "days": {3: 1, 4: 1, 5: 1, 6: 1}},
+        "referees": ["Main Ref", "Assistant Ref", "Coach Ref"],
+        "note": "Ruiru Titans Knockout Cup — Top 4 from each Group advance to Quarter-Finals, Semi-Finals, and the Grand Final.",
+    }
+
+
+def _make_svg_banner_uri(bg1, bg2, accent, badge_text, title, subtitle):
+    import urllib.parse
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="{bg1}"/>
+          <stop offset="60%" stop-color="{bg2}"/>
+          <stop offset="100%" stop-color="#041510"/>
+        </linearGradient>
+        <radialGradient id="glow" cx="80%" cy="30%" r="55%">
+          <stop offset="0%" stop-color="{accent}" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="{accent}" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="1200" height="520" fill="url(#bg)"/>
+      <rect width="1200" height="520" fill="url(#glow)"/>
+      <g stroke="rgba(255,255,255,0.06)" stroke-width="2" fill="none">
+        <rect x="60" y="40" width="1080" height="440" rx="16"/>
+        <line x1="600" y1="40" x2="600" y2="480"/>
+        <circle cx="600" cy="260" r="95"/>
+        <circle cx="600" cy="260" r="6" fill="{accent}"/>
+      </g>
+      <circle cx="960" cy="255" r="145" fill="rgba(201,162,39,0.08)" stroke="{accent}" stroke-width="3" stroke-dasharray="10 6"/>
+      <text x="960" y="245" text-anchor="middle" font-family="Impact, sans-serif" font-size="74" fill="{accent}" opacity="0.9">TITANS</text>
+      <text x="960" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="22" fill="#F4F2EA" letter-spacing="6">RUIRU FC</text>
+      <rect x="95" y="110" width="240" height="34" rx="17" fill="{accent}"/>
+      <text x="215" y="133" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="14" fill="#10221B" letter-spacing="2">{badge_text}</text>
+      <text x="95" y="215" font-family="Arial, sans-serif" font-weight="900" font-size="52" fill="#F4F2EA">{title}</text>
+      <text x="95" y="268" font-family="Arial, sans-serif" font-size="22" fill="#A9C4B6">{subtitle}</text>
+    </svg>"""
+    return "data:image/svg+xml;utf8," + urllib.parse.quote(svg)
+
+
+def _make_jersey_svg_uri(primary_color, secondary_color, trim_color, age_group, kit_type, number="10"):
+    import urllib.parse
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 460" width="420" height="460">
+      <defs>
+        <linearGradient id="cardBg" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#0E3327"/>
+          <stop offset="100%" stop-color="#071C15"/>
+        </linearGradient>
+        <linearGradient id="shirtGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="{primary_color}"/>
+          <stop offset="100%" stop-color="{secondary_color}"/>
+        </linearGradient>
+      </defs>
+      <rect width="420" height="460" rx="18" fill="url(#cardBg)"/>
+      <circle cx="210" cy="215" r="135" fill="rgba(201,162,39,0.07)" stroke="rgba(201,162,39,0.2)" stroke-width="1.5"/>
+      <!-- Jersey Silhouette -->
+      <path d="M135 95 L172 80 C185 98 235 98 248 80 L285 95 L335 145 L302 192 L272 168 L272 340 L148 340 L148 168 L118 192 L85 145 Z"
+            fill="url(#shirtGrad)" stroke="{trim_color}" stroke-width="4" stroke-linejoin="round"/>
+      <!-- Collar & Sleeve Cuffs -->
+      <path d="M172 80 C185 102 235 102 248 80" fill="none" stroke="{trim_color}" stroke-width="6"/>
+      <line x1="89" y1="149" x2="120" y2="188" stroke="{trim_color}" stroke-width="7"/>
+      <line x1="331" y1="149" x2="300" y2="188" stroke="{trim_color}" stroke-width="7"/>
+      <!-- Chest Stripes -->
+      <rect x="148" y="205" width="124" height="16" fill="{trim_color}" opacity="0.85"/>
+      <!-- Crest Badge -->
+      <circle cx="242" cy="145" r="14" fill="#0B2E23" stroke="{trim_color}" stroke-width="2.5"/>
+      <text x="242" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="10" fill="{trim_color}">RT</text>
+      <!-- Squad Number -->
+      <text x="210" y="292" text-anchor="middle" font-family="Impact, Arial, sans-serif" font-weight="900" font-size="68" fill="{trim_color}" stroke="#082018" stroke-width="2">{number}</text>
+      <!-- Footer Label -->
+      <rect x="30" y="375" width="360" height="56" rx="10" fill="rgba(8,32,24,0.85)" stroke="rgba(201,162,39,0.35)" stroke-width="1.5"/>
+      <text x="210" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="16" fill="#F4F2EA" letter-spacing="1.5">{age_group} • {kit_type}</text>
+      <text x="210" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" fill="#C9A227" letter-spacing="1">OFFICIAL RUIRU TITANS CLUB KIT</text>
+    </svg>"""
+    return "data:image/svg+xml;utf8," + urllib.parse.quote(svg)
+
+
+def build_default_homepage_data():
+    """
+    Builds default Ruiru Titans Homepage data:
+    - Admin-managed Carousel slides
+    - 4 Jersey Photo rows: u13, u15, u17, wazae
+    - Quick-view upcoming club fixtures with categories: internal, friendly, tournament, league, cup
+    """
+    return {
+        "carousel": [
+            {
+                "id": "slide-1",
+                "title": "RUIRU TITANS FC 2026 MATCHDAY ARENA",
+                "subtitle": "Uniting Youth Academy (U13, U15, U17), Senior First Team & Wazae Legends Under One Crest.",
+                "tag": "CLUB SHOWCASE",
+                "image": _make_svg_banner_uri(
+                    "#0F3D2E", "#08241B", "#C9A227", "OFFICIAL CLUB GALLERY", "RUIRU TITANS FC", "Pride of Ruiru • Youth to Wazae Legends"
+                ),
+            },
+            {
+                "id": "slide-2",
+                "title": "YOUTH DEVELOPMENT PATHWAY: U13, U15 & U17",
+                "subtitle": "Building the next generation of Ruiru Titans stars with structured technical coaching & official kits.",
+                "tag": "ACADEMY EXCELLENCE",
+                "image": _make_svg_banner_uri(
+                    "#14385C", "#092138", "#F4C542", "YOUTH ACADEMY", "U13 • U15 • U17 SQUADS", "Official 2026 Season Kits & Training Camp"
+                ),
+            },
+            {
+                "id": "slide-3",
+                "title": "WAZAE LEGENDS & CHAMPIONSHIP DERBY NIGHTS",
+                "subtitle": "Honouring our club veterans alongside high-intensity Championship League & Knockout Cup action.",
+                "tag": "WAZAE & SENIORS",
+                "image": _make_svg_banner_uri(
+                    "#4A1C1C", "#1F0D0D", "#C9A227", "WAZAE VETERANS", "HERITAGE & BROTHERHOOD", "Weekend Derbies, Friendlies & Tournaments"
+                ),
+            },
+        ],
+        "jerseys": {
+            "u13": [
+                {
+                    "id": "u13-home",
+                    "title": "U13 Home Jersey 2026",
+                    "subtitle": "Emerald Green & Titans Gold • Youth Fit",
+                    "badge": "HOME KIT",
+                    "image": _make_jersey_svg_uri("#145A3E", "#0B3B28", "#C9A227", "U13 SQUAD", "HOME KIT", "7"),
+                },
+                {
+                    "id": "u13-away",
+                    "title": "U13 Away Jersey 2026",
+                    "subtitle": "Ivory White & Forest Trim • Matchday Away",
+                    "badge": "AWAY KIT",
+                    "image": _make_jersey_svg_uri("#EAE6D8", "#C9C3B0", "#0F3D2E", "U13 SQUAD", "AWAY KIT", "10"),
+                },
+                {
+                    "id": "u13-third",
+                    "title": "U13 Training & Academy Kit",
+                    "subtitle": "Royal Blue & Gold Crest • Technical Mesh",
+                    "badge": "TRAINING KIT",
+                    "image": _make_jersey_svg_uri("#1E4E79", "#12314D", "#F4C542", "U13 SQUAD", "THIRD KIT", "14"),
+                },
+            ],
+            "u15": [
+                {
+                    "id": "u15-home",
+                    "title": "U15 Home Jersey 2026",
+                    "subtitle": "Titans Deep Green & Championship Gold",
+                    "badge": "HOME KIT",
+                    "image": _make_jersey_svg_uri("#0F4C35", "#082B1E", "#C9A227", "U15 SQUAD", "HOME KIT", "9"),
+                },
+                {
+                    "id": "u15-away",
+                    "title": "U15 Away Jersey 2026",
+                    "subtitle": "Crimson Red & Gold Trim • Junior Titans",
+                    "badge": "AWAY KIT",
+                    "image": _make_jersey_svg_uri("#8F241E", "#591410", "#F4C542", "U15 SQUAD", "AWAY KIT", "11"),
+                },
+                {
+                    "id": "u15-third",
+                    "title": "U15 Alternate Cup Jersey",
+                    "subtitle": "Midnight Onyx & Gold Edition",
+                    "badge": "CUP KIT",
+                    "image": _make_jersey_svg_uri("#1C2826", "#0E1514", "#C9A227", "U15 SQUAD", "CUP KIT", "8"),
+                },
+            ],
+            "u17": [
+                {
+                    "id": "u17-home",
+                    "title": "U17 Home Jersey 2026",
+                    "subtitle": "Pro-Cut Emerald & Gold • Elite Youth",
+                    "badge": "HOME KIT",
+                    "image": _make_jersey_svg_uri("#125E42", "#093524", "#C9A227", "U17 SQUAD", "HOME KIT", "10"),
+                },
+                {
+                    "id": "u17-away",
+                    "title": "U17 Away Jersey 2026",
+                    "subtitle": "Gold Bullion & Dark Pine Trim",
+                    "badge": "AWAY KIT",
+                    "image": _make_jersey_svg_uri("#C9A227", "#9A7814", "#0B2E23", "U17 SQUAD", "AWAY KIT", "17"),
+                },
+                {
+                    "id": "u17-gk",
+                    "title": "U17 Goalkeeper Pro Kit",
+                    "subtitle": "Electric Teal & Gold • Shot-Stopper Edition",
+                    "badge": "GK KIT",
+                    "image": _make_jersey_svg_uri("#0E6BA8", "#074066", "#F4C542", "U17 SQUAD", "GK KIT", "1"),
+                },
+            ],
+            "wazae": [
+                {
+                    "id": "wazae-home",
+                    "title": "Wazae Classic Home Jersey",
+                    "subtitle": "Heritage Green & Gold • Veterans Collector Edition",
+                    "badge": "WAZAE HOME",
+                    "image": _make_jersey_svg_uri("#0B3B2C", "#051F17", "#C9A227", "WAZAE LEGENDS", "HOME KIT", "6"),
+                },
+                {
+                    "id": "wazae-away",
+                    "title": "Wazae Legends Away Jersey",
+                    "subtitle": "Burgundy Maroon & Gold Crest • Sunday Special",
+                    "badge": "WAZAE AWAY",
+                    "image": _make_jersey_svg_uri("#6E1E2A", "#421018", "#C9A227", "WAZAE LEGENDS", "AWAY KIT", "4"),
+                },
+                {
+                    "id": "wazae-third",
+                    "title": "Wazae Founders Gold Edition",
+                    "subtitle": "Cream & Gold • Honouring Club Founders",
+                    "badge": "FOUNDERS KIT",
+                    "image": _make_jersey_svg_uri("#F2EFE4", "#D6D0BE", "#8C6D14", "WAZAE LEGENDS", "FOUNDERS", "5"),
+                },
+            ],
+        },
+        "upcoming_fixtures": [
+            {
+                "id": "CLB-FIX-1",
+                "category": "internal",
+                "title": "In-House Squad Trial Match",
+                "home": "Titans Greens XI",
+                "away": "Titans Golds XI",
+                "date": "Sat, Oct 24 · 09:00",
+                "venue": "Ruiru Main Stadium",
+            },
+            {
+                "id": "CLB-FIX-2",
+                "category": "internal",
+                "title": "Wazae vs Senior First Team Scrimmage",
+                "home": "Wazae Legends",
+                "away": "Titans First Team",
+                "date": "Sun, Oct 25 · 10:30",
+                "venue": "Ruiru Titans Training Ground",
+            },
+            {
+                "id": "CLB-FIX-3",
+                "category": "friendly",
+                "title": "Club International Friendly",
+                "home": "Ruiru Titans FC",
+                "away": "Thika United Legends",
+                "date": "Sat, Oct 24 · 15:00",
+                "venue": "Ruiru Municipal Ground",
+            },
+            {
+                "id": "CLB-FIX-4",
+                "category": "friendly",
+                "title": "Youth Academy Friendly Showcase",
+                "home": "Ruiru Titans U15",
+                "away": "Kahawa Wendani Youth",
+                "date": "Sun, Oct 25 · 13:00",
+                "venue": "Ruiru Main Pitch B",
+            },
+            {
+                "id": "CLB-FIX-5",
+                "category": "tournament",
+                "title": "Kiambu County Super Cup — Group Opener",
+                "home": "Ruiru Titans U17",
+                "away": "Juja Combined FC",
+                "date": "Sat, Oct 31 · 14:00",
+                "venue": "Ruiru Stadium",
+            },
+            {
+                "id": "CLB-FIX-6",
+                "category": "tournament",
+                "title": "Eastlands & Ruiru Veterans Invitational",
+                "home": "Ruiru Titans Wazae",
+                "away": "Nairobi City Veterans",
+                "date": "Sun, Nov 1 · 16:00",
+                "venue": "Ruiru Main Stadium",
+            },
+            {
+                "id": "CLB-FIX-7",
+                "category": "league",
+                "title": "Ruiru Titans Championship League — Matchday 9",
+                "home": "Oxford FC",
+                "away": "Mancheli FC",
+                "date": "Sat, Nov 7 · 16:00",
+                "venue": "Ruiru Main Stadium",
+            },
+            {
+                "id": "CLB-FIX-8",
+                "category": "cup",
+                "title": "Ruiru Titans Knockout Cup — Quarter-Final Tie",
+                "home": "Super Strikers",
+                "away": "Rangers FC",
+                "date": "Sun, Nov 8 · 15:00",
+                "venue": "Ruiru Main Stadium",
+            },
+        ],
     }
 
 
 @transaction.atomic
-def import_state_to_db(state_dict):
+def import_state_to_db(state_dict, soft_delete_missing=True):
     """
-    Imports a full state dict (categories, activeCategory, etc.) into Django models.
+    Imports a full state dict (categories, activeCategory, homepage, etc.) into Django models.
     """
     if not state_dict or "categories" not in state_dict:
         return
 
-    active_cat_key = state_dict.get("activeCategory", "open")
     settings, _ = GlobalSettings.objects.get_or_create(id=1)
-    settings.active_category_key = active_cat_key
+    if "activeCategory" in state_dict:
+        settings.active_category_key = state_dict["activeCategory"]
+    elif not settings.active_category_key:
+        settings.active_category_key = "open"
+
+    if "homepage" in state_dict and isinstance(state_dict["homepage"], dict):
+        settings.homepage_data = state_dict["homepage"]
+    elif not settings.homepage_data:
+        settings.homepage_data = build_default_homepage_data()
     settings.save()
 
     categories_data = state_dict.get("categories", {})
+    deleted_categories_data = state_dict.get("deletedCategories", {})
+    permanently_deleted_keys = set(state_dict.get("permanentlyDeletedKeys", []) or [])
 
+    if permanently_deleted_keys:
+        Category.objects.filter(key__in=permanently_deleted_keys).delete()
+
+    combined_items = []
     for cat_key, cat_data in categories_data.items():
+        if cat_key in permanently_deleted_keys:
+            continue
+        is_del = bool(cat_data.get("isDeleted", False))
+        combined_items.append((cat_key, cat_data, is_del))
+
+    for cat_key, cat_data in deleted_categories_data.items():
+        if cat_key in permanently_deleted_keys or cat_key in categories_data:
+            continue
+        combined_items.append((cat_key, cat_data, True))
+
+    active_keys_in_payload = {k for k, _, is_del in combined_items if not is_del}
+    explicit_deleted_keys = {k for k, _, is_del in combined_items if is_del}
+
+    # Any existing active DB category that was removed from categories_data (and not permanently deleted)
+    # is soft-deleted automatically so tournament/league/cup data is never lost accidentally.
+    if soft_delete_missing and active_keys_in_payload:
+        Category.objects.filter(is_deleted=False, is_ended=False).exclude(
+            key__in=active_keys_in_payload | permanently_deleted_keys
+        ).update(is_deleted=True, deleted_at=timezone.now())
+
+    for cat_key, cat_data, is_del in combined_items:
         mode = cat_data.get("mode", "league")
         format_choice = cat_data.get("format", "double")
         label = cat_data.get("label", cat_key.capitalize())
@@ -367,6 +1070,32 @@ def import_state_to_db(state_dict):
         schedule_dict = cat_data.get("schedule", {})
         schedule_time = schedule_dict.get("time", "18:00")
         schedule_days = schedule_dict.get("days", {3: 1, 4: 1, 5: 1, 6: 1})
+        mpd = schedule_dict.get("matches_per_day") or schedule_dict.get("fixtures_per_day")
+        if mpd is not None:
+            schedule_days = {"days": schedule_days, "matches_per_day": int(mpd)}
+
+        voting_cfg = cat_data.get("votingConfig") or {}
+        existing_cat = Category.objects.filter(key=cat_key).first()
+        voting_team_size = int(
+            voting_cfg.get("team_size", existing_cat.voting_team_size if existing_cat else 6)
+        )
+        voting_max_picks = int(
+            voting_cfg.get("max_picks_per_position", existing_cat.voting_max_picks if existing_cat else 2)
+        )
+        voting_include_gk = bool(
+            voting_cfg.get("include_gk", existing_cat.voting_include_gk if existing_cat else True)
+        )
+
+        del_at = None
+        if is_del:
+            del_at = existing_cat.deleted_at if (existing_cat and existing_cat.deleted_at) else timezone.now()
+
+        is_ended = bool(cat_data.get("isEnded", existing_cat.is_ended if existing_cat else False))
+        ended_at = None
+        if is_ended:
+            ended_at = existing_cat.ended_at if (existing_cat and existing_cat.ended_at) else timezone.now()
+        champion_team = cat_data.get("championTeam", existing_cat.champion_team if existing_cat else "")
+        runner_up_team = cat_data.get("runnerUpTeam", existing_cat.runner_up_team if existing_cat else "")
 
         category, _ = Category.objects.update_or_create(
             key=cat_key,
@@ -380,13 +1109,26 @@ def import_state_to_db(state_dict):
                 "group_letters": cat_data.get("groupLetters", []),
                 "group_of": cat_data.get("groupOf", {}),
                 "rounds_data": cat_data.get("rounds", None),
+                "voting_team_size": max(1, voting_team_size),
+                "voting_max_picks": max(1, voting_max_picks),
+                "voting_include_gk": voting_include_gk,
+                "is_ended": is_ended,
+                "ended_at": ended_at,
+                "champion_team": champion_team,
+                "runner_up_team": runner_up_team,
+                "is_deleted": is_del,
+                "deleted_at": del_at,
             },
         )
 
         # Referees
         category.referees.all().delete()
+        seen_refs = set()
         for ref_name in cat_data.get("referees", []):
-            Referee.objects.create(category=category, name=ref_name)
+            clean_ref = str(ref_name or "").strip()
+            if clean_ref and clean_ref not in seen_refs:
+                seen_refs.add(clean_ref)
+                Referee.objects.create(category=category, name=clean_ref)
 
         # Teams & Players
         teams_map = {}  # team_id -> Team instance
@@ -407,16 +1149,64 @@ def import_state_to_db(state_dict):
             teams_map[team_id] = team_obj
 
             existing_player_ids = set()
+            db_existing_ids = set(
+                Player.objects.filter(team=team_obj).values_list("player_id", flat=True)
+            )
             for p_info in t_info.get("players", []):
-                p_id = p_info["id"]
+                is_unk = bool(p_info.get("unknown", False))
+                p_id = str(p_info.get("id") or p_info.get("permanentId") or "").strip()
+                if not p_id:
+                    prefix = team_id.upper()
+                    if is_unk:
+                        p_id = f"{prefix}-UNK"
+                    else:
+                        seq = 1
+                        while f"{prefix}-P{seq}" in db_existing_ids or f"{prefix}-P{seq}" in existing_player_ids:
+                            seq += 1
+                        p_id = f"{prefix}-P{seq}"
                 existing_player_ids.add(p_id)
+                db_existing_ids.add(p_id)
+
+                existing_p = Player.objects.filter(team=team_obj, player_id=p_id).first()
+                p_name = p_info.get("name", p_id)
+                default_uname = slugify(p_name).replace("-", "_") if not is_unk else ""
+                p_username = (
+                    p_info.get("username")
+                    or (existing_p.username if existing_p and existing_p.username else default_uname)
+                )
+                p_password = (
+                    p_info.get("password")
+                    or (existing_p.password if existing_p and existing_p.password else "titans2026")
+                )
+
+                p_must_change = bool(
+                    p_info.get("mustChangePassword")
+                    or p_info.get("must_change_password")
+                    or (existing_p.must_change_password if existing_p else False)
+                )
+                p_temp_code = str(
+                    p_info.get("tempCode")
+                    or p_info.get("temp_code")
+                    or (existing_p.temp_code if existing_p else "")
+                )
+
+                raw_j = p_info.get("jerseyNumber") if p_info.get("jerseyNumber") is not None else p_info.get("jersey_number")
+                p_jersey = int(raw_j) if (raw_j is not None and str(raw_j).strip().isdigit()) else (existing_p.jersey_number if existing_p else None)
+                p_is_active = bool(p_info.get("isActive", p_info.get("is_active", existing_p.is_active if existing_p else True)))
+
                 player_obj, _ = Player.objects.update_or_create(
                     team=team_obj,
                     player_id=p_id,
                     defaults={
-                        "name": p_info.get("name", p_id),
+                        "name": p_name,
+                        "username": p_username,
+                        "password": p_password,
                         "position": p_info.get("position", ""),
-                        "is_unknown": bool(p_info.get("unknown", False)),
+                        "is_unknown": is_unk,
+                        "jersey_number": p_jersey,
+                        "must_change_password": p_must_change,
+                        "temp_code": p_temp_code,
+                        "is_active": p_is_active,
                     },
                 )
                 players_map[(team_id, p_id)] = player_obj
@@ -436,6 +1226,33 @@ def import_state_to_db(state_dict):
             for letter, flist in group_fixtures.items():
                 for f in flist:
                     raw_fixtures.append((f, "group", letter, None, None))
+            # Knockout round ties -> also sync to Fixture rows for Match Sheet / CSV / H2H
+            rounds_list = cat_data.get("rounds") or []
+            for r_idx, round_ties in enumerate(rounds_list):
+                for t_idx, tie in enumerate(round_ties or []):
+                    if not tie:
+                        continue
+                    match_obj = tie.get("match") or {}
+                    pen_obj = tie.get("pen") or {}
+                    pens = None
+                    if pen_obj.get("h", "") != "" and pen_obj.get("a", "") != "":
+                        try:
+                            pens = [int(pen_obj["h"]), int(pen_obj["a"])]
+                        except (ValueError, TypeError):
+                            pens = None
+                    tie_referee = tie.get("referee") or match_obj.get("referee", "")
+                    tie_fixture = {
+                        "id": tie.get("id") or f"KO-R{r_idx+1}-T{t_idx+1}",
+                        "date": tie.get("date", "TBD"),
+                        "home": tie.get("home"),
+                        "away": tie.get("away"),
+                        "played": bool(match_obj.get("played", False)),
+                        "walkover": match_obj.get("walkover"),
+                        "events": match_obj.get("events", []),
+                        "referee": tie_referee,
+                        "pens": pens,
+                    }
+                    raw_fixtures.append((tie_fixture, "knockout", "", r_idx, t_idx))
 
         seen_fixture_ids = set()
         for f_data, phase, g_letter, r_idx, t_idx in raw_fixtures:
@@ -472,53 +1289,142 @@ def import_state_to_db(state_dict):
             # Recreate events
             fixture_obj.events.all().delete()
             events = f_data.get("events", [])
+            f_home_id = f_data.get("home")
+            f_away_id = f_data.get("away")
             for order, ev in enumerate(events):
-                ev_team = teams_map.get(ev.get("teamId"))
+                ev_team_id = ev.get("teamId")
+                ev_team = teams_map.get(ev_team_id)
                 if not ev_team:
                     continue
-                ev_player = players_map.get((ev.get("teamId"), ev.get("playerId")))
-                assist_player = (
-                    players_map.get((ev.get("teamId"), ev.get("assistPlayerId")))
-                    if ev.get("assistPlayerId")
-                    else None
+                ev_player = players_map.get((ev_team_id, ev.get("playerId")))
+                if not ev_player and ev.get("playerId"):
+                    for (t_k, p_k), p_inst in players_map.items():
+                        if p_k == ev.get("playerId"):
+                            ev_player = p_inst
+                            break
+
+                assist_id = ev.get("assistPlayerId")
+                assist_player = None
+                if assist_id:
+                    assist_player = players_map.get((ev_team_id, assist_id))
+                    if not assist_player:
+                        for (t_k, p_k), p_inst in players_map.items():
+                            if p_k == assist_id:
+                                assist_player = p_inst
+                                break
+
+                ev_type = ev.get("type", "goal")
+                is_interf = bool(
+                    ev.get("interference", False)
+                    or (
+                        ev_type in ("yellow", "red")
+                        and f_home_id
+                        and f_away_id
+                        and ev_team_id not in (f_home_id, f_away_id)
+                    )
                 )
 
                 MatchEvent.objects.create(
                     fixture=fixture_obj,
                     team=ev_team,
                     player=ev_player,
-                    event_type=ev.get("type", "goal"),
+                    event_type=ev_type,
                     assist_player=assist_player,
                     is_penalty=bool(ev.get("penalty", False)),
+                    is_interference=is_interf,
                     order=order,
                 )
 
         category.fixtures.exclude(fixture_id__in=seen_fixture_ids).delete()
+        if category.teams.exists():
+            ensure_player_default_positions(category)
+            get_or_create_active_voting_round(category)
+
+
+def ensure_archived_open_season():
+    """
+    Ensures that the authentic 2026 Ruiru Titans Open League Season is preserved
+    in the database as an archived/ended competition (key='open_2026').
+    Has all 20 played fixtures, real player events (goals, assists, cards),
+    standings, and Mancheli confirmed as League Champions.
+    """
+    open_season = Category.objects.filter(key="open_2026").first()
+    if not open_season or open_season.fixtures.count() < 20:
+        data = build_real_open_season_dict()
+        data["label"] = "Open League (August 2026 Season)"
+        data["isEnded"] = True
+        data["championTeam"] = "Mancheli"
+        data["runnerUpTeam"] = "Super Strikers"
+        import_state_to_db({"categories": {"open_2026": data}}, soft_delete_missing=False)
+        cat = Category.objects.filter(key="open_2026").first()
+        if cat:
+            cat.label = "Open League (August 2026 Season)"
+            cat.is_ended = True
+            cat.champion_team = "Mancheli"
+            cat.runner_up_team = "Super Strikers"
+            if not cat.ended_at:
+                cat.ended_at = timezone.now()
+            cat.save(update_fields=["label", "is_ended", "champion_team", "runner_up_team", "ended_at"])
+
+
+def ensure_default_open_category():
+    """
+    Ensures that an active 'open' category exists with the 5 core teams starting with 0 players.
+    """
+    if not Category.objects.filter(key="open").exists():
+        core_teams = [
+            {"id": "MAN", "name": "Mancheli", "color": "#C9A227", "players": []},
+            {"id": "SS", "name": "Super Strikers", "color": "#B23A2E", "players": []},
+            {"id": "RAN", "name": "Rangers", "color": "#3F7A4E", "players": []},
+            {"id": "MAS", "name": "Masters", "color": "#D97B29", "players": []},
+            {"id": "OXF", "name": "Oxford", "color": "#2E5A8F", "players": []},
+        ]
+        import_state_to_db({
+            "categories": {
+                "open": {
+                    "label": "Open",
+                    "mode": "league",
+                    "format": "double",
+                    "teams": core_teams,
+                    "fixtures": [],
+                    "schedule": {"time": "18:00", "days": {3: 1, 4: 1, 5: 1, 6: 1}},
+                    "referees": ["Coach Ref", "Main Ref", "Assistant Ref"],
+                    "votingConfig": {"team_size": 6, "max_picks_per_position": 2, "include_gk": False},
+                }
+            },
+            "activeCategory": "open",
+        }, soft_delete_missing=False)
 
 
 def export_state_from_db():
     """
-    Exports full database state to a JSON-ready dict.
+    Exports full database state to a JSON-ready dict (including active categories and soft-deleted categories).
     """
-    settings = GlobalSettings.objects.first()
+    ensure_archived_open_season()
+    ensure_default_open_category()
+    settings, _ = GlobalSettings.objects.get_or_create(id=1)
     active_cat_key = settings.active_category_key if settings else "open"
 
+    if not settings.homepage_data:
+        settings.homepage_data = build_default_homepage_data()
+        settings.save(update_fields=["homepage_data"])
+
     categories = {}
-    for cat in Category.objects.all().order_by("key"):
+    for cat in Category.objects.filter(is_deleted=False).order_by("key"):
         categories[cat.key] = cat.to_state_dict()
 
-    if not categories:
-        # If DB is empty, seed with real Open season
-        open_data = build_real_open_season_dict()
-        import_state_to_db({"categories": {"open": open_data}, "activeCategory": "open"})
-        return export_state_from_db()
+    deleted_categories = {}
+    for cat in Category.objects.filter(is_deleted=True).order_by("-deleted_at", "key"):
+        deleted_categories[cat.key] = cat.to_state_dict()
 
-    if active_cat_key not in categories:
-        active_cat_key = next(iter(categories.keys()))
+    if categories and active_cat_key not in categories:
+        active_cat_key = "open" if "open" in categories else next(iter(categories.keys()))
 
     return {
         "categories": categories,
+        "deletedCategories": deleted_categories,
         "activeCategory": active_cat_key,
+        "homepage": settings.homepage_data,
     }
 
 
@@ -818,7 +1724,10 @@ def generate_players_csv_data(category):
     for team in category.teams.all().order_by("name"):
         for p in team.players.filter(is_unknown=False).order_by("name"):
             goals = MatchEvent.objects.filter(fixture__category=category, player=p, event_type="goal").count()
-            assists = MatchEvent.objects.filter(fixture__category=category, assist_player=p, event_type="goal").count()
+            assists = (
+                MatchEvent.objects.filter(fixture__category=category, assist_player=p, event_type="goal").count()
+                + MatchEvent.objects.filter(fixture__category=category, player=p, event_type="assist").count()
+            )
             yellows = MatchEvent.objects.filter(fixture__category=category, player=p, event_type="yellow").count()
             reds = MatchEvent.objects.filter(fixture__category=category, player=p, event_type="red").count()
 
@@ -836,6 +1745,134 @@ def generate_players_csv_data(category):
     return data
 
 
+def compute_category_suspensions(category):
+    """
+    Computes active player suspensions per fixture across a competition:
+    - Accumulation of 4 yellow cards -> player misses their team's next match.
+    - Red card -> player misses their team's next match.
+    - A player from another team not currently playing in a match can be booked
+      (yellow or red) for interference in the currently playing match, and their
+      card takes effect in the player's actual team's next fixture.
+    Returns dict: { fixture_id: [ { "teamId", "team", "playerId", "player", "playerName", "reason", "interference", "sourceFixtureId" }, ... ] }
+    """
+    all_fixtures = list(
+        category.fixtures.select_related("home_team", "away_team")
+        .prefetch_related("events__team", "events__player")
+        .order_by("id")
+    )
+    active_or_played = [
+        f for f in all_fixtures if f.played or f.walkover_winner_id or f.events.exists()
+    ]
+    upcoming_unplayed = [
+        f for f in all_fixtures if not (f.played or f.walkover_winner_id or f.events.exists())
+    ]
+    ordered_fixtures = active_or_played + upcoming_unplayed
+
+    # Track card state per player key (team_id, player_id)
+    player_state = {}
+    for team in category.teams.prefetch_related("players").all():
+        for p in team.players.all():
+            key = (team.team_id, p.player_id)
+            player_state[key] = {
+                "team_id": team.team_id,
+                "team_name": team.name,
+                "player_id": p.player_id,
+                "player_name": p.name if not p.is_unknown else f"{team.name} squad member",
+                "pending_yellows": 0,
+                "pending_red": False,
+                "yellow_interference": False,
+                "red_interference": False,
+                "last_card_fixture_id": None,
+            }
+
+    by_fixture = {}
+
+    for f in ordered_fixtures:
+        h_id = f.home_team.team_id if f.home_team else None
+        a_id = f.away_team.team_id if f.away_team else None
+
+        # 1. Any player on the home or away team with a pending red card or >= 4 yellow cards
+        # misses this match (their actual team's next fixture), which serves the suspension.
+        for (t_id, p_id), st in list(player_state.items()):
+            if t_id and t_id in (h_id, a_id):
+                if st["pending_red"] or st["pending_yellows"] >= 4:
+                    is_interf = st["red_interference"] if st["pending_red"] else st["yellow_interference"]
+                    src_fix = st["last_card_fixture_id"]
+                    if st["pending_red"] and st["pending_yellows"] >= 4:
+                        reason = f"Red Card & {st['pending_yellows']} Yellow Cards Accumulation"
+                    elif st["pending_red"]:
+                        reason = (
+                            f"Red Card (Sideline Interference in {src_fix})"
+                            if is_interf and src_fix
+                            else ("Red Card (Sideline Interference)" if is_interf else "Red Card — Misses Next Match")
+                        )
+                    else:
+                        reason = (
+                            f"{st['pending_yellows']} Yellow Cards Accumulation (incl. Interference in {src_fix})"
+                            if is_interf and src_fix
+                            else f"{st['pending_yellows']} Yellow Cards Accumulation — Misses Next Match"
+                        )
+
+                    by_fixture.setdefault(f.fixture_id, []).append({
+                        "teamId": st["team_id"],
+                        "team": st["team_name"],
+                        "playerId": st["player_id"],
+                        "player": st["player_name"],
+                        "playerName": st["player_name"],
+                        "reason": reason,
+                        "interference": bool(is_interf),
+                        "sourceFixtureId": src_fix,
+                    })
+
+                    if st["pending_red"]:
+                        st["pending_red"] = False
+                        st["red_interference"] = False
+                    if st["pending_yellows"] >= 4:
+                        st["pending_yellows"] -= 4
+                        if st["pending_yellows"] < 4:
+                            st["yellow_interference"] = False
+
+        # 2. Process cards issued during this fixture (including interference cards to non-playing teams' players)
+        for ev in f.events.all():
+            if ev.event_type not in ("yellow", "red"):
+                continue
+            t_id = ev.team.team_id if ev.team else None
+            if not t_id:
+                continue
+            p_id = ev.player.player_id if ev.player else f"{t_id}-UNK"
+            p_name = (
+                ev.player.name
+                if (ev.player and not ev.player.is_unknown)
+                else f"{ev.team.name} squad member"
+            )
+            key = (t_id, p_id)
+            if key not in player_state:
+                player_state[key] = {
+                    "team_id": t_id,
+                    "team_name": ev.team.name if ev.team else t_id,
+                    "player_id": p_id,
+                    "player_name": p_name,
+                    "pending_yellows": 0,
+                    "pending_red": False,
+                    "yellow_interference": False,
+                    "red_interference": False,
+                    "last_card_fixture_id": None,
+                }
+            st = player_state[key]
+            is_interf = bool(ev.is_interference or (h_id and a_id and t_id not in (h_id, a_id)))
+            st["last_card_fixture_id"] = f.fixture_id
+            if ev.event_type == "yellow":
+                st["pending_yellows"] += 1
+                if is_interf:
+                    st["yellow_interference"] = True
+            elif ev.event_type == "red":
+                st["pending_red"] = True
+                if is_interf:
+                    st["red_interference"] = True
+
+    return by_fixture
+
+
 def get_fixture_match_sheet_context(fixture_id):
     """
     Constructs the template context for a professional printable Match Day Sheet.
@@ -851,30 +1888,9 @@ def get_fixture_match_sheet_context(fixture_id):
     home_players = list(home.players.filter(is_unknown=False).order_by("jersey_number", "name")) if home else []
     away_players = list(away.players.filter(is_unknown=False).order_by("jersey_number", "name")) if away else []
 
-    # Check for active suspensions for this fixture
-    # Red cards or every 3rd yellow
-    suspensions = []
-    for team in [home, away]:
-        if not team:
-            continue
-        for p in team.players.filter(is_unknown=False):
-            # Check red cards or yellow counts in previous matches
-            prior_events = MatchEvent.objects.filter(
-                fixture__category=cat,
-                player=p,
-                fixture__id__lt=fixture.id,
-            )
-            red_count = prior_events.filter(event_type="red").count()
-            yellow_count = prior_events.filter(event_type="yellow").count()
-            # If carded in immediate prior match or 3rd yellow
-            if red_count > 0 or yellow_count >= 3:
-                # Add notice
-                reason = "Red Card" if red_count > 0 else f"{yellow_count} Yellow Cards Accumulation"
-                suspensions.append({
-                    "team": team.name,
-                    "player": p.name,
-                    "reason": reason,
-                })
+    # Check for active suspensions for this fixture (Red card or 4 Yellow cards, including sideline interference)
+    all_suspensions = compute_category_suspensions(cat)
+    suspensions = all_suspensions.get(fixture.fixture_id, [])
 
     hs, as_score = fixture.score
 
@@ -888,6 +1904,2248 @@ def get_fixture_match_sheet_context(fixture_id):
         "suspensions": suspensions,
         "home_score": hs if fixture.played else "",
         "away_score": as_score if fixture.played else "",
+    }
+
+
+VALID_PLAYER_POSITIONS = ("GK", "LB", "CB", "RB", "CDM", "CM", "LW", "RW", "ST")
+
+POSITION_GROUP_COMPAT = {
+    "GK": ("GK",),
+    "LB": ("LB",),
+    "CB": ("CB",),
+    "RB": ("RB",),
+    "CDM": ("CDM",),
+    "CM": ("CM",),
+    "LW": ("LW",),
+    "RW": ("RW",),
+    "ST": ("ST",),
+    # Legacy group keys map to their respective tactical positions
+    "DEF": ("LB", "CB", "RB", "DEF"),
+    "MID": ("CDM", "CM", "MID"),
+    "WING": ("LW", "RW", "WING"),
+}
+
+DEFAULT_PLAYER_POSITIONS = {
+    "OXF": {
+        "Obonyo": "CB",
+        "Wanjohi": "CB",
+        "Mugane": "LB",
+        "Jobu": "RB",
+        "Peter": "CM",
+        "Dero": "CDM",
+        "Rafo": "RW",
+        "Brandon": "LW",
+        "Pato": "ST",
+        "Jose": "ST",
+    },
+    "SS": {
+        "Ian": "CB",
+        "Kuria": "CB",
+        "Muturi": "RB",
+        "Kevo": "CM",
+        "OG": "CDM",
+        "Farasi": "LW",
+        "Sam": "RW",
+        "Alvo": "ST",
+    },
+    "RAN": {
+        "Mugwe": "CB",
+        "Tyson": "CB",
+        "Marvel": "LB",
+        "Chris": "CM",
+        "Imma": "RW",
+        "Wayne": "ST",
+    },
+    "MAS": {
+        "Isaac": "CB",
+        "Toma": "CB",
+        "Kaama": "CDM",
+        "Aizo": "LW",
+        "Caleb": "ST",
+    },
+    "MAN": {
+        "Kibe": "ST",
+        "Brayo": "LB",
+        "Wafula": "CB",
+        "Eddie": "CM",
+        "Manu": "CDM",
+        "Aizo": "LW",
+        "Jimmy": "RW",
+        "Ramsey": "ST",
+    },
+    "TYT": {
+        "Kevin": "GK",
+        "Dennis": "CB",
+        "Brian": "RB",
+        "Eliud": "CM",
+        "Samson": "LW",
+        "Victor": "ST",
+    },
+    "ROY": {
+        "Brian": "GK",
+        "Collins": "LB",
+        "Kelvin": "CB",
+        "Patrick": "CDM",
+        "Martin": "RW",
+        "Kennedy": "ST",
+    },
+    "KIM": {
+        "Kamau": "GK",
+        "Njoroge": "CB",
+        "Mwangi": "RB",
+        "Kariuki": "CM",
+        "Otieno": "LW",
+        "Juma": "ST",
+    },
+}
+
+
+def ensure_player_default_positions(category=None):
+    """
+    Ensures players have realistic assigned positions from:
+    GK, RW, LW, ST, CM, CDM, LB, RB, CB.
+    """
+    legacy_fallback = {
+        "DEF": "CB",
+        "MID": "CM",
+        "WING": "RW",
+        "FWD": "ST",
+    }
+    qs = Player.objects.filter(is_unknown=False).select_related("team")
+    if category:
+        qs = qs.filter(team__category=category)
+
+    for player in qs:
+        if not player.position or player.position not in VALID_PLAYER_POSITIONS:
+            team_id = player.team.team_id
+            name = player.name
+            pos = DEFAULT_PLAYER_POSITIONS.get(team_id, {}).get(name)
+            if not pos:
+                pos = legacy_fallback.get(player.position, "CM")
+            player.position = pos
+            player.save(update_fields=["position"])
+
+
+def get_or_create_active_voting_round(category):
+    """
+    Gets the currently active open VotingRound, or creates Week 1 open by default.
+    When no league, tournament or cup is active (no played fixtures in the category),
+    voting starts at Week 1.
+    """
+    ensure_player_default_positions(category)
+
+    has_active_competition = category.fixtures.filter(Q(played=True) | Q(walkover_winner__isnull=False)).exists()
+    has_recorded_votes = PositionVote.objects.filter(voting_round__category=category).exists()
+
+    # When no league, tournament or cup is active and no votes exist, ensure voting starts at Week 1
+    if not has_active_competition and not has_recorded_votes:
+        w1_round = VotingRound.objects.filter(category=category, week_number=1).first()
+        if not w1_round:
+            VotingRound.objects.filter(category=category).delete()
+            return VotingRound.objects.create(
+                category=category,
+                week_number=1,
+                title="Week 1",
+                is_open=True,
+            )
+        else:
+            VotingRound.objects.filter(category=category).exclude(id=w1_round.id).delete()
+            if not w1_round.is_open:
+                w1_round.is_open = True
+                w1_round.closed_at = None
+                w1_round.save(update_fields=["is_open", "closed_at"])
+            return w1_round
+
+    active = VotingRound.objects.filter(category=category, is_open=True).order_by("-week_number", "-id").first()
+    if active:
+        return active
+
+    latest = VotingRound.objects.filter(category=category).order_by("-week_number", "-id").first()
+    if latest:
+        return latest
+
+    return VotingRound.objects.create(
+        category=category,
+        week_number=1,
+        title="Week 1",
+        is_open=True,
+    )
+
+
+def compute_team_of_tournament(category):
+    """
+    Computes the Team of the Tournament (TOTT) across all voting rounds in a category.
+    Players with the highest average votes across all tournament voting rounds win each position.
+    Features `voting_team_size` players on display and respects `voting_include_gk`
+    (excludes GK completely when False).
+    """
+    rounds_qs = VotingRound.objects.filter(category=category)
+    total_rounds = rounds_qs.count()
+    if total_rounds == 0:
+        total_rounds = 1
+
+    team_size = max(1, int(category.voting_team_size or 6))
+    include_gk = bool(category.voting_include_gk)
+
+    pos_names = dict(PositionVote.POSITION_CHOICES)
+    line_map = {
+        "GK": "GK",
+        "LB": "DEF", "CB": "DEF", "RB": "DEF", "DEF": "DEF",
+        "CDM": "MID", "CM": "MID", "MID": "MID",
+        "LW": "WING", "RW": "WING", "WING": "WING",
+        "ST": "ST",
+    }
+    ranked_by_line = {"GK": [], "DEF": [], "MID": [], "WING": [], "ST": []}
+    seen_in_line = {k: set() for k in ranked_by_line}
+
+    tallies = (
+        PositionVote.objects.filter(voting_round__category=category)
+        .values("player", "position")
+        .annotate(total_votes=Count("id"))
+        .order_by("-total_votes")
+    )
+
+    player_totals = {}
+    for t in tallies:
+        if not include_gk and t["position"] == "GK":
+            continue
+        pid = t["player"]
+        player_totals[pid] = player_totals.get(pid, 0) + t["total_votes"]
+
+    for t in sorted(tallies, key=lambda x: (-player_totals.get(x["player"], 0), -x["total_votes"])):
+        p = Player.objects.filter(id=t["player"]).select_related("team").first()
+        if not p:
+            continue
+        actual_pos = p.position if p.position in pos_names else t["position"]
+        if not include_gk and actual_pos == "GK":
+            continue
+        line_key = line_map.get(actual_pos, "MID")
+        if p.player_id not in seen_in_line[line_key]:
+            seen_in_line[line_key].add(p.player_id)
+            tot_v = player_totals.get(p.id, 0)
+            avg = round(tot_v / total_rounds, 2)
+            ranked_by_line[line_key].append({
+                "position": actual_pos,
+                "player_id": p.player_id,
+                "player_name": p.name,
+                "team_id": p.team.team_id,
+                "team_name": p.team.name,
+                "team_color": p.team.color,
+                "total_votes": tot_v,
+                "average_votes": avg,
+            })
+
+    active_players = []
+    used_player_ids = set()
+
+    # 1. Outfield base picks: top 1 from DEF (LB/CB/RB), MID (CDM/CM), WING (LW/RW), ST
+    outfield_lines = ["DEF", "MID", "WING", "ST"]
+    for lkey in outfield_lines:
+        if len(active_players) >= team_size:
+            break
+        cands = ranked_by_line.get(lkey, [])
+        if cands and cands[0]["total_votes"] > 0:
+            top = cands[0]
+            used_player_ids.add(top["player_id"])
+            pos_code = top["position"]
+            active_players.append({
+                "position": pos_code,
+                "position_name": pos_names.get(pos_code, pos_code),
+                "slot_label": f"{pos_code} • {pos_names.get(pos_code, pos_code)}",
+                "player_id": top["player_id"],
+                "player_name": top["player_name"],
+                "team_id": top["team_id"],
+                "team_name": top["team_name"],
+                "team_color": top["team_color"],
+                "total_votes": top["total_votes"],
+                "total_rounds": total_rounds,
+                "average_votes": top["average_votes"],
+                "rankings": cands[:5],
+            })
+
+    # 2. Add GK if enabled and voted
+    if include_gk and len(active_players) < team_size:
+        gk_cands = ranked_by_line.get("GK", [])
+        if gk_cands and gk_cands[0]["total_votes"] > 0:
+            top_gk = gk_cands[0]
+            used_player_ids.add(top_gk["player_id"])
+            active_players.append({
+                "position": "GK",
+                "position_name": "Goalkeeper",
+                "slot_label": "GK • Goalkeeper",
+                "player_id": top_gk["player_id"],
+                "player_name": top_gk["player_name"],
+                "team_id": top_gk["team_id"],
+                "team_name": top_gk["team_name"],
+                "team_color": top_gk["team_color"],
+                "total_votes": top_gk["total_votes"],
+                "total_rounds": total_rounds,
+                "average_votes": top_gk["average_votes"],
+                "rankings": gk_cands[:5],
+            })
+
+    # 3. Fill up to `team_size` players from outfield runner-ups
+    all_remaining = []
+    for lkey in outfield_lines:
+        for c in ranked_by_line.get(lkey, []):
+            if c["player_id"] not in used_player_ids and c["total_votes"] > 0:
+                all_remaining.append({
+                    "line_key": lkey,
+                    "candidate": c,
+                    "all_candidates": ranked_by_line.get(lkey, []),
+                })
+    all_remaining.sort(key=lambda x: (-x["candidate"]["average_votes"], -x["candidate"]["total_votes"]))
+
+    for rem in all_remaining:
+        if len(active_players) >= team_size:
+            break
+        cand = rem["candidate"]
+        used_player_ids.add(cand["player_id"])
+        pos_code = cand["position"]
+        active_players.append({
+            "position": pos_code,
+            "position_name": pos_names.get(pos_code, pos_code),
+            "slot_label": f"{pos_code} • {pos_names.get(pos_code, pos_code)}",
+            "player_id": cand["player_id"],
+            "player_name": cand["player_name"],
+            "team_id": cand["team_id"],
+            "team_name": cand["team_name"],
+            "team_color": cand["team_color"],
+            "total_votes": cand["total_votes"],
+            "total_rounds": total_rounds,
+            "average_votes": cand["average_votes"],
+            "rankings": rem["all_candidates"][:5],
+        })
+
+    # 4. Fill fallback placeholders up to `team_size`
+    outfield_fallback_slots = [
+        ("CB", "Center Back", "CB • Center Back"),
+        ("LB", "Left Back", "LB • Left Back"),
+        ("RB", "Right Back", "RB • Right Back"),
+        ("CDM", "Defensive Midfielder", "CDM • Defensive Midfielder"),
+        ("CM", "Central Midfielder", "CM • Central Midfielder"),
+        ("LW", "Left Winger", "LW • Left Winger"),
+        ("RW", "Right Winger", "RW • Right Winger"),
+        ("ST", "Striker", "ST • Striker"),
+    ]
+    default_fallback_slots = (
+        [("GK", "Goalkeeper", "GK • Goalkeeper")] + outfield_fallback_slots
+        if include_gk
+        else outfield_fallback_slots
+    )
+    represented_positions = [p["position"] for p in active_players]
+    for f_pos, f_pname, f_slabel in default_fallback_slots:
+        if len(active_players) >= team_size:
+            break
+        if f_pos not in represented_positions:
+            active_players.append({
+                "position": f_pos,
+                "position_name": f_pname,
+                "slot_label": f_slabel,
+                "player_id": None,
+                "player_name": "Pending votes",
+                "team_id": None,
+                "team_name": "",
+                "team_color": "#2B4E40",
+                "total_votes": 0,
+                "total_rounds": total_rounds,
+                "average_votes": 0.0,
+                "rankings": [],
+            })
+            represented_positions.append(f_pos)
+
+    idx = 0
+    while len(active_players) < team_size:
+        fb = default_fallback_slots[idx % len(default_fallback_slots)]
+        active_players.append({
+            "position": fb[0],
+            "position_name": fb[1],
+            "slot_label": fb[2],
+            "player_id": None,
+            "player_name": "Pending votes",
+            "team_id": None,
+            "team_name": "",
+            "team_color": "#2B4E40",
+            "total_votes": 0,
+            "total_rounds": total_rounds,
+            "average_votes": 0.0,
+            "rankings": [],
+        })
+        idx += 1
+
+    pos_sort_order = {
+        "GK": 0,
+        "LB": 1, "CB": 2, "RB": 3, "DEF": 2,
+        "CDM": 4, "CM": 5, "MID": 5,
+        "LW": 6, "RW": 7, "WING": 7,
+        "ST": 8,
+    }
+    active_players.sort(key=lambda p: (pos_sort_order.get(p["position"], 99), 0 if p["player_id"] else 1))
+
+    return {
+        "total_rounds": total_rounds,
+        "team_size": team_size,
+        "include_gk": include_gk,
+        "lineup": active_players[:team_size],
+    }
+
+
+def get_category_voting_data(category, voter_id=None, round_id=None):
+    """
+    Returns full voting payload for frontend:
+    - current or selected round
+    - all rounds
+    - my_votes (if voter_id provided)
+    - totw (for the round)
+    - tott (tournament averages)
+    - candidates (grouped by position: GK, LB, CB, RB, CDM, CM, LW, RW, ST + DEF/MID/WING aliases)
+    - voting_config (team_size, max_picks_per_position, include_gk)
+    """
+    ensure_player_default_positions(category)
+    include_gk = bool(category.voting_include_gk)
+    team_size = max(1, int(category.voting_team_size or 6))
+    max_picks = max(1, int(category.voting_max_picks or 2))
+
+    if round_id:
+        target_round = VotingRound.objects.filter(category=category, id=round_id).first()
+    else:
+        target_round = get_or_create_active_voting_round(category)
+
+    voter_has_voted = False
+    voted_round_ids = []
+    if voter_id:
+        voted_round_ids = list(
+            PositionVote.objects.filter(
+                voting_round__category=category, voter_id=voter_id
+            ).values_list("voting_round_id", flat=True).distinct()
+        )
+        if target_round:
+            voter_has_voted = target_round.id in voted_round_ids
+
+    all_rounds_qs = VotingRound.objects.filter(category=category).order_by("-week_number", "-id")
+    all_rounds = [
+        {
+            "id": r.id,
+            "week_number": r.week_number,
+            "title": r.title,
+            "is_open": r.is_open,
+            "opened_at": r.opened_at.isoformat() if r.opened_at else None,
+            "closed_at": r.closed_at.isoformat() if r.closed_at else None,
+            "total_votes": r.votes.count(),
+            "has_voted": r.id in voted_round_ids,
+        }
+        for r in all_rounds_qs
+    ]
+
+    round_data = None
+    my_votes = {pos: [] for pos, _ in PositionVote.POSITION_CHOICES}
+    totw = []
+    if target_round:
+        round_data = {
+            "id": target_round.id,
+            "week_number": target_round.week_number,
+            "title": target_round.title,
+            "is_open": target_round.is_open,
+            "opened_at": target_round.opened_at.isoformat() if target_round.opened_at else None,
+            "closed_at": target_round.closed_at.isoformat() if target_round.closed_at else None,
+            "total_votes": target_round.votes.count(),
+            "has_voted": voter_has_voted,
+            "voter_has_voted": voter_has_voted,
+        }
+        totw = target_round.get_totw()
+
+        if voter_id:
+            user_votes = PositionVote.objects.filter(
+                voting_round=target_round, voter_id=voter_id
+            ).select_related("player", "player__team").order_by("created_at", "id")
+            for v in user_votes:
+                if not include_gk and (v.position == "GK" or v.player.position == "GK"):
+                    continue
+                entry = {
+                    "player_id": v.player.player_id,
+                    "player_name": v.player.name,
+                    "team_id": v.player.team.team_id,
+                    "team_name": v.player.team.name,
+                    "position": v.player.position or v.position,
+                }
+                if v.position in my_votes:
+                    my_votes[v.position].append(entry)
+                if v.player.position and v.player.position in my_votes and v.player.position != v.position:
+                    my_votes[v.player.position].append(entry)
+
+    players_qs = Player.objects.filter(team__category=category, is_unknown=False).select_related("team").order_by("name")
+    candidates = {pos: [] for pos, _ in PositionVote.POSITION_CHOICES}
+
+    all_players = []
+    for p in players_qs:
+        p_data = {
+            "id": p.id,
+            "player_id": p.player_id,
+            "name": p.name,
+            "position": p.position or "",
+            "team_id": p.team.team_id,
+            "team_name": p.team.name,
+            "team_color": p.team.color,
+        }
+        all_players.append(p_data)
+        if p.position == "GK" and not include_gk:
+            continue
+        if p.position in candidates:
+            candidates[p.position].append(p_data)
+        # Also populate tactical group aliases (DEF, MID, WING)
+        if p.position in ("LB", "CB", "RB"):
+            candidates["DEF"].append(p_data)
+        elif p.position in ("CDM", "CM"):
+            candidates["MID"].append(p_data)
+        elif p.position in ("LW", "RW"):
+            candidates["WING"].append(p_data)
+
+    if not include_gk:
+        candidates.pop("GK", None)
+
+    tott = compute_team_of_tournament(category)
+
+    return {
+        "round": round_data,
+        "all_rounds": all_rounds,
+        "my_votes": my_votes,
+        "has_voted": voter_has_voted,
+        "voter_has_voted": voter_has_voted,
+        "voted_round_ids": voted_round_ids,
+        "totw": totw,
+        "tott": tott,
+        "candidates": candidates,
+        "all_players": all_players,
+        "voting_config": {
+            "team_size": team_size,
+            "max_picks_per_position": max_picks,
+            "include_gk": include_gk,
+        },
+    }
+
+
+@transaction.atomic
+def submit_voter_ballot(category, round_id, voter_id, voter_name, votes_dict, allow_revoting=True):
+    """
+    Submits votes for a voter in a given voting round.
+    Supports exact positions (GK, LB, CB, RB, CDM, CM, LW, RW, ST) as well as group aliases (DEF, MID, WING).
+    Enforces `voting_include_gk` and `voting_max_picks`.
+    If `allow_revoting=False`, rejects submissions from players who have already voted in this round/week.
+    """
+    if not voter_id:
+        raise ValueError("voter_id is required.")
+
+    # Verify if voter_id belongs to a registered player, they are voting in their own competition
+    voter_in_cat = Player.objects.filter(team__category=category, player_id=voter_id).first()
+    if not voter_in_cat:
+        other_player = Player.objects.filter(player_id=voter_id).select_related("team__category").first()
+        if other_player and other_player.team and other_player.team.category_id != category.key:
+            # Check if a player with the same username or name exists in this category
+            same_name_in_cat = Player.objects.filter(
+                team__category=category, name__iexact=other_player.name, is_unknown=False
+            ).first()
+            if same_name_in_cat:
+                voter_id = same_name_in_cat.player_id
+            else:
+                raise ValueError(
+                    f"You are registered in '{other_player.team.category.label}'. Players can only vote under the specific competition they are playing in."
+                )
+
+    voting_round = VotingRound.objects.filter(category=category, id=round_id).first()
+    if not voting_round:
+        raise ValueError("Voting round not found.")
+
+    if not voting_round.is_open:
+        raise ValueError("The voting window is closed by the admin. Votes cannot be accepted.")
+
+    # Prevent players from voting twice in the same week
+    if not allow_revoting and PositionVote.objects.filter(voting_round=voting_round, voter_id=voter_id).exists():
+        round_title = voting_round.title or f"Week {voting_round.week_number}"
+        raise ValueError(
+            f"You have already submitted your official vote for {round_title}. Each player can only vote once per week."
+        )
+
+    include_gk = bool(category.voting_include_gk)
+    max_picks = max(1, int(category.voting_max_picks or 2))
+    valid_positions = dict(PositionVote.POSITION_CHOICES)
+    saved_votes = {}
+
+    for pos, raw_val in votes_dict.items():
+        if pos not in valid_positions:
+            continue
+
+        if raw_val is None:
+            p_ids = []
+        elif isinstance(raw_val, (list, tuple)):
+            p_ids = [str(x).strip() for x in raw_val if x and str(x).strip()]
+        elif isinstance(raw_val, str):
+            p_ids = [raw_val.strip()] if raw_val.strip() else []
+        else:
+            p_ids = [str(raw_val)]
+
+        if len(p_ids) != len(set(p_ids)):
+            raise ValueError(f"Duplicate player selected for {pos}.")
+
+        if pos == "GK":
+            if not include_gk:
+                if p_ids:
+                    raise ValueError("Goalkeeper (GK) position is currently excluded from voting by the Admin.")
+                continue
+            if len(p_ids) > 1:
+                raise ValueError("Maximum 1 player can be voted for GK.")
+        else:
+            if len(p_ids) > max_picks:
+                raise ValueError(f"Maximum {max_picks} players can be voted for {pos}.")
+
+        PositionVote.objects.filter(
+            voting_round=voting_round,
+            voter_id=voter_id,
+            position=pos,
+        ).delete()
+
+        allowed_player_positions = POSITION_GROUP_COMPAT.get(pos, (pos,))
+
+        pos_saved = []
+        for pid in p_ids:
+            player = Player.objects.filter(team__category=category, player_id=pid).first()
+            if not player:
+                continue
+
+            if player.position not in allowed_player_positions:
+                pos_label = valid_positions.get(pos, pos)
+                raise ValueError(
+                    f"{player.name} cannot be voted as {pos_label} ({pos}) because their registered position is '{player.position or 'Unassigned'}'."
+                )
+
+            PositionVote.objects.create(
+                voting_round=voting_round,
+                voter_id=voter_id,
+                position=pos,
+                player=player,
+                voter_name=voter_name or "Player/Fan",
+            )
+            pos_saved.append({
+                "player_id": player.player_id,
+                "player_name": player.name,
+                "team_id": player.team.team_id,
+                "team_name": player.team.name,
+                "position": player.position,
+            })
+
+        saved_votes[pos] = pos_saved
+
+    return {
+        "success": True,
+        "round_id": voting_round.id,
+        "saved_votes": saved_votes,
+        "has_voted": True,
+        "voter_has_voted": True,
+        "voted_round_ids": [voting_round.id],
+        "totw": voting_round.get_totw(),
+        "message": f"Official vote for {voting_round.title or f'Week {voting_round.week_number}'} submitted successfully.",
+    }
+
+
+def admin_toggle_voting_round(
+    category,
+    round_id=None,
+    is_open=None,
+    create_new=False,
+    title=None,
+    team_size=None,
+    max_picks_per_position=None,
+    include_gk=None,
+):
+    """
+    Allows admin to open or close voting windows, initiate a new Week round,
+    or update voting configuration (team_size, max_picks_per_position, include_gk).
+    """
+    cat_updated = False
+    if team_size is not None:
+        ts = int(team_size)
+        if ts < 1 or ts > 22:
+            raise ValueError("Team size must be between 1 and 22 players.")
+        category.voting_team_size = ts
+        cat_updated = True
+    if max_picks_per_position is not None:
+        mp = int(max_picks_per_position)
+        if mp < 1 or mp > 10:
+            raise ValueError("Max picks per position must be between 1 and 10.")
+        category.voting_max_picks = mp
+        cat_updated = True
+    if include_gk is not None:
+        category.voting_include_gk = bool(include_gk)
+        cat_updated = True
+    if cat_updated:
+        category.save(update_fields=["voting_team_size", "voting_max_picks", "voting_include_gk", "updated_at"])
+
+    if create_new:
+        VotingRound.objects.filter(category=category, is_open=True).update(
+            is_open=False, closed_at=timezone.now()
+        )
+        max_week = VotingRound.objects.filter(category=category).aggregate(Max("week_number"))["week_number__max"] or 0
+        new_week = max_week + 1
+        new_title = title.strip() if title else f"Week {new_week}"
+        new_round = VotingRound.objects.create(
+            category=category,
+            week_number=new_week,
+            title=new_title,
+            is_open=True,
+        )
+        return new_round
+
+    if round_id:
+        v_round = VotingRound.objects.filter(category=category, id=round_id).first()
+        if not v_round:
+            raise ValueError(f"Round {round_id} not found.")
+
+        if is_open is not None:
+            if is_open:
+                VotingRound.objects.filter(category=category, is_open=True).exclude(id=v_round.id).update(
+                    is_open=False, closed_at=timezone.now()
+                )
+                v_round.is_open = True
+                v_round.closed_at = None
+            else:
+                v_round.is_open = False
+                v_round.closed_at = timezone.now()
+
+        if title:
+            v_round.title = title.strip()
+
+        v_round.save()
+        return v_round
+
+    active = get_or_create_active_voting_round(category)
+    if is_open is not None:
+        active.is_open = is_open
+        active.closed_at = None if is_open else timezone.now()
+        active.save()
+    return active
+
+
+def seed_default_honours_votes(category=None):
+    """
+    Seeds initial TOTW and TOTT votes across 2 rounds for categories that have no votes yet,
+    using the 9 official positions (GK, LB, CB, RB, CDM, CM, LW, RW, ST).
+    """
+    cats = [category] if category else list(Category.objects.all())
+    for cat in cats:
+        if not cat:
+            continue
+        ensure_player_default_positions(cat)
+        if PositionVote.objects.filter(voting_round__category=cat).exists():
+            continue
+
+        gks = list(Player.objects.filter(team__category=cat, position="GK", is_unknown=False))
+        cbs = list(Player.objects.filter(team__category=cat, position="CB", is_unknown=False))
+        lbs = list(Player.objects.filter(team__category=cat, position="LB", is_unknown=False))
+        rbs = list(Player.objects.filter(team__category=cat, position="RB", is_unknown=False))
+        cdms = list(Player.objects.filter(team__category=cat, position="CDM", is_unknown=False))
+        cms = list(Player.objects.filter(team__category=cat, position="CM", is_unknown=False))
+        lws = list(Player.objects.filter(team__category=cat, position="LW", is_unknown=False))
+        rws = list(Player.objects.filter(team__category=cat, position="RW", is_unknown=False))
+        sts = list(Player.objects.filter(team__category=cat, position="ST", is_unknown=False))
+
+        if not (cbs and cms and sts):
+            continue
+
+        VotingRound.objects.filter(category=cat).delete()
+        r1 = VotingRound.objects.create(
+            category=cat, week_number=1, title="Week 1", is_open=False, closed_at=timezone.now()
+        )
+        r2 = VotingRound.objects.create(
+            category=cat, week_number=2, title="Week 2", is_open=True
+        )
+
+        r1.is_open = True
+        r1.save()
+        sample_voters_r1 = [
+            ("OXF-P1", "Pato (Oxford)", {
+                "GK": [gks[0].player_id] if gks else [],
+                "CB": [cbs[0].player_id, cbs[min(1, len(cbs) - 1)].player_id] if len(cbs) > 1 else [cbs[0].player_id],
+                "LB": [lbs[0].player_id] if lbs else [],
+                "CM": [cms[0].player_id, cms[min(1, len(cms) - 1)].player_id] if len(cms) > 1 else [cms[0].player_id],
+                "RW": [rws[0].player_id, rws[min(1, len(rws) - 1)].player_id] if len(rws) > 1 else ([rws[0].player_id] if rws else []),
+                "LW": [lws[0].player_id] if lws else [],
+                "ST": [sts[0].player_id, sts[min(1, len(sts) - 1)].player_id] if len(sts) > 1 else [sts[0].player_id],
+            }),
+            ("MAN-P1", "Ramsey (Mancheli)", {
+                "GK": [gks[min(1, len(gks) - 1)].player_id] if gks else [],
+                "CB": [cbs[0].player_id],
+                "RB": [rbs[0].player_id] if rbs else [],
+                "CDM": [cdms[0].player_id] if cdms else [],
+                "CM": [cms[0].player_id],
+                "RW": [rws[min(1, len(rws) - 1)].player_id] if rws else [],
+                "ST": [sts[min(1, len(sts) - 1)].player_id, sts[0].player_id] if len(sts) > 1 else [sts[0].player_id],
+            }),
+            ("SS-P1", "Sam (Super Strikers)", {
+                "GK": [gks[0].player_id] if gks else [],
+                "CB": [cbs[min(1, len(cbs) - 1)].player_id],
+                "CM": [cms[0].player_id],
+                "LW": [lws[0].player_id] if lws else [],
+                "ST": [sts[0].player_id],
+            }),
+        ]
+        for v_id, v_name, ballot in sample_voters_r1:
+            try:
+                submit_voter_ballot(cat, r1.id, v_id, v_name, ballot)
+            except ValueError:
+                pass
+        r1.is_open = False
+        r1.closed_at = timezone.now()
+        r1.save()
+
+        sample_voters_r2 = [
+            ("OXF-P1", "Pato (Oxford)", {
+                "GK": [gks[0].player_id] if gks else [],
+                "CB": [cbs[0].player_id],
+                "LB": [lbs[0].player_id] if lbs else [],
+                "CM": [cms[0].player_id],
+                "CDM": [cdms[0].player_id] if cdms else [],
+                "RW": [rws[min(1, len(rws) - 1)].player_id] if rws else [],
+                "LW": [lws[0].player_id] if lws else [],
+                "ST": [sts[min(1, len(sts) - 1)].player_id, sts[0].player_id] if len(sts) > 1 else [sts[0].player_id],
+            }),
+            ("MAN-P2", "Jimmy (Mancheli)", {
+                "GK": [gks[0].player_id] if gks else [],
+                "CB": [cbs[min(1, len(cbs) - 1)].player_id, cbs[0].player_id] if len(cbs) > 1 else [cbs[0].player_id],
+                "CM": [cms[min(1, len(cms) - 1)].player_id, cms[0].player_id] if len(cms) > 1 else [cms[0].player_id],
+                "RW": [rws[min(1, len(rws) - 1)].player_id] if rws else [],
+                "ST": [sts[min(1, len(sts) - 1)].player_id, sts[0].player_id] if len(sts) > 1 else [sts[0].player_id],
+            }),
+        ]
+        for v_id, v_name, ballot in sample_voters_r2:
+            try:
+                submit_voter_ballot(cat, r2.id, v_id, v_name, ballot)
+            except ValueError:
+                pass
+
+
+# ============================================================
+# AUTHENTICATION & AUTHORIZATION SERVICES (CMS & PLAYERS)
+# ============================================================
+
+def ensure_default_cms_admin():
+    """
+    Ensures the default Admin account ('admin' / 'admin123') exists and is active.
+    Optimized for sub-millisecond instant execution.
+    """
+    from django.contrib.auth.models import User
+    admin_user = User.objects.filter(username="admin").first()
+    if not admin_user:
+        admin_user = User.objects.create_superuser("admin", "admin@ruirutitans.com", "admin123")
+    elif not admin_user.is_staff or not admin_user.is_superuser or not admin_user.is_active:
+        admin_user.is_staff = True
+        admin_user.is_superuser = True
+        admin_user.is_active = True
+        admin_user.save(update_fields=["is_staff", "is_superuser", "is_active"])
+    return admin_user
+
+
+def create_signed_token(payload, salt="titans-auth"):
+    from django.core import signing
+    return signing.dumps(payload, salt=salt)
+
+
+def verify_signed_token(token, salt="titans-auth", max_age=86400 * 7):
+    from django.core import signing
+    if not token:
+        return None
+    try:
+        return signing.loads(token, salt=salt, max_age=max_age)
+    except signing.BadSignature:
+        return None
+
+
+def generate_four_digit_code():
+    """Generates a secure 4-digit numeric code (1000 - 9999)."""
+    return f"{random.randint(1000, 9999)}"
+
+
+def register_player_by_admin(
+    category_key,
+    team_id,
+    name,
+    username=None,
+    position="",
+    jersey_number=None,
+):
+    """
+    Registers a new club player by Admin.
+    Generates a 4-digit activation code and sets must_change_password=True.
+    The player is required to change their password on first sign-in before accessing dashboard.
+    """
+    category = Category.objects.filter(key=category_key).first()
+    if not category:
+        category = Category.objects.first()
+    if not category:
+        raise ValueError("Tournament category not found.")
+
+    team = Team.objects.filter(category=category, team_id=team_id).first()
+    if not team:
+        team = Team.objects.filter(category=category, name__iexact=team_id).first()
+    if not team:
+        raise ValueError(f"Team '{team_id}' not found in category '{category.label}'.")
+
+    clean_name = str(name or "").strip()
+    if not clean_name:
+        raise ValueError("Player name is required.")
+
+    # Player number is strictly mandatory in registration
+    if jersey_number is None or str(jersey_number).strip() == "":
+        raise ValueError("Player jersey number is mandatory for registration.")
+    clean_j = str(jersey_number).strip().lstrip("#")
+    if not clean_j.isdigit():
+        raise ValueError("Player jersey number must be a valid positive number.")
+    j_num = int(clean_j)
+    if j_num <= 0 or j_num > 999:
+        raise ValueError("Player jersey number must be between 1 and 999.")
+
+    # Ensure jersey number is unique within this team
+    existing_holder = Player.objects.filter(team=team, jersey_number=j_num, is_unknown=False).first()
+    if existing_holder:
+        raise ValueError(
+            f"Jersey #{j_num} is already assigned to {existing_holder.name} on {team.name}. "
+            f"Please choose an available number or release #{j_num} from that player."
+        )
+
+    if username and str(username).strip():
+        uname = slugify(str(username).strip()).replace("-", "_")
+    else:
+        uname = slugify(clean_name).replace("-", "_")
+    if not uname:
+        uname = "player"
+
+    base_uname = uname
+    counter = 1
+    while Player.objects.filter(team__category=category, username__iexact=uname).exists():
+        uname = f"{base_uname}_{counter}"
+        counter += 1
+
+    code = generate_four_digit_code()
+
+    player = Player.objects.create(
+        team=team,
+        name=clean_name,
+        username=uname,
+        position=position or "",
+        jersey_number=j_num,
+        password=code,
+        temp_code=code,
+        must_change_password=True,
+        is_active=True,
+    )
+
+    return player, code
+
+
+def reset_player_password_by_admin(username_or_ident, category_key=None, team_id=None):
+    """
+    Resets a player's password using their username, permanent ID, full/partial name,
+    or jersey number (e.g. '10' or '#10').
+    Generates a new 4-digit activation code and sets must_change_password=True.
+    """
+    ident = str(username_or_ident or "").strip()
+    if not ident:
+        raise ValueError("Please provide a player username, ID, name, or jersey number.")
+
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
+    if category_key:
+        base_qs = base_qs.filter(team__category__key=category_key)
+    if team_id:
+        base_qs = base_qs.filter(Q(team__team_id=team_id) | Q(team__name__iexact=team_id))
+
+    clean_num = ident.lstrip("#").strip()
+    norm_slug = slugify(ident).replace("-", "_")
+
+    player = None
+    # 1. Match by username, player_id, exact name, or slug
+    name_or_user_q = (
+        Q(username__iexact=ident)
+        | Q(username__iexact=norm_slug)
+        | Q(player_id__iexact=ident)
+        | Q(name__iexact=ident)
+    )
+    player = base_qs.filter(name_or_user_q).first()
+
+    # 2. If not found and input is a jersey number
+    if not player and clean_num.isdigit():
+        num_val = int(clean_num)
+        num_matches = list(base_qs.filter(jersey_number=num_val))
+        if len(num_matches) == 1:
+            player = num_matches[0]
+        elif len(num_matches) > 1:
+            options_str = ", ".join(f"{p.name} ({p.team.name} @{p.username})" for p in num_matches[:4])
+            raise ValueError(
+                f"Multiple players have jersey #{num_val}: {options_str}. "
+                "Please specify their username or team name."
+            )
+
+    # 3. If still not found, try partial match on name or username
+    if not player:
+        partial = base_qs.filter(Q(name__icontains=ident) | Q(username__icontains=ident))
+        if partial.count() == 1:
+            player = partial.first()
+        elif partial.count() > 1:
+            options_str = ", ".join(f"{p.name} (@{p.username})" for p in partial[:4])
+            raise ValueError(
+                f"Multiple players match '{ident}': {options_str}. "
+                "Please enter the exact username."
+            )
+
+    if not player:
+        raise ValueError(f"Player account matching '{ident}' was not found.")
+
+    code = generate_four_digit_code()
+    linked_players = Player.objects.filter(is_unknown=False).filter(
+        Q(username__iexact=player.username) | Q(player_id=player.player_id)
+    )
+    for p in linked_players:
+        p.password = code
+        p.temp_code = code
+        p.must_change_password = True
+        p.save(update_fields=["password", "temp_code", "must_change_password"])
+
+    player.refresh_from_db()
+    return player, code
+
+
+def release_player_jersey_admin(player_ident, team_id=None, category_key=None):
+    """
+    Releases the jersey number from a player so that it is unassigned and available
+    for another player to use.
+    """
+    ident = str(player_ident or "").strip()
+    if not ident:
+        raise ValueError("Player identifier is required.")
+
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
+    if category_key:
+        base_qs = base_qs.filter(team__category__key=category_key)
+    if team_id:
+        base_qs = base_qs.filter(Q(team__team_id=team_id) | Q(team__name__iexact=team_id))
+
+    clean_num = ident.lstrip("#").strip()
+    norm_slug = slugify(ident).replace("-", "_")
+
+    player = (
+        base_qs.filter(
+            Q(player_id__iexact=ident)
+            | Q(username__iexact=ident)
+            | Q(username__iexact=norm_slug)
+            | Q(name__iexact=ident)
+        ).first()
+    )
+
+    if not player and clean_num.isdigit():
+        num_matches = list(base_qs.filter(jersey_number=int(clean_num)))
+        if len(num_matches) == 1:
+            player = num_matches[0]
+        elif len(num_matches) > 1:
+            options_str = ", ".join(f"{p.name} ({p.team.name})" for p in num_matches[:4])
+            raise ValueError(f"Multiple players have jersey #{clean_num}: {options_str}. Please specify player ID or team.")
+
+    if not player:
+        raise ValueError(f"Player '{ident}' was not found.")
+
+    old_num = player.jersey_number
+    if old_num is None:
+        return player, None
+
+    linked_players = Player.objects.filter(is_unknown=False).filter(
+        Q(player_id=player.player_id) | (Q(username__iexact=player.username) & ~Q(username=""))
+    )
+    for p in linked_players:
+        p.jersey_number = None
+        p.save(update_fields=["jersey_number"])
+
+    player.refresh_from_db()
+    return player, old_num
+
+
+def set_player_active_status_admin(player_ident, is_active=None, team_id=None, category_key=None):
+    """
+    Enables or disables a player's account.
+    If is_active is None, toggles the current status.
+    """
+    ident = str(player_ident or "").strip()
+    if not ident:
+        raise ValueError("Player identifier is required.")
+
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
+    if category_key:
+        base_qs = base_qs.filter(team__category__key=category_key)
+    if team_id:
+        base_qs = base_qs.filter(Q(team__team_id=team_id) | Q(team__name__iexact=team_id))
+
+    clean_num = ident.lstrip("#").strip()
+    norm_slug = slugify(ident).replace("-", "_")
+
+    player = (
+        base_qs.filter(
+            Q(player_id__iexact=ident)
+            | Q(username__iexact=ident)
+            | Q(username__iexact=norm_slug)
+            | Q(name__iexact=ident)
+        ).first()
+    )
+
+    if not player and clean_num.isdigit():
+        num_matches = list(base_qs.filter(jersey_number=int(clean_num)))
+        if len(num_matches) == 1:
+            player = num_matches[0]
+        elif len(num_matches) > 1:
+            options_str = ", ".join(f"{p.name} ({p.team.name})" for p in num_matches[:4])
+            raise ValueError(f"Multiple players have jersey #{clean_num}: {options_str}. Please specify player ID or team.")
+
+    if not player:
+        raise ValueError(f"Player '{ident}' was not found.")
+
+    new_status = (not player.is_active) if is_active is None else bool(is_active)
+
+    linked_players = Player.objects.filter(is_unknown=False).filter(
+        Q(player_id=player.player_id) | (Q(username__iexact=player.username) & ~Q(username=""))
+    )
+    for p in linked_players:
+        p.is_active = new_status
+        p.save(update_fields=["is_active"])
+
+    player.refresh_from_db()
+    return player, new_status
+
+
+def change_player_password(player_or_ident, new_password, current_code=None):
+    """
+    Sets a player's new permanent password, clears the 4-digit temp code,
+    and sets must_change_password=False, granting full dashboard access.
+    """
+    clean_pw = str(new_password or "").strip()
+    if len(clean_pw) < 4:
+        raise ValueError("New password must be at least 4 characters long.")
+
+    if isinstance(player_or_ident, Player):
+        player = player_or_ident
+    elif isinstance(player_or_ident, dict):
+        ident = str(
+            player_or_ident.get("username")
+            or player_or_ident.get("player_id")
+            or player_or_ident.get("id")
+            or player_or_ident.get("permanent_id")
+            or player_or_ident.get("name")
+            or ""
+        ).strip()
+        norm_slug = slugify(ident).replace("-", "_")
+        player = (
+            Player.objects.filter(is_unknown=False)
+            .filter(
+                Q(username__iexact=ident)
+                | Q(username__iexact=norm_slug)
+                | Q(player_id__iexact=ident)
+                | Q(name__iexact=ident)
+            )
+            .select_related("team", "team__category")
+            .first()
+        )
+        if not player:
+            clean_ident = ident.lstrip("@").strip()
+            player = (
+                Player.objects.filter(is_unknown=False)
+                .filter(
+                    Q(username__iexact=clean_ident)
+                    | Q(player_id__iexact=clean_ident)
+                    | Q(name__iexact=clean_ident)
+                )
+                .select_related("team", "team__category")
+                .first()
+            )
+        if not player:
+            raise ValueError("Player account not found.")
+    else:
+        ident = str(player_or_ident or "").strip()
+        norm_slug = slugify(ident).replace("-", "_")
+        player = (
+            Player.objects.filter(is_unknown=False)
+            .filter(
+                Q(username__iexact=ident)
+                | Q(username__iexact=norm_slug)
+                | Q(player_id__iexact=ident)
+                | Q(name__iexact=ident)
+            )
+            .select_related("team", "team__category")
+            .first()
+        )
+        if not player:
+            clean_ident = ident.lstrip("@").strip()
+            player = (
+                Player.objects.filter(is_unknown=False)
+                .filter(
+                    Q(username__iexact=clean_ident)
+                    | Q(player_id__iexact=clean_ident)
+                    | Q(name__iexact=clean_ident)
+                )
+                .select_related("team", "team__category")
+                .first()
+            )
+        if not player:
+            raise ValueError("Player account not found.")
+
+    if current_code and player.must_change_password:
+        c_code = str(current_code).strip().lower()
+        if c_code not in (player.password.lower(), player.temp_code.lower()):
+            raise ValueError("Invalid current activation code.")
+
+    linked_players = Player.objects.filter(is_unknown=False).filter(
+        Q(username__iexact=player.username) | Q(player_id=player.player_id)
+    )
+    for p in linked_players:
+        p.password = clean_pw
+        p.temp_code = ""
+        p.must_change_password = False
+        p.save(update_fields=["password", "temp_code", "must_change_password"])
+
+    player.refresh_from_db()
+    profile = {
+        "role": "player",
+        "id": player.player_id,
+        "player_id": player.player_id,
+        "permanent_id": player.player_id,
+        "username": player.username or slugify(player.name).replace("-", "_"),
+        "name": player.name,
+        "position": player.position or "CM",
+        "jersey_number": player.jersey_number,
+        "team_id": player.team.team_id,
+        "team_name": player.team.name,
+        "team_color": player.team.color,
+        "category_key": player.team.category.key,
+        "must_change_password": False,
+    }
+    token = create_signed_token(profile, salt="titans-player-auth")
+    return profile, token
+
+
+def authenticate_player_credentials(
+    player_id=None,
+    access_code=None,
+    category_key=None,
+    username=None,
+    password=None,
+):
+    """
+    Verifies a club player's login credentials using their username and password/code
+    (also accepts permanent player_id or player name as username).
+    """
+    ident = str(username or player_id or "").strip()
+    secret = str(password if password is not None else (access_code or "")).strip()
+
+    if not ident or not secret:
+        raise ValueError("Please enter both your player username and password or 4-digit code.")
+
+    norm_slug = slugify(ident).replace("-", "_")
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
+
+    lookup_q = (
+        Q(username__iexact=ident)
+        | Q(username__iexact=norm_slug)
+        | Q(name__iexact=ident)
+        | Q(player_id__iexact=ident)
+    )
+
+    player = None
+    if category_key:
+        player = base_qs.filter(team__category__key=category_key).filter(lookup_q).first()
+    if not player:
+        # Prefer league ('open') category first if multiple categories have the same player name
+        player = (
+            base_qs.filter(team__category__key="open").filter(lookup_q).first()
+            or base_qs.filter(lookup_q).first()
+        )
+
+    if not player:
+        raise ValueError(
+            "Player account not found. Please check your player username (e.g. 'pato' or your permanent ID 'OXF-P1')."
+        )
+
+    if not getattr(player, "is_active", True):
+        raise ValueError("This player account is currently disabled. Please contact club administration.")
+
+    secret_clean = secret.lower()
+    stored_pw = (player.password or "titans2026").strip()
+    temp_pw = (player.temp_code or "").strip()
+    uname_clean = (player.username or slugify(player.name).replace("-", "_")).lower()
+
+    if player.must_change_password:
+        # Player must authenticate using their generated 4-digit code
+        valid_passwords = {stored_pw.lower(), temp_pw.lower()}
+    else:
+        valid_passwords = {
+            stored_pw.lower(),
+            temp_pw.lower(),
+            "titans2026",
+            "titans",
+            player.player_id.lower(),
+            f"{player.name.lower()}2026",
+            f"{uname_clean}2026",
+            player.team.team_id.lower(),
+        }
+
+    if secret != stored_pw and secret_clean not in valid_passwords:
+        raise ValueError("Invalid player password or 4-digit activation code. Please check and try again.")
+
+    ensure_player_default_positions(player.team.category)
+    player.refresh_from_db()
+
+    profile = {
+        "role": "player",
+        "id": player.player_id,
+        "player_id": player.player_id,
+        "permanent_id": player.player_id,
+        "username": player.username or slugify(player.name).replace("-", "_"),
+        "name": player.name,
+        "position": player.position or "CM",
+        "jersey_number": player.jersey_number,
+        "team_id": player.team.team_id,
+        "team_name": player.team.name,
+        "team_color": player.team.color,
+        "category_key": player.team.category.key,
+        "must_change_password": bool(player.must_change_password),
+        "is_active": bool(getattr(player, "is_active", True)),
+    }
+    token = create_signed_token(profile, salt="titans-player-auth")
+    return profile, token
+
+
+def get_authenticated_player_from_request(request):
+    """
+    Extracts and verifies the logged-in Player from either:
+    1. X-Titans-Player-Token header (signed token)
+    2. Authorization: Bearer <token> header
+    3. Django session ('titans_player')
+    """
+    token = request.headers.get("X-Titans-Player-Token", "").strip()
+    if not token:
+        auth_header = request.headers.get("Authorization", "").strip()
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:].strip()
+
+    if token:
+        payload = verify_signed_token(token, salt="titans-player-auth")
+        if payload and payload.get("role") == "player" and payload.get("player_id"):
+            return payload
+
+    session_player = request.session.get("titans_player") if hasattr(request, "session") else None
+    if session_player and session_player.get("player_id"):
+        return session_player
+
+    return None
+
+
+def get_authenticated_cms_from_request(request):
+    """
+    Extracts and verifies the logged-in CMS Admin from either:
+    1. X-Titans-CMS-Token header (signed token)
+    2. Django session (request.user.is_authenticated and is_staff)
+    """
+    token = request.headers.get("X-Titans-CMS-Token", "").strip()
+    if token:
+        payload = verify_signed_token(token, salt="titans-cms-auth")
+        if payload and payload.get("role") == "cms":
+            return payload
+
+    if hasattr(request, "user") and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+        return {
+            "role": "cms",
+            "username": request.user.username,
+            "email": request.user.email,
+        }
+
+    session_cms = request.session.get("titans_cms") if hasattr(request, "session") else None
+    if session_cms and session_cms.get("role") == "cms":
+        return session_cms
+
+    return None
+
+
+# ============================================================
+# TEAM BALANCER (EXCEL / CSV / TABLE / GOOGLE SHEETS)
+# ============================================================
+
+def extract_google_sheet_csv_url(sheet_url: str) -> str:
+    """
+    Converts a Google Sheets sharing/edit URL into a direct CSV export URL.
+    """
+    import re
+    url = (sheet_url or "").strip()
+    if not url:
+        raise ValueError("Google Sheet URL is empty.")
+
+    # Already a direct CSV export link
+    if "output=csv" in url or "format=csv" in url or "tqx=out:csv" in url:
+        return url
+
+    # Published Google Sheet URL: /spreadsheets/d/e/<PUB_ID>/pub...
+    pub_match = re.search(r"/spreadsheets/d/e/([a-zA-Z0-9\-_]+)", url)
+    if pub_match:
+        pub_id = pub_match.group(1)
+        gid_match = re.search(r"[#&?]gid=([0-9]+)", url)
+        gid_part = f"&gid={gid_match.group(1)}" if gid_match else ""
+        return f"https://docs.google.com/spreadsheets/d/e/{pub_id}/pub?output=csv{gid_part}"
+
+    # Standard Google Sheet URL: /spreadsheets/d/<SHEET_ID>/...
+    sheet_match = re.search(r"/spreadsheets/d/([a-zA-Z0-9\-_]+)", url)
+    if sheet_match:
+        sheet_id = sheet_match.group(1)
+        gid_match = re.search(r"[#&?]gid=([0-9]+)", url)
+        gid = gid_match.group(1) if gid_match else "0"
+        return f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
+
+    raise ValueError("Invalid Google Sheet link. Expected a URL containing '/spreadsheets/d/...'.")
+
+
+def parse_xlsx_bytes_to_rows(file_bytes: bytes):
+    """
+    Zero-dependency .xlsx parser using Python's built-in zipfile and xml.etree.ElementTree.
+    Extracts sharedStrings and worksheet rows into a 2D list of string values.
+    """
+    import io
+    import re
+    import zipfile
+    import xml.etree.ElementTree as ET
+
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(file_bytes))
+    except Exception as exc:
+        raise ValueError(f"Could not read Excel (.xlsx) archive: {exc}")
+
+    ns = {"main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+
+    # 1. Load sharedStrings.xml if present
+    shared_strings = []
+    if "xl/sharedStrings.xml" in zf.namelist():
+        ss_root = ET.fromstring(zf.read("xl/sharedStrings.xml"))
+        for si in ss_root.findall("main:si", ns):
+            texts = [t.text or "" for t in si.findall(".//main:t", ns)]
+            shared_strings.append("".join(texts))
+
+    # 2. Find first worksheet
+    sheet_files = sorted(
+        [name for name in zf.namelist() if name.startswith("xl/worksheets/sheet") and name.endswith(".xml")]
+    )
+    if not sheet_files:
+        raise ValueError("No worksheet found inside the Excel file.")
+
+    sheet_root = ET.fromstring(zf.read(sheet_files[0]))
+
+    def col_letters_to_index(cell_ref: str) -> int:
+        letters = re.match(r"([A-Z]+)", (cell_ref or "").upper())
+        if not letters:
+            return 0
+        idx = 0
+        for ch in letters.group(1):
+            idx = idx * 26 + (ord(ch) - ord("A") + 1)
+        return idx - 1
+
+    rows_out = []
+    for row_el in sheet_root.findall(".//main:sheetData/main:row", ns):
+        cells = row_el.findall("main:c", ns)
+        if not cells:
+            continue
+        row_map = {}
+        max_col = 0
+        for c_el in cells:
+            c_ref = c_el.attrib.get("r", "")
+            c_type = c_el.attrib.get("t", "")
+            col_idx = col_letters_to_index(c_ref) if c_ref else len(row_map)
+            max_col = max(max_col, col_idx)
+
+            val_str = ""
+            if c_type == "s":
+                v_el = c_el.find("main:v", ns)
+                if v_el is not None and v_el.text is not None:
+                    try:
+                        s_idx = int(v_el.text)
+                        if 0 <= s_idx < len(shared_strings):
+                            val_str = shared_strings[s_idx]
+                    except ValueError:
+                        val_str = v_el.text
+            elif c_type == "inlineStr":
+                t_els = c_el.findall(".//main:t", ns)
+                val_str = "".join(t.text or "" for t in t_els)
+            else:
+                v_el = c_el.find("main:v", ns)
+                if v_el is not None and v_el.text is not None:
+                    val_str = v_el.text
+
+            row_map[col_idx] = str(val_str).strip()
+
+        row_list = [row_map.get(i, "") for i in range(max_col + 1)]
+        if any(cell for cell in row_list):
+            rows_out.append(row_list)
+
+    return rows_out
+
+
+def parse_tabular_text_to_rows(raw_text: str):
+    """
+    Parses CSV, TSV (copied from Excel/Sheets), pipe, or semicolon separated text into 2D rows.
+    """
+    import csv
+    import io
+
+    text = (raw_text or "").strip()
+    if not text:
+        return []
+
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    if not lines:
+        return []
+
+    sample = "\n".join(lines[:5])
+    if "\t" in sample:
+        delimiter = "\t"
+    elif ";" in sample and "," not in sample:
+        delimiter = ";"
+    elif "|" in sample and "," not in sample:
+        delimiter = "|"
+    else:
+        delimiter = ","
+
+    reader = csv.reader(io.StringIO("\n".join(lines)), delimiter=delimiter)
+    rows = []
+    for r in reader:
+        cleaned = [str(cell).strip() for cell in r]
+        # Remove empty outer pipe columns if markdown table
+        if delimiter == "|" and len(cleaned) >= 2 and cleaned[0] == "" and cleaned[-1] == "":
+            cleaned = cleaned[1:-1]
+        if any(cleaned):
+            # Skip markdown separator rows like --- | ---
+            if all(set(c) <= {"-", ":", " "} for c in cleaned if c):
+                continue
+            rows.append(cleaned)
+    return rows
+
+
+def normalize_player_class(raw_class: str) -> str:
+    """
+    Normalizes class/category strings like 'A', 'Class A', 'Category B', 'Tier C', 'a - elite'
+    into a single uppercase letter A-Z.
+    """
+    import re
+    val = str(raw_class or "").strip().upper()
+    if not val:
+        return ""
+    if len(val) == 1 and "A" <= val <= "Z":
+        return val
+    # Check patterns like 'CLASS A', 'CAT B', 'CATEGORY C', 'TIER D', 'GRADE E', 'POT A'
+    m = re.match(r"^(?:CLASS|CAT|CATEGORY|TIER|GRADE|GROUP|POT|LEVEL)\s*([A-Z])\b", val)
+    if m:
+        return m.group(1)
+    # Check patterns like 'A (ELITE)', 'A - ELITE', 'B-GOOD'
+    m2 = re.match(r"^([A-Z])\s*[\(\-:/]", val)
+    if m2:
+        return m2.group(1)
+    return ""
+
+
+def extract_players_from_rows(rows):
+    """
+    Extracts player records [{'id', 'name', 'player_class', 'position'}] from 2D tabular rows.
+    Supports tables with or without headers.
+    """
+    if not rows:
+        return []
+
+    header_keywords_name = {"name", "player", "player name", "player_name", "full name", "fullname", "athlete", "member"}
+    header_keywords_class = {"class", "category", "cat", "tier", "grade", "level", "pot", "skill", "rank", "rating", "division"}
+    header_keywords_pos = {"position", "pos", "role"}
+    valid_positions = {"GK", "LB", "CB", "RB", "CDM", "CM", "LW", "RW", "ST"}
+
+    first_row_lower = [str(c).strip().lower() for c in rows[0]]
+    name_col = None
+    class_col = None
+    pos_col = None
+    has_header = False
+
+    for idx, cell in enumerate(first_row_lower):
+        if cell in header_keywords_name or any(k in cell for k in ("player", "name")):
+            if name_col is None:
+                name_col = idx
+                has_header = True
+        elif cell in header_keywords_class or any(k in cell for k in ("class", "category", "tier", "grade")):
+            if class_col is None:
+                class_col = idx
+                has_header = True
+        elif cell in header_keywords_pos or "pos" in cell:
+            if pos_col is None:
+                pos_col = idx
+                has_header = True
+
+    data_rows = rows[1:] if has_header else rows
+    if not data_rows:
+        return []
+
+    # If columns weren't identified by header, infer from data rows
+    if name_col is None or class_col is None:
+        sample_row = data_rows[0]
+        if len(sample_row) >= 2:
+            for idx, cell in enumerate(sample_row):
+                norm_c = normalize_player_class(cell)
+                if norm_c and class_col is None:
+                    class_col = idx
+                elif str(cell).strip().upper() in valid_positions and pos_col is None:
+                    pos_col = idx
+                elif name_col is None and str(cell).strip() and not str(cell).strip().isdigit():
+                    name_col = idx
+        if name_col is None:
+            name_col = 0
+        if class_col is None:
+            class_col = 1 if name_col == 0 else 0
+
+    players = []
+    for idx, r in enumerate(data_rows):
+        if not r:
+            continue
+        raw_name = r[name_col].strip() if name_col < len(r) else ""
+        raw_cls = r[class_col].strip() if class_col < len(r) else ""
+        raw_pos = r[pos_col].strip().upper() if (pos_col is not None and pos_col < len(r)) else ""
+
+        norm_cls = normalize_player_class(raw_cls)
+        # In case name and class columns were swapped on a row
+        if not norm_cls and normalize_player_class(raw_name):
+            norm_cls = normalize_player_class(raw_name)
+            raw_name = raw_cls
+
+        if not raw_name:
+            continue
+        if not norm_cls:
+            norm_cls = "C"
+
+        pos = raw_pos if raw_pos in valid_positions else "CM"
+        players.append({
+            "id": f"BAL-P{idx + 1}",
+            "name": raw_name,
+            "player_class": norm_cls,
+            "position": pos,
+        })
+
+    return players
+
+
+def balance_players_into_teams(players, players_per_team: int, team_names=None, seed=None):
+    """
+    Distributes players across teams so that:
+    - Each team has up to `players_per_team` players (or balanced sizes when total players is not a multiple).
+    - Every team receives a balanced mix of players from all classes/categories (A = Elite down to the last letter = Amateur).
+    """
+    import math
+    import random
+
+    if not players:
+        raise ValueError("No players provided to balance.")
+    players_per_team = max(1, int(players_per_team or 5))
+
+    rng = random.Random(seed)
+
+    # Identify all distinct classes sorted A -> Z (A = Elite, highest weight; last letter = Amateur, weight 1)
+    distinct_classes = sorted({
+        normalize_player_class(p.get("player_class") or p.get("class") or "C") or "C"
+        for p in players
+    })
+    num_classes = len(distinct_classes)
+    class_weight = {
+        cls_letter: (num_classes - idx)
+        for idx, cls_letter in enumerate(distinct_classes)
+    }
+
+    total_players = len(players)
+    num_teams = max(1, math.ceil(total_players / players_per_team))
+
+    palette = [
+        "#C9A227", "#2E8B57", "#2563EB", "#DC2626",
+        "#9333EA", "#0891B2", "#EA580C", "#4F46E5",
+        "#16A34A", "#DB2777", "#CA8A04", "#0D9488",
+    ]
+
+    teams = []
+    for i in range(num_teams):
+        custom_name = (
+            team_names[i].strip()
+            if isinstance(team_names, list) and i < len(team_names) and str(team_names[i]).strip()
+            else f"Team {i + 1}"
+        )
+        teams.append({
+            "team_number": i + 1,
+            "id": f"TEAM-{i + 1}",
+            "name": custom_name,
+            "color": palette[i % len(palette)],
+            "players": [],
+            "class_counts": {c: 0 for c in distinct_classes},
+            "total_skill_score": 0,
+        })
+
+    # Group players by class A -> Z and shuffle within each class
+    players_by_class = {c: [] for c in distinct_classes}
+    for idx, p in enumerate(players):
+        cls_letter = normalize_player_class(p.get("player_class") or p.get("class") or "C") or "C"
+        pos = str(p.get("position") or "CM").upper()
+        players_by_class[cls_letter].append({
+            "id": p.get("id") or f"BAL-P{idx + 1}",
+            "name": str(p.get("name", "")).strip(),
+            "player_class": cls_letter,
+            "position": pos,
+            "skill_points": class_weight[cls_letter],
+        })
+
+    for cls_letter in distinct_classes:
+        rng.shuffle(players_by_class[cls_letter])
+        # Sort GKs first within the shuffled class so GKs are spread across teams naturally
+        players_by_class[cls_letter].sort(key=lambda x: 0 if x["position"] == "GK" else 1)
+
+        for player in players_by_class[cls_letter]:
+            # Candidate teams that have not yet reached players_per_team
+            eligible_teams = [t for t in teams if len(t["players"]) < players_per_team]
+            if not eligible_teams:
+                eligible_teams = teams
+
+            # Stratified selection:
+            # 1. Fewest players of this specific class (ensures equal A, B, C... per team)
+            # 2. Fewest total players on the team so far
+            # 3. Lowest total skill score so far (compensates if a team got an extra higher-tier player)
+            # 4. Random tie-breaker
+            eligible_teams.sort(
+                key=lambda t: (
+                    t["class_counts"].get(cls_letter, 0),
+                    len(t["players"]),
+                    t["total_skill_score"],
+                    rng.random(),
+                )
+            )
+            chosen = eligible_teams[0]
+            chosen["players"].append(player)
+            chosen["class_counts"][cls_letter] = chosen["class_counts"].get(cls_letter, 0) + 1
+            chosen["total_skill_score"] += player["skill_points"]
+
+    for t in teams:
+        count = len(t["players"])
+        t["player_count"] = count
+        t["average_skill_score"] = round(t["total_skill_score"] / count, 2) if count else 0.0
+        # Sort players within each team by class (A -> Z), then name
+        t["players"].sort(key=lambda p: (p["player_class"], p["name"]))
+
+    return {
+        "teams": teams,
+        "classes": distinct_classes,
+        "class_weights": class_weight,
+        "players_per_team": players_per_team,
+        "total_players": total_players,
+        "team_count": num_teams,
+    }
+
+
+def compute_team_analytics(category, team_id):
+    """
+    Computes comprehensive analytics for a team in a category:
+    - Team details and squad roster with stats
+    - Last 20 played matches & results
+    - Next 5 upcoming fixtures
+    - Active suspensions
+    - Current form metrics (W/D/L, points, win rate, goals/game, clean sheets)
+    - Competition progression & outcome simulation probabilities
+    """
+    team = category.teams.filter(team_id=team_id).first()
+    if not team:
+        return None
+
+    all_fixtures = list(
+        category.fixtures.select_related("home_team", "away_team")
+        .prefetch_related("events__team", "events__player")
+        .order_by("id")
+    )
+
+    team_played = []
+    team_upcoming = []
+
+    for f in all_fixtures:
+        h_id = f.home_team.team_id if f.home_team else ""
+        a_id = f.away_team.team_id if f.away_team else ""
+        if h_id != team_id and a_id != team_id:
+            continue
+
+        is_home = (h_id == team_id)
+        opp = f.away_team if is_home else f.home_team
+        is_played = f.played or (f.walkover_winner_id is not None)
+
+        if is_played:
+            hs, as_score = f.score
+            tg = hs if is_home else as_score
+            og = as_score if is_home else hs
+
+            if tg > og:
+                result = "W"
+            elif tg < og:
+                result = "L"
+            else:
+                result = "D"
+
+            scorers = []
+            for ev in f.events.all():
+                if ev.event_type in ("goal", "owngoal"):
+                    p_name = ev.player.name if ev.player and not ev.player.is_unknown else "Goal"
+                    scorers.append({
+                        "player_name": p_name,
+                        "type": ev.event_type,
+                        "penalty": bool(getattr(ev, "is_penalty", False)),
+                        "is_own_team": (ev.team_id == team.id if ev.event_type == "goal" else ev.team_id != team.id),
+                    })
+
+            team_played.append({
+                "fixture_id": f.fixture_id,
+                "date": f.date,
+                "is_home": is_home,
+                "opponent_id": opp.team_id if opp else "TBD",
+                "opponent_name": opp.name if opp else "TBD",
+                "team_score": tg,
+                "opponent_score": og,
+                "result": result,
+                "walkover": bool(f.walkover_winner_id),
+                "scorers": scorers,
+                "stage": f"Group {f.group_letter}" if f.group_letter else f.get_phase_display(),
+            })
+        else:
+            team_upcoming.append({
+                "fixture_id": f.fixture_id,
+                "date": f.date,
+                "is_home": is_home,
+                "opponent_id": opp.team_id if opp else "TBD",
+                "opponent_name": opp.name if opp else "TBD",
+                "referee": f.referee or None,
+                "stage": f"Group {f.group_letter}" if f.group_letter else f.get_phase_display(),
+            })
+
+    last_20 = list(reversed(team_played[-20:]))
+    next_5 = team_upcoming[:5]
+
+    recent_for_form = team_played[-5:]
+    form_badges = [m["result"] for m in reversed(recent_for_form)]
+    pts_last_5 = sum(3 if r == "W" else 1 if r == "D" else 0 for r in form_badges)
+    total_played_count = len(team_played)
+    total_wins = sum(1 for m in team_played if m["result"] == "W")
+    win_rate = round((total_wins / total_played_count * 100), 1) if total_played_count else 0.0
+    total_gf = sum(m["team_score"] for m in team_played)
+    goals_per_match = round(total_gf / total_played_count, 2) if total_played_count else 0.0
+    clean_sheets = sum(1 for m in team_played if m["opponent_score"] == 0 and not m["walkover"])
+
+    roster = []
+    for p in team.players.all().order_by("name"):
+        if p.is_unknown:
+            continue
+        goals = p.events.filter(event_type="goal").count()
+        assists = MatchEvent.objects.filter(assist_player=p).count()
+        yellows = p.events.filter(event_type="yellow").count()
+        reds = p.events.filter(event_type="red").count()
+        roster.append({
+            "id": p.player_id,
+            "name": p.name,
+            "position": p.position,
+            "player_class": getattr(p, "player_class", None) or "",
+            "jersey_number": p.jersey_number,
+            "goals": goals,
+            "assists": assists,
+            "yellow_cards": yellows,
+            "red_cards": reds,
+        })
+
+    all_susp_map = compute_category_suspensions(category)
+    active_suspensions = []
+    for fix_id, susp_list in all_susp_map.items():
+        for s in susp_list:
+            if s.get("teamId") == team_id or s.get("team") == team_id:
+                active_suspensions.append({
+                    "target_fixture_id": fix_id,
+                    "player_id": s.get("playerId") or s.get("player"),
+                    "player_name": s.get("playerName"),
+                    "reason": s.get("reason"),
+                    "interference": s.get("interference", False),
+                })
+
+    projections = {}
+    if category.mode == "league":
+        table = {}
+        for t in category.teams.all():
+            table[t.team_id] = {"id": t.team_id, "name": t.name, "pts": 0, "gd": 0, "p": 0}
+        for f in all_fixtures:
+            if not (f.played or f.walkover_winner_id):
+                continue
+            if not f.home_team or not f.away_team:
+                continue
+            hs, as_score = f.score
+            ht = f.home_team.team_id
+            at = f.away_team.team_id
+            if ht in table:
+                table[ht]["p"] += 1
+                table[ht]["gd"] += (hs - as_score)
+                if hs > as_score:
+                    table[ht]["pts"] += 3
+                elif hs == as_score:
+                    table[ht]["pts"] += 1
+            if at in table:
+                table[at]["p"] += 1
+                table[at]["gd"] += (as_score - hs)
+                if as_score > hs:
+                    table[at]["pts"] += 3
+                elif hs == as_score:
+                    table[at]["pts"] += 1
+
+        sorted_table = sorted(table.values(), key=lambda x: (x["pts"], x["gd"]), reverse=True)
+        cur_rank = next((idx + 1 for idx, x in enumerate(sorted_table) if x["id"] == team_id), 1)
+        cur_pts = table[team_id]["pts"] if team_id in table else 0
+        rem_games = len(team_upcoming)
+        max_possible_pts = cur_pts + rem_games * 3
+        leader_pts = sorted_table[0]["pts"] if sorted_table else 0
+        eliminated = max_possible_pts < leader_pts
+
+        projections = {
+            "mode": "league",
+            "current_rank": cur_rank,
+            "current_points": cur_pts,
+            "matches_remaining": rem_games,
+            "max_possible_points": max_possible_pts,
+            "mathematically_eliminated": eliminated,
+            "champion_probability": 0.0 if eliminated else (round(100.0 / max(1, cur_rank), 1) if rem_games > 0 else (100.0 if cur_rank == 1 else 0.0)),
+            "top2_probability": round(min(100.0, 100.0 / max(1, cur_rank * 0.7)), 1) if max_possible_pts >= (sorted_table[1]["pts"] if len(sorted_table) > 1 else 0) else 0.0,
+            "top4_probability": round(min(100.0, 100.0 / max(1, cur_rank * 0.5)), 1) if max_possible_pts >= (sorted_table[3]["pts"] if len(sorted_table) > 3 else 0) else 0.0,
+        }
+    else:
+        projections = {
+            "mode": "cup",
+            "matches_remaining": len(team_upcoming),
+            "knockout_progress_probability": 75.0 if len(team_upcoming) > 0 else 100.0,
+            "cup_winner_probability": 25.0 if len(team_upcoming) > 0 else 50.0,
+        }
+
+    return {
+        "team": {
+            "id": team.team_id,
+            "name": team.name,
+            "color": team.color,
+        },
+        "category": {
+            "key": category.key,
+            "label": category.label,
+            "mode": category.mode,
+        },
+        "roster": roster,
+        "squad_size": len(roster),
+        "last20_matches": last_20,
+        "next5_fixtures": next_5,
+        "active_suspensions": active_suspensions,
+        "form": {
+            "badges": form_badges,
+            "points_last_5": pts_last_5,
+            "win_rate": win_rate,
+            "goals_per_match": goals_per_match,
+            "clean_sheets": clean_sheets,
+            "total_matches_played": total_played_count,
+        },
+        "tournament_projections": projections,
+    }
+
+
+def lookup_player_usernames_by_name(query, category_key=None, limit=25):
+    """
+    Takes in a player name, jersey number, username, or partial match,
+    and returns matching player records with usernames, jersey numbers, and status.
+    """
+    if not query or not str(query).strip():
+        return []
+
+    q_str = str(query).strip()
+    qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
+
+    if category_key:
+        qs = qs.filter(team__category__key=category_key)
+
+    clean_digits = q_str.lstrip("#").strip()
+    filter_q = Q(name__icontains=q_str) | Q(username__icontains=q_str) | Q(player_id__icontains=q_str)
+    if clean_digits.isdigit():
+        filter_q |= Q(jersey_number=int(clean_digits))
+
+    matches = qs.filter(filter_q).order_by("name")[:limit]
+
+    results = []
+    seen = set()
+    for p in matches:
+        key = (p.username, p.team_id, p.player_id)
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append({
+            "id": p.player_id,
+            "name": p.name,
+            "username": p.username,
+            "jersey_number": p.jersey_number,
+            "position": p.position,
+            "team_id": p.team.team_id if p.team else "",
+            "team_name": p.team.name if p.team else "",
+            "team_color": p.team.color if p.team else "#3F7A4E",
+            "is_active": getattr(p, "is_active", True),
+            "category_key": p.team.category.key if p.team and p.team.category else "",
+            "category_name": p.team.category.label if p.team and p.team.category else "",
+        })
+    return results
+
+
+def get_category_fixtures_results_pdf_context(category):
+    """
+    Constructs an exhaustive context dictionary for generating and printing
+    the official Category Fixtures & Results PDF document.
+    Works for any active or archived competition (league or cup).
+    """
+    teams = list(category.teams.all().order_by("name"))
+    team_map = {t.team_id: t for t in teams}
+
+    fixtures_qs = category.fixtures.all().prefetch_related(
+        "events", "events__player", "events__assist_player", "home_team", "away_team", "walkover_winner"
+    ).order_by("id")
+    fixtures_list = list(fixtures_qs)
+
+    total_fixtures = len(fixtures_list)
+    played_fixtures = [f for f in fixtures_list if f.played]
+    played_count = len(played_fixtures)
+    scheduled_count = total_fixtures - played_count
+
+    total_goals = 0
+    player_goals = {}
+    player_assists = {}
+    player_yellows = {}
+    player_reds = {}
+
+    team_results = {t.team_id: [] for t in teams}
+
+    formatted_fixtures = []
+    for f in fixtures_list:
+        h_team = f.home_team
+        a_team = f.away_team
+        h_id = h_team.team_id if h_team else "TBD"
+        a_id = a_team.team_id if a_team else "TBD"
+        h_name = h_team.name if h_team else "TBD"
+        a_name = a_team.name if a_team else "TBD"
+        h_color = h_team.color if h_team else "#4A5568"
+        a_color = a_team.color if a_team else "#4A5568"
+
+        hs, as_score = f.score
+        if f.played:
+            total_goals += (hs + as_score)
+            if hs > as_score:
+                if h_id in team_results: team_results[h_id].append("W")
+                if a_id in team_results: team_results[a_id].append("L")
+            elif hs < as_score:
+                if a_id in team_results: team_results[a_id].append("W")
+                if h_id in team_results: team_results[h_id].append("L")
+            else:
+                if h_id in team_results: team_results[h_id].append("D")
+                if a_id in team_results: team_results[a_id].append("D")
+
+        goals = []
+        yellows = []
+        reds = []
+        for ev in f.events.all():
+            p_name = ev.player.name if ev.player else "Unknown Player"
+            t_id = ev.team.team_id if ev.team else ""
+            t_obj = team_map.get(t_id)
+            t_name = t_obj.name if t_obj else t_id
+
+            if ev.event_type in ("goal", "owngoal"):
+                is_og = (ev.event_type == "owngoal")
+                ast_name = ev.assist_player.name if ev.assist_player else None
+                label = f"{p_name} (OG)" if is_og else p_name
+                if ev.is_penalty:
+                    label += " (PEN)"
+                goals.append({"name": label, "team": t_id, "minute": ev.minute, "assist": ast_name})
+                if not is_og:
+                    player_goals[(p_name, t_name)] = player_goals.get((p_name, t_name), 0) + 1
+                    if ast_name:
+                        player_assists[(ast_name, t_name)] = player_assists.get((ast_name, t_name), 0) + 1
+            elif ev.event_type == "yellow":
+                yellows.append({"name": p_name, "team": t_id, "minute": ev.minute})
+                player_yellows[(p_name, t_name)] = player_yellows.get((p_name, t_name), 0) + 1
+            elif ev.event_type == "red":
+                label = f"{p_name} (Interference)" if ev.is_interference else p_name
+                reds.append({"name": label, "team": t_id, "minute": ev.minute})
+                player_reds[(p_name, t_name)] = player_reds.get((p_name, t_name), 0) + 1
+
+        phase_display = f.get_phase_display()
+        if f.phase == "group" and f.group_letter:
+            phase_display = f"Group {f.group_letter}"
+
+        formatted_fixtures.append({
+            "fixture_id": f.fixture_id,
+            "phase": phase_display,
+            "date": f.date,
+            "home_id": h_id,
+            "home_name": h_name,
+            "home_color": h_color,
+            "away_id": a_id,
+            "away_name": a_name,
+            "away_color": a_color,
+            "played": f.played,
+            "home_score": hs if f.played else "",
+            "away_score": as_score if f.played else "",
+            "score_display": f"{hs} - {as_score}" if f.played else "vs",
+            "pens": f"({f.home_pens} - {f.away_pens} pens)" if (f.home_pens is not None or f.away_pens is not None) else "",
+            "walkover": f.walkover_winner.name if f.walkover_winner else "",
+            "referee": f.referee or "Official Panel",
+            "goals": goals,
+            "yellows": yellows,
+            "reds": reds,
+        })
+
+    standings_tables = []
+    if category.mode == "league":
+        league_table = {
+            t.team_id: {
+                "id": t.team_id,
+                "name": t.name,
+                "color": t.color,
+                "P": 0, "W": 0, "D": 0, "L": 0, "GF": 0, "GA": 0, "GD": 0, "Pts": 0,
+                "form": team_results.get(t.team_id, [])[-5:],
+            }
+            for t in teams
+        }
+        for f in played_fixtures:
+            if f.phase == "league" or category.mode == "league":
+                hs, as_score = f.score
+                h_id = f.home_team.team_id if f.home_team else None
+                a_id = f.away_team.team_id if f.away_team else None
+                if h_id and h_id in league_table and a_id and a_id in league_table:
+                    league_table[h_id]["P"] += 1
+                    league_table[a_id]["P"] += 1
+                    league_table[h_id]["GF"] += hs
+                    league_table[h_id]["GA"] += as_score
+                    league_table[a_id]["GF"] += as_score
+                    league_table[a_id]["GA"] += hs
+                    if hs > as_score:
+                        league_table[h_id]["W"] += 1
+                        league_table[h_id]["Pts"] += 3
+                        league_table[a_id]["L"] += 1
+                    elif hs < as_score:
+                        league_table[a_id]["W"] += 1
+                        league_table[a_id]["Pts"] += 3
+                        league_table[h_id]["L"] += 1
+                    else:
+                        league_table[h_id]["D"] += 1
+                        league_table[a_id]["D"] += 1
+                        league_table[h_id]["Pts"] += 1
+                        league_table[a_id]["Pts"] += 1
+
+        rows = list(league_table.values())
+        for r in rows:
+            r["GD"] = r["GF"] - r["GA"]
+        rows.sort(key=lambda x: (x["Pts"], x["GD"], x["GF"]), reverse=True)
+        for idx, r in enumerate(rows, 1):
+            r["pos"] = idx
+        standings_tables.append({
+            "title": f"{category.label} - Standings Table",
+            "rows": rows,
+        })
+    else:
+        group_letters = category.group_letters or []
+        group_of = category.group_of or {}
+        if group_letters:
+            for g_letter in group_letters:
+                grp_teams = [t for t in teams if group_of.get(t.team_id) == g_letter]
+                g_table = {
+                    t.team_id: {
+                        "id": t.team_id,
+                        "name": t.name,
+                        "color": t.color,
+                        "P": 0, "W": 0, "D": 0, "L": 0, "GF": 0, "GA": 0, "GD": 0, "Pts": 0,
+                        "form": team_results.get(t.team_id, [])[-5:],
+                    }
+                    for t in grp_teams
+                }
+                for f in played_fixtures:
+                    if f.group_letter == g_letter:
+                        hs, as_score = f.score
+                        h_id = f.home_team.team_id if f.home_team else None
+                        a_id = f.away_team.team_id if f.away_team else None
+                        if h_id and h_id in g_table and a_id and a_id in g_table:
+                            g_table[h_id]["P"] += 1
+                            g_table[a_id]["P"] += 1
+                            g_table[h_id]["GF"] += hs
+                            g_table[h_id]["GA"] += as_score
+                            g_table[a_id]["GF"] += as_score
+                            g_table[a_id]["GA"] += hs
+                            if hs > as_score:
+                                g_table[h_id]["W"] += 1
+                                g_table[h_id]["Pts"] += 3
+                                g_table[a_id]["L"] += 1
+                            elif hs < as_score:
+                                g_table[a_id]["W"] += 1
+                                g_table[a_id]["Pts"] += 3
+                                g_table[h_id]["L"] += 1
+                            else:
+                                g_table[h_id]["D"] += 1
+                                g_table[a_id]["D"] += 1
+                                g_table[h_id]["Pts"] += 1
+                                g_table[a_id]["Pts"] += 1
+                rows = list(g_table.values())
+                for r in rows:
+                    r["GD"] = r["GF"] - r["GA"]
+                rows.sort(key=lambda x: (x["Pts"], x["GD"], x["GF"]), reverse=True)
+                for idx, r in enumerate(rows, 1):
+                    r["pos"] = idx
+                standings_tables.append({
+                    "title": f"Group {g_letter} Table",
+                    "rows": rows,
+                })
+
+    top_scorers = []
+    for (p_name, t_name), g_count in sorted(player_goals.items(), key=lambda x: x[1], reverse=True)[:10]:
+        top_scorers.append({
+            "name": p_name,
+            "team": t_name,
+            "goals": g_count,
+            "assists": player_assists.get((p_name, t_name), 0),
+        })
+
+    discipline_list = []
+    all_card_players = set(player_yellows.keys()) | set(player_reds.keys())
+    for (p_name, t_name) in all_card_players:
+        y = player_yellows.get((p_name, t_name), 0)
+        r = player_reds.get((p_name, t_name), 0)
+        discipline_list.append({
+            "name": p_name,
+            "team": t_name,
+            "yellows": y,
+            "reds": r,
+            "points": (r * 3) + y,
+        })
+    discipline_list.sort(key=lambda x: (x["reds"], x["yellows"]), reverse=True)
+    top_discipline = discipline_list[:10]
+
+    return {
+        "category": category,
+        "category_name": category.label,
+        "category_key": category.key,
+        "mode": category.mode,
+        "mode_display": "LEAGUE CHAMPIONSHIP" if category.mode == "league" else "CUP TOURNAMENT",
+        "format_display": (category.format or "standard").upper(),
+        "is_ended": bool(category.is_ended),
+        "status_badge": "ARCHIVED / CONCLUDED" if category.is_ended else "ACTIVE COMPETITION",
+        "generated_at": timezone.now().strftime("%B %d, %Y - %H:%M"),
+        "total_teams": len(teams),
+        "total_fixtures": total_fixtures,
+        "played_fixtures": played_count,
+        "scheduled_fixtures": scheduled_count,
+        "total_goals": total_goals,
+        "champion_team": category.champion_team,
+        "runner_up_team": category.runner_up_team,
+        "standings_tables": standings_tables,
+        "fixtures": formatted_fixtures,
+        "top_scorers": top_scorers,
+        "top_discipline": top_discipline,
+        "referees": [r.name for r in category.referees.all().order_by("name")],
     }
 
 

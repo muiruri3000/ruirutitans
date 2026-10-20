@@ -3,6 +3,20 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        entryFileNames: 'js/titans.js',
+        chunkFileNames: 'js/[name].js',
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name && assetInfo.name.endsWith('.css')) {
+            return 'css/titans.css';
+          }
+          return 'assets/[name].[ext]';
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     host: '0.0.0.0',

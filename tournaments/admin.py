@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings
+from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote
 
 
 class PlayerInline(admin.TabularInline):
@@ -100,3 +100,41 @@ class MatchEventAdmin(admin.ModelAdmin):
 @admin.register(GlobalSettings)
 class GlobalSettingsAdmin(admin.ModelAdmin):
     list_display = ("active_category_key",)
+
+
+class PositionVoteInline(admin.TabularInline):
+    model = PositionVote
+    extra = 0
+    fields = ("voter_id", "voter_name", "position", "player", "created_at")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(VotingRound)
+class VotingRoundAdmin(admin.ModelAdmin):
+    list_display = ("title", "category", "week_number", "is_open", "vote_count", "opened_at", "closed_at")
+    list_filter = ("category", "is_open")
+    search_fields = ("title", "category__label")
+    inlines = [PositionVoteInline]
+    actions = ["open_voting_window", "close_voting_window"]
+
+    def vote_count(self, obj):
+        return obj.votes.count()
+    vote_count.short_description = "Votes Cast"
+
+    @admin.action(description="Open selected voting window(s)")
+    def open_voting_window(self, request, queryset):
+        queryset.update(is_open=True, closed_at=None)
+
+    @admin.action(description="Close selected voting window(s)")
+    def close_voting_window(self, request, queryset):
+        from django.utils import timezone
+        queryset.update(is_open=False, closed_at=timezone.now())
+
+
+@admin.register(PositionVote)
+class PositionVoteAdmin(admin.ModelAdmin):
+    list_display = ("voting_round", "voter_id", "voter_name", "position", "player", "created_at")
+    list_filter = ("voting_round__category", "position", "voting_round")
+    search_fields = ("voter_id", "voter_name", "player__name")
+    readonly_fields = ("created_at",)
+

@@ -1,0 +1,645 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ category_name }} - Fixtures &amp; Results Official Dossier | Ruiru Titans FC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    @page {
+      size: A4 portrait;
+      margin: 12mm 14mm;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F1F4F2;
+      color: #1A202C;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.4;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .sheet-wrapper {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      padding: 32px 36px;
+      border: 1px solid #D6DFD9;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+    }
+    .top-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    .btn {
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    .btn-print {
+      background: #0B3A2E;
+      color: #F4F2EA;
+      box-shadow: 0 4px 10px rgba(11, 58, 46, 0.25);
+    }
+    .btn-print:hover { background: #125543; }
+    .btn-back {
+      background: #E2E8F0;
+      color: #2D3748;
+    }
+    .btn-back:hover { background: #CBD5E0; }
+
+    /* Header Banner */
+    .header-box {
+      border-bottom: 3px solid #0B3A2E;
+      padding-bottom: 20px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .club-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 38px;
+      color: #0B3A2E;
+      letter-spacing: 0.04em;
+      margin: 0;
+      line-height: 1;
+    }
+    .sheet-subhead {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #C9A227;
+      margin-top: 6px;
+    }
+    .comp-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #0F172A;
+      margin: 4px 0 2px;
+      letter-spacing: -0.01em;
+    }
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(11, 58, 46, 0.1);
+      color: #0B3A2E;
+      border: 1px solid rgba(11, 58, 46, 0.25);
+    }
+    .header-badge.archived {
+      background: rgba(113, 128, 150, 0.12);
+      color: #4A5568;
+      border-color: #CBD5E0;
+    }
+
+    /* Executive Metrics Strip */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      background: #F8FAF9;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 26px;
+    }
+    .metric-card {
+      text-align: center;
+    }
+    .metric-card .val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: #0B3A2E;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+    .metric-card .lbl {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* Section Headings */
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      color: #0B3A2E;
+      margin: 0 0 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1.5px solid #E2E8F0;
+      padding-bottom: 6px;
+    }
+    .section-title .badge {
+      font-family: 'Inter', sans-serif;
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #C9A227;
+      letter-spacing: 0.06em;
+    }
+
+    /* Standings Table */
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 26px;
+      font-size: 12.5px;
+    }
+    table.data-table th {
+      background: #0B3A2E;
+      color: #F4F2EA;
+      padding: 8px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-align: center;
+    }
+    table.data-table th.text-left { text-align: left; }
+    table.data-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #E2E8F0;
+      text-align: center;
+    }
+    table.data-table td.text-left { text-align: left; }
+    table.data-table tr:nth-child(even) {
+      background: #F9FAF9;
+    }
+    .team-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .color-pip {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .form-pill {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+      font-size: 9.5px;
+      font-weight: 800;
+      border-radius: 3px;
+      text-align: center;
+      margin: 0 1px;
+      color: #FFFFFF;
+    }
+    .form-W { background: #22C55E; }
+    .form-D { background: #F59E0B; }
+    .form-L { background: #EF4444; }
+
+    /* Fixtures Schedule & Results */
+    .fixtures-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 26px;
+    }
+    .fixture-item {
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      background: #FFFFFF;
+      page-break-inside: avoid;
+    }
+    .fixture-item.played {
+      background: #FAFCFA;
+      border-color: #CBD5E0;
+    }
+    .fixture-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #718096;
+      margin-bottom: 8px;
+      border-bottom: 1px dashed #E2E8F0;
+      padding-bottom: 6px;
+    }
+    .fixture-matchup {
+      display: grid;
+      grid-template-columns: 1fr 140px 1fr;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+    .team-home { text-align: right; font-weight: 800; font-size: 14px; color: #1A202C; }
+    .team-away { text-align: left; font-weight: 800; font-size: 14px; color: #1A202C; }
+    .score-badge {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 0.05em;
+      background: #0B3A2E;
+      color: #F4F2EA;
+      padding: 2px 14px;
+      border-radius: 6px;
+      display: inline-block;
+      line-height: 1.1;
+    }
+    .score-badge.upcoming {
+      background: #E2E8F0;
+      color: #4A5568;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 10px;
+    }
+    .events-tray {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #EDF2F7;
+      font-size: 11.5px;
+      color: #4A5568;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .events-tray .item {
+      margin: 2px 0;
+    }
+
+    /* Stats Grid (Top Scorers & Cards) */
+    .stats-split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 26px;
+      page-break-inside: avoid;
+    }
+
+    /* Official Signatures */
+    .signatures-block {
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 1.5px dashed #A0AEC0;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+      page-break-inside: avoid;
+    }
+    .sig-line {
+      border-top: 1px solid #4A5568;
+      margin-top: 40px;
+      padding-top: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #4A5568;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    @media print {
+      body {
+        background: #FFFFFF;
+        padding: 0;
+      }
+      .sheet-wrapper {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      .top-actions {
+        display: none !important;
+      }
+      .score-badge {
+        background: #E2E8F0 !important;
+        color: #0B3A2E !important;
+        border: 1px solid #0B3A2E;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sheet-wrapper">
+  <!-- Top Action Bar (Hidden during print) -->
+  <div class="top-actions">
+    <a href="/" class="btn btn-back">← Back to Dashboard</a>
+    <div style="display: flex; gap: 10px;">
+      <a href="?auto=1" class="btn btn-print" onclick="window.print(); return false;">
+        🖨️ Download PDF / Print Official Dossier
+      </a>
+    </div>
+  </div>
+
+  <!-- Header Banner -->
+  <div class="header-box">
+    <div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <h1 class="club-title">RUIRU TITANS FOOTBALL CLUB</h1>
+      </div>
+      <div class="sheet-subhead">OFFICIAL COMPETITION FIXTURES, RESULTS &amp; STANDINGS DOSSIER</div>
+      <div class="comp-title">{{ category_name }}</div>
+      <div style="font-size: 12px; color: #718096; margin-top: 4px;">
+        Format: <b>{{ format_display }}</b> &bull; Mode: <b>{{ mode_display }}</b> &bull; Referees: <b>{{ referees|join:", "|default:"Assigned Panel" }}</b>
+      </div>
+    </div>
+    <div style="text-align: right;">
+      <span class="header-badge {% if is_ended %}archived{% endif %}">
+        ● {{ status_badge }}
+      </span>
+      <div style="font-size: 11px; color: #718096; margin-top: 6px;">
+        Generated: {{ generated_at }}
+      </div>
+      <div style="font-size: 11px; font-weight: 700; color: #0B3A2E; margin-top: 2px;">
+        Doc Ref: RTFC-{{ category_key|upper }}-{{ total_fixtures }}F
+      </div>
+    </div>
+  </div>
+
+  <!-- Executive Summary Metrics -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="val">{{ total_teams }}</div>
+      <div class="lbl">Teams</div>
+    </div>
+    <div class="metric-card">
+      <div class="val">{{ total_fixtures }}</div>
+      <div class="lbl">Total Fixtures</div>
+    </div>
+    <div class="metric-card">
+      <div class="val">{{ played_fixtures }}</div>
+      <div class="lbl">Played Matches</div>
+    </div>
+    <div class="metric-card">
+      <div class="val">{{ scheduled_fixtures }}</div>
+      <div class="lbl">Remaining</div>
+    </div>
+    <div class="metric-card">
+      <div class="val">{{ total_goals }}</div>
+      <div class="lbl">Goals Scored</div>
+    </div>
+  </div>
+
+  <!-- Standings Tables (League / Group) -->
+  {% for table in standings_tables %}
+  <div style="margin-bottom: 24px;">
+    <div class="section-title">
+      <span>📊 {{ table.title }}</span>
+      <span class="badge">OFFICIAL TABLE</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 38px;">Pos</th>
+          <th class="text-left">Club / Team</th>
+          <th style="width: 36px;">P</th>
+          <th style="width: 36px;">W</th>
+          <th style="width: 36px;">D</th>
+          <th style="width: 36px;">L</th>
+          <th style="width: 40px;">GF</th>
+          <th style="width: 40px;">GA</th>
+          <th style="width: 42px;">GD</th>
+          <th style="width: 44px; background: #C9A227; color: #16201B;">Pts</th>
+          <th style="width: 100px;">Recent Form</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in table.rows %}
+        <tr>
+          <td style="font-weight: 800; color: #0B3A2E;">{{ row.pos }}</td>
+          <td class="text-left">
+            <div class="team-cell">
+              <span class="color-pip" style="background: {{ row.color|default:'#4A5568' }};"></span>
+              <strong>{{ row.name }}</strong>
+            </div>
+          </td>
+          <td>{{ row.P }}</td>
+          <td>{{ row.W }}</td>
+          <td>{{ row.D }}</td>
+          <td>{{ row.L }}</td>
+          <td>{{ row.GF }}</td>
+          <td>{{ row.GA }}</td>
+          <td style="font-weight: 700; color: {% if row.GD > 0 %}#16A34A{% elif row.GD < 0 %}#DC2626{% else %}#4A5568{% endif %};">
+            {% if row.GD > 0 %}+{% endif %}{{ row.GD }}
+          </td>
+          <td style="font-weight: 900; font-size: 13.5px; color: #0B3A2E;">{{ row.Pts }}</td>
+          <td>
+            {% for item in row.form %}
+              <span class="form-pill form-{{ item }}">{{ item }}</span>
+            {% empty %}
+              <span style="color: #A0AEC0; font-size: 11px;">-</span>
+            {% endfor %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="11" style="color: #718096; padding: 14px;">No standings data available yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endfor %}
+
+  <!-- Complete Fixtures & Results Schedule -->
+  <div style="margin-bottom: 24px;">
+    <div class="section-title">
+      <span>⚡ Complete Fixtures &amp; Match Results Schedule</span>
+      <span class="badge">{{ played_fixtures }} of {{ total_fixtures }} Concluded</span>
+    </div>
+
+    <div class="fixtures-list">
+      {% for fix in fixtures %}
+      <div class="fixture-item {% if fix.played %}played{% endif %}">
+        <div class="fixture-meta">
+          <div>
+            <span style="color: #0B3A2E; font-weight: 800;">{{ fix.phase }}</span>
+            &bull; Match Ref: <b>{{ fix.fixture_id }}</b>
+            &bull; Scheduled: <b>{{ fix.date }}</b>
+          </div>
+          <div>
+            Referee: <b>{{ fix.referee }}</b>
+            {% if fix.walkover %}
+              &bull; <span style="color: #B91C1C; font-weight: 800;">Walkover awarded to {{ fix.walkover }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="fixture-matchup">
+          <div class="team-home">
+            <span class="color-pip" style="background: {{ fix.home_color }};"></span>
+            {{ fix.home_name }}
+          </div>
+          <div>
+            {% if fix.played %}
+              <div class="score-badge">{{ fix.home_score }} - {{ fix.away_score }}</div>
+              {% if fix.pens %}
+                <div style="font-size: 11px; font-weight: 700; color: #C9A227; margin-top: 2px;">{{ fix.pens }}</div>
+              {% endif %}
+            {% else %}
+              <div class="score-badge upcoming">SCHEDULED</div>
+            {% endif %}
+          </div>
+          <div class="team-away">
+            <span class="color-pip" style="background: {{ fix.away_color }};"></span>
+            {{ fix.away_name }}
+          </div>
+        </div>
+
+        {% if fix.goals or fix.yellows or fix.reds %}
+        <div class="events-tray">
+          <div>
+            {% if fix.goals %}
+              <div style="font-size: 11px; font-weight: 800; color: #0B3A2E; margin-bottom: 3px;">⚽ Goals:</div>
+              {% for g in fix.goals %}
+                <div class="item">
+                  <b>{{ g.name }}</b> ({{ g.team }}){% if g.assist %} <span style="color: #718096;">[Ast: {{ g.assist }}]</span>{% endif %}{% if g.minute %} - {{ g.minute }}'{% endif %}
+                </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+          <div>
+            {% if fix.yellows or fix.reds %}
+              <div style="font-size: 11px; font-weight: 800; color: #B45309; margin-bottom: 3px;">🟨 / 🟥 Discipline:</div>
+              {% for y in fix.yellows %}
+                <div class="item">🟨 {{ y.name }} ({{ y.team }})</div>
+              {% endfor %}
+              {% for r in fix.reds %}
+                <div class="item" style="color: #DC2626; font-weight: 700;">🟥 {{ r.name }} ({{ r.team }})</div>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div style="text-align: center; color: #718096; padding: 20px; border: 1px dashed #CBD5E0; border-radius: 8px;">
+        No fixtures recorded for this competition.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Player Statistics: Top Scorers & Discipline Summary -->
+  <div class="stats-split-grid">
+    <!-- Top Scorers -->
+    <div>
+      <div class="section-title">
+        <span>🏆 Golden Boot / Top Scorers</span>
+        <span class="badge">GOALS &bull; ASSISTS</span>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 32px;">#</th>
+            <th class="text-left">Player Name</th>
+            <th class="text-left">Club</th>
+            <th style="width: 44px; background: #C9A227; color: #16201B;">Goals</th>
+            <th style="width: 44px;">Ast</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in top_scorers %}
+          <tr>
+            <td style="font-weight: 800; color: #0B3A2E;">{{ forloop.counter }}</td>
+            <td class="text-left"><strong>{{ p.name }}</strong></td>
+            <td class="text-left" style="color: #718096;">{{ p.team }}</td>
+            <td style="font-weight: 900; color: #0B3A2E; font-size: 13.5px;">{{ p.goals }}</td>
+            <td style="font-weight: 700;">{{ p.assists }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" style="color: #718096; padding: 10px;">No goals recorded yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Discipline Leaderboard -->
+    <div>
+      <div class="section-title">
+        <span>🟨 Fair Play &amp; Caution Tracker</span>
+        <span class="badge">CARDS</span>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 32px;">#</th>
+            <th class="text-left">Player Name</th>
+            <th class="text-left">Club</th>
+            <th style="width: 40px; background: #FCD34D; color: #78350F;">🟨</th>
+            <th style="width: 40px; background: #F87171; color: #7F1D1D;">🟥</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in top_discipline %}
+          <tr>
+            <td style="font-weight: 800; color: #0B3A2E;">{{ forloop.counter }}</td>
+            <td class="text-left"><strong>{{ d.name }}</strong></td>
+            <td class="text-left" style="color: #718096;">{{ d.team }}</td>
+            <td style="font-weight: 800; color: #B45309;">{{ d.yellows }}</td>
+            <td style="font-weight: 800; color: #DC2626;">{{ d.reds }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" style="color: #718096; padding: 10px;">Clean record! No cautions or dismissals.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Verification Signatures -->
+  <div class="signatures-block">
+    <div>
+      <div class="sig-line">Competition Director / Chief Referee</div>
+    </div>
+    <div>
+      <div class="sig-line">Head of Operations &amp; Club Secretary</div>
+    </div>
+    <div>
+      <div class="sig-line">Official Titans League Stamp &amp; Date</div>
+    </div>
+  </div>
+</div>
+
+{% if auto_print %}
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      window.print();
+    }, 400);
+  });
+</script>
+{% endif %}
+
+</body>
+</html>

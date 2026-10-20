@@ -30,6 +30,8 @@ db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
+backups/
+data/
 
 # Environment variables
 .env
@@ -42,3 +44,19 @@ staticfiles/
 .DS_Store
 Thumbs.db
 
+# Node.js / React / Vite
+node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Environment files
+.env.*
+!.env.example
+
+# Python test and coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
