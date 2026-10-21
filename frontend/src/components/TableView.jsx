@@ -4,7 +4,7 @@ import { openCategoryFixturesResultsPDF } from '../utils/pdfExport';
 const thNum = { padding: '10px 8px', textAlign: 'center', fontWeight: 700, fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '0.04em' };
 const tdNum = { padding: '10px 8px', textAlign: 'center', fontSize: '13px' };
 
-export default function TableView({ table, teamCount, activeCategoryKey, onSelectTeam }) {
+export default function TableView({ table, teamCount, activeCategoryKey, isCmsMode = false, onOpenEditCategory, onSelectTeam }) {
   if (teamCount === 0) {
     return (
       <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8FA89B', background: '#0F2E24', borderRadius: '14px', border: '1px solid #1E4636' }}>
@@ -118,6 +118,28 @@ export default function TableView({ table, teamCount, activeCategoryKey, onSelec
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {isCmsMode && onOpenEditCategory && (
+            <button
+              type="button"
+              onClick={onOpenEditCategory}
+              style={{
+                background: '#C9A227',
+                color: '#16201B',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '6px 12px',
+                fontSize: '11.5px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              title="Edit league name, format, start date, referees and settings"
+            >
+              ✏️ Edit League
+            </button>
+          )}
           <button
             type="button"
             onClick={() => openCategoryFixturesResultsPDF(activeCategoryKey)}

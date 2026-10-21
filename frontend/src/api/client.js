@@ -278,7 +278,7 @@ export const api = {
               permanent_id: p.id,
               username: p.username || pUname,
               name: p.name,
-              position: p.position || "CM",
+              position: p.position || "",
               team_id: team.id,
               team_name: team.name,
               team_color: team.color,
@@ -369,6 +369,10 @@ export const api = {
     return await res.json();
   },
 
+  async addPlayersToBalancedTeams(payload) {
+    return await this.teamBalancer({ action: "add_players", ...payload });
+  },
+
   async registerPlayerAdmin(payload) {
     const res = await fetch("/api/admin/players/register/", {
       method: "POST",
@@ -420,6 +424,19 @@ export const api = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `Failed to release player jersey number (${res.status})`);
+    }
+    return await res.json();
+  },
+
+  async updatePlayerPosition(payload) {
+    const res = await fetch("/api/admin/players/update-position/", {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to update player position (${res.status})`);
     }
     return await res.json();
   },
@@ -523,7 +540,7 @@ export const api = {
               name: p.name,
               username: p.username || pUname,
               jersey_number: pJersey,
-              position: p.position || 'CM',
+              position: p.position || '',
               is_active: p.isActive !== false && p.is_active !== false,
               team_id: team.id,
               team_name: team.name,
@@ -570,7 +587,7 @@ export const api = {
       {
         id: 2,
         title: "Masters 2 - 0 Rangers | Kaama & Caleb Wonder Strikes",
-        description: "Highlights from Masters dominant display at Ruiru Grounds, featuring Kaama's outside-the-box curler and Caleb's clinical finish.",
+        description: "Highlights from Masters dominant display at Thoome Pri., featuring Kaama's outside-the-box curler and Caleb's clinical finish.",
         categoryKey: "open",
         matchName: "Masters vs Rangers",
         matchDate: "16 Aug 2026",

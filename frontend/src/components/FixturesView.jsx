@@ -85,6 +85,7 @@ export default function FixturesView({
   onBatchMoveFixtures,
   onOpenH2H,
   onGenerateFixtures,
+  onOpenEditCategory,
   onSelectTeam,
 }) {
   const [openFixtureIds, setOpenFixtureIds] = useState({});
@@ -99,6 +100,9 @@ export default function FixturesView({
 
   // Tournament Scheduling Configuration state (per-day matches, kickoff time, 1hr spacing)
   const [scheduleTime, setScheduleTime] = useState(schedule?.time || '15:00');
+  const [scheduleStartDate, setScheduleStartDate] = useState(
+    schedule?.startDate || schedule?.start_date || ''
+  );
   const [daysConfig, setDaysConfig] = useState(() =>
     parseDaysConfig(schedule?.days, schedule?.time || '15:00', schedule?.matches_per_day || 1)
   );
@@ -125,6 +129,9 @@ export default function FixturesView({
 
   useEffect(() => {
     if (schedule?.time) setScheduleTime(schedule.time);
+    if (schedule?.startDate || schedule?.start_date) {
+      setScheduleStartDate(schedule.startDate || schedule.start_date);
+    }
     if (schedule?.days) {
       setDaysConfig(parseDaysConfig(schedule.days, schedule.time || '15:00', schedule.matches_per_day || 1));
     }
@@ -182,6 +189,8 @@ export default function FixturesView({
       time: scheduleTime || '15:00',
       days: daysConfig,
       matches_per_day: Math.max(1, parseInt(fixturesPerDay, 10) || 1),
+      startDate: scheduleStartDate,
+      start_date: scheduleStartDate,
     };
     onUpdateSchedule(newSchedule, applyToUnplayed);
   };
@@ -498,6 +507,29 @@ export default function FixturesView({
             </button>
           )}
 
+          {isCmsMode && onOpenEditCategory && (
+            <button
+              type="button"
+              onClick={onOpenEditCategory}
+              style={{
+                background: '#C9A227',
+                color: '#16201B',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '6px 12px',
+                fontSize: '11.5px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              title="Edit league name, format, start date, referees and settings"
+            >
+              ✏️ Edit League
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => openCategoryFixturesResultsPDF(activeCategoryKey)}
@@ -583,6 +615,19 @@ export default function FixturesView({
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', background: '#0F2E24', padding: '10px 12px', borderRadius: '8px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#DDE6DF', marginBottom: '3px' }}>
+                Fixture / Start Date:
+              </label>
+              <input
+                type="date"
+                className="form-input"
+                value={scheduleStartDate}
+                onChange={(e) => setScheduleStartDate(e.target.value)}
+                style={{ width: '135px', fontSize: '12px', padding: '5px 8px' }}
+                title="First match day start date for this competition"
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#DDE6DF', marginBottom: '3px' }}>
                 Default Kickoff Time:
               </label>
               <input
@@ -593,7 +638,7 @@ export default function FixturesView({
                 style={{ width: '115px', fontSize: '12px', padding: '5px 8px' }}
               />
             </div>
-            <div style={{ flex: '1 1 280px', fontSize: '11px', color: '#6CE5A0', lineHeight: 1.4 }}>
+            <div style={{ flex: '1 1 240px', fontSize: '11px', color: '#6CE5A0', lineHeight: 1.4 }}>
               ⚡ <strong>1-Hour Difference Rule:</strong> All fixtures scheduled on the same date start 1 hour apart (e.g. 14:00, 15:00, 16:00).
             </div>
           </div>
@@ -1019,6 +1064,9 @@ export default function FixturesView({
                   )}
                   <span style={{ fontSize: '11.5px', color: '#8FA89B', fontWeight: 600 }}>
                     📅 {f.date || 'Date TBD'}
+                  </span>
+                  <span style={{ fontSize: '11.5px', color: '#8FA89B', fontWeight: 600 }}>
+                    📍 {f.venue || schedule?.venue || 'Thoome Pri.'}
                   </span>
                   {f.is_rescheduled && (
                     <span

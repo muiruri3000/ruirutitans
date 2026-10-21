@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { computeTeamProfile } from '../utils/teamAnalytics';
 
+const POSITIONS = ['', 'GK', 'LB', 'CB', 'RB', 'CDM', 'CM', 'LW', 'RW', 'ST'];
+
 export default function TeamDetailModal({
   teamId,
   categoryKey,
@@ -10,8 +12,16 @@ export default function TeamDetailModal({
   onClose,
   onOpenH2H,
   onSelectTeam,
+  onMovePlayer,
+  onAddPlayers,
+  isCmsMode = false,
 }) {
   const [activeTab, setActiveTab] = useState('projections'); // 'projections' | 'matches' | 'squad' | 'suspensions'
+  const [newPlayerName, setNewPlayerName] = useState('');
+  const [newPlayerPosition, setNewPlayerPosition] = useState('');
+  const [newPlayerUsername, setNewPlayerUsername] = useState('');
+  const [newPlayerPassword, setNewPlayerPassword] = useState('');
+  const [addMsg, setAddMsg] = useState('');
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -675,6 +685,104 @@ export default function TeamDetailModal({
               </div>
             </div>
 
+            {/* Direct Add Player Form (for Managers / CMS mode) */}
+            {onAddPlayers && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const raw = (newPlayerName || '').trim();
+                  if (!raw) return;
+                  const names = raw.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean);
+                  if (!names.length) return;
+                  onAddPlayers(
+                    team.id,
+                    names,
+                    newPlayerPosition || '',
+                    newPlayerUsername.trim(),
+                    newPlayerPassword.trim()
+                  );
+                  setAddMsg(`✓ Added ${names.length} player(s) directly to ${team.name}!`);
+                  setNewPlayerName('');
+                  setNewPlayerUsername('');
+                  setNewPlayerPassword('');
+                  setTimeout(() => setAddMsg(''), 4000);
+                }}
+                style={{
+                  background: '#08231B',
+                  border: '1px solid #2B5746',
+                  borderRadius: '10px',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase' }}>
+                    + Directly Add Player(s) to {team.name}
+                  </span>
+                  {addMsg && (
+                    <span style={{ fontSize: '11px', color: '#6CE5A0', fontWeight: 700 }}>
+                      {addMsg}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{ flex: '2 1 180px', padding: '6px 10px', fontSize: '12px' }}
+                    placeholder="Player name (or comma-separated: John, Peter)"
+                    value={newPlayerName}
+                    onChange={(e) => setNewPlayerName(e.target.value)}
+                    required
+                  />
+                  <select
+                    className="form-input"
+                    style={{ flex: '1 1 100px', padding: '6px 8px', fontSize: '12px' }}
+                    value={newPlayerPosition}
+                    onChange={(e) => setNewPlayerPosition(e.target.value)}
+                  >
+                    <option value="">-- Pos --</option>
+                    {POSITIONS.filter(Boolean).map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{ flex: '1 1 120px', padding: '6px 10px', fontSize: '12px' }}
+                    placeholder="Username (optional)"
+                    value={newPlayerUsername}
+                    onChange={(e) => setNewPlayerUsername(e.target.value)}
+                  />
+                  <input
+                    type="password"
+                    className="form-input"
+                    style={{ flex: '1 1 120px', padding: '6px 10px', fontSize: '12px' }}
+                    placeholder="Password (default: titans2026)"
+                    value={newPlayerPassword}
+                    onChange={(e) => setNewPlayerPassword(e.target.value)}
+                  />
+                  <button
+                    type="submit"
+                    className="stat-btn"
+                    style={{
+                      background: '#C9A227',
+                      color: '#16201B',
+                      fontWeight: 800,
+                      padding: '6px 14px',
+                      fontSize: '12px',
+                    }}
+                  >
+                    + Add to Team
+                  </button>
+                </div>
+              </form>
+            )}
+
             <div style={{ overflowX: 'auto', border: '1px solid #1E4636', borderRadius: '10px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', color: '#F4F2EA' }}>
                 <thead>
@@ -688,6 +796,9 @@ export default function TeamDetailModal({
                     <th style={{ padding: '8px 8px', textAlign: 'center' }}>🟨 Y</th>
                     <th style={{ padding: '8px 8px', textAlign: 'center' }}>🟥 R</th>
                     <th style={{ padding: '8px 12px', textAlign: 'right' }}>Status</th>
+                    {onMovePlayer && (category?.teams || []).length > 1 && (
+                      <th style={{ padding: '8px 10px', textAlign: 'center' }}>⇄ Transfer</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -710,25 +821,40 @@ export default function TeamDetailModal({
                         {p.name}
                       </td>
                       <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                        <span
-                          style={{
-                            background:
-                              p.position === 'GK'
-                                ? '#EAB308'
-                                : p.position === 'DEF'
-                                ? '#3B82F6'
-                                : p.position === 'MID'
-                                ? '#10B981'
-                                : '#EF4444',
-                            color: '#10221B',
-                            fontWeight: 800,
-                            fontSize: '9.5px',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          {p.position || 'MID'}
-                        </span>
+                        {p.position ? (
+                          <span
+                            style={{
+                              background:
+                                p.position === 'GK'
+                                  ? '#EAB308'
+                                  : ['DEF', 'CB', 'LB', 'RB'].includes(p.position)
+                                  ? '#3B82F6'
+                                  : ['MID', 'CM', 'CDM', 'CAM', 'LM', 'RM'].includes(p.position)
+                                  ? '#10B981'
+                                  : '#EF4444',
+                              color: '#10221B',
+                              fontWeight: 800,
+                              fontSize: '9.5px',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                            }}
+                          >
+                            {p.position}
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              background: '#2A3B34',
+                              color: '#9CA3AF',
+                              fontWeight: 600,
+                              fontSize: '9.5px',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                            }}
+                          >
+                            Unassigned
+                          </span>
+                        )}
                       </td>
                       <td style={{ padding: '8px 10px', textAlign: 'center', color: '#C9A227', fontWeight: 700 }}>
                         {p.category ? `Tier ${p.category}` : 'Standard'}
@@ -756,6 +882,39 @@ export default function TeamDetailModal({
                           </span>
                         )}
                       </td>
+                      {onMovePlayer && (category?.teams || []).length > 1 && (
+                        <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                          <select
+                            value=""
+                            onChange={(e) => {
+                              const targetTeamId = e.target.value;
+                              if (targetTeamId && targetTeamId !== team.id) {
+                                onMovePlayer(team.id, targetTeamId, p.id, categoryKey);
+                              }
+                            }}
+                            title={`Move ${p.name} to another team in ${category?.label || 'league'}`}
+                            style={{
+                              background: '#0B2920',
+                              color: '#6CE5A0',
+                              border: '1px solid #2B5746',
+                              borderRadius: '4px',
+                              fontSize: '10.5px',
+                              padding: '2px 5px',
+                              cursor: 'pointer',
+                              fontWeight: 700,
+                            }}
+                          >
+                            <option value="" disabled>⇄ Move...</option>
+                            {(category?.teams || [])
+                              .filter((other) => other.id !== team.id)
+                              .map((other) => (
+                                <option key={other.id} value={other.id}>
+                                  → {other.name}
+                                </option>
+                              ))}
+                          </select>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

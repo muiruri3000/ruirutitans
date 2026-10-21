@@ -512,17 +512,31 @@ export default function AuthModal({
                               #{p.jersey_number}
                             </span>
                           )}
-                          <span
-                            style={{
-                              fontSize: '10px',
-                              color: '#6CE5A0',
-                              background: 'rgba(108,229,160,0.15)',
-                              padding: '1px 6px',
-                              borderRadius: '4px',
-                            }}
-                          >
-                            {p.position || 'CM'}
-                          </span>
+                          {p.position ? (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                color: '#6CE5A0',
+                                background: 'rgba(108,229,160,0.15)',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                              }}
+                            >
+                              {p.position}
+                            </span>
+                          ) : (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                color: '#9CA3AF',
+                                background: 'rgba(156,163,175,0.15)',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                              }}
+                            >
+                              Unassigned
+                            </span>
+                          )}
                           {p.is_active === false && (
                             <span
                               style={{

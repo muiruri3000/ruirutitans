@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import PasswordInput from './PasswordInput';
 
 const POSITIONS = [
+  { value: '', label: '-- Unassigned (Assign Later) --' },
   { value: 'GK', label: 'GK (Goalkeeper)' },
   { value: 'LB', label: 'LB (Left Back)' },
   { value: 'CB', label: 'CB (Center Back)' },
@@ -56,6 +57,9 @@ export default function ManageView({
   onCreateCategoryWithBalancedTeams,
   onNavigateToCompetitionView,
   onSelectTeam,
+  onMovePlayer,
+  onIntelligentlyAddPlayer,
+  onOpenEditCategory,
   cmsUser = null,
   onUpdateCmsUser = null,
   initialSection = 'players',
@@ -65,6 +69,11 @@ export default function ManageView({
   useEffect(() => {
     if (initialSection) setAdminSection(initialSection);
   }, [initialSection]);
+
+  // Quick Player Transfer state
+  const [quickTransferSourceTeam, setQuickTransferSourceTeam] = useState('');
+  const [quickTransferPlayerId, setQuickTransferPlayerId] = useState('');
+  const [quickTransferTargetTeam, setQuickTransferTargetTeam] = useState('');
 
   // Teams & Roster state
   const [newTeamName, setNewTeamName] = useState('');
@@ -96,7 +105,7 @@ export default function ManageView({
   const [fixHome, setFixHome] = useState('Ruiru Titans FC');
   const [fixAway, setFixAway] = useState('');
   const [fixDate, setFixDate] = useState('');
-  const [fixVenue, setFixVenue] = useState('Ruiru Main Stadium');
+  const [fixVenue, setFixVenue] = useState('Thoome Pri.');
 
   // Voting config state
   const votingCfg = cat?.votingConfig || { team_size: 6, max_picks_per_position: 2, include_gk: true };
@@ -109,7 +118,7 @@ export default function ManageView({
   const [regPlayerName, setRegPlayerName] = useState('');
   const [regPlayerUsername, setRegPlayerUsername] = useState('');
   const [regPlayerTeamId, setRegPlayerTeamId] = useState('');
-  const [regPlayerPosition, setRegPlayerPosition] = useState('ST');
+  const [regPlayerPosition, setRegPlayerPosition] = useState('');
   const [regPlayerJersey, setRegPlayerJersey] = useState('');
   const [regLoading, setRegLoading] = useState(false);
   const [regSuccess, setRegSuccess] = useState(null);
@@ -214,10 +223,15 @@ export default function ManageView({
       return;
     }
 
-    const targetTeamId = regPlayerTeamId || cat?.teams?.[0]?.id;
-    if (!targetTeamId) {
-      setRegError('Please select a team.');
-      return;
+    let targetTeamId = regPlayerTeamId;
+    if (!targetTeamId || targetTeamId === '__auto__') {
+      const teams = (cat?.teams || []).filter((t) => t.id);
+      if (!teams.length) {
+        setRegError('Please create at least one team first.');
+        return;
+      }
+      const sorted = [...teams].sort((a, b) => (a.players?.length || 0) - (b.players?.length || 0));
+      targetTeamId = sorted[0].id;
     }
     setRegLoading(true);
     setRegError(null);
@@ -242,6 +256,23 @@ export default function ManageView({
       setRegError(err.message || 'Failed to register player.');
     } finally {
       setRegLoading(false);
+    }
+  };
+
+  const handleExecuteQuickTransfer = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!quickTransferSourceTeam || !quickTransferTargetTeam || !quickTransferPlayerId) {
+      alert('Please select a source team, a player to transfer, and a destination team.');
+      return;
+    }
+    if (quickTransferSourceTeam === quickTransferTargetTeam) {
+      alert('Source and destination teams cannot be the same.');
+      return;
+    }
+    if (onMovePlayer) {
+      onMovePlayer(quickTransferSourceTeam, quickTransferTargetTeam, quickTransferPlayerId, activeCategoryKey);
+      setStatusBanner('⇄ Player transferred successfully between teams!');
+      setQuickTransferPlayerId('');
     }
   };
 
@@ -412,7 +443,7 @@ export default function ManageView({
       home: fixHome.trim(),
       away: fixAway.trim(),
       date: fixDate.trim() || 'Sat · 15:00',
-      venue: fixVenue.trim() || 'Ruiru Main Stadium',
+      venue: fixVenue.trim() || 'Thoome Pri.',
     };
     onUpdateHomepage({
       ...homepageData,
@@ -464,7 +495,7 @@ export default function ManageView({
     const raw = (newPlayerNames[teamId] || '').trim();
     if (!raw) return;
     const names = raw.split(',').map((s) => s.trim()).filter(Boolean);
-    const pos = newPlayerPositions[teamId] || 'CM';
+    const pos = newPlayerPositions[teamId] || '';
     const customUname = (newPlayerUsernames[teamId] || '').trim();
     const customPass = (newPlayerPasswords[teamId] || '').trim();
     onAddPlayers(teamId, names, pos, customUname, customPass);
@@ -1368,7 +1399,7 @@ export default function ManageView({
                 </label>
                 <input
                   className="form-input"
-                  placeholder="e.g. Ruiru Main Stadium"
+                  placeholder="e.g. Thoome Pri."
                   value={fixVenue}
                   onChange={(e) => setFixVenue(e.target.value)}
                 />
@@ -1575,8 +1606,31 @@ export default function ManageView({
       {/* SECTION 3: CHAMPIONSHIP TEAMS, SQUAD POSITIONS & OFFICIALS */}
       {(adminSection === 'teams' || adminSection === 'players') && (
         <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '12px', padding: '16px' }}>
-          <div className="scoreboard" style={{ color: '#C9A227', fontSize: '20px', marginBottom: '16px' }}>
-            CATEGORY SETTINGS &amp; TEAMS ({cat.label})
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+            <div className="scoreboard" style={{ color: '#C9A227', fontSize: '20px' }}>
+              CATEGORY SETTINGS &amp; TEAMS ({cat.label})
+            </div>
+            {onOpenEditCategory && (
+              <button
+                type="button"
+                onClick={onOpenEditCategory}
+                style={{
+                  background: '#C9A227',
+                  color: '#16201B',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '7px 14px',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                ✏️ Edit League Settings &amp; Start Date
+              </button>
+            )}
           </div>
 
           {/* PLAYER REGISTRATION & PASSWORD RESET PORTAL (4-DIGIT CODE ACTIVATION) */}
@@ -1704,9 +1758,10 @@ export default function ManageView({
                     </label>
                     <select
                       className="form-input"
-                      value={regPlayerTeamId || cat?.teams?.[0]?.id || ''}
+                      value={regPlayerTeamId || '__auto__'}
                       onChange={(e) => setRegPlayerTeamId(e.target.value)}
                     >
+                      <option value="__auto__">⚡ Intelligently Auto-Assign (Balance)</option>
                       {(cat?.teams || []).map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name}
@@ -2104,6 +2159,120 @@ export default function ManageView({
                 </button>
               </form>
             </div>
+
+            {/* CARD 4: Quick Player Transfer Between Teams */}
+            <div
+              style={{
+                background: '#08231B',
+                border: '1px solid #2B5746',
+                borderRadius: '10px',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  ⇄ Quick Player Transfer
+                </div>
+                <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '2px', lineHeight: 1.4 }}>
+                  Instantly move a player from one team to another. All individual player stats, cards, and login credentials are automatically preserved.
+                </div>
+              </div>
+
+              <form onSubmit={handleExecuteQuickTransfer} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                    1. Source Team (Current)
+                  </label>
+                  <select
+                    className="form-input"
+                    value={quickTransferSourceTeam}
+                    onChange={(e) => {
+                      setQuickTransferSourceTeam(e.target.value);
+                      setQuickTransferPlayerId('');
+                    }}
+                  >
+                    <option value="">-- Select Source Team --</option>
+                    {(cat?.teams || []).map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({(t.players || []).filter((p) => !p.unknown).length} players)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                    2. Select Player to Move
+                  </label>
+                  <select
+                    className="form-input"
+                    value={quickTransferPlayerId}
+                    onChange={(e) => setQuickTransferPlayerId(e.target.value)}
+                    disabled={!quickTransferSourceTeam}
+                  >
+                    <option value="">-- Choose Player --</option>
+                    {(
+                      (cat?.teams || []).find((t) => t.id === quickTransferSourceTeam)?.players || []
+                    )
+                      .filter((p) => !p.unknown)
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} {p.position ? `(${p.position})` : ''} · ID: {p.id}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                    3. Destination Team
+                  </label>
+                  <select
+                    className="form-input"
+                    value={quickTransferTargetTeam}
+                    onChange={(e) => setQuickTransferTargetTeam(e.target.value)}
+                  >
+                    <option value="">-- Select Target Team --</option>
+                    {(cat?.teams || [])
+                      .filter((t) => t.id !== quickTransferSourceTeam)
+                      .map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name} ({(t.players || []).filter((p) => !p.unknown).length} players)
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!quickTransferSourceTeam || !quickTransferPlayerId || !quickTransferTargetTeam}
+                  className="stat-btn"
+                  style={{
+                    background:
+                      !quickTransferSourceTeam || !quickTransferPlayerId || !quickTransferTargetTeam
+                        ? '#16352A'
+                        : '#C9A227',
+                    color:
+                      !quickTransferSourceTeam || !quickTransferPlayerId || !quickTransferTargetTeam
+                        ? '#6E9080'
+                        : '#16201B',
+                    fontWeight: 800,
+                    padding: '9px 14px',
+                    fontSize: '12px',
+                    marginTop: 'auto',
+                    cursor:
+                      !quickTransferSourceTeam || !quickTransferPlayerId || !quickTransferTargetTeam
+                        ? 'not-allowed'
+                        : 'pointer',
+                  }}
+                >
+                  ⇄ Execute Transfer
+                </button>
+              </form>
+            </div>
           </div>
 
           {/* Teams & Squad Management */}
@@ -2333,12 +2502,13 @@ export default function ManageView({
                                     🔑 Reset
                                   </button>
                                   <select
-                                    value={p.position || 'CM'}
+                                    value={p.position || ''}
                                     onChange={(e) => onUpdatePlayerPosition && onUpdatePlayerPosition(t.id, p.id, e.target.value)}
+                                    title={p.position ? `Assigned position: ${p.position} (click to change)` : 'No position assigned (click to assign manually)'}
                                     style={{
-                                      background: '#0F2E24',
-                                      color: '#C9A227',
-                                      border: '1px solid #2B4E40',
+                                      background: p.position ? '#0F2E24' : '#1F2937',
+                                      color: p.position ? '#C9A227' : '#9CA3AF',
+                                      border: p.position ? '1px solid #2B4E40' : '1px dashed #6B7280',
                                       borderRadius: '3px',
                                       fontSize: '10px',
                                       padding: '1px 3px',
@@ -2348,10 +2518,41 @@ export default function ManageView({
                                   >
                                     {POSITIONS.map((opt) => (
                                       <option key={opt.value} value={opt.value}>
-                                        {opt.value}
+                                        {opt.value || '-- Unassigned --'}
                                       </option>
                                     ))}
                                   </select>
+                                  {onMovePlayer && (cat?.teams || []).length > 1 && (
+                                    <select
+                                      value=""
+                                      onChange={(e) => {
+                                        const targetTeamId = e.target.value;
+                                        if (targetTeamId && targetTeamId !== t.id) {
+                                          onMovePlayer(t.id, targetTeamId, p.id, activeCategoryKey);
+                                        }
+                                      }}
+                                      title={`Transfer ${p.name} to another team`}
+                                      style={{
+                                        background: '#0B2920',
+                                        color: '#6CE5A0',
+                                        border: '1px solid #2B5746',
+                                        borderRadius: '3px',
+                                        fontSize: '9.5px',
+                                        padding: '1px 3px',
+                                        cursor: 'pointer',
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      <option value="" disabled>⇄ Move...</option>
+                                      {(cat?.teams || [])
+                                        .filter((other) => other.id !== t.id)
+                                        .map((other) => (
+                                          <option key={other.id} value={other.id}>
+                                            → {other.name}
+                                          </option>
+                                        ))}
+                                    </select>
+                                  )}
                                   <span
                                     onClick={() => onRemovePlayer(t.id, p.id)}
                                     style={{ cursor: 'pointer', color: '#FF7A70', fontWeight: 700, marginLeft: '2px' }}
@@ -2390,7 +2591,7 @@ export default function ManageView({
                             onChange={(e) => setNewPlayerPasswords({ ...newPlayerPasswords, [t.id]: e.target.value })}
                           />
                           <select
-                            value={newPlayerPositions[t.id] || 'CM'}
+                            value={newPlayerPositions[t.id] || ''}
                             onChange={(e) => setNewPlayerPositions({ ...newPlayerPositions, [t.id]: e.target.value })}
                             style={{
                               background: '#0F2E24',

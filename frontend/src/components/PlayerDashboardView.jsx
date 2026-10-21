@@ -211,7 +211,7 @@ export default function PlayerDashboardView({
                   fontSize: '11px',
                 }}
               >
-                Pos: {playerUser.position || 'CM'}
+                Pos: {playerUser.position || 'Unassigned'}
               </span>
               <span>•</span>
               <span>Permanent ID: <code style={{ color: '#6CE5A0', fontWeight: 700 }}>{playerUser.player_id}</code></span>

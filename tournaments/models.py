@@ -61,14 +61,25 @@ class Category(models.Model):
     def schedule(self):
         days = self.schedule_days
         matches_per_day = 1
-        if isinstance(days, dict) and "matches_per_day" in days:
-            matches_per_day = days.get("matches_per_day", 1)
-            days = days.get("days", days)
-        return {
+        start_date = None
+        venue = "Thoome Pri."
+        if isinstance(days, dict):
+            if "matches_per_day" in days:
+                matches_per_day = days.get("matches_per_day", 1)
+            start_date = days.get("startDate") or days.get("start_date")
+            venue = days.get("venue") or venue
+            if "days" in days:
+                days = days.get("days", days)
+        res = {
             "time": self.schedule_time or "18:00",
             "days": days or {3: 1, 4: 1, 5: 1, 6: 1},
             "matches_per_day": matches_per_day,
+            "venue": venue,
         }
+        if start_date:
+            res["startDate"] = start_date
+            res["start_date"] = start_date
+        return res
 
     @schedule.setter
     def schedule(self, val):
@@ -77,10 +88,15 @@ class Category(models.Model):
                 self.schedule_time = val.get("time") or "18:00"
             days = val.get("days", {})
             mpd = val.get("matches_per_day") or val.get("fixtures_per_day")
+            start_date = val.get("startDate") or val.get("start_date")
+            venue = val.get("venue") or "Thoome Pri."
+            data = {"days": days, "venue": venue}
             if mpd is not None:
-                self.schedule_days = {"days": days, "matches_per_day": int(mpd)}
-            else:
-                self.schedule_days = days
+                data["matches_per_day"] = int(mpd)
+            if start_date:
+                data["startDate"] = str(start_date)
+                data["start_date"] = str(start_date)
+            self.schedule_days = data
 
     def __str__(self):
         suffix = " [SOFT-DELETED]" if self.is_deleted else ""
@@ -342,6 +358,7 @@ class Fixture(models.Model):
         res = {
             "id": self.fixture_id,
             "date": self.date,
+            "venue": self.category.schedule.get("venue", "Thoome Pri."),
             "home": self.home_team.team_id if self.home_team else None,
             "away": self.away_team.team_id if self.away_team else None,
             "played": self.played,

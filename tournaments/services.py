@@ -277,15 +277,13 @@ REAL_OPEN_FIXTURES_SEED = [
 
 
 def build_real_open_season_dict():
-    """Constructs the seed dictionary for the Open League season."""
-    default_cycle = ["CB", "LB", "RB", "CDM", "CM", "LW", "RW", "ST"]
     teams = []
     for t in REAL_OPEN_TEAM_SEED:
         players = [
             {
                 "id": f"{t['id']}-P{i+1}",
                 "name": n,
-                "position": DEFAULT_PLAYER_POSITIONS.get(t["id"], {}).get(n, default_cycle[i % len(default_cycle)]),
+                "position": DEFAULT_PLAYER_POSITIONS.get(t["id"], {}).get(n, ""),
             }
             for i, n in enumerate(t["players"])
         ]
@@ -401,7 +399,6 @@ def build_real_cup_season_dict():
     - Group Stage Fixtures (played results + upcoming group deciders)
     - 3 Knockout Progression Levels: Quarter-Finals -> Semi-Finals -> Grand Final
     """
-    default_cycle = ["GK", "CB", "LB", "RB", "CDM", "CM", "LW", "RW", "ST"]
     all_seed_teams = REAL_OPEN_TEAM_SEED + CUP_EXTRA_TEAMS_SEED
     teams = []
     for t in all_seed_teams:
@@ -411,7 +408,7 @@ def build_real_cup_season_dict():
                 "name": n.capitalize() if n.islower() else n,
                 "position": DEFAULT_PLAYER_POSITIONS.get(t["id"], {}).get(
                     n.capitalize() if n.islower() else n,
-                    default_cycle[i % len(default_cycle)],
+                    "",
                 ),
             }
             for i, n in enumerate(t["players"])
@@ -833,11 +830,38 @@ def build_default_homepage_data():
             },
             {
                 "id": "slide-3",
-                "title": "WAZAE LEGENDS & CHAMPIONSHIP DERBY NIGHTS",
-                "subtitle": "Honouring our club veterans alongside high-intensity Championship League & Knockout Cup action.",
+                "title": "WAZAE LEGENDS & VETERANS DERBY NIGHTS",
+                "subtitle": "Honouring our club veterans alongside high-intensity Championship League & Tournament action.",
                 "tag": "WAZAE & SENIORS",
                 "image": _make_svg_banner_uri(
                     "#4A1C1C", "#1F0D0D", "#C9A227", "WAZAE VETERANS", "HERITAGE & BROTHERHOOD", "Weekend Derbies, Friendlies & Tournaments"
+                ),
+            },
+            {
+                "id": "slide-4",
+                "title": "FIRST TEAM SENIOR SQUAD AT THOOME PRI.",
+                "subtitle": "Home fortress matchdays, spirited community support & championship title hunt.",
+                "tag": "FIRST TEAM FORTRESS",
+                "image": _make_svg_banner_uri(
+                    "#1B4D3E", "#0D2E24", "#C9A227", "MATCHDAY HOME", "THOOME PRI. GROUND", "The Fortress of Ruiru Titans Football Club"
+                ),
+            },
+            {
+                "id": "slide-5",
+                "title": "COMMUNITY OUTREACH & JUNIOR CLINICS",
+                "subtitle": "Empowering youth talent across Ruiru sub-county with elite coaching drills and grassroots clinics.",
+                "tag": "COMMUNITY ROOTS",
+                "image": _make_svg_banner_uri(
+                    "#203A43", "#0F2027", "#5CD685", "GRASSROOTS INITIATIVE", "RUIRU COMMUNITY CLINICS", "Free Youth Training, Football Gear & Mentorship"
+                ),
+            },
+            {
+                "id": "slide-6",
+                "title": "TITANS TROPHY CABINET & HONOURS ROLL",
+                "subtitle": "Celebrating our tournament triumphs, championship podiums, and historic victories.",
+                "tag": "CLUB HONOURS",
+                "image": _make_svg_banner_uri(
+                    "#3A2800", "#1C1400", "#FFD700", "CHAMPIONS VAULT", "TROPHIES & SILVERWARE", "Honouring Our Legacy of Championship Glory"
                 ),
             },
         ],
@@ -859,10 +883,17 @@ def build_default_homepage_data():
                 },
                 {
                     "id": "u13-third",
-                    "title": "U13 Training & Academy Kit",
+                    "title": "U13 Third Kit 2026",
                     "subtitle": "Royal Blue & Gold Crest • Technical Mesh",
-                    "badge": "TRAINING KIT",
+                    "badge": "THIRD KIT",
                     "image": _make_jersey_svg_uri("#1E4E79", "#12314D", "#F4C542", "U13 SQUAD", "THIRD KIT", "14"),
+                },
+                {
+                    "id": "u13-gk",
+                    "title": "U13 Goalkeeper Pro Kit",
+                    "subtitle": "Solar Yellow & Dark Pine • Shot-Stopper",
+                    "badge": "GK KIT",
+                    "image": _make_jersey_svg_uri("#E6B800", "#8A6D00", "#08231B", "U13 SQUAD", "GK KIT", "1"),
                 },
             ],
             "u15": [
@@ -882,10 +913,17 @@ def build_default_homepage_data():
                 },
                 {
                     "id": "u15-third",
-                    "title": "U15 Alternate Cup Jersey",
+                    "title": "U15 Third Kit 2026",
                     "subtitle": "Midnight Onyx & Gold Edition",
-                    "badge": "CUP KIT",
-                    "image": _make_jersey_svg_uri("#1C2826", "#0E1514", "#C9A227", "U15 SQUAD", "CUP KIT", "8"),
+                    "badge": "THIRD KIT",
+                    "image": _make_jersey_svg_uri("#1C2826", "#0E1514", "#C9A227", "U15 SQUAD", "THIRD KIT", "8"),
+                },
+                {
+                    "id": "u15-gk",
+                    "title": "U15 Goalkeeper Pro Kit",
+                    "subtitle": "Electric Orange & Dark Pine • Junior GK",
+                    "badge": "GK KIT",
+                    "image": _make_jersey_svg_uri("#D35400", "#7E3200", "#F4F2EA", "U15 SQUAD", "GK KIT", "1"),
                 },
             ],
             "u17": [
@@ -904,6 +942,13 @@ def build_default_homepage_data():
                     "image": _make_jersey_svg_uri("#C9A227", "#9A7814", "#0B2E23", "U17 SQUAD", "AWAY KIT", "17"),
                 },
                 {
+                    "id": "u17-third",
+                    "title": "U17 Third Kit 2026",
+                    "subtitle": "Obsidian Navy & Gold Trim • Elite Match",
+                    "badge": "THIRD KIT",
+                    "image": _make_jersey_svg_uri("#162B4D", "#0A172B", "#F4C542", "U17 SQUAD", "THIRD KIT", "14"),
+                },
+                {
                     "id": "u17-gk",
                     "title": "U17 Goalkeeper Pro Kit",
                     "subtitle": "Electric Teal & Gold • Shot-Stopper Edition",
@@ -916,22 +961,29 @@ def build_default_homepage_data():
                     "id": "wazae-home",
                     "title": "Wazae Classic Home Jersey",
                     "subtitle": "Heritage Green & Gold • Veterans Collector Edition",
-                    "badge": "WAZAE HOME",
+                    "badge": "HOME KIT",
                     "image": _make_jersey_svg_uri("#0B3B2C", "#051F17", "#C9A227", "WAZAE LEGENDS", "HOME KIT", "6"),
                 },
                 {
                     "id": "wazae-away",
                     "title": "Wazae Legends Away Jersey",
                     "subtitle": "Burgundy Maroon & Gold Crest • Sunday Special",
-                    "badge": "WAZAE AWAY",
+                    "badge": "AWAY KIT",
                     "image": _make_jersey_svg_uri("#6E1E2A", "#421018", "#C9A227", "WAZAE LEGENDS", "AWAY KIT", "4"),
                 },
                 {
                     "id": "wazae-third",
                     "title": "Wazae Founders Gold Edition",
                     "subtitle": "Cream & Gold • Honouring Club Founders",
-                    "badge": "FOUNDERS KIT",
-                    "image": _make_jersey_svg_uri("#F2EFE4", "#D6D0BE", "#8C6D14", "WAZAE LEGENDS", "FOUNDERS", "5"),
+                    "badge": "THIRD KIT",
+                    "image": _make_jersey_svg_uri("#F2EFE4", "#D6D0BE", "#8C6D14", "WAZAE LEGENDS", "THIRD KIT", "5"),
+                },
+                {
+                    "id": "wazae-gk",
+                    "title": "Wazae Veteran Goalkeeper Kit",
+                    "subtitle": "Charcoal Black & Neon Lime • Veteran Wall",
+                    "badge": "GK KIT",
+                    "image": _make_jersey_svg_uri("#1C1E21", "#0D0E10", "#5CD685", "WAZAE LEGENDS", "GK KIT", "1"),
                 },
             ],
         },
@@ -943,7 +995,7 @@ def build_default_homepage_data():
                 "home": "Titans Greens XI",
                 "away": "Titans Golds XI",
                 "date": "Sat, Oct 24 · 09:00",
-                "venue": "Ruiru Main Stadium",
+                "venue": "Thoome Pri.",
             },
             {
                 "id": "CLB-FIX-2",
@@ -952,7 +1004,7 @@ def build_default_homepage_data():
                 "home": "Wazae Legends",
                 "away": "Titans First Team",
                 "date": "Sun, Oct 25 · 10:30",
-                "venue": "Ruiru Titans Training Ground",
+                "venue": "Thoome Pri.",
             },
             {
                 "id": "CLB-FIX-3",
@@ -961,7 +1013,7 @@ def build_default_homepage_data():
                 "home": "Ruiru Titans FC",
                 "away": "Thika United Legends",
                 "date": "Sat, Oct 24 · 15:00",
-                "venue": "Ruiru Municipal Ground",
+                "venue": "Thoome Pri.",
             },
             {
                 "id": "CLB-FIX-4",
@@ -970,7 +1022,7 @@ def build_default_homepage_data():
                 "home": "Ruiru Titans U15",
                 "away": "Kahawa Wendani Youth",
                 "date": "Sun, Oct 25 · 13:00",
-                "venue": "Ruiru Main Pitch B",
+                "venue": "Thoome Pri.",
             },
             {
                 "id": "CLB-FIX-5",
@@ -979,7 +1031,7 @@ def build_default_homepage_data():
                 "home": "Ruiru Titans U17",
                 "away": "Juja Combined FC",
                 "date": "Sat, Oct 31 · 14:00",
-                "venue": "Ruiru Stadium",
+                "venue": "Thoome Pri.",
             },
             {
                 "id": "CLB-FIX-6",
@@ -988,7 +1040,7 @@ def build_default_homepage_data():
                 "home": "Ruiru Titans Wazae",
                 "away": "Nairobi City Veterans",
                 "date": "Sun, Nov 1 · 16:00",
-                "venue": "Ruiru Main Stadium",
+                "venue": "Thoome Pri.",
             },
             {
                 "id": "CLB-FIX-7",
@@ -997,7 +1049,7 @@ def build_default_homepage_data():
                 "home": "Oxford FC",
                 "away": "Mancheli FC",
                 "date": "Sat, Nov 7 · 16:00",
-                "venue": "Ruiru Main Stadium",
+                "venue": "Thoome Pri.",
             },
             {
                 "id": "CLB-FIX-8",
@@ -1006,7 +1058,7 @@ def build_default_homepage_data():
                 "home": "Super Strikers",
                 "away": "Rangers FC",
                 "date": "Sun, Nov 8 · 15:00",
-                "venue": "Ruiru Main Stadium",
+                "venue": "Thoome Pri.",
             },
         ],
     }
@@ -1071,8 +1123,15 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
         schedule_time = schedule_dict.get("time", "18:00")
         schedule_days = schedule_dict.get("days", {3: 1, 4: 1, 5: 1, 6: 1})
         mpd = schedule_dict.get("matches_per_day") or schedule_dict.get("fixtures_per_day")
+        start_date = schedule_dict.get("startDate") or schedule_dict.get("start_date")
+        venue = schedule_dict.get("venue") or "Thoome Pri."
+        schedule_days_data = {"days": schedule_days, "venue": venue}
         if mpd is not None:
-            schedule_days = {"days": schedule_days, "matches_per_day": int(mpd)}
+            schedule_days_data["matches_per_day"] = int(mpd)
+        if start_date:
+            schedule_days_data["startDate"] = str(start_date)
+            schedule_days_data["start_date"] = str(start_date)
+        schedule_days = schedule_days_data
 
         voting_cfg = cat_data.get("votingConfig") or {}
         existing_cat = Category.objects.filter(key=cat_key).first()
@@ -1135,6 +1194,7 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
         players_map = {}  # (team_id, player_id) -> Player instance
 
         existing_team_ids = set()
+        all_category_player_ids = set()
         for t_info in cat_data.get("teams", []):
             team_id = t_info["id"]
             existing_team_ids.add(team_id)
@@ -1166,8 +1226,9 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
                         p_id = f"{prefix}-P{seq}"
                 existing_player_ids.add(p_id)
                 db_existing_ids.add(p_id)
+                all_category_player_ids.add(p_id)
 
-                existing_p = Player.objects.filter(team=team_obj, player_id=p_id).first()
+                existing_p = Player.objects.filter(team__category=category, player_id=p_id).first()
                 p_name = p_info.get("name", p_id)
                 default_uname = slugify(p_name).replace("-", "_") if not is_unk else ""
                 p_username = (
@@ -1194,25 +1255,33 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
                 p_jersey = int(raw_j) if (raw_j is not None and str(raw_j).strip().isdigit()) else (existing_p.jersey_number if existing_p else None)
                 p_is_active = bool(p_info.get("isActive", p_info.get("is_active", existing_p.is_active if existing_p else True)))
 
-                player_obj, _ = Player.objects.update_or_create(
-                    team=team_obj,
-                    player_id=p_id,
-                    defaults={
-                        "name": p_name,
-                        "username": p_username,
-                        "password": p_password,
-                        "position": p_info.get("position", ""),
-                        "is_unknown": is_unk,
-                        "jersey_number": p_jersey,
-                        "must_change_password": p_must_change,
-                        "temp_code": p_temp_code,
-                        "is_active": p_is_active,
-                    },
-                )
+                defaults_dict = {
+                    "name": p_name,
+                    "username": p_username,
+                    "password": p_password,
+                    "position": p_info.get("position", ""),
+                    "is_unknown": is_unk,
+                    "jersey_number": p_jersey,
+                    "must_change_password": p_must_change,
+                    "temp_code": p_temp_code,
+                    "is_active": p_is_active,
+                }
+                if existing_p:
+                    for k_f, v_f in defaults_dict.items():
+                        setattr(existing_p, k_f, v_f)
+                    existing_p.team = team_obj
+                    existing_p.save()
+                    player_obj = existing_p
+                else:
+                    player_obj = Player.objects.create(
+                        team=team_obj,
+                        player_id=p_id,
+                        **defaults_dict,
+                    )
                 players_map[(team_id, p_id)] = player_obj
 
-            team_obj.players.exclude(player_id__in=existing_player_ids).delete()
-
+        # Clean up players removed from this category
+        Player.objects.filter(team__category=category).exclude(player_id__in=all_category_player_ids).delete()
         category.teams.exclude(team_id__in=existing_team_ids).delete()
 
         # Fixtures & Events
@@ -2002,8 +2071,9 @@ DEFAULT_PLAYER_POSITIONS = {
 
 def ensure_player_default_positions(category=None):
     """
-    Ensures players have realistic assigned positions from:
-    GK, RW, LW, ST, CM, CDM, LB, RB, CB.
+    Normalizes legacy position codes (DEF, MID, WING, FWD) if already assigned,
+    but DOES NOT automatically assign positions to unassigned players.
+    Positions must be assigned manually.
     """
     legacy_fallback = {
         "DEF": "CB",
@@ -2011,18 +2081,13 @@ def ensure_player_default_positions(category=None):
         "WING": "RW",
         "FWD": "ST",
     }
-    qs = Player.objects.filter(is_unknown=False).select_related("team")
+    qs = Player.objects.filter(is_unknown=False).exclude(position="").select_related("team")
     if category:
         qs = qs.filter(team__category=category)
 
     for player in qs:
-        if not player.position or player.position not in VALID_PLAYER_POSITIONS:
-            team_id = player.team.team_id
-            name = player.name
-            pos = DEFAULT_PLAYER_POSITIONS.get(team_id, {}).get(name)
-            if not pos:
-                pos = legacy_fallback.get(player.position, "CM")
-            player.position = pos
+        if player.position in legacy_fallback:
+            player.position = legacy_fallback[player.position]
             player.save(update_fields=["position"])
 
 
@@ -3015,6 +3080,73 @@ def set_player_active_status_admin(player_ident, is_active=None, team_id=None, c
     return player, new_status
 
 
+def update_player_position_by_admin(player_ident, position="", team_id=None, category_key=None):
+    """
+    Manually sets, changes, or clears a player's tactical position.
+    Allowed positions: '', 'GK', 'LB', 'CB', 'RB', 'CDM', 'CM', 'LW', 'RW', 'ST'
+    (and legacy aliases 'DEF', 'MID', 'WING', 'FWD' are normalized).
+    """
+    ident = str(player_ident or "").strip()
+    if not ident:
+        raise ValueError("Please provide a player username, ID, or name.")
+
+    pos = str(position or "").strip().upper()
+    legacy_map = {"DEF": "CB", "MID": "CM", "WING": "RW", "FWD": "ST"}
+    if pos in legacy_map:
+        pos = legacy_map[pos]
+
+    valid = {"", "GK", "LB", "CB", "RB", "CDM", "CM", "LW", "RW", "ST"}
+    if pos not in valid:
+        raise ValueError(f"Invalid position '{position}'. Choose from GK, LB, CB, RB, CDM, CM, LW, RW, ST, or leave blank to unassign.")
+
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
+    if category_key:
+        base_qs = base_qs.filter(team__category__key=category_key)
+    if team_id:
+        base_qs = base_qs.filter(Q(team__team_id=team_id) | Q(team__name__iexact=team_id))
+
+    clean_num = ident.lstrip("#").strip()
+    norm_slug = slugify(ident).replace("-", "_")
+
+    player = (
+        base_qs.filter(
+            Q(player_id__iexact=ident)
+            | Q(username__iexact=ident)
+            | Q(username__iexact=norm_slug)
+            | Q(name__iexact=ident)
+        ).first()
+    )
+
+    if not player and clean_num.isdigit():
+        num_matches = list(base_qs.filter(jersey_number=int(clean_num)))
+        if len(num_matches) == 1:
+            player = num_matches[0]
+        elif len(num_matches) > 1:
+            options_str = ", ".join(f"{p.name} ({p.team.name})" for p in num_matches[:4])
+            raise ValueError(f"Multiple players have jersey #{clean_num}: {options_str}. Please specify player ID or team.")
+
+    if not player and ident.isdigit():
+        player = base_qs.filter(id=int(ident)).first()
+
+    if not player:
+        raise ValueError(f"Player '{ident}' was not found.")
+
+    player.position = pos
+    player.save(update_fields=["position"])
+
+    # Keep linked player records across categories synchronized if desired
+    linked_players = Player.objects.filter(is_unknown=False).filter(
+        Q(player_id=player.player_id) | (Q(username__iexact=player.username) & ~Q(username=""))
+    )
+    for p in linked_players:
+        if p.pk != player.pk:
+            p.position = pos
+            p.save(update_fields=["position"])
+
+    player.refresh_from_db()
+    return player
+
+
 def change_player_password(player_or_ident, new_password, current_code=None):
     """
     Sets a player's new permanent password, clears the 4-digit temp code,
@@ -3112,7 +3244,7 @@ def change_player_password(player_or_ident, new_password, current_code=None):
         "permanent_id": player.player_id,
         "username": player.username or slugify(player.name).replace("-", "_"),
         "name": player.name,
-        "position": player.position or "CM",
+        "position": player.position or "",
         "jersey_number": player.jersey_number,
         "team_id": player.team.team_id,
         "team_name": player.team.name,
@@ -3192,9 +3324,6 @@ def authenticate_player_credentials(
     if secret != stored_pw and secret_clean not in valid_passwords:
         raise ValueError("Invalid player password or 4-digit activation code. Please check and try again.")
 
-    ensure_player_default_positions(player.team.category)
-    player.refresh_from_db()
-
     profile = {
         "role": "player",
         "id": player.player_id,
@@ -3202,7 +3331,7 @@ def authenticate_player_credentials(
         "permanent_id": player.player_id,
         "username": player.username or slugify(player.name).replace("-", "_"),
         "name": player.name,
-        "position": player.position or "CM",
+        "position": player.position or "",
         "jersey_number": player.jersey_number,
         "team_id": player.team.team_id,
         "team_name": player.team.name,
@@ -3520,7 +3649,7 @@ def extract_players_from_rows(rows):
         if not norm_cls:
             norm_cls = "C"
 
-        pos = raw_pos if raw_pos in valid_positions else "CM"
+        pos = raw_pos if raw_pos in valid_positions else ""
         players.append({
             "id": f"BAL-P{idx + 1}",
             "name": raw_name,
@@ -3587,7 +3716,7 @@ def balance_players_into_teams(players, players_per_team: int, team_names=None, 
     players_by_class = {c: [] for c in distinct_classes}
     for idx, p in enumerate(players):
         cls_letter = normalize_player_class(p.get("player_class") or p.get("class") or "C") or "C"
-        pos = str(p.get("position") or "CM").upper()
+        pos = str(p.get("position") or "").strip().upper()
         players_by_class[cls_letter].append({
             "id": p.get("id") or f"BAL-P{idx + 1}",
             "name": str(p.get("name", "")).strip(),
@@ -3639,6 +3768,128 @@ def balance_players_into_teams(players, players_per_team: int, team_names=None, 
         "players_per_team": players_per_team,
         "total_players": total_players,
         "team_count": num_teams,
+    }
+
+
+def intelligently_add_players_to_balanced_teams(teams, new_players, classes=None, class_weights=None, seed=None):
+    """
+    Intelligently adds new player(s) to existing balanced teams while preserving team balance:
+    1. Equal roster sizes: prioritizes candidate teams with the minimum player count.
+    2. Goalkeeper priority: assigns GK to teams without a goalkeeper first.
+    3. Category / Class representation: places player on team with fewest players of that specific tier.
+    4. Skill score balance: places player on team with lowest total skill score as tiebreaker.
+    Does NOT reshuffle existing player assignments.
+    """
+    import copy
+    import random
+
+    if not teams:
+        raise ValueError("Cannot add players: no existing teams provided.")
+    if not new_players:
+        return {
+            "teams": teams,
+            "assignments": [],
+            "total_players": sum(len(t.get("players", [])) for t in teams),
+        }
+
+    rng = random.Random(seed)
+    updated_teams = copy.deepcopy(teams)
+
+    distinct_classes = list(classes) if classes else []
+    for t in updated_teams:
+        for p in t.get("players", []):
+            c = normalize_player_class(p.get("player_class") or p.get("class") or "C") or "C"
+            if c not in distinct_classes:
+                distinct_classes.append(c)
+
+    for p in new_players:
+        c = normalize_player_class(p.get("player_class") or p.get("class") or "C") or "C"
+        if c not in distinct_classes:
+            distinct_classes.append(c)
+    distinct_classes.sort()
+
+    num_classes = len(distinct_classes)
+    weights = dict(class_weights) if class_weights else {}
+    for idx, c in enumerate(distinct_classes):
+        if c not in weights:
+            weights[c] = num_classes - idx
+
+    for t in updated_teams:
+        if "class_counts" not in t:
+            t["class_counts"] = {}
+        for c in distinct_classes:
+            if c not in t["class_counts"]:
+                t["class_counts"][c] = sum(
+                    1 for p in t.get("players", [])
+                    if (normalize_player_class(p.get("player_class") or p.get("class") or "C") or "C") == c
+                )
+        if "total_skill_score" not in t:
+            t["total_skill_score"] = sum(
+                weights.get(normalize_player_class(p.get("player_class") or p.get("class") or "C") or "C", 1)
+                for p in t.get("players", [])
+            )
+
+    valid_positions = {"GK", "LB", "CB", "RB", "CDM", "CM", "LW", "RW", "ST"}
+    prepared = []
+    for idx, p in enumerate(new_players):
+        cls_letter = normalize_player_class(p.get("player_class") or p.get("class") or "C") or "C"
+        raw_pos = str(p.get("position") or "").strip().upper()
+        pos = raw_pos if raw_pos in valid_positions else ""
+        sp = weights.get(cls_letter, 1)
+        prepared.append({
+            "id": p.get("id") or f"BAL-P-ADD-{idx + 1}",
+            "name": str(p.get("name") or "").strip(),
+            "player_class": cls_letter,
+            "position": pos,
+            "skill_points": sp,
+            "is_newly_added": True,
+        })
+
+    # Sort incoming players: higher skill points first, GKs first within the same class
+    prepared.sort(key=lambda p: (-p["skill_points"], 0 if p["position"] == "GK" else 1, p["name"]))
+
+    assignments = []
+    for player in prepared:
+        cls_letter = player["player_class"]
+        is_gk = player["position"] == "GK"
+
+        min_size = min(len(t["players"]) for t in updated_teams)
+        candidates = [t for t in updated_teams if len(t["players"]) == min_size]
+
+        if is_gk:
+            no_gk = [t for t in candidates if not any(p.get("position") == "GK" for p in t["players"])]
+            if no_gk:
+                candidates = no_gk
+
+        min_class_count = min(t["class_counts"].get(cls_letter, 0) for t in candidates)
+        candidates = [t for t in candidates if t["class_counts"].get(cls_letter, 0) == min_class_count]
+
+        min_skill = min(t["total_skill_score"] for t in candidates)
+        candidates = [t for t in candidates if t["total_skill_score"] == min_skill]
+
+        chosen = candidates[0]
+        chosen["players"].append(player)
+        chosen["class_counts"][cls_letter] = chosen["class_counts"].get(cls_letter, 0) + 1
+        chosen["total_skill_score"] += player["skill_points"]
+        count = len(chosen["players"])
+        chosen["player_count"] = count
+        chosen["average_skill_score"] = round(chosen["total_skill_score"] / count, 2) if count else 0.0
+
+        assignments.append({
+            "player": player,
+            "team_id": chosen.get("id"),
+            "team_name": chosen.get("name"),
+        })
+
+    for t in updated_teams:
+        t["players"].sort(key=lambda p: (p["player_class"], p["name"]))
+
+    return {
+        "teams": updated_teams,
+        "classes": distinct_classes,
+        "class_weights": weights,
+        "assignments": assignments,
+        "total_players": sum(len(t["players"]) for t in updated_teams),
     }
 
 
@@ -3978,10 +4229,12 @@ def get_category_fixtures_results_pdf_context(category):
         if f.phase == "group" and f.group_letter:
             phase_display = f"Group {f.group_letter}"
 
+        cat_venue = category.schedule.get("venue", "Thoome Pri.")
         formatted_fixtures.append({
             "fixture_id": f.fixture_id,
             "phase": phase_display,
             "date": f.date,
+            "venue": cat_venue,
             "home_id": h_id,
             "home_name": h_name,
             "home_color": h_color,
@@ -4145,6 +4398,7 @@ def get_category_fixtures_results_pdf_context(category):
         "fixtures": formatted_fixtures,
         "top_scorers": top_scorers,
         "top_discipline": top_discipline,
+        "venue": cat_venue,
         "referees": [r.name for r in category.referees.all().order_by("name")],
     }
 

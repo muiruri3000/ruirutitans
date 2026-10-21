@@ -366,7 +366,7 @@ export default function VotingView({
     catTeams.forEach((team) => {
       (team.players || []).forEach((p, idx) => {
         if (p.unknown) return;
-        const pos = p.position || POSITIONS[idx % POSITIONS.length].key;
+        const pos = p.position || '';
         const pEntry = {
           id: p.id,
           player_id: p.permanentId || p.id,
@@ -378,7 +378,7 @@ export default function VotingView({
         };
         fallbackAll.push(pEntry);
         if (pos === 'GK' && !includeGk) return;
-        if (fallbackCandidates[pos]) {
+        if (pos && fallbackCandidates[pos]) {
           fallbackCandidates[pos].push(pEntry);
         }
       });

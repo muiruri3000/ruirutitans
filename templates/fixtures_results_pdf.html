@@ -370,7 +370,7 @@
       <div class="sheet-subhead">OFFICIAL COMPETITION FIXTURES, RESULTS &amp; STANDINGS DOSSIER</div>
       <div class="comp-title">{{ category_name }}</div>
       <div style="font-size: 12px; color: #718096; margin-top: 4px;">
-        Format: <b>{{ format_display }}</b> &bull; Mode: <b>{{ mode_display }}</b> &bull; Referees: <b>{{ referees|join:", "|default:"Assigned Panel" }}</b>
+        Format: <b>{{ format_display }}</b> &bull; Mode: <b>{{ mode_display }}</b> &bull; Venue: <b>{{ venue|default:"Thoome Pri." }}</b> &bull; Referees: <b>{{ referees|join:", "|default:"Assigned Panel" }}</b>
       </div>
     </div>
     <div style="text-align: right;">
@@ -486,6 +486,7 @@
             <span style="color: #0B3A2E; font-weight: 800;">{{ fix.phase }}</span>
             &bull; Match Ref: <b>{{ fix.fixture_id }}</b>
             &bull; Scheduled: <b>{{ fix.date }}</b>
+            &bull; Venue: <b>{{ fix.venue|default:venue|default:"Thoome Pri." }}</b>
           </div>
           <div>
             Referee: <b>{{ fix.referee }}</b>

@@ -1,6 +1,6 @@
 import json
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, Http404
 from rest_framework import status, views, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -170,12 +170,50 @@ class CategoryListCreateAPIView(views.APIView):
 
 class CategoryDetailAPIView(views.APIView):
     """
-    Retrieve and delete categories.
+    Retrieve, update, and delete categories.
     """
 
     def get(self, request, key):
         cat = get_object_or_404(Category, key=key)
         return Response(cat.to_state_dict())
+
+    def patch(self, request, key):
+        cat = get_object_or_404(Category, key=key)
+        data = request.data or {}
+        if "label" in data and str(data["label"]).strip():
+            cat.label = str(data["label"]).strip()
+        if "format" in data and data["format"] in ("single", "double"):
+            cat.format = data["format"]
+        if "note" in data:
+            cat.note = str(data["note"])
+        if "schedule" in data and isinstance(data["schedule"], dict):
+            cat.schedule = data["schedule"]
+        if "isEnded" in data:
+            cat.is_ended = bool(data["isEnded"])
+            if cat.is_ended and not cat.ended_at:
+                from django.utils import timezone
+                cat.ended_at = timezone.now()
+        if "championTeam" in data:
+            cat.champion_team = str(data["championTeam"])
+        if "referees" in data and isinstance(data["referees"], list):
+            cat.referees.all().delete()
+            for r_name in data["referees"]:
+                clean_name = str(r_name or "").strip()
+                if clean_name:
+                    Referee.objects.create(category=cat, name=clean_name)
+        if "votingConfig" in data and isinstance(data["votingConfig"], dict):
+            vc = data["votingConfig"]
+            if "team_size" in vc:
+                cat.voting_team_size = int(vc["team_size"])
+            if "max_picks_per_position" in vc:
+                cat.voting_max_picks = int(vc["max_picks_per_position"])
+            if "include_gk" in vc:
+                cat.voting_include_gk = bool(vc["include_gk"])
+        cat.save()
+        return Response(cat.to_state_dict())
+
+    def put(self, request, key):
+        return self.patch(request, key)
 
     def delete(self, request, key):
         cat = get_object_or_404(Category, key=key)
@@ -366,7 +404,26 @@ def category_fixtures_results_pdf_view(request, key):
     for any active or archived competition (League, Cup, or Tournament).
     Supports auto-print trigger (?auto=1) or direct viewing/saving.
     """
-    category = get_object_or_404(Category, key=key)
+    category = Category.objects.filter(key=key).first()
+    if not category:
+        category = Category.objects.filter(key__iexact=key).first()
+
+    # If the category isn't in DB yet, auto-seed standard categories if requested
+    if not category:
+        if key in ("cup", "titans-cup", "ruiru-titans-cup"):
+            from .services import build_real_cup_season_dict
+            cup_dict = build_real_cup_season_dict()
+            import_state_to_db({"categories": {key: cup_dict}, "activeCategory": key})
+            category = Category.objects.filter(key=key).first()
+        elif key in ("open", "open-league", "league"):
+            from .services import build_real_open_season_dict
+            open_dict = build_real_open_season_dict()
+            import_state_to_db({"categories": {key: open_dict}, "activeCategory": key})
+            category = Category.objects.filter(key=key).first()
+
+    if not category:
+        raise Http404(f"Category '{key}' not found.")
+
     from .services import get_category_fixtures_results_pdf_context
     context = get_category_fixtures_results_pdf_context(category)
     context["auto_print"] = request.GET.get("auto") in ("1", "true")
@@ -764,6 +821,45 @@ class AdminPlayerReleaseNumberAPIView(views.APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class AdminPlayerUpdatePositionAPIView(views.APIView):
+    """
+    POST /api/admin/players/update-position/
+    Allows an administrator to manually set, change, or clear a player's tactical position.
+    """
+
+    def post(self, request):
+        from .services import update_player_position_by_admin
+        payload = request.data or {}
+        player_ident = (
+            payload.get("player_id")
+            or payload.get("id")
+            or payload.get("username")
+            or payload.get("identifier")
+        )
+        position = payload.get("position", "")
+        team_id = payload.get("team_id") or payload.get("teamId")
+        category_key = payload.get("category_key") or payload.get("categoryKey")
+
+        try:
+            player = update_player_position_by_admin(
+                player_ident=player_ident,
+                position=position,
+                team_id=team_id,
+                category_key=category_key,
+            )
+            return Response({
+                "success": True,
+                "player_id": player.player_id,
+                "username": player.username,
+                "name": player.name,
+                "position": player.position,
+                "team_id": player.team.team_id,
+                "message": f"Position for {player.name} updated to '{player.position or 'Unassigned'}'.",
+            })
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class PlayerChangePasswordAPIView(views.APIView):
     """
     Player changes their password from temporary 4-digit code to their personal password,
@@ -916,6 +1012,7 @@ class TeamBalancerAPIView(views.APIView):
             parse_tabular_text_to_rows,
             extract_players_from_rows,
             balance_players_into_teams,
+            intelligently_add_players_to_balanced_teams,
         )
 
         payload = request.data or {}
@@ -977,6 +1074,30 @@ class TeamBalancerAPIView(views.APIView):
                     "success": True,
                     "players": players,
                     "total_players": len(players),
+                })
+
+            if action in ("add_players", "add"):
+                teams = payload.get("teams") or []
+                new_players = payload.get("new_players") or payload.get("players") or []
+                if not teams:
+                    return Response(
+                        {"error": "Please provide existing teams to add players to."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if not new_players:
+                    return Response(
+                        {"error": "Please provide new players to add."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                result = intelligently_add_players_to_balanced_teams(
+                    teams=teams,
+                    new_players=new_players,
+                    classes=payload.get("classes"),
+                    class_weights=payload.get("class_weights"),
+                )
+                return Response({
+                    "success": True,
+                    **result,
                 })
 
             if not players or not isinstance(players, list):

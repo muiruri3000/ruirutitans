@@ -11,6 +11,7 @@ import VotingView from './components/VotingView';
 import H2HModal from './components/H2HModal';
 import AuthModal from './components/AuthModal';
 import TeamDetailModal from './components/TeamDetailModal';
+import EditCategoryModal from './components/EditCategoryModal';
 import PlayerDashboardView from './components/PlayerDashboardView';
 import HighlightsView from './components/HighlightsView';
 import ArchivesView from './components/ArchivesView';
@@ -218,12 +219,16 @@ export default function App() {
   const [newCatName, setNewCatName] = useState('');
   const [newCatMode, setNewCatMode] = useState('league');
   const [newCatRefs, setNewCatRefs] = useState('Ref Kamau, Ref Otieno, Ref Njoroge');
+  const [newCatStartDate, setNewCatStartDate] = useState('');
 
   // H2H Modal state
   const [h2hState, setH2HState] = useState({ open: false, loading: false, data: null, error: null });
 
   // Team Analytics & Profile Modal state
   const [teamModalState, setTeamModalState] = useState({ open: false, teamId: null, categoryKey: null });
+
+  // Edit League / Category Modal state
+  const [editingCategoryKey, setEditingCategoryKey] = useState(null);
 
   const syncTimerRef = useRef(null);
 
@@ -596,7 +601,7 @@ export default function App() {
     });
   };
 
-  const handleAddPlayers = (teamId, names, position = 'CM', customUsername = '', customPassword = '') => {
+  const handleAddPlayers = (teamId, names, position = '', customUsername = '', customPassword = '') => {
     updateActiveCat((c) => {
       const teams = c.teams.map((t) => {
         if (t.id === teamId) {
@@ -628,7 +633,7 @@ export default function App() {
               name: n,
               username: idx === 0 && customUsername.trim() ? customUsername.trim().toLowerCase() : defaultUname,
               password: customPassword.trim() || 'titans2026',
-              position: position || 'CM',
+              position: position || '',
             };
           });
           return { ...t, players: [...t.players, ...newPlayers] };
@@ -651,18 +656,184 @@ export default function App() {
     });
   };
 
+  const handleMovePlayer = (fromTeamId, toTeamId, playerId, targetCategoryKey = activeCategoryKey) => {
+    if (!fromTeamId || !toTeamId || !playerId || fromTeamId === toTeamId) return;
+    updateCategoryByKey(targetCategoryKey, (c) => {
+      let playerToMove = null;
+      const nextTeams = (c.teams || []).map((t) => {
+        if (t.id === fromTeamId) {
+          const p = (t.players || []).find((x) => x.id === playerId);
+          if (p) playerToMove = { ...p };
+          return {
+            ...t,
+            players: (t.players || []).filter((x) => x.id !== playerId),
+          };
+        }
+        return t;
+      });
+
+      if (!playerToMove) return c;
+
+      const finalTeams = nextTeams.map((t) => {
+        if (t.id === toTeamId) {
+          return {
+            ...t,
+            players: [...(t.players || []), playerToMove],
+          };
+        }
+        return t;
+      });
+
+      return { ...c, teams: finalTeams };
+    });
+  };
+
+  const handleIntelligentlyAddPlayerToCategory = (
+    names,
+    position = '',
+    customUsername = '',
+    customPassword = '',
+    targetCategoryKey = activeCategoryKey
+  ) => {
+    updateCategoryByKey(targetCategoryKey, (c) => {
+      const teams = [...(c.teams || [])];
+      if (!teams.length) return c;
+
+      const updatedTeams = teams.map((t) => ({ ...t, players: [...(t.players || [])] }));
+
+      names.forEach((name) => {
+        updatedTeams.sort((a, b) => {
+          const diff = a.players.length - b.players.length;
+          if (diff !== 0) return diff;
+          if (position) {
+            const aHasPos = a.players.some((p) => p.position === position);
+            const bHasPos = b.players.some((p) => p.position === position);
+            if (aHasPos !== bHasPos) return aHasPos ? 1 : -1;
+          }
+          return 0;
+        });
+
+        const targetTeam = updatedTeams[0];
+        const existingIds = new Set(targetTeam.players.map((p) => p.id));
+        let nextSeq = 1;
+        targetTeam.players.forEach((p) => {
+          const match = String(p.id || '').match(/-P(\d+)$/i);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num >= nextSeq) nextSeq = num + 1;
+          }
+        });
+        while (existingIds.has(`${targetTeam.id}-P${nextSeq}`)) {
+          nextSeq++;
+        }
+        const permId = `${targetTeam.id}-P${nextSeq}`;
+        const defaultUname =
+          name
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_|_$/g, '') || permId.toLowerCase();
+
+        targetTeam.players.push({
+          id: permId,
+          permanentId: permId,
+          name: name.trim(),
+          username: customUsername.trim() ? customUsername.trim().toLowerCase() : defaultUname,
+          password: customPassword.trim() || 'titans2026',
+          position: position || '',
+        });
+      });
+
+      return { ...c, teams: updatedTeams };
+    });
+  };
+
+  const handleSaveCategorySettings = (catKey, updatedFields, rescheduleUnplayed = false) => {
+    updateCategoryByKey(catKey, (c) => {
+      const merged = { ...c, ...updatedFields };
+      const newVenue = merged.schedule?.venue;
+
+      let currentFixtures = (c.fixtures || []).map((f) => {
+        if (!f.played && !f.walkover && newVenue) {
+          return { ...f, venue: newVenue };
+        }
+        return f;
+      });
+
+      if (!rescheduleUnplayed) {
+        return {
+          ...merged,
+          fixtures: currentFixtures,
+        };
+      }
+
+      const unplayedFixtures = currentFixtures.filter((f) => !f.played && !f.walkover);
+      const newSlots = computeScheduleSlots(unplayedFixtures.length, merged.schedule);
+      let slotIdx = 0;
+      const updatedFixtures = currentFixtures.map((f) => {
+        if (!f.played && !f.walkover) {
+          const nextDate = newSlots[slotIdx] || f.date;
+          slotIdx++;
+          return { ...f, date: nextDate, ...(newVenue ? { venue: newVenue } : {}) };
+        }
+        return f;
+      });
+
+      const updatedGroupFixtures = syncCupGroupFixtures(c, updatedFixtures);
+      const updatedRounds = c.rounds
+        ? (c.rounds || []).map((r) =>
+            Array.isArray(r)
+              ? r.map((t) => {
+                  if (!t || t.match?.played) return t;
+                  const matchFix = updatedFixtures.find((uf) => uf.id === t.id);
+                  if (matchFix) {
+                    return {
+                      ...t,
+                      date: matchFix.date,
+                      ...(newVenue ? { venue: newVenue } : {}),
+                      match: {
+                        ...(t.match || {}),
+                        date: matchFix.date,
+                        ...(newVenue ? { venue: newVenue } : {}),
+                      },
+                    };
+                  }
+                  return t;
+                })
+              : r
+          )
+        : undefined;
+
+      return {
+        ...merged,
+        fixtures: updatedFixtures,
+        ...(updatedGroupFixtures ? { groupFixtures: updatedGroupFixtures } : {}),
+        ...(updatedRounds ? { rounds: updatedRounds } : {}),
+      };
+    });
+  };
+
   const handleUpdatePlayerPosition = (teamId, playerId, newPosition) => {
+    const cleanPos = newPosition || '';
     updateActiveCat((c) => {
       const teams = c.teams.map((t) => {
         if (t.id === teamId) {
           return {
             ...t,
-            players: t.players.map((p) => (p.id === playerId ? { ...p, position: newPosition } : p)),
+            players: t.players.map((p) => (p.id === playerId ? { ...p, position: cleanPos } : p)),
           };
         }
         return t;
       });
       return { ...c, teams };
+    });
+    api.updatePlayerPosition({
+      team_id: teamId,
+      player_id: playerId,
+      position: cleanPos,
+      category_key: activeCategoryKey,
+    }).catch((err) => {
+      console.warn('Backend updatePlayerPosition error:', err);
     });
   };
 
@@ -852,13 +1023,18 @@ export default function App() {
       format: 'double',
       teams: initialTeams,
       fixtures: [],
-      schedule: { time: '18:00', days: { 3: 1, 4: 1, 5: 1, 6: 1 } },
+      schedule: {
+        time: '18:00',
+        days: { 3: 1, 4: 1, 5: 1, 6: 1 },
+        ...(newCatStartDate ? { startDate: newCatStartDate, start_date: newCatStartDate } : {}),
+      },
       referees: parsedRefs,
       votingConfig: { team_size: 6, max_picks_per_position: 2, include_gk: true },
     };
     const nextCategories = { ...data.categories, [slug]: newCat };
     commitData({ ...data, categories: nextCategories, activeCategory: slug });
     setNewCatName('');
+    setNewCatStartDate('');
     setAddingCategory(false);
   };
 
@@ -923,8 +1099,28 @@ export default function App() {
     }
     enabledDays.sort((a, b) => a - b);
 
-    const baseDate = new Date(2026, 3, 18); // Sat, 18 Apr 2026
-    const cur = new Date(baseDate.getTime());
+    let baseDate = null;
+    const rawStartDate = schedule?.startDate || schedule?.start_date;
+    if (rawStartDate) {
+      if (typeof rawStartDate === 'string') {
+        const parts = rawStartDate.trim().split(/[-/]/);
+        if (parts.length === 3) {
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10) - 1;
+          const d = parseInt(parts[2], 10);
+          if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+            baseDate = new Date(y, m, d);
+          }
+        }
+      } else if (rawStartDate instanceof Date && !isNaN(rawStartDate.getTime())) {
+        baseDate = new Date(rawStartDate.getTime());
+      }
+    }
+    if (!baseDate || isNaN(baseDate.getTime())) {
+      baseDate = new Date();
+    }
+
+    const cur = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
     while (!dayConfig[cur.getDay()].enabled) {
       cur.setDate(cur.getDate() + 1);
     }
@@ -1151,12 +1347,13 @@ export default function App() {
     roundsList.forEach((rPairs) => {
       rPairs.forEach((pair) => {
         const ref = pickRandomReferee(referees);
-        const dateStr = scheduledDates[slotIdx] || 'Sat, 18 Apr · 15:00';
+        const dateStr = scheduledDates[slotIdx] || scheduledDates[scheduledDates.length - 1] || 'TBD · 15:00';
         slotIdx++;
         fixtures.push({
           id: `F${seq}`,
           round: pair.round,
           date: dateStr,
+          venue: schedule.venue || 'Thoome Pri.',
           home: pair.home,
           away: pair.away,
           played: false,
@@ -1209,13 +1406,14 @@ export default function App() {
       gRounds.forEach((rPairs) => {
         rPairs.forEach((pair) => {
           const ref = pickRandomReferee(referees);
-          const dateStr = groupScheduledDates[slotIdx] || 'Sat, 18 Apr · 15:00';
+          const dateStr = groupScheduledDates[slotIdx] || groupScheduledDates[groupScheduledDates.length - 1] || 'TBD · 15:00';
           slotIdx++;
           const fObj = {
             id: `GF-${letter}-${gSeq}`,
             round: pair.round,
             group: letter,
             date: dateStr,
+            venue: schedule.venue || 'Thoome Pri.',
             home: pair.home,
             away: pair.away,
             played: false,
@@ -1238,16 +1436,17 @@ export default function App() {
 
     const makeKoTie = (id, stage, home, away) => {
       const ref = pickRandomReferee(referees);
-      const date = koScheduledDates[koSlotIdx] || 'Sat, 02 May · 15:00';
+      const date = koScheduledDates[koSlotIdx] || koScheduledDates[koScheduledDates.length - 1] || 'TBD · 15:00';
       koSlotIdx++;
       return {
         id,
         stage,
         date,
+        venue: schedule.venue || 'Thoome Pri.',
         home,
         away,
         referee: ref,
-        match: { played: false, events: [], referee: ref },
+        match: { played: false, events: [], referee: ref, venue: schedule.venue || 'Thoome Pri.' },
         pen: { h: '', a: '' },
       };
     };
@@ -1304,7 +1503,6 @@ export default function App() {
 
   const buildTournamentTeamsFromBalanced = (balancedTeams, existingTeams = []) => {
     const usedCodes = new Set(existingTeams.map((t) => t.id));
-    const TACTICAL_POSITIONS = ['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'LW', 'RW', 'ST'];
     const CORE_CLUBS = [
       { id: 'MAN', name: 'Mancheli', color: '#C9A227' },
       { id: 'SS', name: 'Super Strikers', color: '#B23A2E' },
@@ -1312,7 +1510,6 @@ export default function App() {
       { id: 'MAS', name: 'Masters', color: '#D97B29' },
       { id: 'OXF', name: 'Oxford', color: '#2E5A8F' },
     ];
-
     return balancedTeams.map((bTeam, idx) => {
       const defaultClub = idx < CORE_CLUBS.length ? CORE_CLUBS[idx] : null;
       const cleanName = (bTeam.name || defaultClub?.name || `Team ${idx + 1}`).trim();
@@ -1329,9 +1526,6 @@ export default function App() {
       usedCodes.add(code);
 
       const rawSquad = bTeam.players || [];
-      const distinctPositions = new Set(rawSquad.map((p) => p.position || 'CM'));
-      const needsPositionSpread = rawSquad.length > 1 && distinctPositions.size === 1 && distinctPositions.has('CM');
-
       const teamPlayers = [
         { id: `${code}-UNK`, name: 'Unrecorded scorer', unknown: true },
         ...rawSquad.map((p, pIdx) => {
@@ -1342,16 +1536,13 @@ export default function App() {
               .toLowerCase()
               .replace(/[^a-z0-9]+/g, '_')
               .replace(/^_|_$/g, '') || permId.toLowerCase();
-          const assignedPosition = needsPositionSpread
-            ? TACTICAL_POSITIONS[pIdx % TACTICAL_POSITIONS.length]
-            : p.position || 'CM';
           return {
             id: permId,
             permanentId: permId,
             name: p.name,
             username: defaultUname,
             password: 'titans2026',
-            position: assignedPosition,
+            position: p.position || '',
             playerClass: p.player_class || 'C',
           };
         }),
@@ -1394,13 +1585,20 @@ export default function App() {
     balancedTeams,
     targetKey = activeCategoryKey,
     replaceExisting = true,
-    incomingReferees = []
+    incomingReferees = [],
+    startDate = '',
+    venue = 'Thoome Pri.'
   ) => {
     const currentCat = data.categories[targetKey] || cat;
     const baseTeams = replaceExisting ? [] : currentCat?.teams || [];
     const createdTeams = buildTournamentTeamsFromBalanced(balancedTeams, baseTeams);
     const finalTeams = [...baseTeams, ...createdTeams];
-    const schedule = currentCat?.schedule || { time: '15:00', days: { 6: 1, 0: 1 } };
+    const baseSchedule = currentCat?.schedule || { time: '15:00', days: { 6: 1, 0: 1 } };
+    const schedule = {
+      ...baseSchedule,
+      venue: (venue && venue.trim()) || baseSchedule.venue || 'Thoome Pri.',
+      ...(startDate ? { startDate, start_date: startDate } : {}),
+    };
     const existingRefs = currentCat?.referees || [];
     const mergedRefs = [...existingRefs];
     (incomingReferees || []).forEach((r) => {
@@ -1418,6 +1616,7 @@ export default function App() {
         teams: finalTeams,
         referees: mergedRefs,
         ...cupStruct,
+        schedule,
         votingConfig: currentCat.votingConfig || {
           team_size: Math.min(11, Math.max(5, balancedTeams[0]?.players?.length || 6)),
           max_picks_per_position: 2,
@@ -1437,6 +1636,7 @@ export default function App() {
         teams: finalTeams,
         referees: mergedRefs,
         fixtures,
+        schedule,
         votingConfig: currentCat?.votingConfig || {
           team_size: Math.min(11, Math.max(5, balancedTeams[0]?.players?.length || 6)),
           max_picks_per_position: 2,
@@ -1455,7 +1655,9 @@ export default function App() {
     balancedTeams,
     mode = 'league',
     format = 'double',
-    incomingReferees = []
+    incomingReferees = [],
+    startDate = '',
+    venue = 'Thoome Pri.'
   ) => {
     const cleanTitle = (categoryTitle || 'Balanced Championship').trim();
     const baseSlug = cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'balanced';
@@ -1466,7 +1668,12 @@ export default function App() {
       counter++;
     }
     const createdTeams = buildTournamentTeamsFromBalanced(balancedTeams, []);
-    const schedule = { time: '15:00', days: { 6: 1, 0: 1 } };
+    const schedule = {
+      time: '15:00',
+      days: { 6: 1, 0: 1 },
+      venue: (venue && venue.trim()) || 'Thoome Pri.',
+      ...(startDate ? { startDate, start_date: startDate } : {}),
+    };
     const defaultTeamSize = Math.min(11, Math.max(5, balancedTeams[0]?.players?.length || 6));
     const referees = (incomingReferees || []).filter(Boolean);
 
@@ -2044,6 +2251,26 @@ export default function App() {
               ))}
               <button
                 type="button"
+                onClick={() => setEditingCategoryKey(activeCategoryKey)}
+                title={`Edit "${cat?.label}" name, start date, referees & rules`}
+                style={{
+                  background: '#0B3A2E',
+                  border: '1px solid #2B5746',
+                  color: '#6CE5A0',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  padding: '4px 10px',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                ✏️ Edit &ldquo;{cat?.label}&rdquo;
+              </button>
+              <button
+                type="button"
                 onClick={() => setAddingCategory(!addingCategory)}
                 style={{
                   background: 'transparent',
@@ -2144,6 +2371,14 @@ export default function App() {
               placeholder="Referees (comma-separated: Ref Kamau, Ref Otieno)…"
               value={newCatRefs}
               onChange={(e) => setNewCatRefs(e.target.value)}
+            />
+            <input
+              type="date"
+              className="form-input"
+              style={{ width: '150px' }}
+              value={newCatStartDate}
+              onChange={(e) => setNewCatStartDate(e.target.value)}
+              title="Tournament Kickoff / Start Date (optional)"
             />
             <button type="submit" className="stat-btn" style={{ background: '#C9A227', color: '#16201B', fontWeight: 800, padding: '8px 18px' }}>
               Create Category
@@ -2478,7 +2713,7 @@ export default function App() {
                         📅 Upcoming League Fixtures
                       </span>
                       <div style={{ fontSize: '11px', color: '#8FA89B' }}>
-                        Next scheduled matchdays at Ruiru Grounds
+                        Next scheduled matchdays at Thoome Pri.
                       </div>
                     </div>
                     <button
@@ -2653,6 +2888,8 @@ export default function App() {
             table={standingsTable}
             teamCount={leagueCat?.teams?.length || 0}
             activeCategoryKey={leagueCategoryKey}
+            isCmsMode={isCmsMode}
+            onOpenEditCategory={() => setEditingCategoryKey(leagueCategoryKey)}
             onSelectTeam={handleOpenTeamDetails}
           />
         )}
@@ -2684,6 +2921,7 @@ export default function App() {
             onBatchMoveFixtures={(map) => handleBatchMoveFixtures(activeCategoryKey, map)}
             onOpenH2H={(t1, t2) => handleOpenH2H(t1, t2, activeCategoryKey)}
             onGenerateFixtures={handleGenerateFixtures}
+            onOpenEditCategory={() => setEditingCategoryKey(activeCategoryKey)}
             onSelectTeam={handleOpenTeamDetails}
           />
         )}
@@ -2707,6 +2945,7 @@ export default function App() {
             onBatchMoveFixtures={(map) => handleBatchMoveFixtures(cupCat ? cupCategoryKey : activeCategoryKey, map)}
             onUpdateCupCategory={(mutator) => updateCategoryByKey(cupCat ? cupCategoryKey : activeCategoryKey, mutator)}
             onOpenH2H={(t1, t2) => handleOpenH2H(t1, t2, cupCat ? cupCategoryKey : activeCategoryKey)}
+            onOpenEditCategory={() => setEditingCategoryKey(cupCat ? cupCategoryKey : activeCategoryKey)}
             onSelectTeam={handleOpenTeamDetails}
           />
         )}
@@ -2895,6 +3134,9 @@ export default function App() {
               onApplyBalancedTeamsToCategory={handleApplyBalancedTeamsToCategory}
               onCreateCategoryWithBalancedTeams={handleCreateCategoryWithBalancedTeams}
               onNavigateToCompetitionView={handleNavigateToCompetitionView}
+              onMovePlayer={handleMovePlayer}
+              onIntelligentlyAddPlayer={handleIntelligentlyAddPlayerToCategory}
+              onOpenEditCategory={() => setEditingCategoryKey(activeCategoryKey)}
               onSelectTeam={handleOpenTeamDetails}
               initialSection={manageSection}
             />
@@ -3042,6 +3284,9 @@ export default function App() {
           categoryKey={teamModalState.categoryKey || activeCategoryKey}
           category={data.categories[teamModalState.categoryKey || activeCategoryKey]}
           allCategories={data.categories}
+          isCmsMode={isCmsMode}
+          onMovePlayer={handleMovePlayer}
+          onAddPlayers={handleAddPlayers}
           activeSuspensionsMap={
             (teamModalState.categoryKey || activeCategoryKey) === activeCategoryKey
               ? suspensions
@@ -3059,6 +3304,18 @@ export default function App() {
               categoryKey: newCatKey || teamModalState.categoryKey || activeCategoryKey,
             });
           }}
+        />
+      )}
+
+      {/* Edit League / Category Modal */}
+      {editingCategoryKey && data.categories[editingCategoryKey] && (
+        <EditCategoryModal
+          isOpen={Boolean(editingCategoryKey)}
+          categoryKey={editingCategoryKey}
+          category={data.categories[editingCategoryKey]}
+          onClose={() => setEditingCategoryKey(null)}
+          onSaveCategory={handleSaveCategorySettings}
+          onDeleteCategory={handleDeleteCategory}
         />
       )}
     </div>

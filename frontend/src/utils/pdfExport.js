@@ -5,8 +5,18 @@
 
 export function openCategoryFixturesResultsPDF(categoryKey, autoPrint = true) {
   if (!categoryKey) return;
-  const url = `/categories/${encodeURIComponent(categoryKey)}/fixtures-results/pdf/${autoPrint ? '?auto=1' : ''}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
+  const url = `/api/categories/${encodeURIComponent(categoryKey)}/export/fixtures-results-pdf/${autoPrint ? '?auto=1' : ''}`;
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
 }
 
 export function exportCategoryFixturesResultsPDF(category, autoPrint = true) {

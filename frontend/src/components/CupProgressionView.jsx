@@ -105,6 +105,9 @@ export default function CupProgressionView({
 
   // Tournament Scheduling Configuration state for Cup
   const [scheduleTime, setScheduleTime] = useState(schedule?.time || '15:00');
+  const [scheduleStartDate, setScheduleStartDate] = useState(
+    schedule?.startDate || schedule?.start_date || ''
+  );
   const [daysConfig, setDaysConfig] = useState(() =>
     parseDaysConfig(
       schedule?.days,
@@ -131,6 +134,9 @@ export default function CupProgressionView({
 
   useEffect(() => {
     if (schedule?.time) setScheduleTime(schedule.time);
+    if (schedule?.startDate || schedule?.start_date) {
+      setScheduleStartDate(schedule.startDate || schedule.start_date);
+    }
     if (schedule?.days) {
       setDaysConfig(
         parseDaysConfig(
@@ -200,6 +206,8 @@ export default function CupProgressionView({
       time: primaryTime,
       days: daysConfig,
       matches_per_day: maxMatches,
+      startDate: scheduleStartDate,
+      start_date: scheduleStartDate,
     };
     onUpdateSchedule(newSchedule, applyToUnplayed);
   };
@@ -819,6 +827,19 @@ export default function CupProgressionView({
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', background: '#0F2E24', padding: '10px 12px', borderRadius: '8px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#DDE6DF', marginBottom: '3px' }}>
+                  Cup Start Date:
+                </label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={scheduleStartDate}
+                  onChange={(e) => setScheduleStartDate(e.target.value)}
+                  style={{ width: '135px', fontSize: '12px', padding: '5px 8px' }}
+                  title="First match day start date for the Cup tournament"
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#DDE6DF', marginBottom: '3px' }}>
                   Default Kickoff Time:
                 </label>
                 <input
@@ -829,7 +850,7 @@ export default function CupProgressionView({
                   style={{ width: '115px', fontSize: '12px', padding: '5px 8px' }}
                 />
               </div>
-              <div style={{ flex: '1 1 280px', fontSize: '11px', color: '#6CE5A0', lineHeight: 1.4 }}>
+              <div style={{ flex: '1 1 240px', fontSize: '11px', color: '#6CE5A0', lineHeight: 1.4 }}>
                 ⚡ <strong>1-Hour Difference Rule:</strong> All fixtures scheduled on the same date start 1 hour apart (e.g. 14:00, 15:00, 16:00).
               </div>
             </div>

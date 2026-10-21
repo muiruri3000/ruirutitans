@@ -223,7 +223,7 @@ export default function HighlightsView({
             TITANS HIGHLIGHT REEL &amp; VIDEO VAULT
           </h1>
           <p style={{ margin: 0, fontSize: '13px', color: '#9BB5A8', maxWidth: '640px' }}>
-            Catch all the key goals, wonder strikes, goalkeeper saves, and pivotal tournament moments from Ruiru Grounds.
+            Catch all the key goals, wonder strikes, goalkeeper saves, and pivotal tournament moments from Thoome Pri.
             Featuring match replays, YouTube uploads, and exclusive club recordings.
           </p>
         </div>

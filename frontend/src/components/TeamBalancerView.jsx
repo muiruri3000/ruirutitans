@@ -335,7 +335,7 @@ export function extractPlayersFromRows(rows) {
       id: `BAL-P${idx + 1}-${Date.now().toString(36).slice(-3)}`,
       name: rawName,
       player_class: normCls,
-      position: POSITIONS.includes(rawPos) ? rawPos : 'CM',
+      position: POSITIONS.includes(rawPos) ? rawPos : '',
     });
   });
 
@@ -393,7 +393,7 @@ function balancePlayersClientSide(players, playersPerTeam, existingTeamNames = [
     const cls = normalizePlayerClass(p.player_class || p.class || 'C') || 'C';
     const pos = POSITIONS.includes(String(p.position || '').toUpperCase())
       ? String(p.position).toUpperCase()
-      : 'CM';
+      : '';
     byClass[cls].push({
       id: p.id || `BAL-P${idx + 1}`,
       name: String(p.name).trim(),
@@ -444,7 +444,6 @@ function balancePlayersClientSide(players, playersPerTeam, existingTeamNames = [
     });
   });
 
-  const TACTICAL_POSITIONS = ['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'LW', 'RW', 'ST'];
   teams.forEach((t) => {
     t.player_count = t.players.length;
     t.average_skill_score = t.player_count
@@ -454,14 +453,6 @@ function balancePlayersClientSide(players, playersPerTeam, existingTeamNames = [
       if (a.player_class !== b.player_class) return a.player_class.localeCompare(b.player_class);
       return a.name.localeCompare(b.name);
     });
-    // If all players on the team defaulted to 'CM' (e.g. sheet only had Name & Class),
-    // assign a balanced spread of tactical positions so GK & positional voting work immediately
-    const distinctPos = new Set(t.players.map((p) => p.position || 'CM'));
-    if (t.players.length > 1 && distinctPos.size === 1 && distinctPos.has('CM')) {
-      t.players.forEach((p, idx) => {
-        p.position = TACTICAL_POSITIONS[idx % TACTICAL_POSITIONS.length];
-      });
-    }
   });
 
   return {
@@ -471,6 +462,148 @@ function balancePlayersClientSide(players, playersPerTeam, existingTeamNames = [
     players_per_team: perTeam,
     total_players: totalPlayers,
     team_count: numTeams,
+  };
+}
+
+/**
+ * Intelligently places new player(s) into existing balanced squads while preserving:
+ * 1. Equal roster sizes (prioritizes teams with minimum player count)
+ * 2. Goalkeeper priority (places GK on a team without a goalkeeper if possible)
+ * 3. Class tier balance (places player on team with fewest players of their specific class)
+ * 4. Overall team skill score balance (tiebreaker)
+ * Does NOT reshuffle or modify existing player assignments.
+ */
+export function intelligentlyAddPlayersToTeams(currentTeams, newPlayers, classWeights = {}, classes = []) {
+  if (!currentTeams || !currentTeams.length || !newPlayers || !newPlayers.length) {
+    return { teams: currentTeams || [], assignments: [], classes, class_weights: classWeights };
+  }
+
+  // Clone teams to preserve immutability
+  const updatedTeams = currentTeams.map((t) => ({
+    ...t,
+    players: [...(t.players || [])],
+    class_counts: { ...(t.class_counts || {}) },
+    total_skill_score: Number(t.total_skill_score || 0),
+    player_count: Number(t.players ? t.players.length : 0),
+    average_skill_score: Number(t.average_skill_score || 0),
+  }));
+
+  // Identify all distinct classes including new ones
+  const distinctClasses = [...classes];
+  newPlayers.forEach((p) => {
+    const cls = normalizePlayerClass(p.player_class || p.class || 'C') || 'C';
+    if (!distinctClasses.includes(cls)) {
+      distinctClasses.push(cls);
+    }
+  });
+  distinctClasses.sort();
+
+  const numClasses = distinctClasses.length;
+  const weights = { ...classWeights };
+  distinctClasses.forEach((cls, idx) => {
+    if (weights[cls] === undefined) {
+      weights[cls] = numClasses - idx;
+    }
+  });
+
+  // Ensure class counts and total skill scores are synchronized
+  updatedTeams.forEach((t) => {
+    distinctClasses.forEach((c) => {
+      if (t.class_counts[c] === undefined) {
+        t.class_counts[c] = t.players.filter(
+          (p) => (normalizePlayerClass(p.player_class || p.class || 'C') || 'C') === c
+        ).length;
+      }
+    });
+    if (!t.total_skill_score) {
+      t.total_skill_score = t.players.reduce((sum, p) => sum + (p.skill_points || weights[p.player_class] || 1), 0);
+    }
+  });
+
+  // Prepare normalized player entries
+  const preparedPlayers = newPlayers.map((p, idx) => {
+    const cls = normalizePlayerClass(p.player_class || p.class || 'C') || 'C';
+    const rawPos = String(p.position || '').trim().toUpperCase();
+    const pos = POSITIONS.includes(rawPos) ? rawPos : '';
+    const sp = weights[cls] ?? 1;
+    return {
+      id: p.id || `BAL-P-ADD-${Date.now().toString(36)}-${idx}`,
+      name: String(p.name || '').trim(),
+      player_class: cls,
+      position: pos,
+      skill_points: sp,
+      is_newly_added: true,
+    };
+  });
+
+  // Sort incoming: higher tier first (A -> B -> C), then GKs first within tier
+  preparedPlayers.sort((a, b) => {
+    const diff = (b.skill_points || 0) - (a.skill_points || 0);
+    if (diff !== 0) return diff;
+    if (a.position === 'GK' && b.position !== 'GK') return -1;
+    if (b.position === 'GK' && a.position !== 'GK') return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const assignments = [];
+
+  preparedPlayers.forEach((player) => {
+    const cls = player.player_class;
+    const isGk = player.position === 'GK';
+
+    // 1. Minimum squad size
+    const minSquadSize = Math.min(...updatedTeams.map((t) => t.players.length));
+    let candidates = updatedTeams.filter((t) => t.players.length === minSquadSize);
+    if (!candidates.length) candidates = [...updatedTeams];
+
+    // 2. Goalkeeper priority
+    if (isGk) {
+      const teamsWithoutGk = candidates.filter((t) => !t.players.some((p) => p.position === 'GK'));
+      if (teamsWithoutGk.length > 0) {
+        candidates = teamsWithoutGk;
+      }
+    }
+
+    // 3. Lowest class count for this tier
+    const minClassCount = Math.min(...candidates.map((t) => t.class_counts[cls] || 0));
+    candidates = candidates.filter((t) => (t.class_counts[cls] || 0) === minClassCount);
+
+    // 4. Lowest total skill score
+    const minSkill = Math.min(...candidates.map((t) => t.total_skill_score));
+    candidates = candidates.filter((t) => t.total_skill_score === minSkill);
+
+    // Pick top candidate
+    const chosenTeam = candidates[0];
+    chosenTeam.players.push(player);
+    chosenTeam.class_counts[cls] = (chosenTeam.class_counts[cls] || 0) + 1;
+    chosenTeam.total_skill_score += player.skill_points;
+    chosenTeam.player_count = chosenTeam.players.length;
+    chosenTeam.average_skill_score = Number(
+      (chosenTeam.total_skill_score / chosenTeam.player_count).toFixed(2)
+    );
+
+    const chosenIdx = updatedTeams.indexOf(chosenTeam);
+    assignments.push({
+      player,
+      teamIdx: chosenIdx,
+      teamName: chosenTeam.name,
+      teamId: chosenTeam.id,
+    });
+  });
+
+  // Sort squad display
+  updatedTeams.forEach((t) => {
+    t.players.sort((a, b) => {
+      if (a.player_class !== b.player_class) return a.player_class.localeCompare(b.player_class);
+      return a.name.localeCompare(b.name);
+    });
+  });
+
+  return {
+    teams: updatedTeams,
+    classes: distinctClasses,
+    class_weights: weights,
+    assignments,
   };
 }
 
@@ -577,7 +710,16 @@ export default function TeamBalancerView({
   // Manual single-player addition state
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerClass, setNewPlayerClass] = useState('A');
-  const [newPlayerPosition, setNewPlayerPosition] = useState('CM');
+  const [newPlayerPosition, setNewPlayerPosition] = useState('');
+
+  // Section 3 quick-add player directly to balanced teams state
+  const [quickAddName, setQuickAddName] = useState('');
+  const [quickAddClass, setQuickAddClass] = useState('B');
+  const [quickAddPosition, setQuickAddPosition] = useState('');
+  const [quickAddTargetTeam, setQuickAddTargetTeam] = useState('__auto__');
+  const [cardInlineAddName, setCardInlineAddName] = useState({});
+  const [cardInlineAddClass, setCardInlineAddClass] = useState({});
+  const [cardInlineAddPos, setCardInlineAddPos] = useState({});
 
   // Optional player swap state between generated teams
   const [selectedSwapPlayer, setSelectedSwapPlayer] = useState(null); // { teamIdx, playerIdx }
@@ -590,6 +732,8 @@ export default function TeamBalancerView({
   const [competitionRefereesInput, setCompetitionRefereesInput] = useState(
     'Ref Kamau, Ref Otieno, Ref Njoroge, Ref Mwangi'
   );
+  const [competitionStartDate, setCompetitionStartDate] = useState('');
+  const [competitionVenue, setCompetitionVenue] = useState('Thoome Pri.');
   const [savedCompetitionInfo, setSavedCompetitionInfo] = useState(null); // { key, label, mode, fixtureCount, teamCount }
 
   const parseRefereesList = (raw) =>
@@ -646,6 +790,20 @@ export default function TeamBalancerView({
           file_base64: base64Data,
         });
         if (res.players && res.players.length) {
+          if (balancedResult && balancedResult.teams && balancedResult.teams.length) {
+            const existingNames = new Set(
+              balancedResult.teams.flatMap((t) => t.players.map((p) => String(p.name || '').trim().toLowerCase()))
+            );
+            const newPlayers = res.players.filter(
+              (p) => !existingNames.has(String(p.name || '').trim().toLowerCase())
+            );
+            if (newPlayers.length > 0) {
+              handleIntelligentlyAddPlayers(newPlayers);
+              return;
+            }
+            setStatusMsg(`ℹ️ All ${res.players.length} players from Excel file are already assigned to squads.`);
+            return;
+          }
           setPlayers(res.players);
           setBalancedResult(null);
           setStatusMsg(`✅ Loaded ${res.players.length} players from Excel file "${file.name}".`);
@@ -661,6 +819,20 @@ export default function TeamBalancerView({
           throw new Error(
             'Could not find player names and class letters (A, B, C...) in the uploaded file.'
           );
+        }
+        if (balancedResult && balancedResult.teams && balancedResult.teams.length) {
+          const existingNames = new Set(
+            balancedResult.teams.flatMap((t) => t.players.map((p) => String(p.name || '').trim().toLowerCase()))
+          );
+          const newPlayers = parsedPlayers.filter(
+            (p) => !existingNames.has(String(p.name || '').trim().toLowerCase())
+          );
+          if (newPlayers.length > 0) {
+            handleIntelligentlyAddPlayers(newPlayers);
+            return;
+          }
+          setStatusMsg(`ℹ️ All ${parsedPlayers.length} players from "${file.name}" are already assigned to squads.`);
+          return;
         }
         setPlayers(parsedPlayers);
         setRawPasteText(text);
@@ -730,6 +902,20 @@ export default function TeamBalancerView({
         );
       }
 
+      if (balancedResult && balancedResult.teams && balancedResult.teams.length) {
+        const existingNames = new Set(
+          balancedResult.teams.flatMap((t) => t.players.map((p) => String(p.name || '').trim().toLowerCase()))
+        );
+        const newPlayers = loadedPlayers.filter(
+          (p) => !existingNames.has(String(p.name || '').trim().toLowerCase())
+        );
+        if (newPlayers.length > 0) {
+          handleIntelligentlyAddPlayers(newPlayers);
+          return;
+        }
+        setStatusMsg(`ℹ️ All ${loadedPlayers.length} players from Google Sheet are already in the squads.`);
+        return;
+      }
       setPlayers(loadedPlayers);
       setBalancedResult(null);
       setStatusMsg(`✅ Imported ${loadedPlayers.length} players from Google Sheet!`);
@@ -755,6 +941,20 @@ export default function TeamBalancerView({
       );
       return;
     }
+    if (balancedResult && balancedResult.teams && balancedResult.teams.length) {
+      const existingNames = new Set(
+        balancedResult.teams.flatMap((t) => t.players.map((p) => String(p.name || '').trim().toLowerCase()))
+      );
+      const newPlayers = parsed.filter(
+        (p) => !existingNames.has(String(p.name || '').trim().toLowerCase())
+      );
+      if (newPlayers.length > 0) {
+        handleIntelligentlyAddPlayers(newPlayers);
+        return;
+      }
+      setStatusMsg(`ℹ️ All ${parsed.length} players from pasted text are already in the squads.`);
+      return;
+    }
     setPlayers(parsed);
     setBalancedResult(null);
     setStatusMsg(`✅ Parsed ${parsed.length} players from table text.`);
@@ -771,19 +971,184 @@ export default function TeamBalancerView({
     URL.revokeObjectURL(url);
   };
 
+  // Intelligently assign new player(s) into existing balanced teams without requiring reshuffling
+  const handleIntelligentlyAddPlayers = (newPlayersList) => {
+    if (!newPlayersList || !newPlayersList.length) return;
+
+    if (!balancedResult || !balancedResult.teams || !balancedResult.teams.length) {
+      setPlayers((prev) => [...prev, ...newPlayersList]);
+      setStatusMsg(`➕ Added ${newPlayersList.length} player(s) to the squad list.`);
+      return;
+    }
+
+    const result = intelligentlyAddPlayersToTeams(
+      balancedResult.teams,
+      newPlayersList,
+      balancedResult.class_weights,
+      balancedResult.classes
+    );
+
+    setBalancedResult((prev) => ({
+      ...prev,
+      teams: result.teams,
+      classes: result.classes,
+      class_weights: result.class_weights,
+      total_players: (prev.total_players || 0) + newPlayersList.length,
+    }));
+
+    setPlayers((prev) => [...prev, ...newPlayersList]);
+
+    if (result.assignments.length === 1) {
+      const a = result.assignments[0];
+      setStatusMsg(
+        `✨ Intelligently placed "${a.player.name}" (${a.player.player_class}${a.player.position ? ` · ${a.player.position}` : ''}) into ${a.teamName} — squad size & skill balance maintained without reshuffling!`
+      );
+    } else {
+      const summary = result.assignments.map((a) => `${a.player.name} → ${a.teamName}`).join(', ');
+      setStatusMsg(
+        `✨ Intelligently distributed ${result.assignments.length} player(s) (${summary}) — all teams remain balanced without reshuffling!`
+      );
+    }
+  };
+
   // Add/Update/Remove individual player rows in the interactive table
   const handleAddSinglePlayer = (e) => {
     e.preventDefault();
     if (!newPlayerName.trim()) return;
+    const names = newPlayerName.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean);
+    if (!names.length) return;
     const normCls = normalizePlayerClass(newPlayerClass) || 'C';
-    const nextPlayer = {
-      id: `BAL-P${players.length + 1}-${Date.now().toString(36).slice(-3)}`,
-      name: newPlayerName.trim(),
+
+    const newPlayers = names.map((name, idx) => ({
+      id: `BAL-P${players.length + idx + 1}-${Date.now().toString(36).slice(-3)}`,
+      name,
       player_class: normCls,
-      position: newPlayerPosition || 'CM',
-    };
-    setPlayers((prev) => [...prev, nextPlayer]);
+      position: newPlayerPosition || '',
+    }));
+
+    handleIntelligentlyAddPlayers(newPlayers);
     setNewPlayerName('');
+  };
+
+  const handleDirectAddPlayersToTeam = (teamIdx, newPlayersList) => {
+    if (!balancedResult || !balancedResult.teams || !balancedResult.teams[teamIdx]) return;
+    const weights = balancedResult.class_weights || {};
+    const team = balancedResult.teams[teamIdx];
+    const teamName = teamNames[teamIdx] ?? team.name ?? `Team ${teamIdx + 1}`;
+
+    const prepared = newPlayersList.map((p, idx) => {
+      const cls = normalizePlayerClass(p.player_class || p.class || 'C') || 'C';
+      const pos = POSITIONS.includes(String(p.position || '').toUpperCase())
+        ? String(p.position).toUpperCase()
+        : '';
+      const sp = weights[cls] ?? 1;
+      return {
+        id: p.id || `BAL-P-ADD-${Date.now().toString(36)}-${idx}`,
+        name: String(p.name || '').trim(),
+        player_class: cls,
+        position: pos,
+        skill_points: sp,
+        is_newly_added: true,
+      };
+    });
+
+    const nextTeams = balancedResult.teams.map((t, idx) => {
+      if (idx !== teamIdx) return t;
+      const updatedPlayers = [...t.players, ...prepared];
+      const classCounts = { ...(t.class_counts || {}) };
+      prepared.forEach((p) => {
+        classCounts[p.player_class] = (classCounts[p.player_class] || 0) + 1;
+      });
+      const totalSkill = updatedPlayers.reduce((sum, p) => sum + (p.skill_points || weights[p.player_class] || 1), 0);
+      return {
+        ...t,
+        players: updatedPlayers,
+        class_counts: classCounts,
+        total_skill_score: totalSkill,
+        player_count: updatedPlayers.length,
+        average_skill_score: Number((totalSkill / updatedPlayers.length).toFixed(2)),
+      };
+    });
+
+    setBalancedResult((prev) => ({
+      ...prev,
+      teams: nextTeams,
+      total_players: (prev.total_players || 0) + prepared.length,
+    }));
+    setPlayers((prev) => [...prev, ...prepared]);
+    setStatusMsg(`✓ Directly added ${prepared.length} player(s) to ${teamName}!`);
+  };
+
+  const handleMoveBalancedPlayer = (fromTeamIdx, toTeamIdx, playerIdx) => {
+    if (!balancedResult || !balancedResult.teams) return;
+    if (fromTeamIdx === toTeamIdx) return;
+    const sourceTeam = balancedResult.teams[fromTeamIdx];
+    const targetTeam = balancedResult.teams[toTeamIdx];
+    if (!sourceTeam || !targetTeam) return;
+    const player = sourceTeam.players[playerIdx];
+    if (!player) return;
+
+    const weights = balancedResult.class_weights || {};
+
+    const nextTeams = balancedResult.teams.map((t, idx) => {
+      if (idx === fromTeamIdx) {
+        const updatedPlayers = t.players.filter((_, pIdx) => pIdx !== playerIdx);
+        const classCounts = { ...(t.class_counts || {}) };
+        classCounts[player.player_class] = Math.max(0, (classCounts[player.player_class] || 1) - 1);
+        const totalSkill = updatedPlayers.reduce((sum, p) => sum + (p.skill_points || weights[p.player_class] || 1), 0);
+        return {
+          ...t,
+          players: updatedPlayers,
+          class_counts: classCounts,
+          total_skill_score: totalSkill,
+          player_count: updatedPlayers.length,
+          average_skill_score: updatedPlayers.length ? Number((totalSkill / updatedPlayers.length).toFixed(2)) : 0,
+        };
+      }
+      if (idx === toTeamIdx) {
+        const updatedPlayers = [...t.players, player];
+        const classCounts = { ...(t.class_counts || {}) };
+        classCounts[player.player_class] = (classCounts[player.player_class] || 0) + 1;
+        const totalSkill = updatedPlayers.reduce((sum, p) => sum + (p.skill_points || weights[p.player_class] || 1), 0);
+        return {
+          ...t,
+          players: updatedPlayers,
+          class_counts: classCounts,
+          total_skill_score: totalSkill,
+          player_count: updatedPlayers.length,
+          average_skill_score: Number((totalSkill / updatedPlayers.length).toFixed(2)),
+        };
+      }
+      return t;
+    });
+
+    const fromName = teamNames[fromTeamIdx] ?? sourceTeam.name ?? `Team ${fromTeamIdx + 1}`;
+    const toName = teamNames[toTeamIdx] ?? targetTeam.name ?? `Team ${toTeamIdx + 1}`;
+    setBalancedResult((prev) => ({ ...prev, teams: nextTeams }));
+    setStatusMsg(`⇄ Moved ${player.name} from ${fromName} to ${toName}!`);
+  };
+
+  const handleQuickAddPlayerToBalancedTeams = (e) => {
+    e.preventDefault();
+    if (!quickAddName.trim()) return;
+    const names = quickAddName.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean);
+    if (!names.length) return;
+    const normCls = normalizePlayerClass(quickAddClass) || 'B';
+
+    const newPlayers = names.map((name, idx) => ({
+      id: `BAL-P${players.length + idx + 1}-${Date.now().toString(36).slice(-3)}`,
+      name,
+      player_class: normCls,
+      position: quickAddPosition || '',
+    }));
+
+    if (quickAddTargetTeam === '__auto__' || quickAddTargetTeam === '') {
+      handleIntelligentlyAddPlayers(newPlayers);
+    } else {
+      const tIdx = parseInt(quickAddTargetTeam, 10);
+      handleDirectAddPlayersToTeam(tIdx, newPlayers);
+    }
+    setQuickAddName('');
   };
 
   const handleUpdatePlayerField = (playerId, field, value) => {
@@ -801,6 +1166,33 @@ export default function TeamBalancerView({
 
   const handleRemovePlayerRow = (playerId) => {
     setPlayers((prev) => prev.filter((p) => p.id !== playerId));
+    if (balancedResult && balancedResult.teams) {
+      setBalancedResult((prev) => {
+        if (!prev || !prev.teams) return prev;
+        const nextTeams = prev.teams.map((t) => {
+          const filtered = t.players.filter((p) => p.id !== playerId);
+          if (filtered.length === t.players.length) return t;
+          const classCounts = {};
+          (prev.classes || []).forEach((c) => {
+            classCounts[c] = filtered.filter((p) => p.player_class === c).length;
+          });
+          const totalSkill = filtered.reduce((sum, p) => sum + (p.skill_points || 1), 0);
+          return {
+            ...t,
+            players: filtered,
+            class_counts: classCounts,
+            total_skill_score: totalSkill,
+            player_count: filtered.length,
+            average_skill_score: filtered.length ? Number((totalSkill / filtered.length).toFixed(2)) : 0,
+          };
+        });
+        return {
+          ...prev,
+          teams: nextTeams,
+          total_players: Math.max(0, (prev.total_players || 1) - 1),
+        };
+      });
+    }
   };
 
   // Generate Balanced Teams
@@ -920,7 +1312,7 @@ export default function TeamBalancerView({
       t.players.forEach((p) => {
         const pName = String(p.name || '').replace(/"/g, '""');
         const tierLabel = getClassTierLabel(p.player_class, balancedResult.classes);
-        lines.push(`${t.team_number},"${tName}","${pName}",${p.player_class},"${tierLabel}",${p.position || 'CM'}`);
+        lines.push(`${t.team_number},"${tName}","${pName}",${p.player_class},"${tierLabel}",${p.position || ''}`);
       });
     });
     const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
@@ -949,7 +1341,9 @@ export default function TeamBalancerView({
       finalTeams,
       chosenKey,
       replaceExistingTeams,
-      parsedReferees
+      parsedReferees,
+      competitionStartDate,
+      competitionVenue.trim() || 'Thoome Pri.'
     );
     const fixtureCount = resultInfo?.fixtureCount ?? 0;
 
@@ -962,7 +1356,7 @@ export default function TeamBalancerView({
     });
 
     setStatusMsg(
-      `🏆 Saved ${finalTeams.length} balanced teams (${finalTeams.map((t) => t.name).join(', ')}) to "${chosenLabel}" (${chosenMode === 'cup' ? 'Cup' : 'League'}), automatically generated ${fixtureCount} fixtures with randomized referees, and opened competition-specific player voting!`
+      `🏆 Saved ${finalTeams.length} balanced teams (${finalTeams.map((t) => t.name).join(', ')}) to "${chosenLabel}" (${chosenMode === 'cup' ? 'Cup' : 'League'}), automatically generated ${fixtureCount} fixtures at "${competitionVenue.trim() || 'Thoome Pri.'}" with randomized referees, and opened competition-specific player voting!`
     );
   };
 
@@ -987,7 +1381,9 @@ export default function TeamBalancerView({
       finalTeams,
       mode,
       format,
-      parsedReferees
+      parsedReferees,
+      competitionStartDate,
+      competitionVenue.trim() || 'Thoome Pri.'
     );
     setNewCategoryTitle('');
 
@@ -1560,6 +1956,7 @@ export default function TeamBalancerView({
                 value={newPlayerPosition}
                 onChange={(e) => setNewPlayerPosition(e.target.value)}
               >
+                <option value="">-- Unassigned --</option>
                 {POSITIONS.map((pos) => (
                   <option key={pos} value={pos}>
                     {pos}
@@ -1827,6 +2224,110 @@ export default function TeamBalancerView({
             </div>
           </div>
 
+          {/* Quick-Add Player directly to Balanced Teams without Reshuffling */}
+          <div
+            style={{
+              background: '#082018',
+              border: '1px solid #1E4636',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              marginBottom: '16px',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '12px',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '20px' }}>⚡</span>
+              <div>
+                <strong style={{ fontSize: '13px', color: '#6CE5A0' }}>
+                  Intelligently Add Player(s) to Squads
+                </strong>
+                <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+                  New arrivals are automatically placed on the best squad to preserve equal size & skill balance without reshuffling.
+                </div>
+              </div>
+            </div>
+
+            <form
+              onSubmit={handleQuickAddPlayerToBalancedTeams}
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+                alignItems: 'center',
+                flex: '1 1 auto',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <input
+                type="text"
+                className="form-input"
+                style={{ minWidth: '150px', flex: '1 1 150px', padding: '6px 10px', fontSize: '12px' }}
+                placeholder="Player name(s) (e.g. Oti, Kamau)"
+                value={quickAddName}
+                onChange={(e) => setQuickAddName(e.target.value)}
+              />
+              <input
+                type="text"
+                maxLength={1}
+                className="form-input"
+                style={{ width: '48px', padding: '6px', textAlign: 'center', fontWeight: 800, fontSize: '12px' }}
+                placeholder="Class"
+                title="Skill Tier Class (A = Elite, down to Z = Amateur)"
+                value={quickAddClass}
+                onChange={(e) => setQuickAddClass(e.target.value.toUpperCase())}
+              />
+              <select
+                className="form-input"
+                style={{ width: '92px', padding: '6px 8px', fontSize: '12px' }}
+                value={quickAddPosition}
+                onChange={(e) => setQuickAddPosition(e.target.value)}
+              >
+                <option value="">-- Pos --</option>
+                {POSITIONS.map((pos) => (
+                  <option key={pos} value={pos}>
+                    {pos}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="form-input"
+                style={{ width: '185px', padding: '6px 8px', fontSize: '12px' }}
+                value={quickAddTargetTeam}
+                onChange={(e) => setQuickAddTargetTeam(e.target.value)}
+              >
+                <option value="__auto__">⚡ Auto-Assign (Balanced)</option>
+                {(balancedResult.teams || []).map((t, tIdx) => {
+                  const assignedName = teamNames[tIdx] ?? t.name ?? `Team ${tIdx + 1}`;
+                  return (
+                    <option key={t.id || tIdx} value={String(tIdx)}>
+                      Direct to {assignedName}
+                    </option>
+                  );
+                })}
+              </select>
+              <button
+                type="submit"
+                style={{
+                  background: '#16352A',
+                  color: '#6CE5A0',
+                  border: '1px solid #2F7D5C',
+                  borderRadius: '6px',
+                  padding: '7px 14px',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                + Add to Squads
+              </button>
+            </form>
+          </div>
+
           {/* Balanced Team Cards Grid */}
           <div
             style={{
@@ -1932,6 +2433,78 @@ export default function TeamBalancerView({
                     </span>
                   </div>
 
+                  {/* Inline Direct Add Player to this Team */}
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="+ Player name…"
+                      style={{ flex: 1, padding: '4px 8px', fontSize: '11px' }}
+                      value={cardInlineAddName[tIdx] || ''}
+                      onChange={(e) => setCardInlineAddName({ ...cardInlineAddName, [tIdx]: e.target.value })}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const n = (cardInlineAddName[tIdx] || '').trim();
+                          if (!n) return;
+                          handleDirectAddPlayersToTeam(tIdx, [{
+                            name: n,
+                            player_class: cardInlineAddClass[tIdx] || 'B',
+                            position: cardInlineAddPos[tIdx] || '',
+                          }]);
+                          setCardInlineAddName({ ...cardInlineAddName, [tIdx]: '' });
+                        }
+                      }}
+                    />
+                    <select
+                      className="form-input"
+                      style={{ width: '48px', padding: '4px 2px', fontSize: '10.5px' }}
+                      value={cardInlineAddClass[tIdx] || 'B'}
+                      onChange={(e) => setCardInlineAddClass({ ...cardInlineAddClass, [tIdx]: e.target.value })}
+                    >
+                      {balancedResult.classes.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <select
+                      className="form-input"
+                      style={{ width: '64px', padding: '4px 2px', fontSize: '10.5px' }}
+                      value={cardInlineAddPos[tIdx] || ''}
+                      onChange={(e) => setCardInlineAddPos({ ...cardInlineAddPos, [tIdx]: e.target.value })}
+                    >
+                      <option value="">-- Pos --</option>
+                      {POSITIONS.map((pos) => (
+                        <option key={pos} value={pos}>{pos}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const n = (cardInlineAddName[tIdx] || '').trim();
+                        if (!n) return;
+                        handleDirectAddPlayersToTeam(tIdx, [{
+                          name: n,
+                          player_class: cardInlineAddClass[tIdx] || 'B',
+                          position: cardInlineAddPos[tIdx] || '',
+                        }]);
+                        setCardInlineAddName({ ...cardInlineAddName, [tIdx]: '' });
+                      }}
+                      style={{
+                        background: '#C9A227',
+                        color: '#16201B',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '5px 8px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+
                   {/* Players List in Team */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {team.players.map((p, pIdx) => {
@@ -1977,20 +2550,98 @@ export default function TeamBalancerView({
                             <span style={{ fontSize: '13px', fontWeight: 700, color: '#F4F2EA' }}>
                               {p.name}
                             </span>
+                            {p.is_newly_added && (
+                              <span
+                                style={{
+                                  fontSize: '9px',
+                                  color: '#6CE5A0',
+                                  background: 'rgba(108,229,160,0.18)',
+                                  border: '1px solid #2F7D5C',
+                                  borderRadius: '4px',
+                                  padding: '1px 5px',
+                                  fontWeight: 800,
+                                }}
+                                title="Intelligently placed to preserve team balance without reshuffling"
+                              >
+                                Added
+                              </span>
+                            )}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span
+                            <select
+                              value={p.position || ''}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                const newPos = e.target.value;
+                                setBalancedResult((prev) => {
+                                  if (!prev || !prev.teams) return prev;
+                                  const nextTeams = prev.teams.map((teamItem, tIndex) => {
+                                    if (tIndex !== tIdx) return teamItem;
+                                    return {
+                                      ...teamItem,
+                                      players: teamItem.players.map((pItem, pIndex) =>
+                                        pIndex === pIdx ? { ...pItem, position: newPos } : pItem
+                                      ),
+                                    };
+                                  });
+                                  return { ...prev, teams: nextTeams };
+                                });
+                              }}
                               style={{
-                                fontSize: '10px',
-                                color: '#8FA89B',
-                                background: '#082018',
-                                padding: '2px 6px',
+                                fontSize: '10.5px',
+                                color: p.position ? '#C9A227' : '#9CA3AF',
+                                background: p.position ? '#082018' : '#1F2937',
+                                border: p.position ? '1px solid #1E4637' : '1px dashed #6B7280',
+                                padding: '2px 5px',
                                 borderRadius: '4px',
                                 fontWeight: 700,
+                                cursor: 'pointer',
                               }}
+                              title="Click to manually assign or change player's position"
                             >
-                              {p.position || 'CM'}
-                            </span>
+                              <option value="">-- Unassigned --</option>
+                              {POSITIONS.filter(Boolean).map((pos) => (
+                                <option key={pos} value={pos}>
+                                  {pos}
+                                </option>
+                              ))}
+                            </select>
+                            {balancedResult.teams.length > 1 && (
+                              <select
+                                value=""
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  const targetIdx = parseInt(e.target.value, 10);
+                                  if (!isNaN(targetIdx) && targetIdx !== tIdx) {
+                                    handleMoveBalancedPlayer(tIdx, targetIdx, pIdx);
+                                  }
+                                }}
+                                title={`Move ${p.name} to another balanced team`}
+                                style={{
+                                  fontSize: '10px',
+                                  color: '#6CE5A0',
+                                  background: '#0B2920',
+                                  border: '1px solid #2B5746',
+                                  padding: '2px 4px',
+                                  borderRadius: '4px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <option value="" disabled>⇄ Move...</option>
+                                {balancedResult.teams.map((otherTeam, otherIdx) => {
+                                  if (otherIdx === tIdx) return null;
+                                  const otherName = teamNames[otherIdx] ?? otherTeam.name ?? `Team ${otherIdx + 1}`;
+                                  return (
+                                    <option key={otherIdx} value={String(otherIdx)}>
+                                      → {otherName}
+                                    </option>
+                                  );
+                                })}
+                              </select>
+                            )}
                           </div>
                         </div>
                       );
@@ -2045,6 +2696,64 @@ export default function TeamBalancerView({
               />
               <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '4px' }}>
                 These referees will be saved to the competition and randomly assigned to all generated fixtures. Managers can also change the referee for any unplayed fixture at any time.
+              </div>
+            </div>
+
+            {/* Competition Scheduling & Match Venue Form Inputs */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                gap: '12px',
+              }}
+            >
+              <div
+                style={{
+                  background: '#0D2E23',
+                  border: '1px solid #2A5A46',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                }}
+              >
+                <label style={{ fontSize: '11.5px', fontWeight: 800, color: '#C9A227', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  🗓️ Competition Fixtures Start Date (Optional)
+                </label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={competitionStartDate}
+                  onChange={(e) => setCompetitionStartDate(e.target.value)}
+                  style={{ width: '160px' }}
+                  title="Kickoff date for generated fixtures"
+                />
+                <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '4px' }}>
+                  Set the kickoff date for the first match day. If left blank, it defaults to the upcoming enabled match day from today.
+                </div>
+              </div>
+
+              <div
+                style={{
+                  background: '#0D2E23',
+                  border: '1px solid #2A5A46',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                }}
+              >
+                <label style={{ fontSize: '11.5px', fontWeight: 800, color: '#C9A227', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  🏟️ Match Venue
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={competitionVenue}
+                  onChange={(e) => setCompetitionVenue(e.target.value)}
+                  placeholder="e.g. Thoome Pri."
+                  style={{ width: '100%', maxWidth: '280px', fontWeight: 700 }}
+                  title="Primary match venue for this competition"
+                />
+                <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '4px' }}>
+                  Primary match ground for this competition (defaults to <strong>Thoome Pri.</strong>, editable here).
+                </div>
               </div>
             </div>
 
@@ -2179,6 +2888,19 @@ export default function TeamBalancerView({
                         <option value="cup">🏆 Knockout Cup (Groups + QF/SF/Final)</option>
                       </select>
                     </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                      Match Venue (Ground)
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={competitionVenue}
+                      onChange={(e) => setCompetitionVenue(e.target.value)}
+                      placeholder="e.g. Thoome Pri."
+                      style={{ width: '100%', fontWeight: 700 }}
+                    />
                   </div>
                   <div style={{ fontSize: '11px', color: '#8FA89B' }}>
                     Automatically creates the competition, generates all fixtures, and opens TOTW/TOTT voting for these players.
@@ -2387,10 +3109,11 @@ export default function TeamBalancerView({
                       <td style={{ padding: '6px 12px', textAlign: 'center' }}>
                         <select
                           className="form-input"
-                          value={p.position || 'CM'}
+                          value={p.position || ''}
                           onChange={(e) => handleUpdatePlayerField(p.id, 'position', e.target.value)}
                           style={{ padding: '5px 8px', fontSize: '12px', width: '84px' }}
                         >
+                          <option value="">--</option>
                           {POSITIONS.map((pos) => (
                             <option key={pos} value={pos}>
                               {pos}
