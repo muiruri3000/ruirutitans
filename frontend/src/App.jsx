@@ -313,6 +313,7 @@ export default function App() {
   const cat = data?.categories?.[activeCategoryKey] || data?.categories?.[leagueCategoryKey];
   const leagueCat = data?.categories?.[leagueCategoryKey] || cat;
   const cupCat = data?.categories?.[cupCategoryKey];
+  const effectiveCategoryKey = (data?.categories?.[activeCategoryKey] ? activeCategoryKey : leagueCategoryKey) || activeCategoryKey;
 
   const teamsById = useMemo(() => {
     const map = {};
@@ -536,7 +537,39 @@ export default function App() {
         return f;
       });
       const groupFixtures = syncCupGroupFixtures(c, fixtures);
-      return { ...c, fixtures, ...(groupFixtures ? { groupFixtures } : {}) };
+      const rounds = (c.rounds || []).map((r) =>
+        Array.isArray(r)
+          ? r.map((t) =>
+              t?.id === fId
+                ? {
+                    ...t,
+                    match: {
+                      ...t.match,
+                      played: true,
+                      events: [...(t.match?.events || []), event],
+                    },
+                  }
+                : t
+            )
+          : {
+              ...r,
+              ties: (r.ties || []).map((t) =>
+                t.id === fId
+                  ? {
+                      ...t,
+                      played: true,
+                      events: [...(t.events || []), event],
+                    }
+                  : t
+              ),
+            }
+      );
+      return {
+        ...c,
+        fixtures,
+        ...(groupFixtures ? { groupFixtures } : {}),
+        ...(c.rounds ? { rounds } : {}),
+      };
     });
   };
 
@@ -551,7 +584,37 @@ export default function App() {
         return f;
       });
       const groupFixtures = syncCupGroupFixtures(c, fixtures);
-      return { ...c, fixtures, ...(groupFixtures ? { groupFixtures } : {}) };
+      const rounds = (c.rounds || []).map((r) =>
+        Array.isArray(r)
+          ? r.map((t) =>
+              t?.id === fId
+                ? {
+                    ...t,
+                    match: {
+                      ...t.match,
+                      events: (t.match?.events || []).filter((_, idx) => idx !== eventIndex),
+                    },
+                  }
+                : t
+            )
+          : {
+              ...r,
+              ties: (r.ties || []).map((t) =>
+                t.id === fId
+                  ? {
+                      ...t,
+                      events: (t.events || []).filter((_, idx) => idx !== eventIndex),
+                    }
+                  : t
+              ),
+            }
+      );
+      return {
+        ...c,
+        fixtures,
+        ...(groupFixtures ? { groupFixtures } : {}),
+        ...(c.rounds ? { rounds } : {}),
+      };
     });
   };
 
@@ -2904,24 +2967,24 @@ export default function App() {
             suspensions={suspensions}
             referees={cat.referees}
             schedule={cat?.schedule}
-            activeCategoryKey={activeCategoryKey}
+            activeCategoryKey={effectiveCategoryKey}
             categoryLabel={cat?.label}
             isCmsMode={isCmsMode}
             initialFilter={fixturesInitialFilter}
-            onTogglePlayed={(fId) => handleTogglePlayed(fId, activeCategoryKey)}
-            onAddEvent={(fId, ev) => handleAddEvent(fId, ev, activeCategoryKey)}
-            onRemoveEvent={(fId, idx) => handleRemoveEvent(fId, idx, activeCategoryKey)}
-            onSetWalkover={(fId, wId) => handleSetWalkover(fId, wId, activeCategoryKey)}
-            onSetReferee={(fId, ref) => handleSetReferee(fId, ref, activeCategoryKey)}
-            onAddReferee={(refName) => handleAddReferee(refName, activeCategoryKey)}
-            onRemoveReferee={(refName) => handleRemoveReferee(refName, activeCategoryKey)}
-            onRandomizeReferees={() => handleRandomizeReferees(activeCategoryKey)}
-            onUpdateSchedule={(s, apply) => handleUpdateSchedule(activeCategoryKey, s, apply)}
-            onMoveFixture={(fId, newDateStr) => handleMoveFixtureDate(activeCategoryKey, fId, newDateStr)}
-            onBatchMoveFixtures={(map) => handleBatchMoveFixtures(activeCategoryKey, map)}
-            onOpenH2H={(t1, t2) => handleOpenH2H(t1, t2, activeCategoryKey)}
+            onTogglePlayed={(fId) => handleTogglePlayed(fId, effectiveCategoryKey)}
+            onAddEvent={(fId, ev) => handleAddEvent(fId, ev, effectiveCategoryKey)}
+            onRemoveEvent={(fId, idx) => handleRemoveEvent(fId, idx, effectiveCategoryKey)}
+            onSetWalkover={(fId, wId) => handleSetWalkover(fId, wId, effectiveCategoryKey)}
+            onSetReferee={(fId, ref) => handleSetReferee(fId, ref, effectiveCategoryKey)}
+            onAddReferee={(refName) => handleAddReferee(refName, effectiveCategoryKey)}
+            onRemoveReferee={(refName) => handleRemoveReferee(refName, effectiveCategoryKey)}
+            onRandomizeReferees={() => handleRandomizeReferees(effectiveCategoryKey)}
+            onUpdateSchedule={(s, apply) => handleUpdateSchedule(effectiveCategoryKey, s, apply)}
+            onMoveFixture={(fId, newDateStr) => handleMoveFixtureDate(effectiveCategoryKey, fId, newDateStr)}
+            onBatchMoveFixtures={(map) => handleBatchMoveFixtures(effectiveCategoryKey, map)}
+            onOpenH2H={(t1, t2) => handleOpenH2H(t1, t2, effectiveCategoryKey)}
             onGenerateFixtures={handleGenerateFixtures}
-            onOpenEditCategory={() => setEditingCategoryKey(activeCategoryKey)}
+            onOpenEditCategory={() => setEditingCategoryKey(effectiveCategoryKey)}
             onSelectTeam={handleOpenTeamDetails}
           />
         )}

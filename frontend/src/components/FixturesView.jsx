@@ -89,6 +89,7 @@ export default function FixturesView({
   onSelectTeam,
 }) {
   const [openFixtureIds, setOpenFixtureIds] = useState({});
+  const [recentlyEditedIds, setRecentlyEditedIds] = useState({});
   const [statusFilter, setStatusFilter] = useState(initialFilter); // 'all' | 'results' | 'upcoming'
   const [teamFilter, setTeamFilter] = useState('');
   const [newRefInput, setNewRefInput] = useState('');
@@ -296,6 +297,9 @@ export default function FixturesView({
       ev.assistPlayerId = draft.assistPlayerId;
     }
 
+    setRecentlyEditedIds((prev) => ({ ...prev, [fId]: true }));
+    setOpenFixtureIds((prev) => ({ ...prev, [fId]: true }));
+
     onAddEvent(fId, ev);
     // Reset draft
     updateGoalDraft(fId, teamId, 'playerId', '');
@@ -306,6 +310,8 @@ export default function FixturesView({
   const handleRecordInterference = (fId) => {
     const draft = interfDrafts[fId];
     if (!draft || !draft.teamId || !draft.playerId) return;
+    setRecentlyEditedIds((prev) => ({ ...prev, [fId]: true }));
+    setOpenFixtureIds((prev) => ({ ...prev, [fId]: true }));
     onAddEvent(fId, {
       teamId: draft.teamId,
       playerId: draft.playerId,
@@ -355,6 +361,10 @@ export default function FixturesView({
   const upcomingCount = fixtures.filter((f) => !f.played && !f.walkover).length;
 
   const filteredFixtures = fixtures.filter((f) => {
+    // In CMS mode, if a fixture is currently open or was recently edited, keep it visible
+    // so recording goals or toggling played status never makes the fixture suddenly disappear!
+    if (isCmsMode && (openFixtureIds[f.id] || recentlyEditedIds[f.id])) return true;
+
     const isCompleted = Boolean(f.played || f.walkover);
     if (statusFilter === 'results' && !isCompleted) return false;
     if (statusFilter === 'upcoming' && isCompleted) return false;
@@ -407,7 +417,10 @@ export default function FixturesView({
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => setStatusFilter(tab.key)}
+                onClick={() => {
+                  setStatusFilter(tab.key);
+                  setRecentlyEditedIds({});
+                }}
                 style={{
                   background: statusFilter === tab.key ? '#C9A227' : 'transparent',
                   color: statusFilter === tab.key ? '#16201B' : '#8FA89B',
@@ -1121,7 +1134,7 @@ export default function FixturesView({
                       border: isCompleted ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(201, 162, 39, 0.4)',
                     }}
                   >
-                    {f.walkover ? 'WALKOVER (3-0)' : isCompleted ? 'FULL TIME RESULT' : 'UPCOMING FIXTURE'}
+                    {f.walkover ? 'WALKOVER (3-0)' : isCompleted ? 'FULL TIME RESULT' : (f.events && f.events.length > 0) ? 'MATCH IN PROGRESS / LOGGED' : 'UPCOMING FIXTURE'}
                   </span>
 
                   {/* Referee display or selector (Admin can change referee for any unplayed fixture) */}
@@ -1275,7 +1288,7 @@ export default function FixturesView({
                     textAlign: 'center',
                   }}
                 >
-                  {isCompleted ? `${hs} - ${as}` : 'VS'}
+                  {isCompleted || (f.events && f.events.length > 0) ? `${hs} - ${as}` : 'VS'}
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', textAlign: 'right' }}>
@@ -1433,7 +1446,16 @@ export default function FixturesView({
                         <span key={idx} className="ev-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                           <span>{e.type === 'goal' ? (e.penalty ? '🎯⚽' : '⚽') : e.type === 'owngoal' ? '🥅' : e.type === 'yellow' ? '🟨' : '🟥'}</span>
                           <span>{label}</span>
-                          <span className="ev-remove" onClick={() => onRemoveEvent(f.id, idx)} title="Delete event">✕</span>
+                          <span
+                            className="ev-remove"
+                            onClick={() => {
+                              setRecentlyEditedIds((prev) => ({ ...prev, [f.id]: true }));
+                              onRemoveEvent(f.id, idx);
+                            }}
+                            title="Delete event"
+                          >
+                            ✕
+                          </span>
                         </span>
                       );
                     })}
@@ -1536,6 +1558,8 @@ export default function FixturesView({
                               onChange={(e) => {
                                 const pId = e.target.value;
                                 if (!pId) return;
+                                setRecentlyEditedIds((prev) => ({ ...prev, [f.id]: true }));
+                                setOpenFixtureIds((prev) => ({ ...prev, [f.id]: true }));
                                 onAddEvent(f.id, { teamId: team.id, playerId: pId, type: 'yellow' });
                                 e.target.value = '';
                               }}
@@ -1552,6 +1576,8 @@ export default function FixturesView({
                               onChange={(e) => {
                                 const pId = e.target.value;
                                 if (!pId) return;
+                                setRecentlyEditedIds((prev) => ({ ...prev, [f.id]: true }));
+                                setOpenFixtureIds((prev) => ({ ...prev, [f.id]: true }));
                                 onAddEvent(f.id, { teamId: team.id, playerId: pId, type: 'red' });
                                 e.target.value = '';
                               }}
