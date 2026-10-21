@@ -79,7 +79,19 @@ PRODUCTION_DOMAINS = ["ruirutitans.com", ".ruirutitans.com"]
 
 env_allowed_hosts = os.environ.get("ALLOWED_HOSTS", "").strip()
 if env_allowed_hosts:
-    ALLOWED_HOSTS = [h.strip() for h in env_allowed_hosts.split(",") if h.strip()]
+    raw_hosts = [h.strip() for h in env_allowed_hosts.split(",") if h.strip()]
+    ALLOWED_HOSTS = []
+    for h in raw_hosts:
+        if h not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(h)
+        # In Django, leading period '.ruirutitans.com' matches the domain and any subdomain (*.ruirutitans.com)
+        if h.startswith("*."):
+            normalized = "." + h[2:]
+            if normalized not in ALLOWED_HOSTS:
+                ALLOWED_HOSTS.append(normalized)
+    for prod_domain in PRODUCTION_DOMAINS:
+        if prod_domain not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(prod_domain)
 else:
     ALLOWED_HOSTS = list(PRODUCTION_DOMAINS)
 

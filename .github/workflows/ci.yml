@@ -37,7 +37,7 @@ jobs:
         env:
           SECRET_KEY: ci-only-test-secret-key-not-for-production
           DEBUG: "True"
-          ALLOWED_HOSTS: localhost,127.0.0.1
+          ALLOWED_HOSTS: localhost,127.0.0.1,ruirutitans.com,.ruirutitans.com
           DB_ENGINE: sqlite
         run: python manage.py check
 
@@ -45,7 +45,7 @@ jobs:
         env:
           SECRET_KEY: ci-only-test-secret-key-not-for-production
           DEBUG: "True"
-          ALLOWED_HOSTS: localhost,127.0.0.1
+          ALLOWED_HOSTS: localhost,127.0.0.1,ruirutitans.com,.ruirutitans.com
           DB_ENGINE: sqlite
         run: python manage.py test
 
