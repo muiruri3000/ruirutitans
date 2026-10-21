@@ -1,5 +1,7 @@
 asgiref==3.12.1
+cryptography>=42.0.0
 Django==6.1.2
 django-cors-headers==4.9.0
 djangorestframework==3.18.3
+PyMySQL>=1.1.0,<2.0.0
 sqlparse==0.6.0

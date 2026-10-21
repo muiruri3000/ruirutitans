@@ -31,7 +31,8 @@ db.sqlite3-journal
 media/
 staticfiles/
 backups/
-data/
+/data/
+!frontend/src/data/
 
 # Environment variables
 .env
