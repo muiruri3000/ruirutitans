@@ -241,23 +241,48 @@ jobs:
         fi
         echo "✓ Required secret 'ruirutitans-secrets' is verified with 'SECRET_KEY' populated."
 
-        # 3b. Verify MySQL credentials exist in ruirutitans-secrets
-        for key in MYSQL_DATABASE MYSQL_USER MYSQL_PASSWORD MYSQL_ROOT_PASSWORD; do
-          val=$(kubectl get secret ruirutitans-secrets -n ruirutitans -o jsonpath="{.data.$key}" 2>/dev/null || true)
-          if [ -z "$val" ]; then
-            echo "::error::Secret 'ruirutitans-secrets' exists in namespace 'ruirutitans' but is missing required MySQL key '$key'!"
-            echo "To update the secret with MySQL credentials on your K3s cluster:"
-            echo "  kubectl create secret generic ruirutitans-secrets -n ruirutitans \\"
-            echo "    --from-literal=SECRET_KEY=\"<EXISTING_SECRET_KEY>\" \\"
-            echo "    --from-literal=MYSQL_DATABASE=\"ruirutitans\" \\"
-            echo "    --from-literal=MYSQL_USER=\"titans_user\" \\"
-            echo "    --from-literal=MYSQL_PASSWORD=\"<YOUR_DB_PASSWORD>\" \\"
-            echo "    --from-literal=MYSQL_ROOT_PASSWORD=\"<YOUR_ROOT_PASSWORD>\" \\"
-            echo "    --dry-run=client -o yaml | kubectl apply -f -"
-            exit 1
-          fi
-        done
-        echo "✓ MySQL secret credentials (database, user, password, root password) are verified."
+        # 3b. Verify or Auto-Provision MySQL credentials in ruirutitans-secrets
+        NEEDS_PATCH=false
+        PATCH_DATA=""
+
+        HAS_DB=$(kubectl get secret ruirutitans-secrets -n ruirutitans -o jsonpath='{.data.MYSQL_DATABASE}' 2>/dev/null || true)
+        if [ -z "$HAS_DB" ]; then
+          NEEDS_PATCH=true
+          B64_DB=$(python3 -c "import base64; print(base64.b64encode(b'ruirutitans').decode())")
+          PATCH_DATA="$PATCH_DATA,\"MYSQL_DATABASE\":\"$B64_DB\""
+        fi
+
+        HAS_USER=$(kubectl get secret ruirutitans-secrets -n ruirutitans -o jsonpath='{.data.MYSQL_USER}' 2>/dev/null || true)
+        if [ -z "$HAS_USER" ]; then
+          NEEDS_PATCH=true
+          B64_USER=$(python3 -c "import base64; print(base64.b64encode(b'titans_user').decode())")
+          PATCH_DATA="$PATCH_DATA,\"MYSQL_USER\":\"$B64_USER\""
+        fi
+
+        HAS_PASS=$(kubectl get secret ruirutitans-secrets -n ruirutitans -o jsonpath='{.data.MYSQL_PASSWORD}' 2>/dev/null || true)
+        if [ -z "$HAS_PASS" ]; then
+          NEEDS_PATCH=true
+          AUTO_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
+          B64_PASS=$(python3 -c "import base64; print(base64.b64encode('$AUTO_PASS'.encode()).decode())")
+          PATCH_DATA="$PATCH_DATA,\"MYSQL_PASSWORD\":\"$B64_PASS\""
+        fi
+
+        HAS_ROOT_PASS=$(kubectl get secret ruirutitans-secrets -n ruirutitans -o jsonpath='{.data.MYSQL_ROOT_PASSWORD}' 2>/dev/null || true)
+        if [ -z "$HAS_ROOT_PASS" ]; then
+          NEEDS_PATCH=true
+          AUTO_ROOT_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
+          B64_ROOT_PASS=$(python3 -c "import base64; print(base64.b64encode('$AUTO_ROOT_PASS'.encode()).decode())")
+          PATCH_DATA="$PATCH_DATA,\"MYSQL_ROOT_PASSWORD\":\"$B64_ROOT_PASS\""
+        fi
+
+        if [ "$NEEDS_PATCH" = true ]; then
+          echo "Notice: Auto-provisioning missing MySQL credentials into 'ruirutitans-secrets'..."
+          CLEAN_PATCH="${PATCH_DATA#,}"
+          kubectl patch secret ruirutitans-secrets -n ruirutitans --type merge -p "{\"data\":{$CLEAN_PATCH}}"
+          echo "✓ Successfully provisioned MySQL credentials into 'ruirutitans-secrets'."
+        else
+          echo "✓ MySQL secret credentials (database, user, password, root password) are verified."
+        fi
 
         # 4. Verify TLS Secret ruirutitans-tls-cert exists and contains valid tls.crt and tls.key
         if ! kubectl get secret ruirutitans-tls-cert -n ruirutitans > /dev/null 2>&1; then
