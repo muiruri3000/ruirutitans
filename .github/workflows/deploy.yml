@@ -142,7 +142,7 @@ jobs:
       name: production
       url: https://ruirutitans.com
     env:
-      KUBECONFIG: ${{ runner.temp }}/kubeconfig
+      KUBECONFIG: /tmp/kubeconfig
 
     steps:
     - name: Checkout repository
