@@ -839,47 +839,121 @@ export default function App() {
     });
   };
 
-  const handleAddPlayers = (teamId, names, position = '', customUsername = '', customPassword = '') => {
-    updateActiveCat((c) => {
-      const teams = c.teams.map((t) => {
+  const handleAddPlayers = (
+    teamId,
+    namesOrPlayerObj,
+    position = '',
+    customUsername = '',
+    customPassword = '',
+    targetCategoryKey = null,
+    specificPlayerId = null,
+    jerseyNumber = null
+  ) => {
+    // Normalize names to an array
+    let names = [];
+    if (Array.isArray(namesOrPlayerObj)) {
+      names = namesOrPlayerObj.map((n) => (typeof n === 'string' ? n.trim() : (n?.name || '').trim())).filter(Boolean);
+    } else if (typeof namesOrPlayerObj === 'string') {
+      names = namesOrPlayerObj.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean);
+    } else if (namesOrPlayerObj && typeof namesOrPlayerObj === 'object') {
+      if (namesOrPlayerObj.name) names = [namesOrPlayerObj.name.trim()];
+      if (namesOrPlayerObj.id && !specificPlayerId) specificPlayerId = namesOrPlayerObj.id;
+      if (namesOrPlayerObj.position && !position) position = namesOrPlayerObj.position;
+      if (namesOrPlayerObj.username && !customUsername) customUsername = namesOrPlayerObj.username;
+      if (namesOrPlayerObj.jersey_number && !jerseyNumber) jerseyNumber = namesOrPlayerObj.jersey_number;
+    }
+
+    if (!names.length) return null;
+
+    const cleanPos = typeof position === 'string' ? position.trim() : (Array.isArray(position) ? String(position[0] || '').trim() : '');
+    const cleanUname = typeof customUsername === 'string' ? customUsername.trim() : (Array.isArray(customUsername) ? String(customUsername[0] || '').trim() : '');
+    const cleanPass = typeof customPassword === 'string' ? customPassword.trim() : '';
+
+    let newlyCreatedFirstPlayerId = null;
+
+    // Determine which categories contain this teamId
+    const catKeysToUpdate = new Set();
+    if (targetCategoryKey && data?.categories?.[targetCategoryKey]) {
+      catKeysToUpdate.add(targetCategoryKey);
+    }
+    // Also check all categories to ensure the team roster stays updated in every competition
+    Object.keys(data?.categories || {}).forEach((k) => {
+      const c = data.categories[k];
+      if (c?.teams?.some((t) => t.id === teamId)) {
+        catKeysToUpdate.add(k);
+      }
+    });
+
+    // Fallback to activeCategoryKey or leagueCategoryKey if team wasn't located in any category yet
+    if (catKeysToUpdate.size === 0) {
+      if (activeCategoryKey && data?.categories?.[activeCategoryKey]) {
+        catKeysToUpdate.add(activeCategoryKey);
+      } else if (leagueCategoryKey && data?.categories?.[leagueCategoryKey]) {
+        catKeysToUpdate.add(leagueCategoryKey);
+      }
+    }
+
+    const nextCategories = { ...data.categories };
+
+    catKeysToUpdate.forEach((catKey) => {
+      const currentCat = nextCategories[catKey];
+      if (!currentCat || !Array.isArray(currentCat.teams)) return;
+
+      const teams = currentCat.teams.map((t) => {
         if (t.id === teamId) {
-          const existingIds = new Set(t.players.map((p) => p.id));
+          const existingIds = new Set((t.players || []).map((p) => p.id));
           let nextSeq = 1;
-          t.players.forEach((p) => {
+          (t.players || []).forEach((p) => {
             const match = String(p.id || '').match(/-P(\d+)$/i);
             if (match) {
               const num = parseInt(match[1], 10);
               if (num >= nextSeq) nextSeq = num + 1;
             }
           });
+
           const newPlayers = names.map((n, idx) => {
-            while (existingIds.has(`${t.id}-P${nextSeq}`)) {
+            let permId = specificPlayerId && idx === 0 ? specificPlayerId : null;
+            if (!permId) {
+              while (existingIds.has(`${t.id}-P${nextSeq}`)) {
+                nextSeq++;
+              }
+              permId = `${t.id}-P${nextSeq}`;
               nextSeq++;
             }
-            const permId = `${t.id}-P${nextSeq}`;
             existingIds.add(permId);
-            nextSeq++;
+
+            if (!newlyCreatedFirstPlayerId && idx === 0) {
+              newlyCreatedFirstPlayerId = permId;
+            }
+
             const defaultUname =
               n
                 .trim()
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, '_')
                 .replace(/^_|_$/g, '') || permId.toLowerCase();
+
             return {
               id: permId,
               permanentId: permId,
               name: n,
-              username: idx === 0 && customUsername.trim() ? customUsername.trim().toLowerCase() : defaultUname,
-              password: customPassword.trim() || '',
-              position: position || '',
+              username: idx === 0 && cleanUname ? cleanUname.toLowerCase() : defaultUname,
+              password: cleanPass || '',
+              position: cleanPos || '',
+              jersey_number: jerseyNumber || undefined,
             };
           });
-          return { ...t, players: [...t.players, ...newPlayers] };
+
+          return { ...t, players: [...(t.players || []), ...newPlayers] };
         }
         return t;
       });
-      return { ...c, teams };
+
+      nextCategories[catKey] = { ...currentCat, teams };
     });
+
+    commitData({ ...data, categories: nextCategories });
+    return newlyCreatedFirstPlayerId;
   };
 
   const handleRemovePlayer = (teamId, playerId) => {
@@ -3994,6 +4068,7 @@ export default function App() {
             onOpenEditCategory={() => setEditingCategoryKey(effectiveCategoryKey)}
             onSelectTeam={handleOpenTeamDetails}
             onReportSaved={(fId, reportData) => handleSaveFixtureReport(fId, reportData, effectiveCategoryKey)}
+            onAddPlayers={handleAddPlayers}
           />
         )}
 
@@ -4372,7 +4447,7 @@ export default function App() {
           allCategories={data.categories}
           isCmsMode={isCmsMode}
           onMovePlayer={handleMovePlayer}
-          onAddPlayers={handleAddPlayers}
+          onAddPlayers={(tId, names, pos, u, p) => handleAddPlayers(tId, names, pos, u, p, teamModalState.categoryKey || activeCategoryKey)}
           activeSuspensionsMap={
             (teamModalState.categoryKey || activeCategoryKey) === activeCategoryKey
               ? suspensions

@@ -154,6 +154,7 @@ export default function FixturesView({
   onOpenEditCategory,
   onSelectTeam,
   onReportSaved = null,
+  onAddPlayers = null,
 }) {
   const [activeReportFixture, setActiveReportFixture] = useState(null);
   const [showAIReportModal, setShowAIReportModal] = useState(false);
@@ -163,6 +164,11 @@ export default function FixturesView({
   const [teamFilter, setTeamFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [newRefInput, setNewRefInput] = useState('');
+
+  // Inline quick player addition state: { [teamId]: boolean } or null
+  const [quickAddTeam, setQuickAddTeam] = useState(null); // { teamId, fixtureId }
+  const [quickPlayerName, setQuickPlayerName] = useState('');
+  const [quickPlayerPos, setQuickPlayerPos] = useState('');
 
   // Per-fixture goal recording draft state { [fId]: { [teamId]: { playerId, type: 'goal'|'penalty'|'owngoal', assistPlayerId } } }
   const [goalDrafts, setGoalDrafts] = useState({});
@@ -349,6 +355,27 @@ export default function FixturesView({
       if (field === 'teamId') next.playerId = ''; // reset player when team changes
       return { ...prev, [fId]: next };
     });
+  };
+
+  const handleSaveQuickPlayer = (fId, teamId) => {
+    const rawName = (quickPlayerName || '').trim();
+    if (!rawName || !onAddPlayers) return;
+    const cleanPos = (quickPlayerPos || '').trim().toUpperCase();
+    const newId = onAddPlayers(
+      teamId,
+      rawName,
+      cleanPos,
+      '',
+      '',
+      activeCategoryKey
+    );
+    const targetField = quickAddTeam?.targetField === 'assistPlayerId' ? 'assistPlayerId' : 'playerId';
+    if (newId) {
+      updateGoalDraft(fId, teamId, targetField, newId);
+    }
+    setQuickPlayerName('');
+    setQuickPlayerPos('');
+    setQuickAddTeam(null);
   };
 
   const handleRecordGoal = (fId, teamId) => {
@@ -2010,16 +2037,104 @@ export default function FixturesView({
 
                           {/* Goal recording form */}
                           <div style={{ background: '#0A241C', padding: '8px', borderRadius: '6px', marginBottom: '8px' }}>
-                            <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#8FA89B', marginBottom: '4px' }}>
-                              ⚽ RECORD GOAL (REGULAR / PENALTY / OWN GOAL + ASSIST):
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                              <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#8FA89B' }}>
+                                ⚽ RECORD GOAL (REGULAR / PENALTY / OWN GOAL + ASSIST):
+                              </div>
+                              {onAddPlayers && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (quickAddTeam?.teamId === team.id && quickAddTeam?.fixtureId === f.id) {
+                                      setQuickAddTeam(null);
+                                    } else {
+                                      setQuickAddTeam({ teamId: team.id, fixtureId: f.id });
+                                      setQuickPlayerName('');
+                                      setQuickPlayerPos('');
+                                    }
+                                  }}
+                                  style={{
+                                    background: 'transparent',
+                                    border: '1px solid #C9A227',
+                                    color: '#C9A227',
+                                    borderRadius: '4px',
+                                    padding: '1px 6px',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  {quickAddTeam?.teamId === team.id && quickAddTeam?.fixtureId === f.id ? '✕ Cancel' : '+ Add Player'}
+                                </button>
+                              )}
                             </div>
+
+                            {/* Inline Quick Add Player Row */}
+                            {quickAddTeam?.teamId === team.id && quickAddTeam?.fixtureId === f.id && (
+                              <div style={{ display: 'flex', gap: '4px', marginBottom: '6px', background: '#081E16', padding: '5px', borderRadius: '4px', border: '1px solid #1A4736' }}>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  placeholder={quickAddTeam?.targetField === 'assistPlayerId' ? "Assist provider name..." : "New player full name..."}
+                                  value={quickPlayerName}
+                                  onChange={(e) => setQuickPlayerName(e.target.value)}
+                                  style={{ fontSize: '11px', padding: '3px 6px', flex: 2 }}
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleSaveQuickPlayer(f.id, team.id);
+                                    }
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  placeholder="Pos"
+                                  value={quickPlayerPos}
+                                  onChange={(e) => setQuickPlayerPos(e.target.value)}
+                                  style={{ fontSize: '11px', padding: '3px 6px', flex: 1, textTransform: 'uppercase' }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleSaveQuickPlayer(f.id, team.id);
+                                    }
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveQuickPlayer(f.id, team.id)}
+                                  style={{
+                                    background: '#C9A227',
+                                    color: '#16201B',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    padding: '3px 8px',
+                                    fontSize: '11px',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            )}
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                               {/* Scorer */}
                               <select
                                 className="form-input"
                                 style={{ fontSize: '11.5px', padding: '4px 6px' }}
                                 value={tDraft.playerId}
-                                onChange={(e) => updateGoalDraft(f.id, team.id, 'playerId', e.target.value)}
+                                onChange={(e) => {
+                                  if (e.target.value === '__add_new__') {
+                                    setQuickAddTeam({ teamId: team.id, fixtureId: f.id, targetField: 'playerId' });
+                                    setQuickPlayerName('');
+                                    setQuickPlayerPos('');
+                                  } else {
+                                    updateGoalDraft(f.id, team.id, 'playerId', e.target.value);
+                                  }
+                                }}
                               >
                                 <option value="">Select Scorer…</option>
                                 {teamPlayers.map((p) => (
@@ -2027,6 +2142,9 @@ export default function FixturesView({
                                     {p.name} {p.position ? `(${p.position})` : ''}
                                   </option>
                                 ))}
+                                {onAddPlayers && (
+                                  <option value="__add_new__">➕ + Add New Player to {team.name}…</option>
+                                )}
                               </select>
 
                               {/* Goal Type */}
@@ -2048,7 +2166,15 @@ export default function FixturesView({
                                     className="form-input"
                                     style={{ fontSize: '11px', padding: '4px', flex: 1 }}
                                     value={tDraft.assistPlayerId}
-                                    onChange={(e) => updateGoalDraft(f.id, team.id, 'assistPlayerId', e.target.value)}
+                                    onChange={(e) => {
+                                      if (e.target.value === '__add_new__') {
+                                        setQuickAddTeam({ teamId: team.id, fixtureId: f.id, targetField: 'assistPlayerId' });
+                                        setQuickPlayerName('');
+                                        setQuickPlayerPos('');
+                                      } else {
+                                        updateGoalDraft(f.id, team.id, 'assistPlayerId', e.target.value);
+                                      }
+                                    }}
                                   >
                                     <option value="">🅰️ Assist: Unassisted</option>
                                     {assistCandidates.map((p) => (
@@ -2056,6 +2182,9 @@ export default function FixturesView({
                                         Assist: {p.name}
                                       </option>
                                     ))}
+                                    {onAddPlayers && (
+                                      <option value="__add_new__">➕ + Add Assist Provider…</option>
+                                    )}
                                   </select>
                                 )}
                               </div>

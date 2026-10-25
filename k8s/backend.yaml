@@ -39,6 +39,21 @@ spec:
             - -c
             - |
               set -e
+              if [ "${DB_ENGINE:-}" = "mysql" ] || [ "${USE_MYSQL:-}" = "True" ]; then
+                echo "Waiting for MySQL at ${MYSQL_HOST:-ruirutitans-mysql-svc}:${MYSQL_PORT:-3306}..."
+                python3 -c "
+              import socket, time, os
+              host = os.environ.get('MYSQL_HOST', 'ruirutitans-mysql-svc')
+              port = int(os.environ.get('MYSQL_PORT', 3306))
+              for i in range(60):
+                  try:
+                      with socket.create_connection((host, port), timeout=2):
+                          print('Connected to MySQL server successfully.')
+                          break
+                  except OSError:
+                      time.sleep(2)
+              "
+              fi
               python manage.py migrate --noinput
               exec gunicorn config.wsgi:application \
                 --bind 0.0.0.0:8000 \
