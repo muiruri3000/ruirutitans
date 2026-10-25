@@ -15,7 +15,8 @@ __pycache__/
 *.sqlite3-wal
 *.sqlite3-shm
 db.sqlite3*
-backups/
+backups/*
+!backups/current_tournament_state.json
 data/
 media/
 staticfiles/
