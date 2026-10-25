@@ -1,0 +1,8 @@
+# GitGuardian configuration file
+# Reference: https://docs.gitguardian.com/ggshield-docs/configuration/overview
+version: 2
+secret:
+  ignored_paths:
+    - "**/tests.py"
+    - "**/test_*.py"
+    - "**/tests/**"
