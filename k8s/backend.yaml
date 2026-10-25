@@ -55,11 +55,17 @@ spec:
               "
               fi
               python manage.py migrate --noinput
-              if [ -f "backups/current_tournament_state.json" ]; then
+              SEED_FILE=""
+              if [ -f "tournaments/initial_tournament_state.json" ]; then
+                SEED_FILE="tournaments/initial_tournament_state.json"
+              elif [ -f "backups/current_tournament_state.json" ]; then
+                SEED_FILE="backups/current_tournament_state.json"
+              fi
+              if [ -n "$SEED_FILE" ]; then
                 echo "Checking if initial database seed is required..."
                 python -c "import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings'); django.setup(); from tournaments.models import Category; exit(0 if Category.objects.count() == 0 else 1)" && {
-                  echo "Active database is empty. Auto-seeding tournament state from snapshot..."
-                  python manage.py load_tournament_state backups/current_tournament_state.json || true
+                  echo "Active database is empty. Auto-seeding tournament state from $SEED_FILE..."
+                  python manage.py load_tournament_state "$SEED_FILE" || true
                 } || echo "Database already contains data, skipping auto-seed."
               fi
               exec gunicorn config.wsgi:application \
