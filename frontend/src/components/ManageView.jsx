@@ -353,7 +353,18 @@ export default function ManageView({
       setRegPlayerUsername('');
       setRegPlayerJersey('');
       if (onAddPlayers && res.player) {
-        onAddPlayers(targetTeamId, [res.player.name], [res.player.position], [res.player.username]);
+        const cleanPos = typeof res.player.position === 'string' ? res.player.position : (Array.isArray(res.player.position) ? res.player.position[0] : '');
+        const cleanUname = typeof res.player.username === 'string' ? res.player.username : (Array.isArray(res.player.username) ? res.player.username[0] : '');
+        onAddPlayers(
+          targetTeamId,
+          [res.player.name],
+          cleanPos,
+          cleanUname,
+          '',
+          activeCategoryKey,
+          res.player.id || res.player.player_id,
+          res.player.jersey_number || jNum
+        );
       }
     } catch (err) {
       setRegError(err.message || 'Failed to register player.');

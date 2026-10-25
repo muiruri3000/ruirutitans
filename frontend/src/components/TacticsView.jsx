@@ -482,8 +482,21 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
   // 10. Pitch Orientation (false = Portrait 0deg, true = Landscape 90deg)
   const [isLandscape, setIsLandscape] = useState(false);
 
-  // 11. Pitch Zoom / Content Scale (0.7 to 1.35)
+  // 11. Pitch Zoom / Content Scale (0.5 to 2.0)
   const [pitchScale, setPitchScale] = useState(1.0);
+
+  // 12. Drawing Tools, Annotations, Ball & Custom Player Colors
+  const [activeTool, setActiveTool] = useState('select'); // 'select' | 'curve' | 'line' | 'pass' | 'paint'
+  const [drawColor, setDrawColor] = useState('#FCD34D'); // Active color for drawing and painting
+  const [drawings, setDrawings] = useState([]); // Array of { id, type, color, points }
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [currentDrawing, setCurrentDrawing] = useState(null);
+  const [playerCustomColors, setPlayerCustomColors] = useState({}); // { [nodeId]: color }
+  const [showBall, setShowBall] = useState(true);
+  const [ballPos, setBallPos] = useState({ x: 50, y: 50 });
+  const [isDraggingBall, setIsDraggingBall] = useState(false);
+  const ballDragStartRef = useRef({ startX: 0, startY: 0, ballX: 50, ballY: 50 });
+  const svgRef = useRef(null);
 
   // Load or Initialize Positions when formation or format changes
   useEffect(() => {
@@ -621,13 +634,27 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
     const node = sourceList.find((n) => n.id === slotId);
     if (!node) return;
 
+    // Color Changer Mode: tap player on pitch to instantly update their color!
+    if (activeTool === 'paint') {
+      setPlayerCustomColors((prev) => ({
+        ...prev,
+        [slotId]: drawColor,
+      }));
+      showStatusNotice(`🎨 Updated ${node.player?.name || node.role} color`);
+      return;
+    }
+
     setDraggingSlotId(slotId);
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
     dragStartPosRef.current = {
-      startX: e.clientX || (e.touches && e.touches[0].clientX) || 0,
-      startY: e.clientY || (e.touches && e.touches[0].clientY) || 0,
+      startX: clientX,
+      startY: clientY,
+      startTime: Date.now(),
       nodeX: node.x,
       nodeY: node.y,
       moved: false,
+      isTouch: Boolean(e.touches && e.touches.length > 0),
       isOpponent: Boolean(isOpponent),
     };
   };
@@ -644,8 +671,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
       const deltaX = clientX - dragStartPosRef.current.startX;
       const deltaY = clientY - dragStartPosRef.current.startY;
 
-      // Mark as moved if distance > 6px
-      if (Math.hypot(deltaX, deltaY) > 6) {
+      // Generous jitter threshold for touch screens to prevent accidental drag detection
+      const threshold = dragStartPosRef.current.isTouch ? 18 : 6;
+      if (Math.hypot(deltaX, deltaY) > threshold) {
         dragStartPosRef.current.moved = true;
       }
 
@@ -673,21 +701,35 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
       }
     };
 
-    const handlePointerUp = () => {
-      const moved = dragStartPosRef.current.moved;
+    const handlePointerUp = (e) => {
+      const clientX = e.clientX || (e.changedTouches && e.changedTouches[0]?.clientX) || 0;
+      const clientY = e.clientY || (e.changedTouches && e.changedTouches[0]?.clientY) || 0;
+      const deltaX = clientX - dragStartPosRef.current.startX;
+      const deltaY = clientY - dragStartPosRef.current.startY;
+      const duration = Date.now() - (dragStartPosRef.current.startTime || 0);
+
+      // Tap detection: smooth experience for changing or adding a player on touch screens
+      const isTap = !dragStartPosRef.current.moved || (duration < 350 && Math.hypot(deltaX, deltaY) < 22);
       const slotId = draggingSlotId;
       const isOpp = dragStartPosRef.current.isOpponent;
       setDraggingSlotId(null);
 
-      // If user clicked without dragging, open player selection modal!
-      if (!moved) {
+      if (isTap) {
         const slotNode = (isOpp ? opponentNodes : pitchNodes).find((n) => n.id === slotId);
         if (slotNode) {
-          setActiveSlotModal(slotNode);
-          setModalFilterTeamId(isOpp && selectedOpponentTeamId !== 'auto-red' ? selectedOpponentTeamId : 'all');
-          setPlayerSearchQuery('');
-          setCustomPlayerName('');
-          setCustomPlayerNumber('');
+          if (activeTool === 'paint') {
+            setPlayerCustomColors((prev) => ({
+              ...prev,
+              [slotId]: drawColor,
+            }));
+            showStatusNotice(`🎨 Updated ${slotNode.player?.name || slotNode.role} color`);
+          } else {
+            setActiveSlotModal(slotNode);
+            setModalFilterTeamId(isOpp && selectedOpponentTeamId !== 'auto-red' ? selectedOpponentTeamId : 'all');
+            setPlayerSearchQuery('');
+            setCustomPlayerName('');
+            setCustomPlayerNumber('');
+          }
         }
       } else {
         if (!isOpp) {
@@ -707,7 +749,193 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
       window.removeEventListener('touchmove', handlePointerMove);
       window.removeEventListener('touchend', handlePointerUp);
     };
-  }, [draggingSlotId, pitchNodes, opponentNodes, selectedOpponentTeamId, isLandscape]);
+  }, [draggingSlotId, pitchNodes, opponentNodes, selectedOpponentTeamId, isLandscape, activeTool, drawColor]);
+
+  // Multi-Touch Pinch to Stretch Pitch on Touch Screens
+  useEffect(() => {
+    const pitchEl = pitchRef.current;
+    if (!pitchEl) return;
+
+    let initialDist = null;
+    let initialScale = 1.0;
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length === 2) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        initialDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        initialScale = pitchScale;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length === 2 && initialDist) {
+        e.preventDefault();
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        const ratio = currentDist / initialDist;
+        const nextScale = Math.min(2.0, Math.max(0.5, Math.round(initialScale * ratio * 100) / 100));
+        setPitchScale(nextScale);
+      }
+    };
+
+    const handleTouchEnd = (e) => {
+      if (e.touches.length < 2) {
+        initialDist = null;
+      }
+    };
+
+    pitchEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+    pitchEl.addEventListener('touchmove', handleTouchMove, { passive: false });
+    pitchEl.addEventListener('touchend', handleTouchEnd, { passive: true });
+    pitchEl.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      pitchEl.removeEventListener('touchstart', handleTouchStart);
+      pitchEl.removeEventListener('touchmove', handleTouchMove);
+      pitchEl.removeEventListener('touchend', handleTouchEnd);
+      pitchEl.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [pitchScale]);
+
+  // Handle Dragging Ball on Pitch
+  const handleBallPointerDown = (e) => {
+    e.stopPropagation();
+    setIsDraggingBall(true);
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+    ballDragStartRef.current = {
+      startX: clientX,
+      startY: clientY,
+      ballX: ballPos.x,
+      ballY: ballPos.y,
+    };
+  };
+
+  useEffect(() => {
+    if (!isDraggingBall) return;
+
+    const handleBallMove = (e) => {
+      if (!pitchRef.current) return;
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+
+      const rect = pitchRef.current.getBoundingClientRect();
+      const deltaX = clientX - ballDragStartRef.current.startX;
+      const deltaY = clientY - ballDragStartRef.current.startY;
+
+      const deltaPercentX = (deltaX / rect.width) * 100;
+      const deltaPercentY = (deltaY / rect.height) * 100;
+
+      let nextX, nextY;
+      if (isLandscape) {
+        nextX = Math.max(3, Math.min(97, ballDragStartRef.current.ballX + deltaPercentY));
+        nextY = Math.max(3, Math.min(97, ballDragStartRef.current.ballY - deltaPercentX));
+      } else {
+        nextX = Math.max(3, Math.min(97, ballDragStartRef.current.ballX + deltaPercentX));
+        nextY = Math.max(3, Math.min(97, ballDragStartRef.current.ballY + deltaPercentY));
+      }
+
+      setBallPos({
+        x: Math.round(nextX * 10) / 10,
+        y: Math.round(nextY * 10) / 10,
+      });
+    };
+
+    const handleBallUp = () => {
+      setIsDraggingBall(false);
+    };
+
+    window.addEventListener('mousemove', handleBallMove);
+    window.addEventListener('mouseup', handleBallUp);
+    window.addEventListener('touchmove', handleBallMove, { passive: false });
+    window.addEventListener('touchend', handleBallUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleBallMove);
+      window.removeEventListener('mouseup', handleBallUp);
+      window.removeEventListener('touchmove', handleBallMove);
+      window.removeEventListener('touchend', handleBallUp);
+    };
+  }, [isDraggingBall, isLandscape]);
+
+  // Handle Drawing on Pitch (Curve, Line Arrow, Pass Arrow)
+  const handleSvgPointerDown = (e) => {
+    if (activeTool !== 'curve' && activeTool !== 'line' && activeTool !== 'pass') return;
+    e.stopPropagation();
+
+    if (!pitchRef.current) return;
+    const rect = pitchRef.current.getBoundingClientRect();
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+
+    const startX = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    const startY = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+
+    setIsDrawing(true);
+    setCurrentDrawing({
+      type: activeTool,
+      color: drawColor,
+      points: [{ x: Math.round(startX * 10) / 10, y: Math.round(startY * 10) / 10 }],
+    });
+  };
+
+  useEffect(() => {
+    if (!isDrawing) return;
+
+    const handleDrawingMove = (e) => {
+      if (!pitchRef.current) return;
+      const rect = pitchRef.current.getBoundingClientRect();
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+
+      const curX = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+      const curY = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+
+      setCurrentDrawing((prev) => {
+        if (!prev) return null;
+        const pt = { x: Math.round(curX * 10) / 10, y: Math.round(curY * 10) / 10 };
+        if (prev.type === 'curve') {
+          return { ...prev, points: [...prev.points, pt] };
+        }
+        return { ...prev, points: [prev.points[0], pt] };
+      });
+    };
+
+    const handleDrawingUp = () => {
+      setIsDrawing(false);
+      setCurrentDrawing((prev) => {
+        if (prev && prev.points && prev.points.length > 1) {
+          setDrawings((d) => [...d, { ...prev, id: Date.now() }]);
+        }
+        return null;
+      });
+    };
+
+    window.addEventListener('mousemove', handleDrawingMove);
+    window.addEventListener('mouseup', handleDrawingUp);
+    window.addEventListener('touchmove', handleDrawingMove, { passive: false });
+    window.addEventListener('touchend', handleDrawingUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleDrawingMove);
+      window.removeEventListener('mouseup', handleDrawingUp);
+      window.removeEventListener('touchmove', handleDrawingMove);
+      window.removeEventListener('touchend', handleDrawingUp);
+    };
+  }, [isDrawing]);
+
+  // Helper to generate SVG path for freehand curves
+  const generateSvgPath = (points) => {
+    if (!points || points.length === 0) return '';
+    if (points.length === 1) return `M ${points[0].x} ${points[0].y} L ${points[0].x} ${points[0].y}`;
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      path += ` L ${points[i].x} ${points[i].y}`;
+    }
+    return path;
+  };
 
   // Assign Player to Slot
   const assignPlayerToSlot = (slotId, playerObj) => {
@@ -1268,7 +1496,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 <span>{isLandscape ? '90° Landscape' : 'Rotate 90°'}</span>
               </button>
 
-              {/* Pitch & Content Size Adjuster */}
+              {/* Pitch & Content Size Adjuster with Manually Editable % */}
               <div
                 style={{
                   display: 'inline-flex',
@@ -1283,15 +1511,15 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 <span style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700 }}>🔍</span>
                 <button
                   type="button"
-                  onClick={() => setPitchScale((prev) => Math.max(0.7, Math.round((prev - 0.05) * 100) / 100))}
-                  disabled={pitchScale <= 0.7}
+                  onClick={() => setPitchScale((prev) => Math.max(0.5, Math.round((prev - 0.05) * 100) / 100))}
+                  disabled={pitchScale <= 0.5}
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: pitchScale <= 0.7 ? '#4B5563' : '#FCD34D',
+                    color: pitchScale <= 0.5 ? '#4B5563' : '#FCD34D',
                     fontSize: '13px',
                     fontWeight: 900,
-                    cursor: pitchScale <= 0.7 ? 'not-allowed' : 'pointer',
+                    cursor: pitchScale <= 0.5 ? 'not-allowed' : 'pointer',
                     padding: '0 3px',
                     lineHeight: 1,
                   }}
@@ -1301,8 +1529,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 </button>
                 <input
                   type="range"
-                  min="0.7"
-                  max="1.35"
+                  min="0.5"
+                  max="2.0"
                   step="0.05"
                   value={pitchScale}
                   onChange={(e) => setPitchScale(parseFloat(e.target.value))}
@@ -1315,15 +1543,15 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 />
                 <button
                   type="button"
-                  onClick={() => setPitchScale((prev) => Math.min(1.35, Math.round((prev + 0.05) * 100) / 100))}
-                  disabled={pitchScale >= 1.35}
+                  onClick={() => setPitchScale((prev) => Math.min(2.0, Math.round((prev + 0.05) * 100) / 100))}
+                  disabled={pitchScale >= 2.0}
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: pitchScale >= 1.35 ? '#4B5563' : '#FCD34D',
+                    color: pitchScale >= 2.0 ? '#4B5563' : '#FCD34D',
                     fontSize: '13px',
                     fontWeight: 900,
-                    cursor: pitchScale >= 1.35 ? 'not-allowed' : 'pointer',
+                    cursor: pitchScale >= 2.0 ? 'not-allowed' : 'pointer',
                     padding: '0 3px',
                     lineHeight: 1,
                   }}
@@ -1331,22 +1559,277 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 >
                   +
                 </button>
-                <span
-                  onClick={() => setPitchScale(1.0)}
-                  style={{
-                    fontSize: '10px',
-                    color: '#9BB5A8',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    marginLeft: '2px',
-                    minWidth: '32px',
-                    textAlign: 'right',
-                  }}
-                  title="Click to reset size to 100%"
-                >
-                  {Math.round(pitchScale * 100)}%
-                </span>
+                <div style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '3px' }}>
+                  <input
+                    type="number"
+                    min="50"
+                    max="200"
+                    value={Math.round(pitchScale * 100)}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val)) {
+                        setPitchScale(Math.min(2.0, Math.max(0.5, val / 100)));
+                      }
+                    }}
+                    style={{
+                      width: '42px',
+                      background: '#071B15',
+                      border: '1px solid #2B5746',
+                      borderRadius: '4px',
+                      color: '#FCD34D',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      textAlign: 'center',
+                      padding: '1px 2px',
+                    }}
+                    title="Type pitch zoom % directly (e.g. 100)"
+                  />
+                  <span
+                    onClick={() => setPitchScale(1.0)}
+                    style={{
+                      fontSize: '10px',
+                      color: '#9BB5A8',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      marginLeft: '2px',
+                    }}
+                    title="Click % to reset size to 100%"
+                  >
+                    %
+                  </span>
+                </div>
               </div>
+            </div>
+          </div>
+
+          {/* Tactical Drawing, Arrows, Ball & Color Changer Toolbar */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#071B15',
+              border: '1px solid #1E4636',
+              borderRadius: '8px',
+              padding: '6px 10px',
+              marginBottom: '10px',
+              flexWrap: 'wrap',
+            }}
+          >
+            {/* Tool Selectors */}
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTool('select');
+                  showStatusNotice('👆 Move / Select Mode: Drag players or the ball');
+                }}
+                style={{
+                  background: activeTool === 'select' ? '#C9A227' : '#0E291E',
+                  color: activeTool === 'select' ? '#16201B' : '#E2E8F0',
+                  border: '1px solid #2B5746',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+                title="Move players and ball on pitch"
+              >
+                👆 Move
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTool('curve');
+                  showStatusNotice('✏️ Draw Tool: Drag on pitch to draw freehand tactical runs');
+                }}
+                style={{
+                  background: activeTool === 'curve' ? '#C9A227' : '#0E291E',
+                  color: activeTool === 'curve' ? '#16201B' : '#E2E8F0',
+                  border: '1px solid #2B5746',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+                title="Draw freehand curve / path"
+              >
+                ✏️ Draw
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTool('line');
+                  showStatusNotice('➡️ Arrow Tool: Drag on pitch to draw movement arrow');
+                }}
+                style={{
+                  background: activeTool === 'line' ? '#C9A227' : '#0E291E',
+                  color: activeTool === 'line' ? '#16201B' : '#E2E8F0',
+                  border: '1px solid #2B5746',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+                title="Draw straight arrow"
+              >
+                ➡️ Arrow
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTool('pass');
+                  showStatusNotice('↪️ Pass Arrow: Drag on pitch to draw dashed pass line');
+                }}
+                style={{
+                  background: activeTool === 'pass' ? '#C9A227' : '#0E291E',
+                  color: activeTool === 'pass' ? '#16201B' : '#E2E8F0',
+                  border: '1px solid #2B5746',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+                title="Draw dashed pass arrow"
+              >
+                ↪️ Pass
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTool('paint');
+                  showStatusNotice(`🎨 Color Changer: Pick a color, then tap any player on the pitch to update their color!`);
+                }}
+                style={{
+                  background: activeTool === 'paint' ? drawColor : '#0E291E',
+                  color: activeTool === 'paint' ? (['#FFFFFF', '#FCD34D', '#10B981', '#06B6D4'].includes(drawColor) ? '#16201B' : '#FFFFFF') : '#FCD34D',
+                  border: activeTool === 'paint' ? '2px solid #FFFFFF' : '1px solid #2B5746',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: activeTool === 'paint' ? '0 0 8px rgba(255,255,255,0.5)' : 'none',
+                }}
+                title="Tap color, then tap a player on pitch to update their color"
+              >
+                🎨 Color Changer
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !showBall;
+                  setShowBall(next);
+                  if (next) setBallPos({ x: 50, y: 50 });
+                  showStatusNotice(next ? '⚽ Soccer ball placed on pitch' : '⚽ Ball removed from pitch');
+                }}
+                style={{
+                  background: showBall ? '#14382B' : '#0E291E',
+                  color: showBall ? '#FCD34D' : '#8FA89B',
+                  border: showBall ? '1px solid #C9A227' : '1px solid #2B5746',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+                title="Toggle soccer ball on pitch (draggable)"
+              >
+                ⚽ {showBall ? 'Ball (ON)' : 'Ball (OFF)'}
+              </button>
+            </div>
+
+            {/* Color Changer Palette & Swatches */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700 }}>Color:</span>
+              {['#FCD34D', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#F97316', '#A855F7', '#06B6D4'].map((c) => (
+                <div
+                  key={c}
+                  onClick={() => {
+                    setDrawColor(c);
+                    if (activeTool === 'paint') {
+                      showStatusNotice(`🎨 Selected color ${c} — now tap any player on pitch to update!`);
+                    }
+                  }}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    background: c,
+                    border: drawColor === c ? '2px solid #FFFFFF' : '1px solid rgba(0,0,0,0.6)',
+                    cursor: 'pointer',
+                    boxShadow: drawColor === c ? '0 0 6px #FFFFFF' : 'none',
+                    transform: drawColor === c ? 'scale(1.2)' : 'scale(1)',
+                    transition: 'all 0.1s ease',
+                  }}
+                  title={`Select color ${c}`}
+                />
+              ))}
+
+              <input
+                type="color"
+                value={drawColor}
+                onChange={(e) => setDrawColor(e.target.value)}
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  padding: 0,
+                  border: 'none',
+                  borderRadius: '4px',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                }}
+                title="Custom color picker"
+              />
+
+              {/* Drawings Undo & Clear Buttons */}
+              {drawings.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setDrawings((prev) => prev.slice(0, -1))}
+                    style={{
+                      background: '#16382B',
+                      color: '#F4F2EA',
+                      border: '1px solid #2B5746',
+                      borderRadius: '4px',
+                      padding: '2px 7px',
+                      fontSize: '10.5px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                    }}
+                    title="Undo last drawing"
+                  >
+                    ↩ Undo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDrawings([])}
+                    style={{
+                      background: '#231518',
+                      color: '#FF8A8A',
+                      border: '1px solid #732228',
+                      borderRadius: '4px',
+                      padding: '2px 7px',
+                      fontSize: '10.5px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                    }}
+                    title="Clear all drawings"
+                  >
+                    🗑 Clear
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -1501,14 +1984,171 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               </svg>
             )}
 
+            {/* SVG Tactical Drawing & Arrow Overlay */}
+            <svg
+              ref={svgRef}
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              onMouseDown={handleSvgPointerDown}
+              onTouchStart={handleSvgPointerDown}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: activeTool === 'curve' || activeTool === 'line' || activeTool === 'pass' ? 25 : 4,
+                pointerEvents: activeTool === 'curve' || activeTool === 'line' || activeTool === 'pass' ? 'auto' : 'none',
+                touchAction: 'none',
+              }}
+            >
+              <defs>
+                {['#FCD34D', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#F97316', '#A855F7', '#EC4899', '#06B6D4']
+                  .concat(drawColor)
+                  .filter((c, i, arr) => arr.indexOf(c) === i)
+                  .map((c) => (
+                    <marker
+                      key={c}
+                      id={`arrow-${c.replace('#', '')}`}
+                      viewBox="0 0 10 10"
+                      refX="6"
+                      refY="5"
+                      markerWidth="3.5"
+                      markerHeight="3.5"
+                      orient="auto-start-reverse"
+                    >
+                      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill={c} />
+                    </marker>
+                  ))}
+              </defs>
+
+              {/* Render all saved tactical annotations */}
+              {drawings.map((d) => {
+                if (d.type === 'curve') {
+                  return (
+                    <path
+                      key={d.id}
+                      d={generateSvgPath(d.points)}
+                      stroke={d.color}
+                      strokeWidth="1.2"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  );
+                }
+                if (d.type === 'line' && d.points.length >= 2) {
+                  const p1 = d.points[0];
+                  const p2 = d.points[d.points.length - 1];
+                  return (
+                    <line
+                      key={d.id}
+                      x1={p1.x}
+                      y1={p1.y}
+                      x2={p2.x}
+                      y2={p2.y}
+                      stroke={d.color}
+                      strokeWidth="1.2"
+                      strokeLinecap="round"
+                      markerEnd={`url(#arrow-${d.color.replace('#', '')})`}
+                    />
+                  );
+                }
+                if (d.type === 'pass' && d.points.length >= 2) {
+                  const p1 = d.points[0];
+                  const p2 = d.points[d.points.length - 1];
+                  return (
+                    <line
+                      key={d.id}
+                      x1={p1.x}
+                      y1={p1.y}
+                      x2={p2.x}
+                      y2={p2.y}
+                      stroke={d.color}
+                      strokeWidth="1.2"
+                      strokeDasharray="2,2"
+                      strokeLinecap="round"
+                      markerEnd={`url(#arrow-${d.color.replace('#', '')})`}
+                    />
+                  );
+                }
+                return null;
+              })}
+
+              {/* Render active in-progress drawing */}
+              {currentDrawing && currentDrawing.points.length > 0 && (
+                currentDrawing.type === 'curve' ? (
+                  <path
+                    d={generateSvgPath(currentDrawing.points)}
+                    stroke={currentDrawing.color}
+                    strokeWidth="1.2"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ) : currentDrawing.points.length >= 2 ? (
+                  <line
+                    x1={currentDrawing.points[0].x}
+                    y1={currentDrawing.points[0].y}
+                    x2={currentDrawing.points[currentDrawing.points.length - 1].x}
+                    y2={currentDrawing.points[currentDrawing.points.length - 1].y}
+                    stroke={currentDrawing.color}
+                    strokeWidth="1.2"
+                    strokeDasharray={currentDrawing.type === 'pass' ? '2,2' : undefined}
+                    strokeLinecap="round"
+                    markerEnd={`url(#arrow-${currentDrawing.color.replace('#', '')})`}
+                  />
+                ) : null
+              )}
+            </svg>
+
+            {/* Draggable Realistic Soccer Ball on Pitch */}
+            {showBall && (
+              <div
+                onMouseDown={handleBallPointerDown}
+                onTouchStart={handleBallPointerDown}
+                style={{
+                  position: 'absolute',
+                  left: isLandscape ? `${100 - ballPos.y}%` : `${ballPos.x}%`,
+                  top: isLandscape ? `${ballPos.x}%` : `${ballPos.y}%`,
+                  transform: `translate(-50%, -50%) scale(${isDraggingBall ? 1.3 : 1})`,
+                  width: `${Math.max(22, Math.round(28 * pitchScale))}px`,
+                  height: `${Math.max(22, Math.round(28 * pitchScale))}px`,
+                  zIndex: isDraggingBall ? 130 : 22,
+                  cursor: isDraggingBall ? 'grabbing' : 'grab',
+                  touchAction: 'none',
+                  userSelect: 'none',
+                  transition: isDraggingBall ? 'none' : 'transform 0.1s ease',
+                  filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.75))',
+                }}
+                title="Soccer Ball (Touch / Drag to move anywhere on pitch)"
+              >
+                <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
+                  <circle cx="50" cy="50" r="48" fill="#F8FAFC" stroke="#0F172A" strokeWidth="3" />
+                  <polygon points="50,33 64,43 59,59 41,59 36,43" fill="#0F172A" />
+                  <line x1="50" y1="33" x2="50" y2="12" stroke="#0F172A" strokeWidth="3.5" />
+                  <polygon points="40,2 60,2 50,12" fill="#0F172A" />
+                  <line x1="64" y1="43" x2="82" y2="35" stroke="#0F172A" strokeWidth="3.5" />
+                  <polygon points="82,35 96,24 96,44" fill="#0F172A" />
+                  <line x1="59" y1="59" x2="73" y2="76" stroke="#0F172A" strokeWidth="3.5" />
+                  <polygon points="73,76 86,90 68,96" fill="#0F172A" />
+                  <line x1="41" y1="59" x2="27" y2="76" stroke="#0F172A" strokeWidth="3.5" />
+                  <polygon points="27,76 32,96 14,90" fill="#0F172A" />
+                  <line x1="36" y1="43" x2="18" y2="35" stroke="#0F172A" strokeWidth="3.5" />
+                  <polygon points="18,35 4,44 4,24" fill="#0F172A" />
+                </svg>
+              </div>
+            )}
+
             {/* Draggable Position Nodes (Filtered for optional Goalkeeper) */}
             {visiblePitchNodes.map((node) => {
               const isAssigned = Boolean(node.player);
               const isDragging = draggingSlotId === node.id;
               const playerObj = node.player;
 
-              // Use assigned player's own club color (or fallback to team color)
-              const playerTeamColor = playerObj?.teamColor || (playerObj?.teamId && teamsMap[playerObj.teamId]?.color) || '#C9A227';
+              // Use custom painted color, assigned player's own club color, or fallback to default gold
+              const customColor = playerCustomColors[node.id];
+              const playerTeamColor = customColor || playerObj?.teamColor || (playerObj?.teamId && teamsMap[playerObj.teamId]?.color) || '#C9A227';
               const isGk = node.role === 'GK';
 
               const nodeLeft = isLandscape ? `${100 - node.y}%` : `${node.x}%`;
@@ -1519,6 +2159,16 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   key={node.id}
                   onMouseDown={(e) => handlePointerDown(e, node.id)}
                   onTouchStart={(e) => handlePointerDown(e, node.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (activeTool === 'paint') {
+                      setPlayerCustomColors((prev) => ({
+                        ...prev,
+                        [node.id]: drawColor,
+                      }));
+                      showStatusNotice(`🎨 Updated ${node.player?.name || node.role} color`);
+                    }
+                  }}
                   onDragOver={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1534,7 +2184,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                     top: nodeTop,
                     transform: `translate(-50%, -50%) scale(${isDragging ? 1.15 : 1})`,
                     zIndex: isDragging ? 100 : 10,
-                    cursor: isDragging ? 'grabbing' : 'grab',
+                    cursor: isDragging ? 'grabbing' : activeTool === 'paint' ? 'crosshair' : 'grab',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -1548,7 +2198,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                       width: `${badgeDiameter}px`,
                       height: `${badgeDiameter}px`,
                       borderRadius: '50%',
-                      background: isAssigned
+                      background: customColor
+                        ? `radial-gradient(circle, ${customColor} 0%, #0F172A 100%)`
+                        : isAssigned
                         ? isGk
                           ? 'radial-gradient(circle, #EAB308 0%, #854D0E 100%)'
                           : `radial-gradient(circle, ${playerTeamColor} 0%, #0F172A 100%)`
@@ -1577,7 +2229,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                       <span style={{ color: '#48BB78', fontSize: `${roleFontSize}px` }}>{node.role}</span>
                     )}
 
-                    {/* Quick remove button if assigned */}
+                    {/* Quick remove button if assigned - ONLY the X remains, no circle container */}
                     {isAssigned && (
                       <button
                         type="button"
@@ -1587,26 +2239,25 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                         }}
                         style={{
                           position: 'absolute',
-                          top: '-3px',
-                          right: '-3px',
-                          width: `${removeBtnSize}px`,
-                          height: `${removeBtnSize}px`,
-                          borderRadius: '50%',
-                          background: '#EF4444',
-                          border: '1px solid #FFFFFF',
-                          color: '#FFFFFF',
-                          fontSize: `${Math.round(removeBtnSize * 0.65)}px`,
+                          top: '-8px',
+                          right: '-8px',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#EF4444',
+                          fontSize: `${Math.max(15, Math.round(removeBtnSize * 1.15))}px`,
                           fontWeight: 900,
-                          lineHeight: '1',
+                          lineHeight: 1,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           cursor: 'pointer',
-                          padding: 0,
+                          padding: '3px',
+                          textShadow: '0 0 2px #000, 0 1px 4px rgba(0,0,0,0.95)',
+                          zIndex: 20,
                         }}
                         title="Unassign player"
                       >
-                        ×
+                        ✕
                       </button>
                     )}
                   </div>
@@ -1654,7 +2305,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 const isAssigned = Boolean(node.player);
                 const isDragging = draggingSlotId === node.id;
                 const playerObj = node.player;
-                const playerColor = playerObj?.teamColor || opponentThemeColor;
+                const oppCustomColor = playerCustomColors[node.id];
+                const playerColor = oppCustomColor || playerObj?.teamColor || opponentThemeColor;
                 const isGk = node.role === 'GK';
 
                 const oppLeft = isLandscape ? `${100 - node.y}%` : `${node.x}%`;
@@ -1665,6 +2317,16 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                     key={node.id}
                     onMouseDown={(e) => handlePointerDown(e, node.id, true)}
                     onTouchStart={(e) => handlePointerDown(e, node.id, true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (activeTool === 'paint') {
+                        setPlayerCustomColors((prev) => ({
+                          ...prev,
+                          [node.id]: drawColor,
+                        }));
+                        showStatusNotice(`🎨 Updated opponent ${node.player?.name || node.role} color`);
+                      }
+                    }}
                     onDragOver={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -1680,7 +2342,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                       top: oppTop,
                       transform: `translate(-50%, -50%) scale(${isDragging ? 1.15 : 1})`,
                       zIndex: isDragging ? 100 : 12,
-                      cursor: isDragging ? 'grabbing' : 'grab',
+                      cursor: isDragging ? 'grabbing' : activeTool === 'paint' ? 'crosshair' : 'grab',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -1694,7 +2356,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                         width: `${badgeDiameter}px`,
                         height: `${badgeDiameter}px`,
                         borderRadius: '50%',
-                        background: isAssigned
+                        background: oppCustomColor
+                          ? `radial-gradient(circle, ${oppCustomColor} 0%, #1E070B 100%)`
+                          : isAssigned
                           ? isGk
                             ? 'radial-gradient(circle, #F97316 0%, #7C2D12 100%)'
                             : `radial-gradient(circle, ${playerColor} 0%, #1E070B 100%)`
@@ -1725,7 +2389,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                         <span style={{ color: '#FFE4E6', fontSize: `${roleFontSize}px` }}>{node.role}</span>
                       )}
 
-                      {/* Quick remove button */}
+                      {/* Quick remove button - ONLY the X remains, no circle container */}
                       {isAssigned && (
                         <button
                           type="button"
@@ -1735,26 +2399,25 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                           }}
                           style={{
                             position: 'absolute',
-                            top: '-3px',
-                            right: '-3px',
-                            width: `${removeBtnSize}px`,
-                            height: `${removeBtnSize}px`,
-                            borderRadius: '50%',
-                            background: '#EF4444',
-                            border: '1px solid #FFFFFF',
-                            color: '#FFFFFF',
-                            fontSize: `${Math.round(removeBtnSize * 0.65)}px`,
+                            top: '-8px',
+                            right: '-8px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#EF4444',
+                            fontSize: `${Math.max(15, Math.round(removeBtnSize * 1.15))}px`,
                             fontWeight: 900,
-                            lineHeight: '1',
+                            lineHeight: 1,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
-                            padding: 0,
+                            padding: '3px',
+                            textShadow: '0 0 2px #000, 0 1px 4px rgba(0,0,0,0.95)',
+                            zIndex: 20,
                           }}
                           title="Unassign opponent player"
                         >
-                          ×
+                          ✕
                         </button>
                       )}
                     </div>
@@ -1961,30 +2624,41 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                         e.dataTransfer.setData('text/plain', JSON.stringify(player));
                         e.dataTransfer.effectAllowed = 'copy';
                       }}
+                      onClick={() => {
+                        const emptySlot = visiblePitchNodes.find((n) => !n.player);
+                        if (emptySlot) {
+                          assignPlayerToSlot(emptySlot.id, player);
+                          showStatusNotice(`✅ Placed ${player.name} on ${emptySlot.label || emptySlot.role}`);
+                        } else if (visiblePitchNodes.length > 0) {
+                          setActiveSlotModal(visiblePitchNodes[0]);
+                          showStatusNotice(`Select which slot to assign ${player.name}`);
+                        }
+                      }}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '5px 8px',
+                        padding: '7px 8px',
                         borderRadius: '6px',
                         background: '#071B15',
                         border: '1px solid #1A3E30',
                         fontSize: '11px',
-                        cursor: 'grab',
+                        cursor: 'pointer',
                         transition: 'background 0.15s ease, border-color 0.15s ease',
+                        touchAction: 'manipulation',
                       }}
-                      title="Drag and drop directly onto any position on the pitch"
+                      title="Tap to place on pitch, or drag and drop"
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ color: '#6E9080', cursor: 'grab', fontSize: '11px' }}>⋮⋮</span>
                         <span
                           style={{
-                            width: '18px',
-                            height: '18px',
+                            width: '20px',
+                            height: '20px',
                             borderRadius: '50%',
                             background: pTeamColor,
                             color: '#FFFFFF',
-                            fontSize: '9.5px',
+                            fontSize: '10px',
                             fontWeight: 800,
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -2003,11 +2677,13 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           const emptySlot = visiblePitchNodes.find((n) => !n.player);
                           if (emptySlot) {
                             assignPlayerToSlot(emptySlot.id, player);
-                          } else {
+                            showStatusNotice(`✅ Placed ${player.name} on ${emptySlot.label || emptySlot.role}`);
+                          } else if (visiblePitchNodes.length > 0) {
                             setActiveSlotModal(visiblePitchNodes[0]);
                           }
                         }}
@@ -2016,8 +2692,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                           color: '#6CE5A0',
                           border: '1px solid #2B5746',
                           borderRadius: '4px',
-                          padding: '2px 6px',
-                          fontSize: '10px',
+                          padding: '3px 8px',
+                          fontSize: '10.5px',
                           fontWeight: 700,
                           cursor: 'pointer',
                         }}
