@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ruirutitans-backup
 spec:
-  schedule: "0 2 * * *"  # Every night at 02:00 UTC
+  schedule: "0 0 * * *"  # Every night at midnight (00:00 UTC)
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
