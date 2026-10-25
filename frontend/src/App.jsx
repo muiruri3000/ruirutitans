@@ -403,20 +403,20 @@ export default function App() {
     if (!data?.categories) return 'ruiru-titans-league-oct-nov-2026';
     const active = data.activeCategory;
     const activeCat = active ? data.categories[active] : null;
-    if (activeCat && activeCat.mode === 'league' && !activeCat.isEnded && !activeCat.isDeleted && (activeCat.fixtures || []).length > 0) {
+    if (activeCat && activeCat.mode === 'league' && !activeCat.isDeleted) {
       return active;
     }
-    const foundWithFixtures = Object.keys(data.categories).find((k) => {
-      const c = data.categories[k];
-      return c && c.mode === 'league' && !c.isEnded && !c.isDeleted && (c.fixtures || []).length > 0;
-    });
-    if (foundWithFixtures) return foundWithFixtures;
-
-    const anyActiveLeague = Object.keys(data.categories).find((k) => {
+    const currentActiveLeague = Object.keys(data.categories).find((k) => {
       const c = data.categories[k];
       return c && c.mode === 'league' && !c.isEnded && !c.isDeleted;
     });
-    if (anyActiveLeague) return anyActiveLeague;
+    if (currentActiveLeague) return currentActiveLeague;
+
+    const anyLeague = Object.keys(data.categories).find((k) => {
+      const c = data.categories[k];
+      return c && c.mode === 'league' && !c.isDeleted;
+    });
+    if (anyLeague) return anyLeague;
 
     return active || Object.keys(data.categories)[0] || 'ruiru-titans-league-oct-nov-2026';
   }, [data]);
@@ -436,9 +436,8 @@ export default function App() {
   const activeCategoryKey = useMemo(() => {
     const active = data?.activeCategory;
     const activeCat = active ? data?.categories?.[active] : null;
-    if (activeCat && !activeCat.isEnded && !activeCat.isDeleted) {
-      const fixCount = (activeCat.fixtures || []).length + Object.values(activeCat.groupFixtures || {}).flat().length;
-      if (fixCount > 0) return active;
+    if (activeCat && !activeCat.isDeleted) {
+      return active;
     }
     return leagueCategoryKey;
   }, [data, leagueCategoryKey]);

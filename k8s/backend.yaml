@@ -55,6 +55,13 @@ spec:
               "
               fi
               python manage.py migrate --noinput
+              if [ -f "tournaments/fixtures/initial_admin_users.json" ]; then
+                echo "Ensuring admin accounts exist in database..."
+                python -c "import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings'); django.setup(); from django.contrib.auth.models import User; exit(0 if not User.objects.filter(username='admin').exists() else 1)" && {
+                  echo "Restoring admin and admin_reporter credentials..."
+                  python manage.py loaddata tournaments/fixtures/initial_admin_users.json || true
+                } || echo "Admin accounts already present."
+              fi
               SEED_FILE=""
               if [ -f "tournaments/initial_tournament_state.json" ]; then
                 SEED_FILE="tournaments/initial_tournament_state.json"
@@ -62,11 +69,11 @@ spec:
                 SEED_FILE="backups/current_tournament_state.json"
               fi
               if [ -n "$SEED_FILE" ]; then
-                echo "Checking if initial database seed is required..."
-                python -c "import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings'); django.setup(); from tournaments.models import Category; exit(0 if Category.objects.count() == 0 else 1)" && {
-                  echo "Active database is empty. Auto-seeding tournament state from $SEED_FILE..."
+                echo "Checking if active tournament seed is required..."
+                python -c "import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings'); django.setup(); from tournaments.models import Category; exit(0 if not Category.objects.filter(key='ruiru-titans-league-oct-nov-2026').exists() else 1)" && {
+                  echo "Active tournament missing. Auto-seeding tournament state from $SEED_FILE..."
                   python manage.py load_tournament_state "$SEED_FILE" || true
-                } || echo "Database already contains data, skipping auto-seed."
+                } || echo "Active tournament data already present, skipping auto-seed."
               fi
               exec gunicorn config.wsgi:application \
                 --bind 0.0.0.0:8000 \
