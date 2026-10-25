@@ -141,6 +141,8 @@ jobs:
     environment:
       name: production
       url: https://ruirutitans.com
+    env:
+      KUBECONFIG: ${{ runner.temp }}/kubeconfig
 
     steps:
     - name: Checkout repository
@@ -160,40 +162,46 @@ jobs:
         KUBECONFIG_RAW: ${{ secrets.KUBECONFIG }}
       run: |
         set -euo pipefail
+
+        # Ensure directory exists with restrictive umask (077) so directory is mode 0700
+        (umask 077 && mkdir -p "$(dirname "$KUBECONFIG")")
+
         if [ -z "${KUBECONFIG_RAW:-}" ]; then
-          echo "::error::GitHub Actions Secret 'KUBECONFIG' is empty or not configured! Please add 'KUBECONFIG' to your GitHub repository or 'production' environment secrets."
-          exit 1
-        fi
-        mkdir -p ~/.kube
-        rm -f /tmp/kubeconfig_decoded /tmp/kubeconfig_raw
-        printf '%s\n' "$KUBECONFIG_RAW" > /tmp/kubeconfig_raw
-
-        # Auto-detect if KUBECONFIG was provided as base64-encoded string
-        if base64 -d /tmp/kubeconfig_raw > /tmp/kubeconfig_decoded 2>/dev/null && grep -q "apiVersion" /tmp/kubeconfig_decoded; then
-          echo "Decoded base64-encoded KUBECONFIG secret."
-          mv /tmp/kubeconfig_decoded ~/.kube/config
-        else
-          mv /tmp/kubeconfig_raw ~/.kube/config
-        fi
-        rm -f /tmp/kubeconfig_decoded /tmp/kubeconfig_raw
-        chmod 600 ~/.kube/config
-
-        echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
-        export KUBECONFIG="$HOME/.kube/config"
-
-        # Validate that kubeconfig can be parsed by kubectl
-        if ! kubectl config view > /dev/null 2>&1; then
-          echo "::error::Unable to parse KUBECONFIG! The provided secret is neither valid YAML nor valid base64-encoded YAML."
+          echo "::error::GitHub Actions Secret 'KUBECONFIG' is missing or empty! Please configure 'KUBECONFIG' with the raw kubeconfig YAML in repository secrets or the 'production' environment secrets."
           exit 1
         fi
 
-        # Detect if cluster server is mistakenly set to localhost or 127.0.0.1
+        # Write raw kubeconfig YAML securely with restrictive umask and mode 0600
+        # (Follows explicit raw YAML format per k8s/README.md; no ambiguous base64 decoding)
+        (umask 077 && printf '%s\n' "$KUBECONFIG_RAW" > "$KUBECONFIG")
+        chmod 600 "$KUBECONFIG"
+
+        # Validate that kubeconfig is well-formed YAML parsable by kubectl
+        if ! kubectl config view --raw > /dev/null 2>&1; then
+          echo "::error::KUBECONFIG secret is malformed! Ensure the secret contains valid raw kubeconfig YAML."
+          exit 1
+        fi
+
+        # Extract and validate configured cluster server endpoint safely
         SERVER_URL=$(kubectl config view -o jsonpath='{.clusters[0].cluster.server}' 2>/dev/null || true)
-        echo "Configured Kubernetes cluster API server: ${SERVER_URL:-unknown}"
-        if echo "$SERVER_URL" | grep -qE "127\.0\.0\.1|localhost"; then
-          echo "::error::Your KUBECONFIG contains server URL '$SERVER_URL'! From GitHub Actions runners, 127.0.0.1/localhost points to the runner itself, not your server. In your KUBECONFIG secret, replace 127.0.0.1 with your K3s server's public IP address or domain (e.g., https://<YOUR_SERVER_IP>:6443)."
+        if [ -z "$SERVER_URL" ]; then
+          echo "::error::KUBECONFIG does not contain a cluster server URL (clusters[0].cluster.server is missing or empty)."
           exit 1
         fi
+
+        # Flag loopback addresses (localhost / 127.0.0.1) which point to the runner VM itself
+        if echo "$SERVER_URL" | grep -qE "^https?://(127\.0\.0\.1|localhost|0\.0\.0\.0)(:|/|$)"; then
+          echo "::error::Your KUBECONFIG specifies cluster server '$SERVER_URL'! From GitHub Actions runners, loopback addresses point to the runner VM itself. Update your KUBECONFIG secret so 'server:' points to your K3s cluster public IP or domain (e.g., https://<YOUR_VPS_IP>:6443)."
+          exit 1
+        fi
+
+        # Safe non-mutating connectivity check before proceeding
+        echo "Verifying API server connectivity to $SERVER_URL..."
+        if ! kubectl --request-timeout=10s get --raw=/version > /dev/null 2>&1; then
+          echo "::error::Unable to reach Kubernetes API server at $SERVER_URL within 10 seconds. Check that: 1) VPS firewall permits incoming TCP traffic on port 6443. 2) The IP/domain in KUBECONFIG is correct and publicly reachable. 3) K3s service is active."
+          exit 1
+        fi
+        echo "✓ Successfully connected to Kubernetes API server ($SERVER_URL)."
 
     - name: Pre-Flight Check — Verify Required Kubernetes Secrets & Namespace
       run: |
@@ -203,7 +211,7 @@ jobs:
         echo "=========================================================="
 
         # 0. Verify cluster connectivity
-        if ! kubectl cluster-info > /dev/null 2>&1; then
+        if ! kubectl --request-timeout=10s get --raw=/version > /dev/null 2>&1; then
           echo "::error::Unable to connect to the K3s cluster using KUBECONFIG."
           exit 1
         fi
@@ -232,6 +240,24 @@ jobs:
           exit 1
         fi
         echo "✓ Required secret 'ruirutitans-secrets' is verified with 'SECRET_KEY' populated."
+
+        # 3b. Verify MySQL credentials exist in ruirutitans-secrets
+        for key in MYSQL_DATABASE MYSQL_USER MYSQL_PASSWORD MYSQL_ROOT_PASSWORD; do
+          val=$(kubectl get secret ruirutitans-secrets -n ruirutitans -o jsonpath="{.data.$key}" 2>/dev/null || true)
+          if [ -z "$val" ]; then
+            echo "::error::Secret 'ruirutitans-secrets' exists in namespace 'ruirutitans' but is missing required MySQL key '$key'!"
+            echo "To update the secret with MySQL credentials on your K3s cluster:"
+            echo "  kubectl create secret generic ruirutitans-secrets -n ruirutitans \\"
+            echo "    --from-literal=SECRET_KEY=\"<EXISTING_SECRET_KEY>\" \\"
+            echo "    --from-literal=MYSQL_DATABASE=\"ruirutitans\" \\"
+            echo "    --from-literal=MYSQL_USER=\"titans_user\" \\"
+            echo "    --from-literal=MYSQL_PASSWORD=\"<YOUR_DB_PASSWORD>\" \\"
+            echo "    --from-literal=MYSQL_ROOT_PASSWORD=\"<YOUR_ROOT_PASSWORD>\" \\"
+            echo "    --dry-run=client -o yaml | kubectl apply -f -"
+            exit 1
+          fi
+        done
+        echo "✓ MySQL secret credentials (database, user, password, root password) are verified."
 
         # 4. Verify TLS Secret ruirutitans-tls-cert exists and contains valid tls.crt and tls.key
         if ! kubectl get secret ruirutitans-tls-cert -n ruirutitans > /dev/null 2>&1; then
@@ -326,12 +352,17 @@ jobs:
         echo "Updated Kubernetes image references:"
         grep -n 'image:' k8s/backend.yaml k8s/frontend.yaml k8s/backup-cronjob.yaml
 
-    - name: Stage 1 — Apply base resources (Namespace, PVCs, ConfigMap)
+    - name: Stage 1 — Apply base resources (Namespace, PVCs, ConfigMap, MySQL)
       run: |
         set -euo pipefail
         kubectl apply -f k8s/namespace.yaml
         kubectl apply -f k8s/pvc.yaml
         kubectl apply -f k8s/config.yaml
+        kubectl apply -f k8s/mysql.yaml
+
+    - name: Stage 1b — Wait for MySQL deployment rollout
+      run: |
+        kubectl rollout status deployment/ruirutitans-mysql -n ruirutitans --timeout=180s
 
     - name: Stage 2 — Deploy application workloads (Backend and Frontend)
       run: |
@@ -433,28 +464,38 @@ jobs:
         echo "      It does NOT revert database schema migrations or persistent volume (PVC) data."
         echo "=========================================================="
 
-        if ! kubectl cluster-info > /dev/null 2>&1; then
-          echo "::error::Kubernetes cluster is unreachable. Skipping diagnostics and rollback because no connection could be established."
-          echo "Check that your KUBECONFIG secret has the correct public IP and that port 6443 is open on your firewall."
+        # Check if kubeconfig exists and API server is reachable before attempting kubectl diagnostics
+        if [ ! -f "${KUBECONFIG:-}" ]; then
+          echo "::warning::Kubeconfig file is missing or path is invalid; skipping cluster diagnostics and rollback."
+          exit 1
+        fi
+
+        if ! kubectl --request-timeout=5s get --raw=/version > /dev/null 2>&1; then
+          echo "::warning::Kubernetes API server is unreachable from the runner. Skipping cluster diagnostics and rollback."
+          echo "Check that your KUBECONFIG secret is configured with the VPS public IP and that port 6443 is open on your firewall."
           exit 1
         fi
 
         echo "--- Pod Status in Namespace ruirutitans ---"
-        kubectl get pods -n ruirutitans -o wide || true
+        kubectl get pods -n ruirutitans -o wide 2>&1 || echo "::warning::Failed to retrieve pod status."
 
         echo "--- Recent Cluster Events ---"
-        kubectl get events -n ruirutitans --sort-by='.lastTimestamp' | tail -n 25 || true
+        kubectl get events -n ruirutitans --sort-by='.lastTimestamp' 2>&1 | tail -n 25 || echo "::warning::Failed to retrieve cluster events."
 
         echo "--- Backend Logs (tail 60) ---"
-        kubectl logs -n ruirutitans -l app.kubernetes.io/name=ruirutitans-backend --tail=60 || true
+        kubectl logs -n ruirutitans -l app.kubernetes.io/name=ruirutitans-backend --tail=60 2>&1 || echo "::warning::Failed to retrieve backend logs."
 
         echo "--- Frontend Logs (tail 60) ---"
-        kubectl logs -n ruirutitans -l app.kubernetes.io/name=ruirutitans-frontend --tail=60 || true
+        kubectl logs -n ruirutitans -l app.kubernetes.io/name=ruirutitans-frontend --tail=60 2>&1 || echo "::warning::Failed to retrieve frontend logs."
+
+        echo "=========================================================="
+        echo "Checking for existing deployments eligible for rollback..."
+        echo "=========================================================="
 
         for deployment in ruirutitans-backend ruirutitans-frontend; do
           if kubectl get deployment "$deployment" -n ruirutitans > /dev/null 2>&1; then
             echo "Checking rollout history for $deployment in namespace ruirutitans..."
-            history=$(kubectl rollout history deployment/"$deployment" -n ruirutitans)
+            history=$(kubectl rollout history deployment/"$deployment" -n ruirutitans 2>&1)
             echo "$history"
             revisions=$(printf '%s\n' "$history" | awk '/^[[:space:]]*[0-9]+[[:space:]]/ { count++ } END { print count+0 }')
 
@@ -466,7 +507,7 @@ jobs:
               echo "First deployment or no previous revision available for $deployment (revision count: $revisions); skipping rollback."
             fi
           else
-            echo "Deployment $deployment does not exist in namespace ruirutitans; skipping rollback."
+            echo "Deployment '$deployment' does not exist in namespace 'ruirutitans'; skipping rollback."
           fi
         done
 
