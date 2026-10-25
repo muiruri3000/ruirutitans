@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { compareFixturesByDate } from './FixturesView';
 
 const JERSEY_ROWS = [
   {
@@ -648,9 +649,19 @@ export default function ClubHomeView({
   // Combine custom upcoming fixtures (internal, friendly, tournament, league, cup)
   // with live unplayed League & Cup fixtures from tournament categories
   const allUpcomingFixtures = useMemo(() => {
-    const list = [...customFixtures];
+    // Only include non-league, non-cup exhibition club fixtures from customFixtures.
+    // Exclude dummy placeholder fixtures (CLB-FIX-1 through CLB-FIX-8).
+    const dummyIds = new Set(['CLB-FIX-1', 'CLB-FIX-2', 'CLB-FIX-3', 'CLB-FIX-4', 'CLB-FIX-5', 'CLB-FIX-6', 'CLB-FIX-7', 'CLB-FIX-8']);
+    const list = customFixtures.filter((f) => {
+      const cat = (f.category || '').toLowerCase();
+      if (cat === 'league' || cat === 'cup') return false;
+      if (dummyIds.has(f.id)) return false;
+      return true;
+    });
 
     Object.entries(categoriesData || {}).forEach(([catKey, cat]) => {
+      if (cat.isEnded || cat.isDeleted) return;
+
       const teamNameMap = {};
       (cat.teams || []).forEach((t) => {
         teamNameMap[t.id] = t.name;
@@ -714,7 +725,7 @@ export default function ClubHomeView({
       }
     });
 
-    return list;
+    return list.sort(compareFixturesByDate);
   }, [customFixtures, categoriesData]);
 
   const filteredFixtures = useMemo(() => {
@@ -1417,6 +1428,9 @@ export default function ClubHomeView({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {FIXTURE_CATEGORIES.map((catOpt) => {
                 const isSelected = selectedFixtureCat === catOpt.key;
+                const catCount = catOpt.key === 'all'
+                  ? allUpcomingFixtures.length
+                  : allUpcomingFixtures.filter((f) => (f.category || '').toLowerCase() === catOpt.key).length;
                 return (
                   <button
                     key={catOpt.key}
@@ -1434,7 +1448,7 @@ export default function ClubHomeView({
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    {catOpt.label}
+                    {catOpt.label} ({catCount})
                   </button>
                 );
               })}

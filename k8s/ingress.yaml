@@ -1,0 +1,129 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ruirutitans-ingress
+  namespace: ruirutitans
+  labels:
+    app.kubernetes.io/name: ruirutitans-ingress
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    # Native K3s Traefik TLS: Traefik automatically uses the TLS secret defined below:
+    # kubectl create secret tls ruirutitans-tls-cert -n ruirutitans --cert=fullchain.pem --key=privkey.pem
+    # If cert-manager is installed on your K3s cluster, uncomment the following line:
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - ruirutitans.com
+        - www.ruirutitans.com
+      secretName: ruirutitans-tls-cert
+  rules:
+    - host: ruirutitans.com
+      http:
+        paths:
+          # Backend API & Admin Routes
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          - path: /static
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          - path: /media
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          - path: /fixtures
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          - path: /categories
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          # Frontend SPA root
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-frontend-svc
+                port:
+                  number: 80
+    - host: www.ruirutitans.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          - path: /static
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          - path: /media
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          - path: /fixtures
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          - path: /categories
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-backend-svc
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ruirutitans-frontend-svc
+                port:
+                  number: 80

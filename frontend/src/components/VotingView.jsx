@@ -543,25 +543,52 @@ export default function VotingView({
           )}
 
           {currentRound && (
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 14px',
-                borderRadius: '999px',
-                fontSize: '11.5px',
-                fontWeight: 700,
-                letterSpacing: '0.04em',
-                background: currentRound.is_open ? 'rgba(63, 122, 78, 0.25)' : 'rgba(178, 58, 46, 0.2)',
-                color: currentRound.is_open ? '#5CD685' : '#FF7A70',
-                border: currentRound.is_open ? '1px solid #3F7A4E' : '1px solid #B23A2E',
-              }}
-            >
-              <span>{currentRound.is_open ? '● VOTING OPEN' : '🔒 VOTING CLOSED'}</span>
-              <span style={{ color: '#8FA89B', fontWeight: 500 }}>
-                • {currentRound.total_votes || 0} votes cast
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  background: currentRound.is_open ? 'rgba(63, 122, 78, 0.25)' : 'rgba(178, 58, 46, 0.2)',
+                  color: currentRound.is_open ? '#5CD685' : '#FF7A70',
+                  border: currentRound.is_open ? '1px solid #3F7A4E' : '1px solid #B23A2E',
+                }}
+              >
+                <span>{currentRound.is_open ? '● VOTING OPEN' : '🔒 VOTING CLOSED'}</span>
+                <span style={{ color: '#8FA89B', fontWeight: 500 }}>
+                  • {currentRound.total_votes || 0} votes cast
+                </span>
+              </div>
+
+              {(isCmsMode || cmsUser) && (
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleAdminToggleWindow(!currentRound.is_open)}
+                  style={{
+                    background: currentRound.is_open ? '#B23A2E' : '#3F7A4E',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    fontSize: '11.5px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: currentRound.is_open ? '0 2px 8px rgba(178,58,46,0.3)' : '0 2px 8px rgba(63,122,78,0.3)',
+                  }}
+                  title={currentRound.is_open ? 'Click to turn voting OFF (players cannot vote)' : 'Click to turn voting ON (players can vote)'}
+                >
+                  <span>{currentRound.is_open ? '🔒 Turn Voting OFF' : '🔓 Turn Voting ON'}</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -861,7 +888,7 @@ export default function VotingView({
                 </div>
               )}
 
-              {!currentRound?.is_open && (
+              {!currentRound?.is_open && hasVotedThisWeek && (
                 <div
                   style={{
                     background: 'rgba(178, 58, 46, 0.15)',
@@ -984,6 +1011,125 @@ export default function VotingView({
                           );
                         })}
                       </div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setSubTab('totw')}
+                      style={{
+                        background: '#C9A227',
+                        color: '#16201B',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '11px 24px',
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(201, 162, 39, 0.3)',
+                      }}
+                    >
+                      🏆 View Official Team of the Week (TOTW) Lineup →
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSubTab('tott')}
+                      style={{
+                        background: '#16352A',
+                        color: '#DDE6DF',
+                        border: '1px solid #2B4E40',
+                        borderRadius: '8px',
+                        padding: '11px 20px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      👑 View Season Team of the Tournament (TOTT)
+                    </button>
+                  </div>
+                </div>
+              ) : !currentRound?.is_open ? (
+                <div
+                  style={{
+                    background: 'linear-gradient(145deg, #0F2E24 0%, #081B15 100%)',
+                    border: '2px solid #B23A2E',
+                    borderRadius: '16px',
+                    padding: '36px 24px',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '16px',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '68px',
+                      height: '68px',
+                      borderRadius: '50%',
+                      background: 'rgba(178, 58, 46, 0.15)',
+                      border: '2px solid #B23A2E',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '30px',
+                    }}
+                  >
+                    🔒
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#FF7A70', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      VOTING WINDOW CLOSED BY TOURNAMENT ADMINISTRATOR
+                    </div>
+                    <h3 className="scoreboard" style={{ fontSize: '30px', color: '#F4F2EA', margin: '0 0 8px', letterSpacing: '0.03em' }}>
+                      OFFICIAL VOTING IS TURNED OFF FOR {currentRound?.title?.toUpperCase() || 'THIS WEEK'}
+                    </h3>
+                    <p style={{ fontSize: '13.5px', color: '#9BB5A8', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
+                      The tournament manager has turned voting <strong>OFF</strong> for {currentRound?.title || 'this round'}.
+                      Registered players cannot vote or submit ballots while voting is disabled.
+                      You can view the locked <strong>Team of the Week (TOTW)</strong> or the overall <strong>Season Team of the Tournament (TOTT)</strong> below.
+                    </p>
+                  </div>
+
+                  {(isCmsMode || cmsUser) && (
+                    <div
+                      style={{
+                        background: 'rgba(201, 162, 39, 0.1)',
+                        border: '1px solid rgba(201, 162, 39, 0.35)',
+                        borderRadius: '10px',
+                        padding: '12px 20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '14px',
+                        flexWrap: 'wrap',
+                        justifyContent: 'center',
+                        maxWidth: '560px',
+                      }}
+                    >
+                      <span style={{ fontSize: '12.5px', color: '#F4F2EA' }}>
+                        👑 <strong>Admin Quick Action:</strong> Reopen voting to allow players to cast ballots.
+                      </span>
+                      <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => handleAdminToggleWindow(true)}
+                        style={{
+                          background: '#3F7A4E',
+                          color: '#FFF',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 16px',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🔓 Turn Voting ON Now
+                      </button>
                     </div>
                   )}
 

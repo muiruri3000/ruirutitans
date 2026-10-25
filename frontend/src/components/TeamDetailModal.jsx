@@ -762,7 +762,7 @@ export default function TeamDetailModal({
                     type="password"
                     className="form-input"
                     style={{ flex: '1 1 120px', padding: '6px 10px', fontSize: '12px' }}
-                    placeholder="Password (default: titans2026)"
+                    placeholder="Initial password (or use 4-digit activation)"
                     value={newPlayerPassword}
                     onChange={(e) => setNewPlayerPassword(e.target.value)}
                   />

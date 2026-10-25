@@ -1,5 +1,6 @@
 // Team Analytics & Predictive Tournament Progression Engine for Ruiru Titans FC
 // Dynamically recalculates after every match played, walkover, or event recorded.
+import { compareFixturesByDate } from '../components/FixturesView';
 
 export function computeFixtureScore(matchLike, homeId, awayId) {
   if (!matchLike) return { hs: 0, as: 0 };
@@ -72,7 +73,7 @@ export function computeTeamProfile(teamId, currentCategory, allCategories = {}, 
     const teamScore = isHome ? hs : as;
     const oppScore = isHome ? as : hs;
 
-    const isCompleted = Boolean(f.played || f.walkover);
+    const isCompleted = Boolean(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0));
 
     if (isCompleted) {
       let result = 'D';
@@ -170,15 +171,15 @@ export function computeTeamProfile(teamId, currentCategory, allCategories = {}, 
     }
   }
 
-  // Deduplicate and sort matches
+  // Deduplicate and sort matches by date
   const uniquePlayedMap = new Map();
   allTeamPlayedMatches.forEach((m) => uniquePlayedMap.set(String(m.id), m));
-  const sortedPlayed = Array.from(uniquePlayedMap.values()).reverse(); // Most recent first
+  const sortedPlayed = Array.from(uniquePlayedMap.values()).sort(compareFixturesByDate).reverse(); // Most recent first
   const last20Matches = sortedPlayed.slice(0, 20);
 
   const uniqueUpcomingMap = new Map();
   allTeamUpcomingMatches.forEach((m) => uniqueUpcomingMap.set(String(m.id), m));
-  const sortedUpcoming = Array.from(uniqueUpcomingMap.values()); // Nearest first
+  const sortedUpcoming = Array.from(uniqueUpcomingMap.values()).sort(compareFixturesByDate); // Nearest first
   const next5Fixtures = sortedUpcoming.slice(0, 5);
 
   // 3. Player Stats & Roster
@@ -326,7 +327,7 @@ function simulateLeagueCompetition(teamId, category, teamsMap) {
   const unplayedFixtures = [];
 
   fixtures.forEach((f) => {
-    if (f.played || f.walkover) {
+    if (f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0)) {
       const { hs, as } = computeFixtureScore(f, f.home, f.away);
       const h = table[f.home];
       const a = table[f.away];
@@ -557,7 +558,7 @@ function simulateCupCompetition(teamId, category, teamsMap) {
 
     const unplayedGroup = [];
     gFixtures.forEach((f) => {
-      if (f.played || f.walkover) {
+      if (f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0)) {
         const { hs, as } = computeFixtureScore(f, f.home, f.away);
         const h = gTable[f.home];
         const a = gTable[f.away];

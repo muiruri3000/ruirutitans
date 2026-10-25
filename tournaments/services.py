@@ -4,7 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.text import slugify
 from django.db.models import Count, Max, Avg, Q
-from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote
+from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote, fixture_sort_key
 
 REAL_OPEN_TEAM_SEED = [
     {
@@ -987,80 +987,7 @@ def build_default_homepage_data():
                 },
             ],
         },
-        "upcoming_fixtures": [
-            {
-                "id": "CLB-FIX-1",
-                "category": "internal",
-                "title": "In-House Squad Trial Match",
-                "home": "Titans Greens XI",
-                "away": "Titans Golds XI",
-                "date": "Sat, Oct 24 · 09:00",
-                "venue": "Thoome Pri.",
-            },
-            {
-                "id": "CLB-FIX-2",
-                "category": "internal",
-                "title": "Wazae vs Senior First Team Scrimmage",
-                "home": "Wazae Legends",
-                "away": "Titans First Team",
-                "date": "Sun, Oct 25 · 10:30",
-                "venue": "Thoome Pri.",
-            },
-            {
-                "id": "CLB-FIX-3",
-                "category": "friendly",
-                "title": "Club International Friendly",
-                "home": "Ruiru Titans FC",
-                "away": "Thika United Legends",
-                "date": "Sat, Oct 24 · 15:00",
-                "venue": "Thoome Pri.",
-            },
-            {
-                "id": "CLB-FIX-4",
-                "category": "friendly",
-                "title": "Youth Academy Friendly Showcase",
-                "home": "Ruiru Titans U15",
-                "away": "Kahawa Wendani Youth",
-                "date": "Sun, Oct 25 · 13:00",
-                "venue": "Thoome Pri.",
-            },
-            {
-                "id": "CLB-FIX-5",
-                "category": "tournament",
-                "title": "Kiambu County Super Cup — Group Opener",
-                "home": "Ruiru Titans U17",
-                "away": "Juja Combined FC",
-                "date": "Sat, Oct 31 · 14:00",
-                "venue": "Thoome Pri.",
-            },
-            {
-                "id": "CLB-FIX-6",
-                "category": "tournament",
-                "title": "Eastlands & Ruiru Veterans Invitational",
-                "home": "Ruiru Titans Wazae",
-                "away": "Nairobi City Veterans",
-                "date": "Sun, Nov 1 · 16:00",
-                "venue": "Thoome Pri.",
-            },
-            {
-                "id": "CLB-FIX-7",
-                "category": "league",
-                "title": "Ruiru Titans Championship League — Matchday 9",
-                "home": "Oxford FC",
-                "away": "Mancheli FC",
-                "date": "Sat, Nov 7 · 16:00",
-                "venue": "Thoome Pri.",
-            },
-            {
-                "id": "CLB-FIX-8",
-                "category": "cup",
-                "title": "Ruiru Titans Knockout Cup — Quarter-Final Tie",
-                "home": "Super Strikers",
-                "away": "Rangers FC",
-                "date": "Sun, Nov 8 · 15:00",
-                "venue": "Thoome Pri.",
-            },
-        ],
+        "upcoming_fixtures": [],
     }
 
 
@@ -1235,21 +1162,31 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
                     p_info.get("username")
                     or (existing_p.username if existing_p and existing_p.username else default_uname)
                 )
-                p_password = (
-                    p_info.get("password")
-                    or (existing_p.password if existing_p and existing_p.password else "titans2026")
-                )
-
-                p_must_change = bool(
-                    p_info.get("mustChangePassword")
-                    or p_info.get("must_change_password")
-                    or (existing_p.must_change_password if existing_p else False)
-                )
-                p_temp_code = str(
-                    p_info.get("tempCode")
-                    or p_info.get("temp_code")
-                    or (existing_p.temp_code if existing_p else "")
-                )
+                if existing_p:
+                    p_password = existing_p.password
+                    p_must_change = existing_p.must_change_password
+                    p_temp_code = existing_p.temp_code
+                    p_temp_code_created_at = getattr(existing_p, "temp_code_created_at", None)
+                else:
+                    from django.contrib.auth.hashers import make_password
+                    raw_pw = p_info.get("password")
+                    if raw_pw and str(raw_pw).strip() and str(raw_pw).strip() != "titans2026":
+                        p_password = (
+                            raw_pw
+                            if (
+                                str(raw_pw).startswith("!")
+                                or str(raw_pw).startswith("pbkdf2_")
+                                or str(raw_pw).startswith("argon2")
+                                or str(raw_pw).startswith("bcrypt")
+                            )
+                            else make_password(raw_pw)
+                        )
+                        p_must_change = bool(p_info.get("mustChangePassword") or p_info.get("must_change_password", False))
+                    else:
+                        p_password = make_password(None)
+                        p_must_change = True
+                    p_temp_code = str(p_info.get("tempCode") or p_info.get("temp_code", ""))
+                    p_temp_code_created_at = None
 
                 raw_j = p_info.get("jerseyNumber") if p_info.get("jerseyNumber") is not None else p_info.get("jersey_number")
                 p_jersey = int(raw_j) if (raw_j is not None and str(raw_j).strip().isdigit()) else (existing_p.jersey_number if existing_p else None)
@@ -1264,6 +1201,7 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
                     "jersey_number": p_jersey,
                     "must_change_password": p_must_change,
                     "temp_code": p_temp_code,
+                    "temp_code_created_at": p_temp_code_created_at,
                     "is_active": p_is_active,
                 }
                 if existing_p:
@@ -1287,8 +1225,8 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
         # Fixtures & Events
         raw_fixtures = []
         if mode == "league":
-            for f in cat_data.get("fixtures", []):
-                raw_fixtures.append((f, "league", "", None, None))
+            for seq_i, f in enumerate(cat_data.get("fixtures", []), start=1):
+                raw_fixtures.append((f, "league", "", seq_i, None))
         else:
             # Group fixtures
             group_fixtures = cat_data.get("groupFixtures", {})
@@ -1336,6 +1274,15 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
             home_pens = pens[0] if (pens and len(pens) > 0) else None
             away_pens = pens[1] if (pens and len(pens) > 1) else None
 
+            events = f_data.get("events", [])
+            has_events = bool(events and len(events) > 0)
+            is_fixture_played = bool(f_data.get("played", False)) or has_events or bool(walkover_team)
+
+            existing_fix = Fixture.objects.filter(category=category, fixture_id=f_id).first()
+            incoming_ref = f_data.get("referee", "")
+            if existing_fix and (existing_fix.played or existing_fix.events.exists() or existing_fix.walkover_winner_id) and existing_fix.referee and not incoming_ref:
+                incoming_ref = existing_fix.referee
+
             fixture_obj, _ = Fixture.objects.update_or_create(
                 category=category,
                 fixture_id=f_id,
@@ -1347,17 +1294,18 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
                     "date": f_data.get("date", "TBD"),
                     "home_team": home_team,
                     "away_team": away_team,
-                    "played": bool(f_data.get("played", False)),
+                    "played": is_fixture_played,
                     "walkover_winner": walkover_team,
                     "home_pens": home_pens,
                     "away_pens": away_pens,
-                    "referee": f_data.get("referee", ""),
+                    "referee": incoming_ref,
+                    "report": f_data.get("report") or (existing_fix.report if (existing_fix and existing_fix.report) else {}),
                 },
             )
 
             # Recreate events
             fixture_obj.events.all().delete()
-            events = f_data.get("events", [])
+
             f_home_id = f_data.get("home")
             f_away_id = f_data.get("away")
             for order, ev in enumerate(events):
@@ -1409,6 +1357,289 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
             ensure_player_default_positions(category)
             get_or_create_active_voting_round(category)
 
+def reorganize_category_unplayed_fixtures(category, newly_added_team_id=None):
+    """
+    Reorganizes all unplayed fixtures for a league category so that:
+    1. Played fixtures remain 100% frozen and intact.
+    2. Any team (especially a newly added team or trailing teams with fewer games)
+       plays catch-up matches immediately in Round 1.
+    3. Invariant: No team plays an additional match (N+1) before the new team
+       (and every other team in the league) has played match N.
+    4. Rounds are strictly partitioned so each team plays exactly once per round,
+       avoiding back-to-back fatigue.
+    5. Unplayed fixtures take chronological upcoming date slots and are sequentially renumbered.
+    """
+    if isinstance(category, str):
+        category = Category.objects.get(key=category)
+    if category.mode != "league":
+        return 0
+
+    fixtures = list(category.fixtures.filter(phase="league"))
+    fixtures.sort(key=fixture_sort_key)
+    played_fixtures = [f for f in fixtures if f.played or f.events.exists() or f.walkover_winner_id]
+    for idx, pf in enumerate(played_fixtures, start=1):
+        if pf.round_index != idx:
+            pf.round_index = idx
+            pf.save(update_fields=["round_index"])
+    unplayed_fixtures = [f for f in fixtures if not (f.played or f.events.exists() or f.walkover_winner_id)]
+
+    if not unplayed_fixtures:
+        return 0
+
+    teams = list(category.teams.all())
+    team_ids = [t.id for t in teams]
+    if len(team_ids) < 2:
+        return 0
+
+    # Count played games per team and track head-to-head encounters
+    played_counts = {t_id: 0 for t_id in team_ids}
+    h2h_counts = {}
+
+    def get_h2h_key(u, v):
+        return (u, v) if str(u) < str(v) else (v, u)
+
+    for f in played_fixtures:
+        if f.home_team_id in played_counts:
+            played_counts[f.home_team_id] += 1
+        if f.away_team_id in played_counts:
+            played_counts[f.away_team_id] += 1
+        if f.home_team_id and f.away_team_id:
+            k = get_h2h_key(f.home_team_id, f.away_team_id)
+            h2h_counts[k] = h2h_counts.get(k, 0) + 1
+
+    def can_teams_meet(h_id, a_id):
+        """
+        Invariant: Two teams that have played against each other k times (k >= 1)
+        should not meet again (k + 1) until both teams have played all other teams
+        in the league at least k times.
+        """
+        if not h_id or not a_id or h_id == a_id:
+            return True
+        k = h2h_counts.get(get_h2h_key(h_id, a_id), 0)
+        if k == 0:
+            return True
+        for other_id in team_ids:
+            if other_id != h_id and h2h_counts.get(get_h2h_key(h_id, other_id), 0) < k:
+                return False
+            if other_id != a_id and h2h_counts.get(get_h2h_key(a_id, other_id), 0) < k:
+                return False
+        return True
+
+    scheduled_counts = dict(played_counts)
+    unplayed_pool = list(unplayed_fixtures)
+    reordered_unplayed = []
+    last_played_slot = {t_id: -999 for t_id in team_ids}
+
+    # Populate recent slots for played fixtures to ensure proper rest spacing
+    for idx, f in enumerate(played_fixtures):
+        pseudo_slot = idx - len(played_fixtures)
+        if f.home_team_id:
+            last_played_slot[f.home_team_id] = pseudo_slot
+        if f.away_team_id:
+            last_played_slot[f.away_team_id] = pseudo_slot
+
+    # Collect available unplayed date slots sorted chronologically by date
+    from .models import parse_fixture_date_key
+    unplayed_dates = sorted([f.date for f in unplayed_fixtures], key=parse_fixture_date_key)
+
+    target_new_id = None
+    if newly_added_team_id:
+        target_new_id = getattr(newly_added_team_id, "id", newly_added_team_id)
+        if isinstance(target_new_id, str):
+            t_obj = category.teams.filter(Q(team_id=target_new_id) | Q(name=target_new_id)).first()
+            if t_obj:
+                target_new_id = t_obj.id
+
+    round_teams_scheduled = set()
+    slot = 0
+
+    while unplayed_pool:
+        min_games = min(scheduled_counts.values()) if scheduled_counts else 0
+        max_games = max(scheduled_counts.values()) if scheduled_counts else 0
+
+        best_idx = -1
+        best_score = -float("inf")
+
+        if min_games < max_games:
+            # CATCH-UP PHASE:
+            # Only trailing teams (scheduled_counts == min_games) are eligible to play!
+            trailing_teams = {t_id for t_id, cnt in scheduled_counts.items() if cnt == min_games}
+
+            for i, m in enumerate(unplayed_pool):
+                h_id = m.home_team_id
+                a_id = m.away_team_id
+                h_trail = h_id in trailing_teams
+                a_trail = a_id in trailing_teams
+
+                # Invariant: NEVER schedule a match between two non-trailing teams while teams are behind!
+                if not h_trail and not a_trail:
+                    continue
+
+                # Invariant: Two teams that have met k times cannot meet again until they have played all other teams
+                if not can_teams_meet(h_id, a_id):
+                    continue
+
+                score = 0
+                if h_trail and a_trail:
+                    score += 50000  # Both trailing: ideal catch-up match!
+                else:
+                    # One trailing, one not trailing
+                    score += 1000
+                    if len(trailing_teams) >= 2:
+                        score -= 30000
+
+                if target_new_id and (h_id == target_new_id or a_id == target_new_id):
+                    score += 15000  # Priority in earliest catch-up slot
+
+                k = get_h2h_key(h_id, a_id)
+                if h2h_counts.get(k, 0) > 0:
+                    score -= 20000  # Prefer fresh matchups
+
+                if last_played_slot.get(h_id) == slot - 1 or last_played_slot.get(a_id) == slot - 1:
+                    score -= 2000
+
+                if score > best_score:
+                    best_score = score
+                    best_idx = i
+
+            if best_idx == -1:
+                # Fallback within catch-up phase: any trailing match or match that satisfies can_teams_meet
+                for i, m in enumerate(unplayed_pool):
+                    h_id = m.home_team_id
+                    a_id = m.away_team_id
+                    if not can_teams_meet(h_id, a_id):
+                        continue
+                    sum_count = scheduled_counts.get(h_id, 0) + scheduled_counts.get(a_id, 0)
+                    score = 1000 - sum_count * 50
+                    if score > best_score:
+                        best_score = score
+                        best_idx = i
+
+        else:
+            # NORMAL ROUND PHASE:
+            # Each team plays exactly once per round before ANY team plays in the next round!
+            if len(round_teams_scheduled) >= len(team_ids) - (len(team_ids) % 2):
+                round_teams_scheduled.clear()
+
+            current_target = min_games + 1
+
+            for i, m in enumerate(unplayed_pool):
+                h_id = m.home_team_id
+                a_id = m.away_team_id
+                h_in = h_id in round_teams_scheduled
+                a_in = a_id in round_teams_scheduled
+
+                # In this round, neither team can have already been scheduled
+                if h_in or a_in:
+                    continue
+
+                # Strict round cap: neither team can exceed the current round target
+                if scheduled_counts.get(h_id, 0) >= current_target or scheduled_counts.get(a_id, 0) >= current_target:
+                    continue
+
+                # Invariant: Two teams that have met k times cannot meet again until they have played all other teams
+                if not can_teams_meet(h_id, a_id):
+                    continue
+
+                score = 2000
+
+                # Fresh matchup preference
+                k = get_h2h_key(h_id, a_id)
+                if h2h_counts.get(k, 0) == 0:
+                    score += 5000
+                else:
+                    score -= 10000
+
+                # Fatigue spacing: prefer teams that have rested longer
+                gap_h = slot - last_played_slot.get(h_id, -999)
+                gap_a = slot - last_played_slot.get(a_id, -999)
+                score += min(gap_h, gap_a) * 100
+
+                if gap_h <= 1 or gap_a <= 1:
+                    score -= 5000
+                if gap_h <= 2 or gap_a <= 2:
+                    score -= 1000
+
+                if score > best_score:
+                    best_score = score
+                    best_idx = i
+
+            if best_idx == -1:
+                # If no strictly disjoint match found under current target, reset round set and find match with minimum sum count satisfying can_teams_meet
+                round_teams_scheduled.clear()
+                for i, m in enumerate(unplayed_pool):
+                    h_id = m.home_team_id
+                    a_id = m.away_team_id
+                    if not can_teams_meet(h_id, a_id):
+                        continue
+                    sum_count = scheduled_counts.get(h_id, 0) + scheduled_counts.get(a_id, 0)
+                    score = 1000 - sum_count * 50
+                    gap_h = slot - last_played_slot.get(h_id, -999)
+                    gap_a = slot - last_played_slot.get(a_id, -999)
+                    score += min(gap_h, gap_a) * 10
+                    if score > best_score:
+                        best_score = score
+                        best_idx = i
+
+        if best_idx == -1:
+            for i, m in enumerate(unplayed_pool):
+                if can_teams_meet(m.home_team_id, m.away_team_id):
+                    best_idx = i
+                    break
+
+        if best_idx == -1:
+            best_idx = 0
+
+        chosen_match = unplayed_pool.pop(best_idx)
+        slot_date = unplayed_dates[slot] if slot < len(unplayed_dates) else "Upcoming Weekend · 16:00"
+
+        chosen_match.date = slot_date
+        scheduled_counts[chosen_match.home_team_id] = scheduled_counts.get(chosen_match.home_team_id, 0) + 1
+        scheduled_counts[chosen_match.away_team_id] = scheduled_counts.get(chosen_match.away_team_id, 0) + 1
+        round_teams_scheduled.add(chosen_match.home_team_id)
+        round_teams_scheduled.add(chosen_match.away_team_id)
+        last_played_slot[chosen_match.home_team_id] = slot
+        last_played_slot[chosen_match.away_team_id] = slot
+
+        k = get_h2h_key(chosen_match.home_team_id, chosen_match.away_team_id)
+        h2h_counts[k] = h2h_counts.get(k, 0) + 1
+
+        reordered_unplayed.append(chosen_match)
+        slot += 1
+
+    # Renumber sequentially after played fixtures
+    max_played_seq = 0
+    prefix = "F"
+    for f in played_fixtures:
+        m_real = re.match(r"REAL-F(\d+)", str(f.fixture_id or ""), re.IGNORECASE)
+        if m_real:
+            prefix = "REAL-F"
+            num = int(m_real.group(1))
+            if num > max_played_seq:
+                max_played_seq = num
+        else:
+            m_f = re.match(r"^F(\d+)$", str(f.fixture_id or ""), re.IGNORECASE)
+            if m_f:
+                num = int(m_f.group(1))
+                if num > max_played_seq:
+                    max_played_seq = num
+
+    seq = max_played_seq
+    with transaction.atomic():
+        # Pass 1: Set temporary fixture IDs to prevent unique constraint collisions
+        for idx, m in enumerate(reordered_unplayed):
+            m.fixture_id = f"TMP-REORD-{m.id}-{idx}"
+            m.save(update_fields=["fixture_id"])
+
+        # Pass 2: Set final sequential fixture IDs and round_index
+        for m in reordered_unplayed:
+            seq += 1
+            m.fixture_id = f"{prefix}{seq}"
+            m.round_index = seq
+            m.save(update_fields=["date", "fixture_id", "round_index"])
+
+    return len(reordered_unplayed)
+
 
 def ensure_archived_open_season():
     """
@@ -1438,41 +1669,43 @@ def ensure_archived_open_season():
 
 def ensure_default_open_category():
     """
-    Ensures that an active 'open' category exists with the 5 core teams starting with 0 players.
+    Ensures that an active 'open' category exists ONLY when no categories exist at all in the database.
     """
-    if not Category.objects.filter(key="open").exists():
-        core_teams = [
-            {"id": "MAN", "name": "Mancheli", "color": "#C9A227", "players": []},
-            {"id": "SS", "name": "Super Strikers", "color": "#B23A2E", "players": []},
-            {"id": "RAN", "name": "Rangers", "color": "#3F7A4E", "players": []},
-            {"id": "MAS", "name": "Masters", "color": "#D97B29", "players": []},
-            {"id": "OXF", "name": "Oxford", "color": "#2E5A8F", "players": []},
-        ]
-        import_state_to_db({
-            "categories": {
-                "open": {
-                    "label": "Open",
-                    "mode": "league",
-                    "format": "double",
-                    "teams": core_teams,
-                    "fixtures": [],
-                    "schedule": {"time": "18:00", "days": {3: 1, 4: 1, 5: 1, 6: 1}},
-                    "referees": ["Coach Ref", "Main Ref", "Assistant Ref"],
-                    "votingConfig": {"team_size": 6, "max_picks_per_position": 2, "include_gk": False},
-                }
-            },
-            "activeCategory": "open",
-        }, soft_delete_missing=False)
+    if Category.objects.exists():
+        return
+    core_teams = [
+        {"id": "MAN", "name": "Mancheli", "color": "#C9A227", "players": []},
+        {"id": "SS", "name": "Super Strikers", "color": "#B23A2E", "players": []},
+        {"id": "RAN", "name": "Rangers", "color": "#3F7A4E", "players": []},
+        {"id": "MAS", "name": "Masters", "color": "#D97B29", "players": []},
+        {"id": "OXF", "name": "Oxford", "color": "#2E5A8F", "players": []},
+    ]
+    import_state_to_db({
+        "categories": {
+            "open": {
+                "label": "Open",
+                "mode": "league",
+                "format": "double",
+                "teams": core_teams,
+                "fixtures": [],
+                "schedule": {"time": "18:00", "days": {3: 1, 4: 1, 5: 1, 6: 1}},
+                "referees": ["Coach Ref", "Main Ref", "Assistant Ref"],
+                "votingConfig": {"team_size": 6, "max_picks_per_position": 2, "include_gk": False},
+            }
+        },
+        "activeCategory": "open",
+    }, soft_delete_missing=False)
 
 
 def export_state_from_db():
     """
     Exports full database state to a JSON-ready dict (including active categories and soft-deleted categories).
     """
-    ensure_archived_open_season()
-    ensure_default_open_category()
+    if not Category.objects.exists():
+        ensure_archived_open_season()
+        ensure_default_open_category()
     settings, _ = GlobalSettings.objects.get_or_create(id=1)
-    active_cat_key = settings.active_category_key if settings else "open"
+    active_cat_key = settings.active_category_key if settings else None
 
     if not settings.homepage_data:
         settings.homepage_data = build_default_homepage_data()
@@ -1486,8 +1719,12 @@ def export_state_from_db():
     for cat in Category.objects.filter(is_deleted=True).order_by("-deleted_at", "key"):
         deleted_categories[cat.key] = cat.to_state_dict()
 
-    if categories and active_cat_key not in categories:
-        active_cat_key = "open" if "open" in categories else next(iter(categories.keys()))
+    if categories:
+        if not active_cat_key or active_cat_key not in categories or categories.get(active_cat_key, {}).get("isEnded"):
+            # Select first active non-ended category
+            active_cat_key = next((k for k, c in categories.items() if not c.get("isEnded")), next(iter(categories.keys())))
+    else:
+        active_cat_key = "open"
 
     return {
         "categories": categories,
@@ -1508,7 +1745,8 @@ def compute_h2h_comparison(category, team1_id, team2_id):
     if not team1 or not team2:
         return None
 
-    all_fixtures = list(category.fixtures.all().order_by("id"))
+    all_fixtures = list(category.fixtures.all())
+    all_fixtures.sort(key=fixture_sort_key)
 
     # 1. Past H2H encounters
     h2h_matches = []
@@ -1527,7 +1765,7 @@ def compute_h2h_comparison(category, team1_id, team2_id):
             continue
 
         hs, as_score = f.score
-        is_played = f.played or (f.walkover_winner is not None)
+        is_played = bool(f.played or (f.walkover_winner is not None) or f.events.exists())
 
         match_info = {
             "fixture_id": f.fixture_id,
@@ -1568,7 +1806,7 @@ def compute_h2h_comparison(category, team1_id, team2_id):
     def get_team_form(t_id):
         team_fixtures = [
             f for f in all_fixtures
-            if (f.played or f.walkover_winner) and (
+            if (f.played or f.walkover_winner or f.events.exists()) and (
                 (f.home_team and f.home_team.team_id == t_id) or
                 (f.away_team and f.away_team.team_id == t_id)
             )
@@ -1606,7 +1844,7 @@ def compute_h2h_comparison(category, team1_id, team2_id):
         t_id = team_obj.team_id
         matches = [
             f for f in all_fixtures
-            if (f.played or f.walkover_winner) and (
+            if (f.played or f.walkover_winner or f.events.exists()) and (
                 (f.home_team and f.home_team.team_id == t_id) or
                 (f.away_team and f.away_team.team_id == t_id)
             )
@@ -1684,7 +1922,7 @@ def generate_standings_csv_data(category):
     }
 
     for f in fixtures:
-        if not f.played:
+        if not f.played and not f.events.exists() and not f.walkover_winner:
             continue
         hs, as_score = f.score
         h_id = f.home_team.team_id if f.home_team else None
@@ -1738,7 +1976,8 @@ def generate_standings_csv_data(category):
 
 def generate_fixtures_csv_data(category):
     """Generates rows for Fixtures CSV export."""
-    fixtures = category.fixtures.all().order_by("id")
+    fixtures = list(category.fixtures.all())
+    fixtures.sort(key=fixture_sort_key)
     header = [
         "Fixture ID",
         "Phase",
@@ -1827,8 +2066,8 @@ def compute_category_suspensions(category):
     all_fixtures = list(
         category.fixtures.select_related("home_team", "away_team")
         .prefetch_related("events__team", "events__player")
-        .order_by("id")
     )
+    all_fixtures.sort(key=fixture_sort_key)
     active_or_played = [
         f for f in all_fixtures if f.played or f.walkover_winner_id or f.events.exists()
     ]
@@ -2791,26 +3030,218 @@ def seed_default_honours_votes(category=None):
 # AUTHENTICATION & AUTHORIZATION SERVICES (CMS & PLAYERS)
 # ============================================================
 
-def ensure_default_cms_admin():
+def ensure_default_cms_admin(allow_create=False):
     """
-    Ensures the default Admin account ('admin' / 'admin123') exists and is active.
-    Optimized for sub-millisecond instant execution.
+    Checks for an active staff/superuser account.
+    Never creates or resets a hardcoded default password unless explicitly invoked
+    with allow_create=True in local development seeding.
     """
     from django.contrib.auth.models import User
-    admin_user = User.objects.filter(username="admin").first()
-    if not admin_user:
-        admin_user = User.objects.create_superuser("admin", "admin@ruirutitans.com", "admin123")
-    elif not admin_user.is_staff or not admin_user.is_superuser or not admin_user.is_active:
-        admin_user.is_staff = True
-        admin_user.is_superuser = True
-        admin_user.is_active = True
-        admin_user.save(update_fields=["is_staff", "is_superuser", "is_active"])
-    return admin_user
+    from django.conf import settings
+    admin_user = User.objects.filter(is_staff=True, is_active=True).first()
+    if admin_user:
+        return admin_user
+    if allow_create and getattr(settings, "DEBUG", False):
+        import os
+        seed_pw = os.environ.get("DEV_ADMIN_PASSWORD", "").strip()
+        if seed_pw:
+            return User.objects.create_superuser("admin", "admin@ruirutitans.com", seed_pw)
+    return None
+
+
+def _is_trusted_proxy_peer(remote_addr: str) -> bool:
+    """
+    Returns True only if remote_addr belongs to an explicitly configured CIDR or IP
+    in settings.TRUSTED_PROXY_CIDRS. Never trusts forwarded headers from arbitrary peers.
+    """
+    import ipaddress
+    from django.conf import settings
+
+    if not remote_addr:
+        return False
+    trusted_cidrs = getattr(settings, "TRUSTED_PROXY_CIDRS", None) or []
+    if not trusted_cidrs:
+        return False
+    try:
+        peer_ip = ipaddress.ip_address(remote_addr.strip())
+    except ValueError:
+        return False
+
+    for entry in trusted_cidrs:
+        entry_str = str(entry or "").strip()
+        if not entry_str:
+            continue
+        try:
+            if "/" in entry_str:
+                if peer_ip in ipaddress.ip_network(entry_str, strict=False):
+                    return True
+            else:
+                if peer_ip == ipaddress.ip_address(entry_str):
+                    return True
+        except ValueError:
+            continue
+    return False
+
+
+def get_client_ip(request):
+    """
+    Extracts the client IP address safely for rate limiting.
+    Never trusts client-supplied X-Forwarded-For or CF-Connecting-IP headers unless
+    the direct peer (REMOTE_ADDR) is in settings.TRUSTED_PROXY_CIDRS.
+    When trusted, walks X-Forwarded-For from right to left and returns the first
+    valid IP address that is not itself a trusted proxy (preventing spoofed left-side XFF values).
+    """
+    import ipaddress
+
+    if not request:
+        return "unknown"
+    meta = getattr(request, "META", {}) or {}
+    remote_addr = (meta.get("REMOTE_ADDR") or "").strip()
+
+    if _is_trusted_proxy_peer(remote_addr):
+        xff = (meta.get("HTTP_X_FORWARDED_FOR") or "").strip()
+        if xff:
+            parts = [p.strip() for p in xff.split(",") if p.strip()]
+            for candidate in reversed(parts):
+                try:
+                    ipaddress.ip_address(candidate)
+                except ValueError:
+                    continue
+                if not _is_trusted_proxy_peer(candidate):
+                    return candidate
+            if parts:
+                try:
+                    ipaddress.ip_address(parts[0])
+                    return parts[0]
+                except ValueError:
+                    pass
+
+        cf_ip = (meta.get("HTTP_CF_CONNECTING_IP") or "").strip()
+        if cf_ip:
+            candidate = cf_ip.split(",")[0].strip()
+            try:
+                ipaddress.ip_address(candidate)
+                return candidate
+            except ValueError:
+                pass
+
+    return remote_addr or "unknown"
+
+
+def check_auth_rate_limit(scope, ip_addr, identifier="", max_ip_attempts=15, max_ident_attempts=8, window_seconds=300):
+    """
+    Checks whether an authentication or password-change endpoint is rate-limited
+    for the given (scope, ip_addr) or (scope, ip_addr, identifier) tuple.
+    Returns True if rate limit is exceeded, False otherwise.
+    Designed so an attacker from one IP cannot globally lock out another user's account on a different IP.
+    """
+    from django.core.cache import cache
+    import hashlib
+
+    ip_clean = str(ip_addr or "unknown").strip().lower()
+    ident_clean = str(identifier or "").strip().lower()
+
+    ip_hash = hashlib.sha256(f"{scope}:ip:{ip_clean}".encode("utf-8")).hexdigest()[:24]
+    ip_key = f"rl:{scope}:ip:{ip_hash}"
+    ip_count = cache.get(ip_key, 0)
+    if ip_count >= max_ip_attempts:
+        return True
+
+    if ident_clean:
+        pair_hash = hashlib.sha256(f"{scope}:pair:{ip_clean}:{ident_clean}".encode("utf-8")).hexdigest()[:24]
+        pair_key = f"rl:{scope}:pair:{pair_hash}"
+        pair_count = cache.get(pair_key, 0)
+        if pair_count >= max_ident_attempts:
+            return True
+
+    return False
+
+
+def record_auth_failure(scope, ip_addr, identifier="", window_seconds=300):
+    """
+    Records a failed authentication or password-change attempt in cache.
+    """
+    from django.core.cache import cache
+    import hashlib
+
+    ip_clean = str(ip_addr or "unknown").strip().lower()
+    ident_clean = str(identifier or "").strip().lower()
+
+    ip_hash = hashlib.sha256(f"{scope}:ip:{ip_clean}".encode("utf-8")).hexdigest()[:24]
+    ip_key = f"rl:{scope}:ip:{ip_hash}"
+    curr_ip = cache.get(ip_key, 0)
+    cache.set(ip_key, curr_ip + 1, timeout=window_seconds)
+
+    if ident_clean:
+        pair_hash = hashlib.sha256(f"{scope}:pair:{ip_clean}:{ident_clean}".encode("utf-8")).hexdigest()[:24]
+        pair_key = f"rl:{scope}:pair:{pair_hash}"
+        curr_pair = cache.get(pair_key, 0)
+        cache.set(pair_key, curr_pair + 1, timeout=window_seconds)
+
+
+def clear_auth_failures(scope, ip_addr, identifier=""):
+    """
+    Clears failure counters for (scope, ip_addr, identifier) upon successful authentication.
+    """
+    from django.core.cache import cache
+    import hashlib
+
+    ip_clean = str(ip_addr or "unknown").strip().lower()
+    ident_clean = str(identifier or "").strip().lower()
+
+    if ident_clean:
+        pair_hash = hashlib.sha256(f"{scope}:pair:{ip_clean}:{ident_clean}".encode("utf-8")).hexdigest()[:24]
+        pair_key = f"rl:{scope}:pair:{pair_hash}"
+        cache.delete(pair_key)
+
+
+def compute_credential_fingerprint(secret_state: str) -> str:
+    """
+    Computes a short, non-reversible HMAC-SHA256 fingerprint of an account's current
+    password hash (and temporary code state) so signed tokens are immediately invalidated
+    whenever a password is changed or reset. Never exposes raw hashes.
+    """
+    import hmac
+    import hashlib
+    from django.conf import settings
+
+    key = (getattr(settings, "SECRET_KEY", "") or "titans-fallback-fp-key").encode("utf-8")
+    msg = f"cred-v1:{secret_state or ''}".encode("utf-8")
+    return hmac.new(key, msg, hashlib.sha256).hexdigest()[:16]
+
+
+def get_cms_user_credential_fingerprint(user) -> str:
+    if not user:
+        return ""
+    return compute_credential_fingerprint(f"cms:{user.pk}:{user.password or ''}")
+
+
+def get_player_credential_fingerprint(player) -> str:
+    if not player:
+        return ""
+    return compute_credential_fingerprint(
+        f"player:{player.player_id}:{player.password or ''}:{player.temp_code or ''}:{bool(player.must_change_password)}"
+    )
 
 
 def create_signed_token(payload, salt="titans-auth"):
     from django.core import signing
-    return signing.dumps(payload, salt=salt)
+    token_data = dict(payload) if isinstance(payload, dict) else payload
+    if isinstance(token_data, dict) and "_cv" not in token_data:
+        role = token_data.get("role")
+        if role == "cms" and token_data.get("username"):
+            from django.contrib.auth.models import User
+            u = User.objects.filter(username__iexact=token_data["username"]).first()
+            if u:
+                token_data["_cv"] = get_cms_user_credential_fingerprint(u)
+        elif role == "player" and (token_data.get("player_id") or token_data.get("id")):
+            pid = token_data.get("player_id") or token_data.get("id")
+            cat_key = token_data.get("category_key")
+            qs = Player.objects.filter(player_id=pid, is_unknown=False)
+            p = (qs.filter(team__category__key=cat_key).first() or qs.first()) if cat_key else qs.first()
+            if p:
+                token_data["_cv"] = get_player_credential_fingerprint(p)
+    return signing.dumps(token_data, salt=salt)
 
 
 def verify_signed_token(token, salt="titans-auth", max_age=86400 * 7):
@@ -2824,8 +3255,9 @@ def verify_signed_token(token, salt="titans-auth", max_age=86400 * 7):
 
 
 def generate_four_digit_code():
-    """Generates a secure 4-digit numeric code (1000 - 9999)."""
-    return f"{random.randint(1000, 9999)}"
+    """Generates a cryptographically secure 4-digit numeric code (1000 - 9999)."""
+    import secrets
+    return f"{secrets.randbelow(9000) + 1000}"
 
 
 def register_player_by_admin(
@@ -2841,6 +3273,7 @@ def register_player_by_admin(
     Generates a 4-digit activation code and sets must_change_password=True.
     The player is required to change their password on first sign-in before accessing dashboard.
     """
+    from django.utils import timezone
     category = Category.objects.filter(key=category_key).first()
     if not category:
         category = Category.objects.first()
@@ -2898,6 +3331,7 @@ def register_player_by_admin(
         jersey_number=j_num,
         password=code,
         temp_code=code,
+        temp_code_created_at=timezone.now(),
         must_change_password=True,
         is_active=True,
     )
@@ -2963,14 +3397,16 @@ def reset_player_password_by_admin(username_or_ident, category_key=None, team_id
         raise ValueError(f"Player account matching '{ident}' was not found.")
 
     code = generate_four_digit_code()
+    from django.utils import timezone
     linked_players = Player.objects.filter(is_unknown=False).filter(
         Q(username__iexact=player.username) | Q(player_id=player.player_id)
     )
     for p in linked_players:
-        p.password = code
+        p.set_password(code)
         p.temp_code = code
+        p.temp_code_created_at = timezone.now()
         p.must_change_password = True
-        p.save(update_fields=["password", "temp_code", "must_change_password"])
+        p.save(update_fields=["password", "temp_code", "temp_code_created_at", "must_change_password"])
 
     player.refresh_from_db()
     return player, code
@@ -3155,6 +3591,8 @@ def change_player_password(player_or_ident, new_password, current_code=None):
     clean_pw = str(new_password or "").strip()
     if len(clean_pw) < 4:
         raise ValueError("New password must be at least 4 characters long.")
+    if clean_pw.lower() == "titans2026":
+        raise ValueError("Please choose a personal password instead of the legacy default password.")
 
     if isinstance(player_or_ident, Player):
         player = player_or_ident
@@ -3222,19 +3660,27 @@ def change_player_password(player_or_ident, new_password, current_code=None):
         if not player:
             raise ValueError("Player account not found.")
 
-    if current_code and player.must_change_password:
-        c_code = str(current_code).strip().lower()
-        if c_code not in (player.password.lower(), player.temp_code.lower()):
-            raise ValueError("Invalid current activation code.")
+    if player.must_change_password:
+        if not current_code:
+            raise ValueError("Current 4-digit activation code is required.")
+        c_code = str(current_code).strip()
+        if not player.is_temp_code_valid(c_code) and not player.check_password(c_code):
+            raise ValueError("Invalid current activation code or attempt limit reached.")
+    else:
+        # Standard password change requires verification of existing password
+        if not current_code:
+            raise ValueError("Current password is required to set a new password.")
+        c_code = str(current_code).strip()
+        if not player.check_password(c_code):
+            raise ValueError("Current password does not match. Please verify and try again.")
 
     linked_players = Player.objects.filter(is_unknown=False).filter(
         Q(username__iexact=player.username) | Q(player_id=player.player_id)
     )
     for p in linked_players:
-        p.password = clean_pw
-        p.temp_code = ""
-        p.must_change_password = False
-        p.save(update_fields=["password", "temp_code", "must_change_password"])
+        p.set_password(clean_pw)
+        p.clear_temp_code()
+        p.save(update_fields=["password", "temp_code", "temp_code_created_at", "must_change_password"])
 
     player.refresh_from_db()
     profile = {
@@ -3301,28 +3747,20 @@ def authenticate_player_credentials(
     if not getattr(player, "is_active", True):
         raise ValueError("This player account is currently disabled. Please contact club administration.")
 
-    secret_clean = secret.lower()
-    stored_pw = (player.password or "titans2026").strip()
-    temp_pw = (player.temp_code or "").strip()
-    uname_clean = (player.username or slugify(player.name).replace("-", "_")).lower()
+    secret_clean = secret.strip()
+    is_valid = False
 
     if player.must_change_password:
-        # Player must authenticate using their generated 4-digit code
-        valid_passwords = {stored_pw.lower(), temp_pw.lower()}
+        # Player must authenticate using their generated 4-digit code or current password
+        if player.is_temp_code_valid(secret_clean) or player.check_password(secret_clean):
+            is_valid = True
     else:
-        valid_passwords = {
-            stored_pw.lower(),
-            temp_pw.lower(),
-            "titans2026",
-            "titans",
-            player.player_id.lower(),
-            f"{player.name.lower()}2026",
-            f"{uname_clean}2026",
-            player.team.team_id.lower(),
-        }
+        # Standard login with player's password or unexpired temporary code
+        if player.check_password(secret_clean) or (player.temp_code and player.is_temp_code_valid(secret_clean)):
+            is_valid = True
 
-    if secret != stored_pw and secret_clean not in valid_passwords:
-        raise ValueError("Invalid player password or 4-digit activation code. Please check and try again.")
+    if not is_valid:
+        raise ValueError("Invalid player credentials or 4-digit activation code. Please check and try again.")
 
     profile = {
         "role": "player",
@@ -3344,12 +3782,61 @@ def authenticate_player_credentials(
     return profile, token
 
 
+def _resolve_active_player_record(payload, require_cv=True):
+    """
+    Resolves and validates a live Player DB record from a token/session payload.
+    Returns (player, synced_profile_dict) or (None, None) if not found or inactive.
+    """
+    import secrets
+
+    if not payload or not isinstance(payload, dict):
+        return None, None
+    player_id = str(payload.get("player_id") or payload.get("id") or "").strip()
+    if not player_id:
+        return None, None
+    category_key = payload.get("category_key")
+    qs = Player.objects.filter(player_id=player_id, is_unknown=False).select_related("team", "team__category")
+    if category_key:
+        player = qs.filter(team__category__key=category_key).first() or qs.first()
+    else:
+        player = qs.first()
+    if not player or not getattr(player, "is_active", True):
+        return None, None
+
+    expected_cv = get_player_credential_fingerprint(player)
+    token_cv = payload.get("_cv")
+    if require_cv:
+        if not token_cv or not secrets.compare_digest(str(token_cv), expected_cv):
+            return None, None
+    elif token_cv and not secrets.compare_digest(str(token_cv), expected_cv):
+        return None, None
+
+    synced_profile = {
+        "role": "player",
+        "id": player.player_id,
+        "player_id": player.player_id,
+        "permanent_id": player.player_id,
+        "username": player.username or slugify(player.name).replace("-", "_"),
+        "name": player.name,
+        "position": player.position or "",
+        "jersey_number": player.jersey_number,
+        "team_id": player.team.team_id,
+        "team_name": player.team.name,
+        "team_color": player.team.color,
+        "category_key": player.team.category.key,
+        "must_change_password": bool(player.must_change_password),
+        "is_active": bool(player.is_active),
+    }
+    return player, synced_profile
+
+
 def get_authenticated_player_from_request(request):
     """
     Extracts and verifies the logged-in Player from either:
     1. X-Titans-Player-Token header (signed token)
     2. Authorization: Bearer <token> header
     3. Django session ('titans_player')
+    Always verifies that the player account exists and is active in the database.
     """
     token = request.headers.get("X-Titans-Player-Token", "").strip()
     if not token:
@@ -3359,12 +3846,17 @@ def get_authenticated_player_from_request(request):
 
     if token:
         payload = verify_signed_token(token, salt="titans-player-auth")
-        if payload and payload.get("role") == "player" and payload.get("player_id"):
-            return payload
+        if payload and payload.get("role") == "player" and (payload.get("player_id") or payload.get("id")):
+            _, synced = _resolve_active_player_record(payload, require_cv=True)
+            if synced:
+                return synced
+        return None
 
     session_player = request.session.get("titans_player") if hasattr(request, "session") else None
-    if session_player and session_player.get("player_id"):
-        return session_player
+    if session_player and (session_player.get("player_id") or session_player.get("id")):
+        _, synced = _resolve_active_player_record(session_player, require_cv=False)
+        if synced:
+            return synced
 
     return None
 
@@ -3373,15 +3865,37 @@ def get_authenticated_cms_from_request(request):
     """
     Extracts and verifies the logged-in CMS Admin from either:
     1. X-Titans-CMS-Token header (signed token)
-    2. Django session (request.user.is_authenticated and is_staff)
+    2. Authorization: Bearer <token> header (signed with 'titans-cms-auth')
+    3. Django session (request.user.is_authenticated and is_staff, or 'titans_cms')
+    Always verifies that the Django User exists in the DB, is_active, and is_staff/is_superuser.
     """
+    import secrets
+    from django.contrib.auth.models import User
+
     token = request.headers.get("X-Titans-CMS-Token", "").strip()
+    if not token:
+        auth_header = request.headers.get("Authorization", "").strip()
+        if auth_header.startswith("Bearer "):
+            candidate = auth_header[7:].strip()
+            if verify_signed_token(candidate, salt="titans-cms-auth"):
+                token = candidate
+
     if token:
         payload = verify_signed_token(token, salt="titans-cms-auth")
-        if payload and payload.get("role") == "cms":
-            return payload
+        if payload and payload.get("role") == "cms" and payload.get("username"):
+            user = User.objects.filter(username__iexact=payload["username"]).first()
+            if user and user.is_active and (user.is_staff or user.is_superuser):
+                expected_cv = get_cms_user_credential_fingerprint(user)
+                token_cv = payload.get("_cv")
+                if token_cv and secrets.compare_digest(str(token_cv), expected_cv):
+                    return {
+                        "role": "cms",
+                        "username": user.username,
+                        "email": user.email,
+                    }
+        return None
 
-    if hasattr(request, "user") and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+    if hasattr(request, "user") and request.user.is_authenticated and getattr(request.user, "is_active", True) and (request.user.is_staff or request.user.is_superuser):
         return {
             "role": "cms",
             "username": request.user.username,
@@ -3389,8 +3903,16 @@ def get_authenticated_cms_from_request(request):
         }
 
     session_cms = request.session.get("titans_cms") if hasattr(request, "session") else None
-    if session_cms and session_cms.get("role") == "cms":
-        return session_cms
+    if session_cms and session_cms.get("role") == "cms" and session_cms.get("username"):
+        user = User.objects.filter(username__iexact=session_cms["username"]).first()
+        if user and user.is_active and (user.is_staff or user.is_superuser):
+            token_cv = session_cms.get("_cv")
+            if not token_cv or secrets.compare_digest(str(token_cv), get_cms_user_credential_fingerprint(user)):
+                return {
+                    "role": "cms",
+                    "username": user.username,
+                    "email": user.email,
+                }
 
     return None
 
@@ -3402,18 +3924,21 @@ def get_authenticated_cms_from_request(request):
 def extract_google_sheet_csv_url(sheet_url: str) -> str:
     """
     Converts a Google Sheets sharing/edit URL into a direct CSV export URL.
+    Strictly validates the URL points to docs.google.com/spreadsheets/ to prevent SSRF.
     """
     import re
+    from urllib.parse import urlparse
+
     url = (sheet_url or "").strip()
     if not url:
         raise ValueError("Google Sheet URL is empty.")
 
-    # Already a direct CSV export link
-    if "output=csv" in url or "format=csv" in url or "tqx=out:csv" in url:
-        return url
+    parsed = urlparse(url)
+    if parsed.scheme not in ("https", "http") or parsed.hostname != "docs.google.com" or not parsed.path.startswith("/spreadsheets/"):
+        raise ValueError("Invalid Google Sheet link. Expected a URL on 'https://docs.google.com/spreadsheets/...'.")
 
     # Published Google Sheet URL: /spreadsheets/d/e/<PUB_ID>/pub...
-    pub_match = re.search(r"/spreadsheets/d/e/([a-zA-Z0-9\-_]+)", url)
+    pub_match = re.search(r"/spreadsheets/d/e/([a-zA-Z0-9\-_]+)", parsed.path)
     if pub_match:
         pub_id = pub_match.group(1)
         gid_match = re.search(r"[#&?]gid=([0-9]+)", url)
@@ -3421,7 +3946,7 @@ def extract_google_sheet_csv_url(sheet_url: str) -> str:
         return f"https://docs.google.com/spreadsheets/d/e/{pub_id}/pub?output=csv{gid_part}"
 
     # Standard Google Sheet URL: /spreadsheets/d/<SHEET_ID>/...
-    sheet_match = re.search(r"/spreadsheets/d/([a-zA-Z0-9\-_]+)", url)
+    sheet_match = re.search(r"/spreadsheets/d/([a-zA-Z0-9\-_]+)", parsed.path)
     if sheet_match:
         sheet_id = sheet_match.group(1)
         gid_match = re.search(r"[#&?]gid=([0-9]+)", url)
@@ -3910,8 +4435,8 @@ def compute_team_analytics(category, team_id):
     all_fixtures = list(
         category.fixtures.select_related("home_team", "away_team")
         .prefetch_related("events__team", "events__player")
-        .order_by("id")
     )
+    all_fixtures.sort(key=fixture_sort_key)
 
     team_played = []
     team_upcoming = []
@@ -3924,7 +4449,7 @@ def compute_team_analytics(category, team_id):
 
         is_home = (h_id == team_id)
         opp = f.away_team if is_home else f.home_team
-        is_played = f.played or (f.walkover_winner_id is not None)
+        is_played = f.played or (f.walkover_winner_id is not None) or f.events.exists()
 
         if is_played:
             hs, as_score = f.score
@@ -4157,11 +4682,12 @@ def get_category_fixtures_results_pdf_context(category):
 
     fixtures_qs = category.fixtures.all().prefetch_related(
         "events", "events__player", "events__assist_player", "home_team", "away_team", "walkover_winner"
-    ).order_by("id")
+    )
     fixtures_list = list(fixtures_qs)
+    fixtures_list.sort(key=fixture_sort_key)
 
     total_fixtures = len(fixtures_list)
-    played_fixtures = [f for f in fixtures_list if f.played]
+    played_fixtures = [f for f in fixtures_list if (f.played or f.walkover_winner or f.events.exists())]
     played_count = len(played_fixtures)
     scheduled_count = total_fixtures - played_count
 
@@ -4185,7 +4711,8 @@ def get_category_fixtures_results_pdf_context(category):
         a_color = a_team.color if a_team else "#4A5568"
 
         hs, as_score = f.score
-        if f.played:
+        is_completed = bool(f.played or f.walkover_winner or f.events.exists())
+        if is_completed:
             total_goals += (hs + as_score)
             if hs > as_score:
                 if h_id in team_results: team_results[h_id].append("W")
@@ -4241,10 +4768,10 @@ def get_category_fixtures_results_pdf_context(category):
             "away_id": a_id,
             "away_name": a_name,
             "away_color": a_color,
-            "played": f.played,
-            "home_score": hs if f.played else "",
-            "away_score": as_score if f.played else "",
-            "score_display": f"{hs} - {as_score}" if f.played else "vs",
+            "played": is_completed,
+            "home_score": hs if is_completed else "",
+            "away_score": as_score if is_completed else "",
+            "score_display": f"{hs} - {as_score}" if is_completed else "vs",
             "pens": f"({f.home_pens} - {f.away_pens} pens)" if (f.home_pens is not None or f.away_pens is not None) else "",
             "walkover": f.walkover_winner.name if f.walkover_winner else "",
             "referee": f.referee or "Official Panel",

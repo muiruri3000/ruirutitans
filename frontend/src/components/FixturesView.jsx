@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { openCategoryFixturesResultsPDF } from '../utils/pdfExport';
+import MatchReportModal from './MatchReportModal';
+import AIWeeklyReportModal from './AIWeeklyReportModal';
 
 export const formatDateWithTime = (dateStr, timeStr = '15:00') => {
   if (!dateStr) return '';
@@ -14,6 +16,68 @@ export const formatDateWithTime = (dateStr, timeStr = '15:00') => {
     return `${dayNames[dt.getDay()]}, ${String(d).padStart(2, '0')} ${monthNames[m]} · ${timeStr}`;
   }
   return `${dateStr} · ${timeStr}`;
+};
+
+const MONTH_INDEX_MAP = {
+  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+  jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+};
+
+export const getFixtureDateSortValue = (dateStr) => {
+  if (!dateStr) return Number.MAX_SAFE_INTEGER;
+  const s = String(dateStr).trim();
+  if (!s || /^tbd/i.test(s) || /upcoming/i.test(s)) return Number.MAX_SAFE_INTEGER;
+
+  const timeMatch = s.match(/(\d{1,2}):(\d{2})/);
+  const hour = timeMatch ? parseInt(timeMatch[1], 10) : 0;
+  const minute = timeMatch ? parseInt(timeMatch[2], 10) : 0;
+
+  // 1. ISO date: YYYY-MM-DD
+  const isoMatch = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    const yr = parseInt(isoMatch[1], 10);
+    const mon = parseInt(isoMatch[2], 10);
+    const day = parseInt(isoMatch[3], 10);
+    return new Date(yr, mon - 1, day, hour, minute).getTime();
+  }
+
+  // 2. Day + Month name (e.g. 'Wed, 21 Oct · 17:10' or '21 Oct 2026')
+  const dmMatch = s.match(/\b(\d{1,2})\s+([A-Za-z]{3})[a-z]*\b(?:\s+(\d{4}))?/);
+  if (dmMatch) {
+    const day = parseInt(dmMatch[1], 10);
+    const mon = MONTH_INDEX_MAP[dmMatch[2].toLowerCase()] || 0;
+    const yr = dmMatch[3] ? parseInt(dmMatch[3], 10) : 2026;
+    if (mon > 0) {
+      return new Date(yr, mon - 1, day, hour, minute).getTime();
+    }
+  }
+
+  // 3. Month name + Day (e.g. 'Aug 12' or 'Oct 21, 2026')
+  const mdMatch = s.match(/\b([A-Za-z]{3})[a-z]*\s+(\d{1,2})\b(?:,?\s*(\d{4}))?/);
+  if (mdMatch) {
+    const mon = MONTH_INDEX_MAP[mdMatch[1].toLowerCase()] || 0;
+    const day = parseInt(mdMatch[2], 10);
+    const yr = mdMatch[3] ? parseInt(mdMatch[3], 10) : 2026;
+    if (mon > 0) {
+      return new Date(yr, mon - 1, day, hour, minute).getTime();
+    }
+  }
+
+  return Number.MAX_SAFE_INTEGER;
+};
+
+export const compareFixturesByDate = (a, b) => {
+  const da = getFixtureDateSortValue(a?.date);
+  const db = getFixtureDateSortValue(b?.date);
+  if (da !== db) return da - db;
+
+  const ra = Number(a?.round ?? a?.round_index ?? 999999);
+  const rb = Number(b?.round ?? b?.round_index ?? 999999);
+  if (ra !== rb) return ra - rb;
+
+  const na = parseInt(String(a?.id || '').replace(/\D+/g, ''), 10) || 999999;
+  const nb = parseInt(String(b?.id || '').replace(/\D+/g, ''), 10) || 999999;
+  return na - nb;
 };
 
 export const parseDaysConfig = (rawDays, defaultTime = '15:00', defaultCount = 1) => {
@@ -71,6 +135,7 @@ export default function FixturesView({
   activeCategoryKey,
   categoryLabel = '',
   isCmsMode = false,
+  cmsUser = null,
   initialFilter = 'all',
   onTogglePlayed,
   onAddEvent,
@@ -85,12 +150,18 @@ export default function FixturesView({
   onBatchMoveFixtures,
   onOpenH2H,
   onGenerateFixtures,
+  onReorganizeUnplayedFixtures = null,
   onOpenEditCategory,
   onSelectTeam,
+  onReportSaved = null,
 }) {
+  const [activeReportFixture, setActiveReportFixture] = useState(null);
+  const [showAIReportModal, setShowAIReportModal] = useState(false);
   const [openFixtureIds, setOpenFixtureIds] = useState({});
+  const [recentlyEditedIds, setRecentlyEditedIds] = useState({});
   const [statusFilter, setStatusFilter] = useState(initialFilter); // 'all' | 'results' | 'upcoming'
   const [teamFilter, setTeamFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [newRefInput, setNewRefInput] = useState('');
 
   // Per-fixture goal recording draft state { [fId]: { [teamId]: { playerId, type: 'goal'|'penalty'|'owngoal', assistPlayerId } } }
@@ -296,6 +367,9 @@ export default function FixturesView({
       ev.assistPlayerId = draft.assistPlayerId;
     }
 
+    setRecentlyEditedIds((prev) => ({ ...prev, [fId]: true }));
+    setOpenFixtureIds((prev) => ({ ...prev, [fId]: true }));
+
     onAddEvent(fId, ev);
     // Reset draft
     updateGoalDraft(fId, teamId, 'playerId', '');
@@ -306,6 +380,8 @@ export default function FixturesView({
   const handleRecordInterference = (fId) => {
     const draft = interfDrafts[fId];
     if (!draft || !draft.teamId || !draft.playerId) return;
+    setRecentlyEditedIds((prev) => ({ ...prev, [fId]: true }));
+    setOpenFixtureIds((prev) => ({ ...prev, [fId]: true }));
     onAddEvent(fId, {
       teamId: draft.teamId,
       playerId: draft.playerId,
@@ -351,16 +427,56 @@ export default function FixturesView({
     setOpenFixtureIds((prev) => ({ ...prev, [fId]: !prev[fId] }));
   };
 
-  const resultsCount = fixtures.filter((f) => f.played || f.walkover).length;
-  const upcomingCount = fixtures.filter((f) => !f.played && !f.walkover).length;
+  const isFixtureCompleted = (f) => Boolean(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0));
+  const resultsCount = fixtures.filter(isFixtureCompleted).length;
+  const upcomingCount = fixtures.filter((f) => !isFixtureCompleted(f)).length;
 
-  const filteredFixtures = fixtures.filter((f) => {
-    const isCompleted = Boolean(f.played || f.walkover);
-    if (statusFilter === 'results' && !isCompleted) return false;
-    if (statusFilter === 'upcoming' && isCompleted) return false;
+  const trimmedSearch = searchQuery.trim().toLowerCase();
+
+  // Helper to check if a fixture involves a team matching the search query
+  const matchesTeamSearch = (f, query) => {
+    if (!query) return true;
+    const homeTeam = teamsById?.[f.home];
+    const awayTeam = teamsById?.[f.away];
+    const homeName = (homeTeam?.name || f.home || '').toLowerCase();
+    const awayName = (awayTeam?.name || f.away || '').toLowerCase();
+    const homeId = (f.home || '').toLowerCase();
+    const awayId = (f.away || '').toLowerCase();
+    return (
+      homeName.includes(query) ||
+      awayName.includes(query) ||
+      homeId.includes(query) ||
+      awayId.includes(query)
+    );
+  };
+
+  // Fixtures filtered by team (either dropdown or search input), before status tab filtering
+  const teamFilteredFixtures = fixtures.filter((f) => {
     if (teamFilter && f.home !== teamFilter && f.away !== teamFilter) return false;
+    if (trimmedSearch && !matchesTeamSearch(f, trimmedSearch)) return false;
     return true;
   });
+
+  const teamResultsCount = teamFilteredFixtures.filter(isFixtureCompleted).length;
+  const teamUpcomingCount = teamFilteredFixtures.filter((f) => !isFixtureCompleted(f)).length;
+
+  const isSearchOrTeamFilterActive = Boolean(trimmedSearch || teamFilter);
+
+  const filteredFixtures = fixtures
+    .filter((f) => {
+      // In CMS mode, if a fixture is currently open or was recently edited, keep it visible
+      // so recording goals or toggling played status never makes the fixture suddenly disappear!
+      if (isCmsMode && (openFixtureIds[f.id] || recentlyEditedIds[f.id])) return true;
+
+      const isCompleted = isFixtureCompleted(f);
+      if (statusFilter === 'results' && !isCompleted) return false;
+      if (statusFilter === 'upcoming' && isCompleted) return false;
+      if (teamFilter && f.home !== teamFilter && f.away !== teamFilter) return false;
+      if (trimmedSearch && !matchesTeamSearch(f, trimmedSearch)) return false;
+      return true;
+    })
+    .slice()
+    .sort(compareFixturesByDate);
 
   const DAYS_MAP = [
     { num: 1, label: 'Mon' },
@@ -392,7 +508,16 @@ export default function FixturesView({
             ⚽ {categoryLabel ? `${categoryLabel} — ` : ''}Match Results &amp; Fixtures Schedule
           </span>
           <div style={{ fontSize: '11.5px', color: '#8FA89B', marginTop: '2px' }}>
-            {resultsCount} completed results · {upcomingCount} upcoming fixtures
+            {isSearchOrTeamFilterActive ? (
+              <span>
+                Found <strong style={{ color: '#FCD34D' }}>{teamFilteredFixtures.length}</strong> matches ({teamResultsCount} completed results · {teamUpcomingCount} upcoming)
+                {trimmedSearch && <> for team "<strong>{searchQuery.trim()}</strong>"</>}
+              </span>
+            ) : (
+              <span>
+                {resultsCount} completed results · {upcomingCount} upcoming fixtures
+              </span>
+            )}
           </div>
         </div>
 
@@ -400,14 +525,17 @@ export default function FixturesView({
           {/* Status filter pills */}
           <div style={{ display: 'flex', background: '#09221A', padding: '3px', borderRadius: '8px', border: '1px solid #1E4636' }}>
             {[
-              { key: 'all', label: `All (${fixtures.length})` },
-              { key: 'results', label: `✅ Match Results (${resultsCount})` },
-              { key: 'upcoming', label: `📅 Upcoming (${upcomingCount})` },
+              { key: 'all', label: `All (${isSearchOrTeamFilterActive ? teamFilteredFixtures.length : fixtures.length})` },
+              { key: 'results', label: `✅ Match Results (${isSearchOrTeamFilterActive ? teamResultsCount : resultsCount})` },
+              { key: 'upcoming', label: `📅 Upcoming (${isSearchOrTeamFilterActive ? teamUpcomingCount : upcomingCount})` },
             ].map((tab) => (
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => setStatusFilter(tab.key)}
+                onClick={() => {
+                  setStatusFilter(tab.key);
+                  setRecentlyEditedIds({});
+                }}
                 style={{
                   background: statusFilter === tab.key ? '#C9A227' : 'transparent',
                   color: statusFilter === tab.key ? '#16201B' : '#8FA89B',
@@ -424,14 +552,83 @@ export default function FixturesView({
             ))}
           </div>
 
-          {/* Team filter */}
+          {/* Team Search Input */}
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+            <span
+              style={{
+                position: 'absolute',
+                left: '9px',
+                fontSize: '12px',
+                color: '#8FA89B',
+                pointerEvents: 'none',
+              }}
+            >
+              🔍
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchQuery(val);
+                // Searching a team name automatically switches to 'all' to show all its fixtures and results
+                if (val.trim() && statusFilter !== 'all') {
+                  setStatusFilter('all');
+                }
+              }}
+              placeholder="Search team name..."
+              style={{
+                background: '#16352A',
+                color: '#F4F2EA',
+                border: searchQuery.trim() ? '1.5px solid #C9A227' : '1px solid #2B4E40',
+                borderRadius: '8px',
+                padding: '6px 26px 6px 28px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                width: '165px',
+                outline: 'none',
+                boxShadow: searchQuery.trim() ? '0 0 6px rgba(201, 162, 39, 0.35)' : 'none',
+              }}
+              aria-label="Search fixtures and results by team name"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                style={{
+                  position: 'absolute',
+                  right: '6px',
+                  background: 'none',
+                  border: 'none',
+                  color: '#8FA89B',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                title="Clear search"
+                aria-label="Clear team search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Team filter dropdown */}
           <select
             value={teamFilter}
-            onChange={(e) => setTeamFilter(e.target.value)}
+            onChange={(e) => {
+              setTeamFilter(e.target.value);
+              if (e.target.value && statusFilter !== 'all') {
+                setStatusFilter('all');
+              }
+            }}
             style={{
               background: '#16352A',
               color: '#F4F2EA',
-              border: '1px solid #2B4E40',
+              border: teamFilter ? '1.5px solid #C9A227' : '1px solid #2B4E40',
               borderRadius: '8px',
               padding: '6px 10px',
               fontSize: '11.5px',
@@ -507,6 +704,26 @@ export default function FixturesView({
             </button>
           )}
 
+          {isCmsMode && onReorganizeUnplayedFixtures && upcomingCount > 0 && (
+            <button
+              type="button"
+              onClick={onReorganizeUnplayedFixtures}
+              style={{
+                background: '#16352A',
+                color: '#6CE5A0',
+                border: '1px solid #2F7D5C',
+                borderRadius: '8px',
+                padding: '6px 10px',
+                fontSize: '11.5px',
+                fontWeight: 800,
+                cursor: 'pointer',
+              }}
+              title="Restructure unplayed fixtures so new and trailing teams catch up first without any team playing ahead"
+            >
+              ⚖️ Reorganize &amp; Balance Schedule
+            </button>
+          )}
+
           {isCmsMode && onOpenEditCategory && (
             <button
               type="button"
@@ -551,12 +768,129 @@ export default function FixturesView({
             📄 Download PDF
           </button>
 
+          <button
+            type="button"
+            onClick={() => setShowAIReportModal(true)}
+            style={{
+              background: 'linear-gradient(135deg, #1B3F35 0%, #0F2D25 100%)',
+              color: '#FCD34D',
+              border: '1.5px solid #C9A227',
+              borderRadius: '8px',
+              padding: '6px 14px',
+              fontSize: '11.5px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 8px rgba(201, 162, 39, 0.25)',
+            }}
+            title="Interactive AI Weekly Report Generator: Multi-match analysis, executive editorial, daily dossiers, and printable PDF"
+          >
+            🤖 AI Weekly Report Generator
+          </button>
+
+          <a
+            href={`/api/categories/${activeCategoryKey}/reports/ai-matchweek-pdf/?auto=1`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              background: '#0B3A2E',
+              color: '#C9A227',
+              border: '1px solid #2B5746',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              fontSize: '11.5px',
+              fontWeight: 800,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+            title="Direct print / download official AI Matchweek PDF dossier"
+          >
+            📄 AI Report PDF
+          </a>
+
           <a
             href={`/api/categories/${activeCategoryKey}/export/fixtures-csv/`}
             className="csv-export-btn"
             title="Download fixtures schedule and results as CSV"
           >
             📥 Export CSV
+          </a>
+        </div>
+      </div>
+
+      {/* AI Intelligence & Weekly Report Quick Launch Banner */}
+      <div
+        style={{
+          background: 'linear-gradient(90deg, #072219 0%, #0B2E22 50%, #072219 100%)',
+          border: '1px solid #1E4636',
+          borderLeft: '4px solid #C9A227',
+          borderRadius: '12px',
+          padding: '12px 18px',
+          marginBottom: '16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '24px' }}>🤖</span>
+          <div>
+            <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              AI Matchweek &amp; Daily Intelligence Engine
+            </div>
+            <div style={{ fontSize: '11.5px', color: '#DDE6DF' }}>
+              Synthesize multi-match results, goal trends, referee decisions, and admin reports into official weekly editorial dossiers.
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={() => setShowAIReportModal(true)}
+            style={{
+              background: '#C9A227',
+              color: '#16201B',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '12px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 8px rgba(201, 162, 39, 0.3)',
+            }}
+          >
+            ✨ Open AI Weekly Generator
+          </button>
+
+          <a
+            href={`/api/categories/${activeCategoryKey}/reports/ai-matchweek-pdf/?auto=1`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              background: '#16352A',
+              color: '#F4F2EA',
+              border: '1px solid #2B5746',
+              borderRadius: '8px',
+              padding: '8px 14px',
+              fontSize: '12px',
+              fontWeight: 700,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+          >
+            🖨️ PDF Dossier
           </a>
         </div>
       </div>
@@ -971,9 +1305,124 @@ export default function FixturesView({
         </div>
       )}
 
+      {/* Active Search / Team Filter Banner */}
+      {isSearchOrTeamFilterActive && (
+        <div
+          style={{
+            background: 'linear-gradient(90deg, #103B2E 0%, #0D2E24 100%)',
+            border: '1px solid #C9A227',
+            borderRadius: '10px',
+            padding: '10px 16px',
+            marginBottom: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '10px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#F4F2EA', fontSize: '12.5px' }}>
+            <span style={{ fontSize: '16px' }}>🔍</span>
+            <span>
+              Showing all fixtures &amp; results for team:{' '}
+              <strong style={{ color: '#FCD34D' }}>
+                {trimmedSearch ? `"${searchQuery.trim()}"` : (teamsById[teamFilter]?.name || teamFilter)}
+              </strong>{' '}
+              · <span style={{ color: '#6CE5A0', fontWeight: 700 }}>{filteredFixtures.length} matches</span>{' '}
+              ({teamResultsCount} results · {teamUpcomingCount} upcoming)
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {statusFilter !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setStatusFilter('all')}
+                style={{
+                  background: '#0B2E22',
+                  border: '1px solid #2F7D5C',
+                  color: '#6CE5A0',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Show All ({teamFilteredFixtures.length})
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setTeamFilter('');
+              }}
+              style={{
+                background: '#C9A227',
+                color: '#16201B',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '4px 12px',
+                fontSize: '11.5px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              ✕ Clear Search
+            </button>
+          </div>
+        </div>
+      )}
+
       {filteredFixtures.length === 0 && (
-        <div style={{ padding: '28px', textAlign: 'center', color: '#8FA89B', fontSize: '13px' }}>
-          No matches match the current filter criteria.
+        <div
+          style={{
+            padding: '36px 20px',
+            textAlign: 'center',
+            color: '#8FA89B',
+            fontSize: '13px',
+            background: '#09221A',
+            borderRadius: '10px',
+            border: '1px dashed #1E4636',
+            marginBottom: '14px',
+          }}
+        >
+          {isSearchOrTeamFilterActive ? (
+            <div>
+              <div style={{ fontSize: '15px', color: '#F4F2EA', fontWeight: 700, marginBottom: '6px' }}>
+                No fixtures or results found for "{searchQuery.trim() || (teamsById[teamFilter]?.name || teamFilter)}"
+              </div>
+              <div style={{ marginBottom: '14px', fontSize: '12px' }}>
+                No scheduled matches or completed results match this team name.
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setTeamFilter('');
+                  setStatusFilter('all');
+                }}
+                style={{
+                  background: '#C9A227',
+                  color: '#16201B',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '7px 16px',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                ✕ Clear Search &amp; View All
+              </button>
+            </div>
+          ) : (
+            <div>No matches match the current filter criteria.</div>
+          )}
         </div>
       )}
 
@@ -983,7 +1432,7 @@ export default function FixturesView({
           const away = teamsById[f.away];
           const isOpen = !!openFixtureIds[f.id];
           const suspendedList = (suspensions || {})[f.id] || [];
-          const isCompleted = Boolean(f.played || f.walkover);
+          const isCompleted = isFixtureCompleted(f);
 
           // Compute scores
           let hs = 0, as = 0;
@@ -1121,7 +1570,7 @@ export default function FixturesView({
                       border: isCompleted ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(201, 162, 39, 0.4)',
                     }}
                   >
-                    {f.walkover ? 'WALKOVER (3-0)' : isCompleted ? 'FULL TIME RESULT' : 'UPCOMING FIXTURE'}
+                    {f.walkover ? 'WALKOVER (3-0)' : isCompleted ? 'FULL TIME RESULT' : (f.events && f.events.length > 0) ? 'MATCH IN PROGRESS / LOGGED' : 'UPCOMING FIXTURE'}
                   </span>
 
                   {/* Referee display or selector (Admin can change referee for any unplayed fixture) */}
@@ -1275,7 +1724,7 @@ export default function FixturesView({
                     textAlign: 'center',
                   }}
                 >
-                  {isCompleted ? `${hs} - ${as}` : 'VS'}
+                  {isCompleted || (f.events && f.events.length > 0) ? `${hs} - ${as}` : 'VS'}
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', textAlign: 'right' }}>
@@ -1373,6 +1822,39 @@ export default function FixturesView({
                   >
                     📄 Match Sheet
                   </a>
+
+                  {/* Quick Action Report Button */}
+                  {isCompleted && (
+                    <button
+                      type="button"
+                      className="btn-pill-action"
+                      onClick={() => setActiveReportFixture(f)}
+                      style={{
+                        background: f.report && f.report.content ? '#16352A' : isCmsMode ? 'rgba(201,162,39,0.2)' : '#102B22',
+                        borderColor: f.report && f.report.content ? '#C9A227' : isCmsMode ? '#C9A227' : '#2F6A52',
+                        color: f.report && f.report.content ? '#FCD34D' : isCmsMode ? '#FCD34D' : '#DDE6DF',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontWeight: 700,
+                      }}
+                      title={
+                        f.report && f.report.content
+                          ? 'View official match report & game dossier'
+                          : isCmsMode
+                          ? 'Write official game report for this completed match'
+                          : 'View match report'
+                      }
+                    >
+                      {isCmsMode
+                        ? f.report && f.report.content
+                          ? '✏️ Edit Game Report'
+                          : '✍️ Add Match Report'
+                        : f.report && f.report.content
+                        ? '📝 Match Report ✓'
+                        : '📝 Match Report'}
+                    </button>
+                  )}
                 </div>
 
                 {isCmsMode && (
@@ -1382,14 +1864,14 @@ export default function FixturesView({
                       className="played-toggle"
                       onClick={() => onTogglePlayed(f.id)}
                       style={{
-                        background: f.played ? 'rgba(201,162,39,0.15)' : 'transparent',
-                        borderColor: f.played ? '#C9A227' : '#2B4E40',
-                        color: f.played ? '#C9A227' : '#8FA89B',
+                        background: isCompleted ? 'rgba(201,162,39,0.15)' : 'transparent',
+                        borderColor: isCompleted ? '#C9A227' : '#2B4E40',
+                        color: isCompleted ? '#C9A227' : '#8FA89B',
                         padding: '4px 10px',
                         fontSize: '11.5px',
                       }}
                     >
-                      {f.played ? '✓ Final' : 'Mark Final'}
+                      {isCompleted ? '✓ Final' : 'Mark Final'}
                     </button>
 
                     <button
@@ -1402,6 +1884,68 @@ export default function FixturesView({
                   </div>
                 )}
               </div>
+
+              {/* Prominent Match Report Strip on Every Played Match */}
+              {isCompleted && (
+                <div
+                  style={{
+                    marginTop: '10px',
+                    padding: '8px 12px',
+                    background: f.report && f.report.content ? 'rgba(201, 162, 39, 0.09)' : 'rgba(16, 56, 43, 0.45)',
+                    border: f.report && f.report.content ? '1px solid #C9A227' : '1px dashed #2F6A52',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 auto' }}>
+                    <span style={{ fontSize: '18px' }}>📝</span>
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: 800, color: f.report && f.report.content ? '#FCD34D' : '#9CA3AF', textTransform: 'uppercase' }}>
+                        {f.report && f.report.content ? 'Official Game Report Published' : 'Game Report: Pending Admin Write-up'}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#E2E8F0', fontWeight: 600 }}>
+                        {f.report && f.report.title
+                          ? `"${f.report.title}"${f.report.motm ? ` · 🌟 MOTM: ${f.report.motm}` : ''}`
+                          : isCmsMode
+                          ? 'Add the official narrative, star performer (MOTM), and tactical notes'
+                          : 'Official game story, player of the match, and tactical breakdown'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveReportFixture(f)}
+                    style={{
+                      background: isCmsMode ? '#C9A227' : '#16352A',
+                      color: isCmsMode ? '#16201B' : '#FCD34D',
+                      border: isCmsMode ? 'none' : '1px solid #C9A227',
+                      borderRadius: '6px',
+                      padding: '6px 14px',
+                      fontSize: '11.5px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      whiteSpace: 'nowrap',
+                      boxShadow: isCmsMode ? '0 2px 6px rgba(201, 162, 39, 0.3)' : 'none',
+                    }}
+                  >
+                    {isCmsMode
+                      ? f.report && f.report.content
+                        ? '✏️ Edit Game Report'
+                        : '✍️ Add Match Report'
+                      : f.report && f.report.content
+                      ? '📖 Read Game Report'
+                      : '📝 View Match Report'}
+                  </button>
+                </div>
+              )}
 
               {/* Expandable CMS Match Events Panel */}
               {isCmsMode && isOpen && (
@@ -1433,7 +1977,16 @@ export default function FixturesView({
                         <span key={idx} className="ev-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                           <span>{e.type === 'goal' ? (e.penalty ? '🎯⚽' : '⚽') : e.type === 'owngoal' ? '🥅' : e.type === 'yellow' ? '🟨' : '🟥'}</span>
                           <span>{label}</span>
-                          <span className="ev-remove" onClick={() => onRemoveEvent(f.id, idx)} title="Delete event">✕</span>
+                          <span
+                            className="ev-remove"
+                            onClick={() => {
+                              setRecentlyEditedIds((prev) => ({ ...prev, [f.id]: true }));
+                              onRemoveEvent(f.id, idx);
+                            }}
+                            title="Delete event"
+                          >
+                            ✕
+                          </span>
                         </span>
                       );
                     })}
@@ -1536,6 +2089,8 @@ export default function FixturesView({
                               onChange={(e) => {
                                 const pId = e.target.value;
                                 if (!pId) return;
+                                setRecentlyEditedIds((prev) => ({ ...prev, [f.id]: true }));
+                                setOpenFixtureIds((prev) => ({ ...prev, [f.id]: true }));
                                 onAddEvent(f.id, { teamId: team.id, playerId: pId, type: 'yellow' });
                                 e.target.value = '';
                               }}
@@ -1552,6 +2107,8 @@ export default function FixturesView({
                               onChange={(e) => {
                                 const pId = e.target.value;
                                 if (!pId) return;
+                                setRecentlyEditedIds((prev) => ({ ...prev, [f.id]: true }));
+                                setOpenFixtureIds((prev) => ({ ...prev, [f.id]: true }));
                                 onAddEvent(f.id, { teamId: team.id, playerId: pId, type: 'red' });
                                 e.target.value = '';
                               }}
@@ -1633,6 +2190,54 @@ export default function FixturesView({
                     </div>
                   )}
 
+                  {/* Official Match Report Box inside CMS event logger */}
+                  <div
+                    style={{
+                      marginTop: '12px',
+                      padding: '12px 14px',
+                      background: '#07241A',
+                      border: '1.5px solid #C9A227',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '10px',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        📝 OFFICIAL MATCH REPORT &amp; GAME STORY
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#DDE6DF', marginTop: '2px' }}>
+                        {f.report && f.report.title
+                          ? `Title: "${f.report.title}" | MOTM: ${f.report.motm || 'Not set'}`
+                          : 'Write the official match recap, select Man of the Match, and document tactical observations.'}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveReportFixture(f)}
+                      style={{
+                        background: '#C9A227',
+                        border: 'none',
+                        color: '#16201B',
+                        borderRadius: '6px',
+                        padding: '7px 16px',
+                        fontSize: '11.5px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 6px rgba(201, 162, 39, 0.3)',
+                      }}
+                    >
+                      {f.report && f.report.content ? '✏️ Edit Game Report' : '✍️ Write Match Report'}
+                    </button>
+                  </div>
+
                   {/* Walkover choice */}
                   <div style={{ marginTop: '10px', fontSize: '11.5px', color: '#8FA89B' }}>
                     Walkover winner:{' '}
@@ -1659,6 +2264,34 @@ export default function FixturesView({
           );
         })}
       </div>
+
+      {/* Match Report Modal */}
+      {activeReportFixture && (
+        <MatchReportModal
+          fixture={activeReportFixture}
+          homeTeam={teamsById[activeReportFixture.home]}
+          awayTeam={teamsById[activeReportFixture.away]}
+          categoryKey={activeCategoryKey}
+          isCmsMode={isCmsMode}
+          cmsUser={cmsUser}
+          onClose={() => setActiveReportFixture(null)}
+          onReportSaved={(fId, rep) => {
+            setActiveReportFixture((prev) => (prev && prev.id === fId ? { ...prev, report: rep } : prev));
+            if (onReportSaved) onReportSaved(fId, rep);
+          }}
+        />
+      )}
+
+      {/* AI Weekly Report Generator Modal */}
+      {showAIReportModal && (
+        <AIWeeklyReportModal
+          categoryKey={activeCategoryKey}
+          categoryLabel={categoryLabel}
+          fixtures={fixtures}
+          teamsById={teamsById}
+          onClose={() => setShowAIReportModal(false)}
+        />
+      )}
     </div>
   );
 }

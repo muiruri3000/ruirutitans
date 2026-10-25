@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import TopNav from './components/TopNav';
 import ClubHomeView from './components/ClubHomeView';
 import TableView from './components/TableView';
-import FixturesView from './components/FixturesView';
+import FixturesView, { compareFixturesByDate, getFixtureDateSortValue } from './components/FixturesView';
 import CupProgressionView from './components/CupProgressionView';
 import StatsView from './components/StatsView';
 import ManageView from './components/ManageView';
@@ -15,6 +15,9 @@ import EditCategoryModal from './components/EditCategoryModal';
 import PlayerDashboardView from './components/PlayerDashboardView';
 import HighlightsView from './components/HighlightsView';
 import ArchivesView from './components/ArchivesView';
+import MatchReportModal from './components/MatchReportModal';
+import AIWeeklyReportModal from './components/AIWeeklyReportModal';
+import TacticsView from './components/TacticsView';
 import { openCategoryFixturesResultsPDF } from './utils/pdfExport';
 import { api } from './api/client';
 import { DEFAULT_TITANS_STATE, CORE_FIVE_TEAMS } from './data/defaultState';
@@ -74,12 +77,12 @@ function collectOrderedCategoryFixtures(catObj) {
     });
   });
 
-  const activeOrPlayed = rawList.filter(
-    (f) => f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0)
-  );
-  const upcomingUnplayed = rawList.filter(
-    (f) => !(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0))
-  );
+  const activeOrPlayed = rawList
+    .filter((f) => f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0))
+    .sort(compareFixturesByDate);
+  const upcomingUnplayed = rawList
+    .filter((f) => !(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0)))
+    .sort(compareFixturesByDate);
   return [...activeOrPlayed, ...upcomingUnplayed];
 }
 
@@ -203,7 +206,40 @@ function computeCategorySuspensions(catObj) {
 export default function App() {
   const [data, setData] = useState(() => DEFAULT_TITANS_STATE);
   const [syncStatus, setSyncStatus] = useState('synced'); // 'synced' | 'saving' | 'error'
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'table' | 'fixtures' | 'cup' | 'voting' | 'stats' | 'manage'
+  const [isStandaloneTactics, setIsStandaloneTactics] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tactics_standalone') === 'true' || window.location.hash === '#tactics-standalone') {
+        return true;
+      }
+      return localStorage.getItem('titans_tactics_dedicated_page') === 'true';
+    }
+    return false;
+  });
+
+  const [currentView, setCurrentView] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tactics_standalone') === 'true' || window.location.hash === '#tactics-standalone' || window.location.hash === '#tactics') {
+        return 'tactics';
+      }
+      if (localStorage.getItem('titans_tactics_dedicated_page') === 'true') {
+        return 'tactics';
+      }
+    }
+    return 'home';
+  });
+
+  const handleToggleStandaloneTactics = (val) => {
+    const next = typeof val === 'boolean' ? val : !isStandaloneTactics;
+    setIsStandaloneTactics(next);
+    try {
+      localStorage.setItem('titans_tactics_dedicated_page', next ? 'true' : 'false');
+    } catch {}
+    if (next) {
+      setCurrentView('tactics');
+    }
+  };
   const [fixturesInitialFilter, setFixturesInitialFilter] = useState('all');
   const [votingInitialTab, setVotingInitialTab] = useState('totw');
 
@@ -230,6 +266,10 @@ export default function App() {
   // Edit League / Category Modal state
   const [editingCategoryKey, setEditingCategoryKey] = useState(null);
 
+  // Match Report & AI Weekly Report Modals (Home / Championship view triggers)
+  const [appReportFixture, setAppReportFixture] = useState(null);
+  const [appShowAIReport, setAppShowAIReport] = useState(false);
+
   const syncTimerRef = useRef(null);
 
   // Initial load from Django REST API + Player Auth Session check
@@ -241,19 +281,68 @@ export default function App() {
           api.getAuthSession().catch(() => ({ cms: null, player: null })),
         ]);
         if (serverState && serverState.categories) {
-          setData(serverState);
+          let needsReorg = false;
+          const nextCategories = { ...serverState.categories };
+          Object.keys(nextCategories).forEach((k) => {
+            const cat = nextCategories[k];
+            if (cat && cat.mode === 'league' && Array.isArray(cat.fixtures)) {
+              const hasAppendedFixtures = cat.fixtures.some((f) => String(f.id || '').startsWith('REAL-F4') || String(f.id || '').startsWith('REAL-F5'));
+              const f4 = cat.fixtures.find((f) => f.id === 'F4');
+              const f4IsEarlyGame2 = f4 && (f4.home === 'BAL' || f4.away === 'BAL') && !f4.played;
+              if (hasAppendedFixtures || f4IsEarlyGame2) {
+                needsReorg = true;
+                nextCategories[k] = {
+                  ...cat,
+                  fixtures: reorganizeLeagueUnplayedFixtures(cat),
+                };
+              }
+            }
+          });
+          const finalState = needsReorg ? { ...serverState, categories: nextCategories } : serverState;
+          setData(finalState);
           setSyncStatus('synced');
+          if (needsReorg) {
+            try {
+              localStorage.setItem('ruiru_titans_react_state', JSON.stringify(finalState));
+            } catch {}
+          }
         }
         if (sessionInfo?.cms) {
           setCmsUser(sessionInfo.cms);
+          setIsCmsMode(true);
           setPlayerUser(null);
         } else if (sessionInfo?.player) {
           setPlayerUser(sessionInfo.player);
           setCmsUser(null);
+          setIsCmsMode(false);
         } else {
           setCmsUser(null);
+          setIsCmsMode(false);
           setPlayerUser(null);
         }
+
+        // Check if there was pending unsaved state that failed to save previously
+        try {
+          const rawPending = localStorage.getItem('ruiru_titans_pending_sync');
+          if (rawPending) {
+            const pending = JSON.parse(rawPending);
+            if (pending && pending.categories) {
+              if (sessionInfo?.cms) {
+                try {
+                  await api.saveState(pending);
+                  localStorage.removeItem('ruiru_titans_pending_sync');
+                  setData(pending);
+                  setSyncStatus('synced');
+                  return;
+                } catch {}
+              } else {
+                setData(pending);
+                setSyncStatus('error');
+                return;
+              }
+            }
+          }
+        } catch {}
       } catch (err) {
         console.warn('Could not load from API, using fallback state', err);
       }
@@ -273,10 +362,27 @@ export default function App() {
           localStorage.setItem('ruiru_titans_react_state', JSON.stringify(nextData));
         } catch (e) {}
         await api.saveState(nextData);
+        try {
+          localStorage.removeItem('ruiru_titans_pending_sync');
+        } catch (e) {}
         setSyncStatus('synced');
       } catch (err) {
         console.error('Failed to sync to backend:', err);
         setSyncStatus('error');
+        try {
+          localStorage.setItem('ruiru_titans_pending_sync', JSON.stringify(nextData));
+        } catch (e) {}
+        const msg = String(err?.message || '');
+        if (
+          msg.includes('401') ||
+          msg.includes('403') ||
+          msg.includes('auth') ||
+          msg.includes('token') ||
+          msg.includes('credentials') ||
+          msg.includes('permission')
+        ) {
+          setAuthModal({ open: true, tab: 'cms' });
+        }
       }
     }, 400);
   };
@@ -292,27 +398,65 @@ export default function App() {
     }, 0);
   };
 
-  // Find League and Cup categories
+  // Find League and Cup categories, prioritizing active non-ended campaigns with fixtures
   const leagueCategoryKey = useMemo(() => {
-    if (!data?.categories) return 'open';
+    if (!data?.categories) return 'ruiru-titans-league-oct-nov-2026';
     const active = data.activeCategory;
-    if (active && data.categories[active]?.mode === 'league') return active;
-    const found = Object.keys(data.categories).find((k) => data.categories[k]?.mode === 'league');
-    return found || Object.keys(data.categories)[0] || 'open';
+    const activeCat = active ? data.categories[active] : null;
+    if (activeCat && activeCat.mode === 'league' && !activeCat.isEnded && !activeCat.isDeleted && (activeCat.fixtures || []).length > 0) {
+      return active;
+    }
+    const foundWithFixtures = Object.keys(data.categories).find((k) => {
+      const c = data.categories[k];
+      return c && c.mode === 'league' && !c.isEnded && !c.isDeleted && (c.fixtures || []).length > 0;
+    });
+    if (foundWithFixtures) return foundWithFixtures;
+
+    const anyActiveLeague = Object.keys(data.categories).find((k) => {
+      const c = data.categories[k];
+      return c && c.mode === 'league' && !c.isEnded && !c.isDeleted;
+    });
+    if (anyActiveLeague) return anyActiveLeague;
+
+    return active || Object.keys(data.categories)[0] || 'ruiru-titans-league-oct-nov-2026';
   }, [data]);
 
   const cupCategoryKey = useMemo(() => {
-    if (!data?.categories) return 'titans-cup';
+    if (!data?.categories) return null;
     const active = data.activeCategory;
-    if (active && data.categories[active]?.mode === 'cup') return active;
-    const found = Object.keys(data.categories).find((k) => data.categories[k]?.mode === 'cup');
-    return found || 'titans-cup';
+    const activeCat = active ? data.categories[active] : null;
+    if (activeCat && activeCat.mode === 'cup' && !activeCat.isEnded && !activeCat.isDeleted) return active;
+    const found = Object.keys(data.categories).find((k) => {
+      const c = data.categories[k];
+      return c && c.mode === 'cup' && !c.isEnded && !c.isDeleted;
+    });
+    return found || null;
   }, [data]);
 
-  const activeCategoryKey = data?.activeCategory || 'open';
+  const activeCategoryKey = useMemo(() => {
+    const active = data?.activeCategory;
+    const activeCat = active ? data?.categories?.[active] : null;
+    if (activeCat && !activeCat.isEnded && !activeCat.isDeleted) {
+      const fixCount = (activeCat.fixtures || []).length + Object.values(activeCat.groupFixtures || {}).flat().length;
+      if (fixCount > 0) return active;
+    }
+    return leagueCategoryKey;
+  }, [data, leagueCategoryKey]);
+
   const cat = data?.categories?.[activeCategoryKey] || data?.categories?.[leagueCategoryKey];
   const leagueCat = data?.categories?.[leagueCategoryKey] || cat;
-  const cupCat = data?.categories?.[cupCategoryKey];
+  const cupCat = cupCategoryKey ? data?.categories?.[cupCategoryKey] : null;
+  const effectiveCategoryKey = activeCategoryKey || leagueCategoryKey;
+
+  // Active competitions list for navigation and switcher (only real active non-ended tournaments)
+  const activeCompetitionsList = useMemo(() => {
+    return Object.entries(data?.categories || {}).filter(([k, c]) => {
+      if (c.isEnded || c.isDeleted) return false;
+      const fixCount = (c.fixtures || []).length + Object.values(c.groupFixtures || {}).flat().length;
+      const playerCount = (c.teams || []).reduce((acc, t) => acc + (t.players || []).length, 0);
+      return fixCount > 0 || playerCount > 0;
+    });
+  }, [data]);
 
   const teamsById = useMemo(() => {
     const map = {};
@@ -340,7 +484,8 @@ export default function App() {
     });
 
     targetCat.fixtures.forEach((f) => {
-      if (!f.played && !f.walkover) return;
+      const isPlayed = Boolean(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0));
+      if (!isPlayed) return;
       const { hs, as } = computeFixtureScore(f);
 
       const h = table[f.home];
@@ -465,8 +610,9 @@ export default function App() {
   // Quick club stats for Hero Banner
   const clubMetrics = useMemo(() => {
     const lFixtures = leagueCat?.fixtures || [];
-    const completedResults = lFixtures.filter((f) => f.played || f.walkover);
-    const upcomingFixtures = lFixtures.filter((f) => !f.played && !f.walkover);
+    const isCompleted = (f) => Boolean(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0));
+    const completedResults = lFixtures.filter(isCompleted);
+    const upcomingFixtures = lFixtures.filter((f) => !isCompleted(f));
     let totalGoals = 0;
     lFixtures.forEach((f) => {
       const { hs, as } = computeFixtureScore(f);
@@ -497,6 +643,15 @@ export default function App() {
     updateCategoryByKey(activeCategoryKey, mutator);
   };
 
+  const isFixturePlayedOrCompleted = (f) => {
+    if (!f) return false;
+    if (f.played || f.walkover) return true;
+    if (Array.isArray(f.events) && f.events.length > 0) return true;
+    if (f.match && (f.match.played || f.match.walkover || (Array.isArray(f.match.events) && f.match.events.length > 0))) return true;
+    if (f.winner || (f.home_score !== undefined && f.home_score !== '') || (f.score1 !== undefined && f.score1 !== '')) return true;
+    return false;
+  };
+
   const syncCupGroupFixtures = (c, nextFixtures) => {
     if (!c.groupFixtures) return undefined;
     const byId = {};
@@ -505,7 +660,20 @@ export default function App() {
     });
     const nextGroupFixtures = {};
     Object.entries(c.groupFixtures).forEach(([letter, list]) => {
-      nextGroupFixtures[letter] = (list || []).map((gf) => byId[gf.id] || gf);
+      nextGroupFixtures[letter] = (list || []).map((gf) => {
+        const updated = byId[gf.id];
+        if (!updated) return gf;
+        if (isFixturePlayedOrCompleted(gf)) {
+          return {
+            ...updated,
+            played: true,
+            referee: gf.referee || updated.referee,
+            events: (gf.events && gf.events.length > 0) ? gf.events : updated.events,
+            walkover: gf.walkover || updated.walkover,
+          };
+        }
+        return updated;
+      });
     });
     return nextGroupFixtures;
   };
@@ -536,7 +704,39 @@ export default function App() {
         return f;
       });
       const groupFixtures = syncCupGroupFixtures(c, fixtures);
-      return { ...c, fixtures, ...(groupFixtures ? { groupFixtures } : {}) };
+      const rounds = (c.rounds || []).map((r) =>
+        Array.isArray(r)
+          ? r.map((t) =>
+              t?.id === fId
+                ? {
+                    ...t,
+                    match: {
+                      ...t.match,
+                      played: true,
+                      events: [...(t.match?.events || []), event],
+                    },
+                  }
+                : t
+            )
+          : {
+              ...r,
+              ties: (r.ties || []).map((t) =>
+                t.id === fId
+                  ? {
+                      ...t,
+                      played: true,
+                      events: [...(t.events || []), event],
+                    }
+                  : t
+              ),
+            }
+      );
+      return {
+        ...c,
+        fixtures,
+        ...(groupFixtures ? { groupFixtures } : {}),
+        ...(c.rounds ? { rounds } : {}),
+      };
     });
   };
 
@@ -551,7 +751,37 @@ export default function App() {
         return f;
       });
       const groupFixtures = syncCupGroupFixtures(c, fixtures);
-      return { ...c, fixtures, ...(groupFixtures ? { groupFixtures } : {}) };
+      const rounds = (c.rounds || []).map((r) =>
+        Array.isArray(r)
+          ? r.map((t) =>
+              t?.id === fId
+                ? {
+                    ...t,
+                    match: {
+                      ...t.match,
+                      events: (t.match?.events || []).filter((_, idx) => idx !== eventIndex),
+                    },
+                  }
+                : t
+            )
+          : {
+              ...r,
+              ties: (r.ties || []).map((t) =>
+                t.id === fId
+                  ? {
+                      ...t,
+                      events: (t.events || []).filter((_, idx) => idx !== eventIndex),
+                    }
+                  : t
+              ),
+            }
+      );
+      return {
+        ...c,
+        fixtures,
+        ...(groupFixtures ? { groupFixtures } : {}),
+        ...(c.rounds ? { rounds } : {}),
+      };
     });
   };
 
@@ -563,6 +793,14 @@ export default function App() {
         }
         return f;
       });
+      const groupFixtures = syncCupGroupFixtures(c, fixtures);
+      return { ...c, fixtures, ...(groupFixtures ? { groupFixtures } : {}) };
+    });
+  };
+
+  const handleSaveFixtureReport = (fId, reportData, targetKey = activeCategoryKey) => {
+    updateCategoryByKey(targetKey, (c) => {
+      const fixtures = (c.fixtures || []).map((f) => (f.id === fId ? { ...f, report: reportData } : f));
       const groupFixtures = syncCupGroupFixtures(c, fixtures);
       return { ...c, fixtures, ...(groupFixtures ? { groupFixtures } : {}) };
     });
@@ -632,7 +870,7 @@ export default function App() {
               permanentId: permId,
               name: n,
               username: idx === 0 && customUsername.trim() ? customUsername.trim().toLowerCase() : defaultUname,
-              password: customPassword.trim() || 'titans2026',
+              password: customPassword.trim() || '',
               position: position || '',
             };
           });
@@ -739,7 +977,7 @@ export default function App() {
           permanentId: permId,
           name: name.trim(),
           username: customUsername.trim() ? customUsername.trim().toLowerCase() : defaultUname,
-          password: customPassword.trim() || 'titans2026',
+          password: customPassword.trim() || '',
           position: position || '',
         });
       });
@@ -890,23 +1128,33 @@ export default function App() {
         if (!merged.includes(n)) merged.push(n);
       });
 
-      // Automatically assign random referees to any unplayed fixtures that don't have one yet
+      // Automatically assign random referees ONLY to unplayed fixtures that don't have one yet
       const fixtures = (c.fixtures || []).map((f) =>
-        !f.played && !f.walkover && !f.referee
+        !isFixturePlayedOrCompleted(f) && !f.referee
           ? { ...f, referee: pickRandomReferee(merged) }
           : f
       );
       const groupFixtures = syncCupGroupFixtures(c, fixtures);
       const rounds = c.rounds
-        ? (c.rounds || []).map((r) =>
-            Array.isArray(r)
-              ? r.map((t) => {
-                  if (!t || t.match?.played || t.referee || t.match?.referee) return t;
+        ? (c.rounds || []).map((r) => {
+            if (Array.isArray(r)) {
+              return r.map((t) => {
+                if (!t || isFixturePlayedOrCompleted(t) || t.referee || t.match?.referee) return t;
+                const rand = pickRandomReferee(merged);
+                return { ...t, referee: rand, match: { ...(t.match || {}), referee: rand } };
+              });
+            } else if (r && typeof r === 'object' && Array.isArray(r.ties)) {
+              return {
+                ...r,
+                ties: r.ties.map((t) => {
+                  if (!t || isFixturePlayedOrCompleted(t) || t.referee || t.match?.referee) return t;
                   const rand = pickRandomReferee(merged);
                   return { ...t, referee: rand, match: { ...(t.match || {}), referee: rand } };
-                })
-              : r
-          )
+                }),
+              };
+            }
+            return r;
+          })
         : undefined;
 
       return {
@@ -936,23 +1184,82 @@ export default function App() {
       const pool = c.referees || [];
       if (pool.length === 0) return c;
 
-      const fixtures = (c.fixtures || []).map((f) => {
-        if (f.played || f.walkover) return f;
-        updatedCount++;
-        return { ...f, referee: pickRandomReferee(pool) };
+      // Map existing completed/played fixture IDs across all structures so they are NEVER modified
+      const completedFixtureIds = new Set();
+      (c.fixtures || []).forEach((f) => {
+        if (isFixturePlayedOrCompleted(f)) completedFixtureIds.add(f.id);
       });
-      const groupFixtures = syncCupGroupFixtures(c, fixtures);
-      const rounds = c.rounds
-        ? (c.rounds || []).map((r) =>
-            Array.isArray(r)
-              ? r.map((t) => {
-                  if (!t || t.match?.played) return t;
-                  updatedCount++;
-                  const rand = pickRandomReferee(pool);
-                  return { ...t, referee: rand, match: { ...(t.match || {}), referee: rand } };
-                })
-              : r
+      if (c.groupFixtures) {
+        Object.values(c.groupFixtures).forEach((list) => {
+          (list || []).forEach((f) => {
+            if (isFixturePlayedOrCompleted(f)) completedFixtureIds.add(f.id);
+          });
+        });
+      }
+      if (c.rounds) {
+        (c.rounds || []).forEach((r) => {
+          const ties = Array.isArray(r) ? r : (r?.ties || []);
+          ties.forEach((t) => {
+            if (isFixturePlayedOrCompleted(t)) completedFixtureIds.add(t.id);
+          });
+        });
+      }
+
+      const refByFixId = {};
+      const fixtures = (c.fixtures || []).map((f) => {
+        if (completedFixtureIds.has(f.id) || isFixturePlayedOrCompleted(f)) {
+          return f; // Strictly preserve played fixture referee
+        }
+        updatedCount++;
+        const rand = pickRandomReferee(pool);
+        refByFixId[f.id] = rand;
+        return { ...f, referee: rand };
+      });
+
+      const groupFixtures = c.groupFixtures
+        ? Object.fromEntries(
+            Object.entries(c.groupFixtures).map(([letter, list]) => [
+              letter,
+              (list || []).map((f) => {
+                if (completedFixtureIds.has(f.id) || isFixturePlayedOrCompleted(f)) {
+                  return f; // Strictly preserve played group fixture referee
+                }
+                const rand = refByFixId[f.id] || pickRandomReferee(pool);
+                refByFixId[f.id] = rand;
+                return { ...f, referee: rand };
+              }),
+            ])
           )
+        : undefined;
+
+      const rounds = c.rounds
+        ? (c.rounds || []).map((r) => {
+            if (Array.isArray(r)) {
+              return r.map((t) => {
+                if (!t || completedFixtureIds.has(t.id) || isFixturePlayedOrCompleted(t)) {
+                  return t; // Strictly preserve played knockout tie referee
+                }
+                updatedCount++;
+                const rand = refByFixId[t.id] || pickRandomReferee(pool);
+                refByFixId[t.id] = rand;
+                return { ...t, referee: rand, match: { ...(t.match || {}), referee: rand } };
+              });
+            } else if (r && typeof r === 'object' && Array.isArray(r.ties)) {
+              return {
+                ...r,
+                ties: r.ties.map((t) => {
+                  if (!t || completedFixtureIds.has(t.id) || isFixturePlayedOrCompleted(t)) {
+                    return t; // Strictly preserve played knockout tie referee
+                  }
+                  updatedCount++;
+                  const rand = refByFixId[t.id] || pickRandomReferee(pool);
+                  refByFixId[t.id] = rand;
+                  return { ...t, referee: rand, match: { ...(t.match || {}), referee: rand } };
+                }),
+              };
+            }
+            return r;
+          })
         : undefined;
 
       return {
@@ -1243,7 +1550,7 @@ export default function App() {
 
       return {
         ...c,
-        fixtures: updatedFixtures,
+        fixtures: updatedFixtures.slice().sort(compareFixturesByDate),
         ...(updatedGroupFixtures ? { groupFixtures: updatedGroupFixtures } : {}),
         ...(updatedRounds ? { rounds: updatedRounds } : {}),
       };
@@ -1282,7 +1589,7 @@ export default function App() {
 
       return {
         ...c,
-        fixtures: updatedFixtures,
+        fixtures: updatedFixtures.slice().sort(compareFixturesByDate),
         ...(updatedGroupFixtures ? { groupFixtures: updatedGroupFixtures } : {}),
         ...(updatedRounds ? { rounds: updatedRounds } : {}),
       };
@@ -1365,6 +1672,323 @@ export default function App() {
       });
     });
     return fixtures;
+  };
+
+  const reorganizeLeagueUnplayedFixtures = (category, newlyAddedTeamId = null) => {
+    if (!category || category.mode === 'cup') return category?.fixtures || [];
+
+    const allFixtures = [...(category.fixtures || [])];
+    const teams = category.teams || [];
+    const teamIds = teams.map((t) => t.id);
+    if (teamIds.length < 2) return allFixtures;
+
+    // 1. Separate played vs unplayed (played matches are frozen and untouched)
+    const playedFixtures = [];
+    const unplayedFixtures = [];
+
+    allFixtures.forEach((f) => {
+      const isPlayed = Boolean(f.played) || (f.events && f.events.length > 0) || Boolean(f.walkover) || (f.score1 != null && f.score2 != null);
+      if (isPlayed) {
+        playedFixtures.push(f);
+      } else {
+        unplayedFixtures.push(f);
+      }
+    });
+
+    if (unplayedFixtures.length === 0) {
+      return playedFixtures;
+    }
+
+    // 2. Count played matches per team and track head-to-head encounters
+    const playedCount = {};
+    const scheduledCount = {};
+    const h2hCount = {};
+    const h2hKey = (u, v) => (String(u) < String(v) ? `${u}::${v}` : `${v}::${u}`);
+
+    const canTeamsMeet = (hId, aId) => {
+      // Invariant: Two teams that have met k times (k >= 1) cannot meet again
+      // until both teams have played all other teams in the league at least k times.
+      if (!hId || !aId || hId === aId) return true;
+      const k = h2hCount[h2hKey(hId, aId)] || 0;
+      if (k === 0) return true;
+      for (let i = 0; i < teamIds.length; i++) {
+        const otherId = teamIds[i];
+        if (otherId !== hId && (h2hCount[h2hKey(hId, otherId)] || 0) < k) {
+          return false;
+        }
+        if (otherId !== aId && (h2hCount[h2hKey(aId, otherId)] || 0) < k) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    teamIds.forEach((id) => {
+      playedCount[id] = 0;
+      scheduledCount[id] = 0;
+    });
+
+    playedFixtures.forEach((f) => {
+      if (f.home && playedCount[f.home] !== undefined) playedCount[f.home]++;
+      if (f.away && playedCount[f.away] !== undefined) playedCount[f.away]++;
+      if (f.home && f.away) {
+        const k = h2hKey(f.home, f.away);
+        h2hCount[k] = (h2hCount[k] || 0) + 1;
+      }
+    });
+
+    teamIds.forEach((id) => {
+      scheduledCount[id] = playedCount[id] || 0;
+    });
+
+    // 3. Extract the available unplayed match slots
+    const schedule = category.schedule || {
+      start_date: '2026-10-22',
+      match_days: ['Wednesday', 'Thursday', 'Friday', 'Saturday', 'Monday'],
+      match_times: ['17:10', '18:10'],
+      venue: 'Thoome Pri.',
+    };
+
+    const existingUnplayedSlots = unplayedFixtures.map((f) => ({
+      date: f.date,
+      venue: f.venue || schedule.venue || 'Thoome Pri.',
+    }));
+
+    const totalSlotsNeeded = playedFixtures.length + unplayedFixtures.length + 30;
+    const computedSlots = computeScheduleSlots(totalSlotsNeeded, schedule);
+
+    const availableSlots = [];
+    existingUnplayedSlots
+      .slice()
+      .sort((a, b) => getFixtureDateSortValue(a.date) - getFixtureDateSortValue(b.date))
+      .forEach((s) => {
+        if (s.date && s.date !== 'TBD' && !s.date.includes('Upcoming Weekend')) {
+          availableSlots.push(s);
+        }
+      });
+
+    let cIdx = playedFixtures.length;
+    while (availableSlots.length < unplayedFixtures.length + 20) {
+      const slotStr = computedSlots[cIdx] || 'Upcoming Weekend · 16:00';
+      availableSlots.push({ date: slotStr, venue: schedule.venue || 'Thoome Pri.' });
+      cIdx++;
+    }
+
+    // 4. Referees pool
+    const referees = (category.referees && category.referees.length > 0)
+      ? category.referees
+      : ['Ref Kamau', 'Ref Otieno', 'Ref Njoroge', 'Ref Wanjohi'];
+
+    // 5. Intelligent Round-by-Round Equalized Scheduler
+    // Strict Invariant: "any team should not play one more game before the new team has played"
+    // - Catch-up matches (teams with 0 games) MUST be scheduled into the earliest unplayed slots.
+    // - Teams that played yesterday have played game 1 and cannot play game 2 until all trailing teams have equalized.
+    // - Masters (and any team) playing game 1 today cannot play game 2 before the new team plays game 1.
+    const unplayedPool = [...unplayedFixtures];
+    const reorderedUnplayed = [];
+    const lastPlayedSlot = {};
+    teamIds.forEach((id) => { lastPlayedSlot[id] = -999; });
+
+    // Populate recent slots for played fixtures to ensure proper rest spacing
+    playedFixtures.forEach((f, idx) => {
+      const pseudoSlot = idx - playedFixtures.length;
+      if (f.home) lastPlayedSlot[f.home] = pseudoSlot;
+      if (f.away) lastPlayedSlot[f.away] = pseudoSlot;
+    });
+
+    let roundTeamsScheduled = new Set();
+    let slot = 0;
+
+    while (unplayedPool.length > 0) {
+      const minGames = Math.min(...teamIds.map((id) => scheduledCount[id] || 0));
+      const maxGames = Math.max(...teamIds.map((id) => scheduledCount[id] || 0));
+
+      let bestIdx = -1;
+      let bestScore = -Infinity;
+
+      if (minGames < maxGames) {
+        // CATCH-UP PHASE:
+        // Only trailing teams (those with scheduledCount === minGames) are eligible to play!
+        const trailingTeams = new Set(teamIds.filter((id) => (scheduledCount[id] || 0) === minGames));
+
+        for (let i = 0; i < unplayedPool.length; i++) {
+          const m = unplayedPool[i];
+          const hTrail = trailingTeams.has(m.home);
+          const aTrail = trailingTeams.has(m.away);
+
+          // Invariant: Do not schedule a match between two non-trailing teams while teams are behind!
+          if (!hTrail && !aTrail) continue;
+
+          // Invariant: Two teams that have met k times cannot meet again until they have played all other teams
+          if (!canTeamsMeet(m.home, m.away)) continue;
+
+          let score = 0;
+          if (hTrail && aTrail) {
+            score += 50000; // Both are trailing: ideal catch-up match!
+          } else {
+            // One trailing, one not trailing (only used if odd number of trailing teams)
+            score += 1000;
+            if (trailingTeams.size >= 2) score -= 30000;
+          }
+
+          if (newlyAddedTeamId && (m.home === newlyAddedTeamId || m.away === newlyAddedTeamId)) {
+            score += 15000; // Give top priority to new team in the earliest catch-up slot
+          }
+
+          const h2h = h2hCount[h2hKey(m.home, m.away)] || 0;
+          if (h2h > 0) score -= 20000; // Prefer fresh matchups
+
+          if (lastPlayedSlot[m.home] === slot - 1 || lastPlayedSlot[m.away] === slot - 1) {
+            score -= 2000;
+          }
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestIdx = i;
+          }
+        }
+
+        if (bestIdx === -1) {
+          // Fallback within catch-up phase: find match that satisfies canTeamsMeet
+          for (let i = 0; i < unplayedPool.length; i++) {
+            const m = unplayedPool[i];
+            if (!canTeamsMeet(m.home, m.away)) continue;
+            const sumCount = (scheduledCount[m.home] || 0) + (scheduledCount[m.away] || 0);
+            const score = 1000 - sumCount * 50;
+            if (score > bestScore) {
+              bestScore = score;
+              bestIdx = i;
+            }
+          }
+        }
+      } else {
+        // NORMAL ROUND PHASE:
+        // Each team plays exactly once per round before ANY team plays in the next round!
+        if (roundTeamsScheduled.size >= teamIds.length - (teamIds.length % 2)) {
+          roundTeamsScheduled.clear();
+        }
+
+        const currentTarget = minGames + 1;
+
+        for (let i = 0; i < unplayedPool.length; i++) {
+          const m = unplayedPool[i];
+          const hIn = roundTeamsScheduled.has(m.home);
+          const aIn = roundTeamsScheduled.has(m.away);
+
+          // In this round, neither team can have already been scheduled
+          if (hIn || aIn) continue;
+
+          // Strict round cap: neither team can exceed the current round target
+          if ((scheduledCount[m.home] || 0) >= currentTarget || (scheduledCount[m.away] || 0) >= currentTarget) {
+            continue;
+          }
+
+          // Invariant: Two teams that have met k times cannot meet again until they have played all other teams
+          if (!canTeamsMeet(m.home, m.away)) continue;
+
+          let score = 2000;
+
+          // Fresh matchup preference
+          const h2h = h2hCount[h2hKey(m.home, m.away)] || 0;
+          if (h2h === 0) score += 5000;
+          else score -= 10000;
+
+          // Fatigue spacing: prefer teams that have rested longer
+          const gapH = slot - (lastPlayedSlot[m.home] ?? -999);
+          const gapA = slot - (lastPlayedSlot[m.away] ?? -999);
+          score += Math.min(gapH, gapA) * 100;
+
+          if (gapH <= 1 || gapA <= 1) score -= 5000;
+          if (gapH <= 2 || gapA <= 2) score -= 1000;
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestIdx = i;
+          }
+        }
+
+        if (bestIdx === -1) {
+          // If no strictly disjoint match found under current target, reset round set and find match with minimum sum count satisfying canTeamsMeet
+          roundTeamsScheduled.clear();
+          for (let i = 0; i < unplayedPool.length; i++) {
+            const m = unplayedPool[i];
+            if (!canTeamsMeet(m.home, m.away)) continue;
+            const sumCount = (scheduledCount[m.home] || 0) + (scheduledCount[m.away] || 0);
+            let score = 1000 - sumCount * 50;
+            const gapH = slot - (lastPlayedSlot[m.home] ?? -999);
+            const gapA = slot - (lastPlayedSlot[m.away] ?? -999);
+            score += Math.min(gapH, gapA) * 10;
+            if (score > bestScore) {
+              bestScore = score;
+              bestIdx = i;
+            }
+          }
+        }
+      }
+
+      if (bestIdx === -1) {
+        for (let i = 0; i < unplayedPool.length; i++) {
+          if (canTeamsMeet(unplayedPool[i].home, unplayedPool[i].away)) {
+            bestIdx = i;
+            break;
+          }
+        }
+      }
+
+      if (bestIdx === -1) bestIdx = 0;
+
+      const [chosenMatch] = unplayedPool.splice(bestIdx, 1);
+      const slotInfo = availableSlots[slot] || { date: 'Upcoming Weekend · 16:00', venue: schedule.venue || 'Thoome Pri.' };
+      const assignedRef = chosenMatch.referee || referees[slot % referees.length];
+
+      const updatedMatch = {
+        ...chosenMatch,
+        date: slotInfo.date,
+        venue: chosenMatch.venue || slotInfo.venue,
+        referee: assignedRef,
+      };
+
+      scheduledCount[chosenMatch.home] = (scheduledCount[chosenMatch.home] || 0) + 1;
+      scheduledCount[chosenMatch.away] = (scheduledCount[chosenMatch.away] || 0) + 1;
+      roundTeamsScheduled.add(chosenMatch.home);
+      roundTeamsScheduled.add(chosenMatch.away);
+      lastPlayedSlot[chosenMatch.home] = slot;
+      lastPlayedSlot[chosenMatch.away] = slot;
+      const k = h2hKey(chosenMatch.home, chosenMatch.away);
+      h2hCount[k] = (h2hCount[k] || 0) + 1;
+
+      reorderedUnplayed.push(updatedMatch);
+      slot++;
+    }
+
+    // 6. Sequential ID renumbering after played fixtures
+    let maxPlayedSeq = 0;
+    let prefix = 'F';
+    playedFixtures.forEach((f) => {
+      const mReal = String(f.id || '').match(/REAL-F(\d+)/i);
+      if (mReal) {
+        prefix = 'REAL-F';
+        const num = parseInt(mReal[1], 10);
+        if (num > maxPlayedSeq) maxPlayedSeq = num;
+      } else {
+        const mF = String(f.id || '').match(/^F(\d+)$/i);
+        if (mF) {
+          const num = parseInt(mF[1], 10);
+          if (num > maxPlayedSeq) maxPlayedSeq = num;
+        }
+      }
+    });
+
+    let seq = maxPlayedSeq;
+    const finalUnplayed = reorderedUnplayed.map((m) => {
+      seq++;
+      return {
+        ...m,
+        id: `${prefix}${seq}`,
+      };
+    });
+
+    return [...playedFixtures, ...finalUnplayed];
   };
 
   const generateCupStructureForTeams = (teams, schedule = {}, referees = []) => {
@@ -1541,7 +2165,7 @@ export default function App() {
             permanentId: permId,
             name: p.name,
             username: defaultUname,
-            password: 'titans2026',
+            password: '',
             position: p.position || '',
             playerClass: p.player_class || 'C',
           };
@@ -1723,6 +2347,291 @@ export default function App() {
     setCurrentView(viewName);
   };
 
+  const handleCreateLeagueTeam = ({
+    teamName,
+    teamCode,
+    teamColor,
+    initialPlayers = [],
+    transferredPlayerIds = [],
+    autoBalanceCount = 0,
+    generateFixtures = true,
+    fixtureFormat = 'double',
+    targetCategoryKey = activeCategoryKey,
+  }) => {
+    let resultSummary = null;
+    updateCategoryByKey(targetCategoryKey, (c) => {
+      const name = (teamName || '').trim();
+      if (!name) return c;
+
+      // 1. Generate unique team ID / code
+      let code = (teamCode || name.slice(0, 3)).trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (!code) code = 'NEW';
+      let finalCode = code;
+      let counter = 1;
+      const existingTeamIds = new Set((c.teams || []).map((t) => t.id));
+      while (existingTeamIds.has(finalCode)) {
+        finalCode = `${code}${counter++}`;
+      }
+
+      const color = teamColor || PALETTE[(c.teams || []).length % PALETTE.length];
+
+      // Unknown scorer placeholder for this team
+      const newPlayers = [
+        { id: `${finalCode}-UNK`, name: 'Unrecorded scorer', unknown: true },
+      ];
+
+      // 2. Add manual initial players
+      let pSeq = 1;
+      (initialPlayers || []).forEach((p) => {
+        const pName = (p.name || '').trim();
+        if (!pName) return;
+        const pId = `${finalCode}-P${pSeq++}`;
+        const defaultUname = pName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_|_$/g, '') || pId.toLowerCase();
+        newPlayers.push({
+          id: pId,
+          permanentId: pId,
+          name: pName,
+          username: (p.username || defaultUname).trim().toLowerCase(),
+          password: p.password || '',
+          position: p.position || '',
+          jerseyNumber: p.jerseyNumber != null && String(p.jerseyNumber).trim() !== '' ? parseInt(p.jerseyNumber, 10) : null,
+          isActive: true,
+        });
+      });
+
+      // 3. Process manual transfers from other teams
+      const transferSet = new Set((transferredPlayerIds || []).map((t) => `${t.fromTeamId}::${t.playerId}`));
+      const playersToTransfer = [];
+
+      let updatedTeams = (c.teams || []).map((team) => {
+        const remainingPlayers = [];
+        (team.players || []).forEach((p) => {
+          if (transferSet.has(`${team.id}::${p.id}`) && !p.unknown) {
+            playersToTransfer.push({ ...p, previousTeamId: team.id });
+          } else {
+            remainingPlayers.push(p);
+          }
+        });
+        return { ...team, players: remainingPlayers };
+      });
+
+      // 4. Process Intelligent Competitive Auto-Pull (if enabled)
+      const pullTarget = parseInt(autoBalanceCount || 0, 10);
+      if (pullTarget > 0) {
+        const classifyPos = (pos) => {
+          const u = (pos || '').toUpperCase();
+          if (u.includes('GK')) return 'GK';
+          if (u.includes('DEF') || u.includes('CB') || u.includes('LB') || u.includes('RB')) return 'DEF';
+          if (u.includes('MID') || u.includes('CDM') || u.includes('CAM') || u.includes('CM')) return 'MID';
+          if (u.includes('FWD') || u.includes('ST') || u.includes('RW') || u.includes('LW') || u.includes('CF')) return 'FWD';
+          return 'OTHER';
+        };
+
+        const targetPositions = ['GK', 'DEF', 'MID', 'DEF', 'MID', 'FWD', 'OTHER'];
+        let pulled = 0;
+
+        while (pulled < pullTarget) {
+          // Identify donor teams with squad size > 5, sorted by largest squad first
+          const eligibleTeams = updatedTeams
+            .filter((t) => (t.players || []).filter((p) => !p.unknown).length > 5)
+            .sort((a, b) => {
+              const countA = (a.players || []).filter((p) => !p.unknown).length;
+              const countB = (b.players || []).filter((p) => !p.unknown).length;
+              return countB - countA;
+            });
+
+          if (eligibleTeams.length === 0) break; // Preserve minimum 5 players on all teams
+
+          const donorTeam = eligibleTeams[pulled % eligibleTeams.length];
+          const donorPlayers = donorTeam.players.filter((p) => !p.unknown);
+          const desiredPos = targetPositions[pulled % targetPositions.length];
+
+          let candidate = donorPlayers.find((p) => classifyPos(p.position) === desiredPos);
+          if (!candidate) {
+            candidate = donorPlayers[donorPlayers.length - 1];
+          }
+
+          if (candidate) {
+            donorTeam.players = donorTeam.players.filter((p) => p.id !== candidate.id);
+            playersToTransfer.push({ ...candidate, previousTeamId: donorTeam.id });
+            pulled++;
+          } else {
+            break;
+          }
+        }
+      }
+
+      // Add all transferred/pulled players into newTeam, preserving permanent IDs, credentials, and stats
+      playersToTransfer.forEach((tp) => {
+        newPlayers.push({
+          ...tp,
+          id: tp.permanentId || tp.id,
+          name: tp.name,
+          username: tp.username,
+          password: tp.password,
+          position: tp.position || '',
+          jerseyNumber: tp.jerseyNumber ?? tp.jersey_number ?? null,
+          isActive: tp.isActive ?? tp.is_active ?? true,
+        });
+      });
+
+      const newTeam = {
+        id: finalCode,
+        name: name,
+        color: color,
+        players: newPlayers,
+      };
+
+      updatedTeams.push(newTeam);
+
+      // 5. Generate League Fixtures against all other teams
+      let updatedFixtures = [...(c.fixtures || [])];
+      let newMatchesCount = 0;
+
+      if (c.mode === 'cup') {
+        const groupLetters = c.groupLetters || ['A', 'B'];
+        const groupCounts = {};
+        groupLetters.forEach((l) => { groupCounts[l] = 0; });
+        (c.teams || []).forEach((t) => {
+          const g = (c.groupOf || {})[t.id] || groupLetters[0];
+          if (groupCounts[g] !== undefined) groupCounts[g]++;
+        });
+        let minGroup = groupLetters[0];
+        groupLetters.forEach((l) => {
+          if (groupCounts[l] < groupCounts[minGroup]) minGroup = l;
+        });
+
+        const newGroupOf = { ...(c.groupOf || {}), [finalCode]: minGroup };
+        const groupOpponents = updatedTeams.filter((t) => t.id !== finalCode && newGroupOf[t.id] === minGroup);
+        const groupList = [...((c.groupFixtures && c.groupFixtures[minGroup]) || [])];
+        let gSeq = groupList.length + 1;
+        const referees = (c.referees && c.referees.length > 0) ? c.referees : ['Ref Kamau', 'Ref Otieno'];
+
+        groupOpponents.forEach((opp) => {
+          const ref = referees[gSeq % referees.length];
+          const gfObj = {
+            id: `GF-${minGroup}-${gSeq}`,
+            date: 'Upcoming Weekend · 16:00',
+            venue: 'Thoome Pri.',
+            home: finalCode,
+            away: opp.id,
+            played: false,
+            walkover: null,
+            referee: ref,
+            events: [],
+          };
+          groupList.push(gfObj);
+          updatedFixtures.push(gfObj);
+          gSeq++;
+          newMatchesCount++;
+        });
+
+        const newGroupFixtures = { ...(c.groupFixtures || {}), [minGroup]: groupList };
+        resultSummary = {
+          teamId: finalCode,
+          teamName: name,
+          playerCount: newPlayers.filter((p) => !p.unknown).length,
+          fixtureCount: newMatchesCount,
+        };
+        return {
+          ...c,
+          teams: updatedTeams,
+          groupOf: newGroupOf,
+          groupFixtures: newGroupFixtures,
+          fixtures: updatedFixtures,
+        };
+      }
+
+      if (generateFixtures !== false) {
+        const otherTeams = updatedTeams.filter((t) => t.id !== finalCode);
+        const format = fixtureFormat || c.format || 'double';
+        const referees = (c.referees && c.referees.length > 0)
+          ? c.referees
+          : ['Ref Kamau', 'Ref Otieno', 'Ref Njoroge'];
+
+        let maxSeq = 0;
+        let idPrefix = 'REAL-F';
+        (c.fixtures || []).forEach((f) => {
+          const mReal = String(f.id || '').match(/REAL-F(\d+)/i);
+          if (mReal) {
+            idPrefix = 'REAL-F';
+            const num = parseInt(mReal[1], 10);
+            if (num > maxSeq) maxSeq = num;
+          } else {
+            const mF = String(f.id || '').match(/^F(\d+)$/i);
+            if (mF) {
+              const num = parseInt(mF[1], 10);
+              if (num > maxSeq) maxSeq = num;
+            }
+          }
+        });
+
+        // Determine home & away or single pairings
+        const newPairs = [];
+        otherTeams.forEach((opp) => {
+          newPairs.push({ home: finalCode, away: opp.id });
+          if (format === 'double') {
+            newPairs.push({ home: opp.id, away: finalCode });
+          }
+        });
+
+        const newUnplayedFixtures = newPairs.map((pair) => ({
+          home: pair.home,
+          away: pair.away,
+          played: false,
+          walkover: null,
+          events: [],
+        }));
+
+        newMatchesCount = newUnplayedFixtures.length;
+
+        // Reorganize all unplayed fixtures so catch-up matches play first,
+        // and no team plays an extra game before the new team has played!
+        updatedFixtures = reorganizeLeagueUnplayedFixtures(
+          {
+            ...c,
+            teams: updatedTeams,
+            fixtures: [...(c.fixtures || []), ...newUnplayedFixtures],
+          },
+          finalCode
+        );
+      }
+
+      resultSummary = {
+        teamId: finalCode,
+        teamName: name,
+        playerCount: newPlayers.filter((p) => !p.unknown).length,
+        fixtureCount: newMatchesCount,
+      };
+
+      return {
+        ...c,
+        teams: updatedTeams,
+        fixtures: updatedFixtures,
+      };
+    });
+
+    return resultSummary;
+  };
+
+  const handleReorganizeUnplayedFixtures = (catKey = activeCategoryKey) => {
+    let reorderedCount = 0;
+    updateActiveCategory((c) => {
+      if (!c || c.mode === 'cup') return c;
+      const reordered = reorganizeLeagueUnplayedFixtures(c);
+      const playedCount = (c.fixtures || []).filter((f) => f.played || (f.events && f.events.length > 0) || f.walkover || (f.score1 != null && f.score2 != null)).length;
+      reorderedCount = reordered.length - playedCount;
+      return {
+        ...c,
+        fixtures: reordered,
+      };
+    });
+    return reorderedCount;
+  };
+
   const handleDeleteCategory = (catKey = activeCategoryKey) => {
     const targetCat = data?.categories?.[catKey];
     if (!targetCat) return;
@@ -1801,13 +2710,30 @@ export default function App() {
   };
 
   // Auth Callbacks
-  const handleCmsLoginSuccess = (cms) => {
+  const handleCmsLoginSuccess = async (cms) => {
     // Single-session mutual exclusivity: log off player if manager signs in
     setPlayerUser(null);
     api.setPlayerToken('');
     setCmsUser(cms);
     setIsCmsMode(true);
     setCurrentView('manage');
+
+    // Automatically flush any pending unsaved state now that manager is authenticated!
+    try {
+      const rawPending = localStorage.getItem('ruiru_titans_pending_sync');
+      if (rawPending) {
+        const pendingState = JSON.parse(rawPending);
+        if (pendingState && pendingState.categories) {
+          setSyncStatus('saving');
+          await api.saveState(pendingState);
+          setData(pendingState);
+          localStorage.removeItem('ruiru_titans_pending_sync');
+          setSyncStatus('synced');
+        }
+      }
+    } catch (e) {
+      console.warn('Could not flush pending sync on CMS login:', e);
+    }
   };
 
   const handlePlayerLoginSuccess = (player) => {
@@ -1854,6 +2780,7 @@ export default function App() {
     { key: 'voting', label: '⭐ TOTW & TOTT (Vote)' },
     { key: 'stats', label: '📈 Player Stats' },
     { key: 'balancer', label: '⚖️ Team Balancer' },
+    { key: 'tactics', label: '📋 Tactics' },
     ...(playerUser
       ? [{ key: 'player-dashboard', label: '👤 Player Dashboard' }]
       : isCmsMode && cmsUser
@@ -1895,48 +2822,146 @@ export default function App() {
     };
   }, [data?.categories, activeCategoryKey, leagueCat, standingsTable]);
 
+  const isDedicatedTacticsMode = isStandaloneTactics && currentView === 'tactics';
+
   return (
     <div style={{ minHeight: '100vh', background: '#08261E', fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column' }}>
-      {/* Top Bar with Sign In to Manager Dashboard Link & Player Auth */}
-      <TopNav
-        syncStatus={syncStatus}
-        cmsUser={cmsUser}
-        playerUser={playerUser}
-        isCmsMode={isCmsMode}
-        currentView={currentView}
-        onNavigate={(view) => setCurrentView(view)}
-        onOpenAuthModal={(tab) => setAuthModal({ open: true, tab })}
-        onToggleCmsMode={(nextVal) => {
-          const next = typeof nextVal === 'boolean' ? nextVal : !isCmsMode;
-          if (!next) {
-            handleLogoutCms();
-          } else if (cmsUser) {
-            setIsCmsMode(true);
-            setCurrentView('manage');
-          } else {
-            setAuthModal({ open: true, tab: 'cms' });
-          }
-        }}
-        onLogoutCms={handleLogoutCms}
-        onLogoutPlayer={handleLogoutPlayer}
-      />
-
-      {/* Main Content Container */}
-      <main style={{ maxWidth: '1180px', width: '100%', margin: '0 auto', padding: '20px 16px 64px', flex: 1 }}>
-        {/* STUNNING HERO BANNER */}
-        <section
-          className="hero-banner"
+      {/* Top Bar with Sign In to Manager Dashboard Link & Player Auth OR Dedicated Tactics Header */}
+      {!isDedicatedTacticsMode ? (
+        <TopNav
+          syncStatus={syncStatus}
+          cmsUser={cmsUser}
+          playerUser={playerUser}
+          isCmsMode={isCmsMode}
+          currentView={currentView}
+          onNavigate={(view) => setCurrentView(view)}
+          onOpenAuthModal={(tab) => setAuthModal({ open: true, tab })}
+          onToggleCmsMode={(nextVal) => {
+            const next = typeof nextVal === 'boolean' ? nextVal : !isCmsMode;
+            if (!next) {
+              handleLogoutCms();
+            } else if (cmsUser) {
+              setIsCmsMode(true);
+              setCurrentView('manage');
+            } else {
+              setAuthModal({ open: true, tab: 'cms' });
+            }
+          }}
+          onLogoutCms={handleLogoutCms}
+          onLogoutPlayer={handleLogoutPlayer}
+        />
+      ) : (
+        <header
           style={{
-            background: 'radial-gradient(circle at 85% 20%, rgba(201, 162, 39, 0.22) 0%, rgba(15, 46, 36, 0.96) 55%, #091F18 100%)',
-            border: '1px solid #2B5746',
-            borderRadius: '18px',
-            padding: '28px 28px 22px',
-            marginBottom: '20px',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.35)',
-            position: 'relative',
-            overflow: 'hidden',
+            background: '#0B281F',
+            borderBottom: '1px solid #1E4636',
+            padding: '10px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
           }}
         >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button
+              type="button"
+              onClick={() => handleToggleStandaloneTactics(false)}
+              style={{
+                background: '#16352A',
+                color: '#F4F2EA',
+                border: '1px solid #2B5746',
+                borderRadius: '8px',
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease',
+              }}
+              title="Return to the main Ruiru Titans club portal"
+            >
+              <span>←</span>
+              <span>Back to Club Portal</span>
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>📋</span>
+              <span className="scoreboard" style={{ fontSize: '18px', color: '#FCD34D', letterSpacing: '0.04em' }}>
+                RUIRU TITANS · DEDICATED TACTICS BOARD
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => window.open(window.location.pathname + '?tactics_standalone=true', '_blank')}
+              style={{
+                background: '#071B15',
+                color: '#8FA89B',
+                border: '1px solid #1E4636',
+                borderRadius: '8px',
+                padding: '6px 12px',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+              title="Open in a separate standalone browser window"
+            >
+              <span>↗</span> Open in New Window
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleStandaloneTactics(false)}
+              style={{
+                background: '#231518',
+                color: '#FF8A8A',
+                border: '1px solid #732228',
+                borderRadius: '8px',
+                padding: '6px 12px',
+                fontSize: '11.5px',
+                fontWeight: 800,
+                cursor: 'pointer',
+              }}
+              title="Exit dedicated board page and restore all club portal sections"
+            >
+              ✕ Exit Dedicated Page
+            </button>
+          </div>
+        </header>
+      )}
+
+      {/* Main Content Container */}
+      <main
+        style={{
+          maxWidth: isDedicatedTacticsMode ? '1440px' : '1180px',
+          width: '100%',
+          margin: '0 auto',
+          padding: isDedicatedTacticsMode ? '10px 14px 48px' : '20px 16px 64px',
+          flex: 1,
+        }}
+      >
+        {/* STUNNING HERO BANNER (Hidden on dedicated tactics board page) */}
+        {!isDedicatedTacticsMode && (
+          <section
+            className="hero-banner"
+            style={{
+              background: 'radial-gradient(circle at 85% 20%, rgba(201, 162, 39, 0.22) 0%, rgba(15, 46, 36, 0.96) 55%, #091F18 100%)',
+              border: '1px solid #2B5746',
+              borderRadius: '18px',
+              padding: '28px 28px 22px',
+              marginBottom: '20px',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.35)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
             {/* Club Identity */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flex: '1 1 460px' }}>
@@ -2200,9 +3225,10 @@ export default function App() {
             ))}
           </div>
         </section>
+        )}
 
         {/* Manager Dashboard Active Banner */}
-        {isCmsMode && (
+        {!isDedicatedTacticsMode && isCmsMode && (
           <div
             style={{
               background: 'rgba(201, 162, 39, 0.14)',
@@ -2230,7 +3256,7 @@ export default function App() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              {Object.entries(data.categories).map(([k, c]) => (
+              {activeCompetitionsList.map(([k, c]) => (
                 <button
                   key={k}
                   type="button"
@@ -2335,7 +3361,7 @@ export default function App() {
         )}
 
         {/* Add Category Form (CMS only) */}
-        {isCmsMode && addingCategory && (
+        {!isDedicatedTacticsMode && isCmsMode && addingCategory && (
           <form
             onSubmit={handleCreateCategory}
             style={{
@@ -2387,74 +3413,76 @@ export default function App() {
         )}
 
         {/* Primary Section Navigation Bar */}
-        <nav
-          aria-label="Club Homepage Sections"
-          style={{
-            display: 'flex',
-            gap: '6px',
-            marginBottom: '14px',
-            background: '#0F2E24',
-            padding: '6px',
-            borderRadius: '12px',
-            border: '1px solid #1E4636',
-            overflowX: 'auto',
-          }}
-        >
-          {navTabs.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              className="tab-btn"
-              onClick={() => {
-                if (t.key === 'register-players') {
-                  setManageSection('players');
-                  if (cmsUser && isCmsMode) {
+        {!isDedicatedTacticsMode && (
+          <nav
+            aria-label="Club Homepage Sections"
+            style={{
+              display: 'flex',
+              gap: '6px',
+              marginBottom: '14px',
+              background: '#0F2E24',
+              padding: '6px',
+              borderRadius: '12px',
+              border: '1px solid #1E4636',
+              overflowX: 'auto',
+            }}
+          >
+            {navTabs.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                className="tab-btn"
+                onClick={() => {
+                  if (t.key === 'register-players') {
+                    setManageSection('players');
+                    if (cmsUser && isCmsMode) {
+                      setCurrentView('manage');
+                    } else {
+                      setCurrentView('manage');
+                      setAuthModal({ open: true, tab: 'cms' });
+                    }
+                    return;
+                  }
+                  if (t.key === 'manage') {
+                    setManageSection('players');
+                    if (!cmsUser || !isCmsMode) {
+                      setAuthModal({ open: true, tab: 'cms' });
+                    }
                     setCurrentView('manage');
-                  } else {
-                    setCurrentView('manage');
-                    setAuthModal({ open: true, tab: 'cms' });
+                    return;
                   }
-                  return;
-                }
-                if (t.key === 'manage') {
-                  setManageSection('players');
-                  if (!cmsUser || !isCmsMode) {
-                    setAuthModal({ open: true, tab: 'cms' });
+                  if (t.key === 'table') {
+                    if (cat?.mode !== 'league' && data.activeCategory !== leagueCategoryKey) {
+                      handleSelectActiveCategory(leagueCategoryKey);
+                    }
+                  } else if (t.key === 'cup') {
+                    if (cat?.mode !== 'cup' && data.categories[cupCategoryKey] && data.activeCategory !== cupCategoryKey) {
+                      handleSelectActiveCategory(cupCategoryKey);
+                    }
                   }
-                  setCurrentView('manage');
-                  return;
-                }
-                if (t.key === 'table') {
-                  if (cat?.mode !== 'league' && data.activeCategory !== leagueCategoryKey) {
-                    handleSelectActiveCategory(leagueCategoryKey);
-                  }
-                } else if (t.key === 'cup') {
-                  if (cat?.mode !== 'cup' && data.categories[cupCategoryKey] && data.activeCategory !== cupCategoryKey) {
-                    handleSelectActiveCategory(cupCategoryKey);
-                  }
-                }
-                setCurrentView(t.key);
-              }}
-              style={{
-                flex: 1,
-                padding: '10px 14px',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer',
-                background: currentView === t.key ? '#C9A227' : 'transparent',
-                color: currentView === t.key ? '#16201B' : '#9BB5A8',
-                fontWeight: 800,
-                fontSize: '12.5px',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
+                  setCurrentView(t.key);
+                }}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: currentView === t.key ? '#C9A227' : 'transparent',
+                  color: currentView === t.key ? '#16201B' : '#9BB5A8',
+                  fontWeight: 800,
+                  fontSize: '12.5px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
+        )}
 
         {/* Public Active Competition Switcher Bar (for Fixtures, Voting, Standings, Cup, Stats & Balancer) */}
-        {currentView !== 'home' && Object.keys(data.categories || {}).length > 0 && (
+        {!isDedicatedTacticsMode && currentView !== 'home' && currentView !== 'tactics' && activeCompetitionsList.length > 0 && (
           <div
             style={{
               background: '#0B281F',
@@ -2481,7 +3509,7 @@ export default function App() {
               >
                 🏆 Active Competition:
               </span>
-              {Object.entries(data.categories).map(([k, c]) => {
+              {activeCompetitionsList.map(([k, c]) => {
                 const isActive = k === activeCategoryKey;
                 const isCup = c.mode === 'cup';
                 return (
@@ -2611,7 +3639,7 @@ export default function App() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {/* Latest Match Results Card */}
                 <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '14px', padding: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
                     <div>
                       <span style={{ fontSize: '12px', fontWeight: 800, color: '#4ADE80', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                         ✅ Latest Match Results
@@ -2620,16 +3648,33 @@ export default function App() {
                         Completed Ruiru Titans League matches
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      className="btn-pill-action"
-                      onClick={() => {
-                        setFixturesInitialFilter('results');
-                        setCurrentView('fixtures');
-                      }}
-                    >
-                      All {clubMetrics.completedCount} Results →
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        className="btn-pill-action"
+                        style={{
+                          background: 'linear-gradient(135deg, #104332 0%, #17543E 100%)',
+                          border: '1px solid #2EE59D',
+                          color: '#E8FFF3',
+                          fontWeight: 800,
+                          boxShadow: '0 2px 8px rgba(46, 229, 157, 0.25)',
+                        }}
+                        onClick={() => setAppShowAIReport(true)}
+                        title="Open AI Weekly & Matchweek Report Generator"
+                      >
+                        🤖 AI Weekly Report
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-pill-action"
+                        onClick={() => {
+                          setFixturesInitialFilter('results');
+                          setCurrentView('fixtures');
+                        }}
+                      >
+                        All {clubMetrics.completedCount} Results →
+                      </button>
+                    </div>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -2637,6 +3682,7 @@ export default function App() {
                       const home = leagueTeamsById[f.home];
                       const away = leagueTeamsById[f.away];
                       const { hs, as } = computeFixtureScore(f);
+                      const hasReport = Boolean(f.report?.content && f.report.content.trim());
                       return (
                         <div
                           key={f.id}
@@ -2699,6 +3745,28 @@ export default function App() {
                             )}
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: away?.color || '#2E5A8F' }} />
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => setAppReportFixture(f)}
+                            style={{
+                              background: hasReport ? 'rgba(46, 229, 157, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                              border: hasReport ? '1px solid #2EE59D' : '1px solid #335544',
+                              color: hasReport ? '#A7F3D0' : '#8FA89B',
+                              padding: '5px 9px',
+                              borderRadius: '6px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                            }}
+                            title={hasReport ? 'Read Official Match Report' : (isCmsMode ? 'Write Official Match Report' : 'Match Report')}
+                          >
+                            {hasReport ? '📄 Report' : (isCmsMode ? '✍️ Add Report' : '📄 Report')}
+                          </button>
                         </div>
                       );
                     })}
@@ -2904,25 +3972,28 @@ export default function App() {
             suspensions={suspensions}
             referees={cat.referees}
             schedule={cat?.schedule}
-            activeCategoryKey={activeCategoryKey}
+            activeCategoryKey={effectiveCategoryKey}
             categoryLabel={cat?.label}
             isCmsMode={isCmsMode}
+            cmsUser={cmsUser}
             initialFilter={fixturesInitialFilter}
-            onTogglePlayed={(fId) => handleTogglePlayed(fId, activeCategoryKey)}
-            onAddEvent={(fId, ev) => handleAddEvent(fId, ev, activeCategoryKey)}
-            onRemoveEvent={(fId, idx) => handleRemoveEvent(fId, idx, activeCategoryKey)}
-            onSetWalkover={(fId, wId) => handleSetWalkover(fId, wId, activeCategoryKey)}
-            onSetReferee={(fId, ref) => handleSetReferee(fId, ref, activeCategoryKey)}
-            onAddReferee={(refName) => handleAddReferee(refName, activeCategoryKey)}
-            onRemoveReferee={(refName) => handleRemoveReferee(refName, activeCategoryKey)}
-            onRandomizeReferees={() => handleRandomizeReferees(activeCategoryKey)}
-            onUpdateSchedule={(s, apply) => handleUpdateSchedule(activeCategoryKey, s, apply)}
-            onMoveFixture={(fId, newDateStr) => handleMoveFixtureDate(activeCategoryKey, fId, newDateStr)}
-            onBatchMoveFixtures={(map) => handleBatchMoveFixtures(activeCategoryKey, map)}
-            onOpenH2H={(t1, t2) => handleOpenH2H(t1, t2, activeCategoryKey)}
+            onTogglePlayed={(fId) => handleTogglePlayed(fId, effectiveCategoryKey)}
+            onAddEvent={(fId, ev) => handleAddEvent(fId, ev, effectiveCategoryKey)}
+            onRemoveEvent={(fId, idx) => handleRemoveEvent(fId, idx, effectiveCategoryKey)}
+            onSetWalkover={(fId, wId) => handleSetWalkover(fId, wId, effectiveCategoryKey)}
+            onSetReferee={(fId, ref) => handleSetReferee(fId, ref, effectiveCategoryKey)}
+            onAddReferee={(refName) => handleAddReferee(refName, effectiveCategoryKey)}
+            onRemoveReferee={(refName) => handleRemoveReferee(refName, effectiveCategoryKey)}
+            onRandomizeReferees={() => handleRandomizeReferees(effectiveCategoryKey)}
+            onUpdateSchedule={(s, apply) => handleUpdateSchedule(effectiveCategoryKey, s, apply)}
+            onMoveFixture={(fId, newDateStr) => handleMoveFixtureDate(effectiveCategoryKey, fId, newDateStr)}
+            onBatchMoveFixtures={(map) => handleBatchMoveFixtures(effectiveCategoryKey, map)}
+            onOpenH2H={(t1, t2) => handleOpenH2H(t1, t2, effectiveCategoryKey)}
             onGenerateFixtures={handleGenerateFixtures}
-            onOpenEditCategory={() => setEditingCategoryKey(activeCategoryKey)}
+            onReorganizeUnplayedFixtures={() => handleReorganizeUnplayedFixtures(effectiveCategoryKey)}
+            onOpenEditCategory={() => setEditingCategoryKey(effectiveCategoryKey)}
             onSelectTeam={handleOpenTeamDetails}
+            onReportSaved={(fId, reportData) => handleSaveFixtureReport(fId, reportData, effectiveCategoryKey)}
           />
         )}
 
@@ -2931,10 +4002,10 @@ export default function App() {
            ========================================================= */}
         {currentView === 'cup' && (
           <CupProgressionView
-            cupCategory={cupCat || cat}
-            cupCategoryKey={cupCat ? cupCategoryKey : activeCategoryKey}
+            cupCategory={cupCat}
+            cupCategoryKey={cupCategoryKey}
             cupCategoriesList={Object.entries(data.categories)
-              .filter(([, c]) => c.mode === 'cup')
+              .filter(([, c]) => c.mode === 'cup' && !c.isEnded && !c.isDeleted)
               .map(([k, c]) => ({ key: k, label: c.label }))}
             onSelectCupCategory={(k) => handleSelectActiveCategory(k)}
             isCmsMode={isCmsMode}
@@ -3014,6 +4085,19 @@ export default function App() {
             cmsUser={cmsUser}
             onUpdateCategory={updateCategoryByKey}
             onSelectTeam={handleOpenTeamDetails}
+          />
+        )}
+
+        {/* =========================================================
+            6F. DEDICATED TACTICS & FORMATIONS BOARD VIEW
+           ========================================================= */}
+        {currentView === 'tactics' && (
+          <TacticsView
+            categories={data.categories}
+            activeCategoryKey={activeCategoryKey}
+            isCmsMode={isCmsMode}
+            isStandalonePage={isDedicatedTacticsMode}
+            onToggleStandalonePage={handleToggleStandaloneTactics}
           />
         )}
 
@@ -3118,6 +4202,7 @@ export default function App() {
               onUpdateHomepage={handleUpdateHomepage}
               onUpdateVotingConfig={handleUpdateVotingConfig}
               onAddTeam={handleAddTeam}
+              onCreateLeagueTeam={handleCreateLeagueTeam}
               onAddPlayers={handleAddPlayers}
               onRemovePlayer={handleRemovePlayer}
               onUpdatePlayerPosition={handleUpdatePlayerPosition}
@@ -3131,6 +4216,7 @@ export default function App() {
               onPermanentDeleteCategory={handlePermanentDeleteCategory}
               onResetRealSeason={handleResetRealSeason}
               onGenerateFixtures={handleGenerateFixtures}
+              onReorganizeUnplayedFixtures={handleReorganizeUnplayedFixtures}
               onApplyBalancedTeamsToCategory={handleApplyBalancedTeamsToCategory}
               onCreateCategoryWithBalancedTeams={handleCreateCategoryWithBalancedTeams}
               onNavigateToCompetitionView={handleNavigateToCompetitionView}
@@ -3154,7 +4240,7 @@ export default function App() {
                 🔐 MANAGER DASHBOARD SIGN-IN REQUIRED
               </h3>
               <p style={{ fontSize: '13px', color: '#8FA89B', maxWidth: '520px', margin: '0 auto 16px' }}>
-                Please sign in with your Ruiru Titans manager password (default: <code>admin123</code>) to access the <strong>📝 Player Registration Form</strong> (with 4-digit code generation), reset player passwords by username, and manage teams and tournament fixtures.
+                Please sign in with your Ruiru Titans manager credentials to access the <strong>📝 Player Registration Form</strong> (with 4-digit code generation), reset player passwords by username, and manage teams and tournament fixtures.
               </p>
               <button
                 type="button"
@@ -3170,7 +4256,7 @@ export default function App() {
                   cursor: 'pointer',
                 }}
               >
-                🔐 Open Manager Sign-In (Password: admin123)
+                🔐 Open Manager Sign-In
               </button>
             </div>
           )
@@ -3316,6 +4402,34 @@ export default function App() {
           onClose={() => setEditingCategoryKey(null)}
           onSaveCategory={handleSaveCategorySettings}
           onDeleteCategory={handleDeleteCategory}
+        />
+      )}
+
+      {/* Match Report Modal (from Championship Home View) */}
+      {appReportFixture && (
+        <MatchReportModal
+          fixture={appReportFixture}
+          homeTeam={leagueTeamsById[appReportFixture.home] || (data.categories[leagueCategoryKey]?.teams || []).find((t) => t.id === appReportFixture.home)}
+          awayTeam={leagueTeamsById[appReportFixture.away] || (data.categories[leagueCategoryKey]?.teams || []).find((t) => t.id === appReportFixture.away)}
+          categoryKey={leagueCategoryKey}
+          isCmsMode={isCmsMode}
+          cmsUser={cmsUser}
+          onClose={() => setAppReportFixture(null)}
+          onReportSaved={(fId, rep) => {
+            handleSaveFixtureReport(fId, rep, leagueCategoryKey);
+            setAppReportFixture((prev) => (prev && prev.id === fId ? { ...prev, report: rep } : prev));
+          }}
+        />
+      )}
+
+      {/* AI Weekly Report Generator Modal (from Championship Home View) */}
+      {appShowAIReport && (
+        <AIWeeklyReportModal
+          categoryKey={leagueCategoryKey}
+          categoryLabel={data.categories[leagueCategoryKey]?.label || 'Ruiru Titans League'}
+          fixtures={data.categories[leagueCategoryKey]?.fixtures || []}
+          teamsById={leagueTeamsById}
+          onClose={() => setAppShowAIReport(false)}
         />
       )}
     </div>

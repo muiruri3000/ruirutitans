@@ -1,5 +1,80 @@
+import re
 from django.db import models
 from django.utils.text import slugify
+
+
+_MONTH_MAP = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+}
+
+
+def parse_fixture_date_key(date_str):
+    """
+    Parses a fixture date string into a chronological comparison tuple:
+    (has_no_valid_date, year, month, day, hour, minute)
+    so dated fixtures always sort chronologically from earliest to latest,
+    and 'TBD' / 'Upcoming Weekend' fixtures sort at the end.
+    """
+    if not date_str:
+        return (1, 9999, 99, 99, 99, 99)
+    s = str(date_str).strip()
+    if not s or s.upper().startswith("TBD") or "upcoming" in s.lower():
+        return (1, 9999, 99, 99, 99, 99)
+
+    # Extract time HH:MM if present
+    time_match = re.search(r"(\d{1,2}):(\d{2})", s)
+    hour = int(time_match.group(1)) if time_match else 0
+    minute = int(time_match.group(2)) if time_match else 0
+
+    # 1. ISO date: YYYY-MM-DD
+    iso_match = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", s)
+    if iso_match:
+        return (0, int(iso_match.group(1)), int(iso_match.group(2)), int(iso_match.group(3)), hour, minute)
+
+    # 2. Day + Month name (e.g. 'Wed, 21 Oct · 17:10' or '21 Oct 2026')
+    dm_match = re.search(r"\b(\d{1,2})\s+([A-Za-z]{3})[a-z]*\b(?:\s+(\d{4}))?", s)
+    if dm_match:
+        day = int(dm_match.group(1))
+        mon = _MONTH_MAP.get(dm_match.group(2).lower(), 0)
+        yr = int(dm_match.group(3)) if dm_match.group(3) else 2026
+        if mon:
+            return (0, yr, mon, day, hour, minute)
+
+    # 3. Month name + Day (e.g. 'Aug 12' or 'Oct 21, 2026')
+    md_match = re.search(r"\b([A-Za-z]{3})[a-z]*\s+(\d{1,2})\b(?:,?\s*(\d{4}))?", s)
+    if md_match:
+        mon = _MONTH_MAP.get(md_match.group(1).lower(), 0)
+        day = int(md_match.group(2))
+        yr = int(md_match.group(3)) if md_match.group(3) else 2026
+        if mon:
+            return (0, yr, mon, day, hour, minute)
+
+    return (1, 9999, 99, 99, hour, minute)
+
+
+def fixture_sort_key(f):
+    """
+    Sort key for Fixture instances or fixture dicts ensuring chronological date ordering first,
+    followed by sequential tie-breakers:
+    1. Chronological date & kickoff time (parsed from `date`)
+    2. round_index if defined (or round if dict)
+    3. numeric sequence extracted from fixture_id (e.g. 'F3' -> 3, 'KO-R2-T1' -> (2, 1))
+    4. database id (or 0)
+    """
+    raw_date = getattr(f, "date", None) if not isinstance(f, dict) else f.get("date")
+    date_key = parse_fixture_date_key(raw_date)
+
+    fid = getattr(f, "fixture_id", None) or (f.get("id") if isinstance(f, dict) else "") or ""
+    nums = [int(n) for n in re.findall(r'\d+', str(fid))]
+    primary_num = nums[0] if nums else 999999
+
+    r_idx = getattr(f, "round_index", None) if not isinstance(f, dict) else f.get("round_index", f.get("round"))
+    if r_idx is None:
+        r_idx = primary_num
+
+    db_id = getattr(f, "id", 0) if not isinstance(f, dict) else f.get("db_id", 0)
+    return (date_key, r_idx, nums or [999999], db_id)
 
 
 class GlobalSettings(models.Model):
@@ -115,7 +190,9 @@ class Category(models.Model):
         }
 
         if self.mode == "league":
-            fixtures_data = [f.to_dict() for f in self.fixtures.filter(phase="league").order_by("id")]
+            league_fixtures = list(self.fixtures.filter(phase="league"))
+            league_fixtures.sort(key=fixture_sort_key)
+            fixtures_data = [f.to_dict() for f in league_fixtures]
             return {
                 "label": self.label,
                 "mode": "league",
@@ -134,17 +211,16 @@ class Category(models.Model):
                 "deletedAt": self.deleted_at.isoformat() if self.deleted_at else None,
             }
         else:
-            # Cup mode: organize group fixtures and knockout rounds
+            # Cup mode: organize group fixtures and knockout rounds ordered by date
             group_fixtures = {}
             for letter in self.group_letters or []:
-                group_fixtures[letter] = [
-                    f.to_dict()
-                    for f in self.fixtures.filter(phase="group", group_letter=letter).order_by("id")
-                ]
-            all_cup_fixtures = [
-                f.to_dict()
-                for f in self.fixtures.filter(home_team__isnull=False, away_team__isnull=False).order_by("id")
-            ]
+                g_list = list(self.fixtures.filter(phase="group", group_letter=letter))
+                g_list.sort(key=fixture_sort_key)
+                group_fixtures[letter] = [f.to_dict() for f in g_list]
+
+            cup_list = list(self.fixtures.filter(home_team__isnull=False, away_team__isnull=False))
+            cup_list.sort(key=fixture_sort_key)
+            all_cup_fixtures = [f.to_dict() for f in cup_list]
 
             return {
                 "label": self.label,
@@ -192,12 +268,23 @@ class Team(models.Model):
         }
 
 
+def get_default_player_password_hash():
+    """
+    Returns an unusable Django password hash (prefixed with '!') so newly created
+    player accounts never share a predictable default password.
+    New accounts must be activated via an administrator-issued 4-digit activation code
+    or an explicit password setup.
+    """
+    from django.contrib.auth.hashers import make_password
+    return make_password(None)
+
+
 class Player(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players")
     player_id = models.CharField(max_length=64)
     name = models.CharField(max_length=128)
     username = models.CharField(max_length=64, blank=True, default="")
-    password = models.CharField(max_length=128, blank=True, default="titans2026")
+    password = models.CharField(max_length=128, blank=True, default="")
     position = models.CharField(
         max_length=16,
         blank=True,
@@ -219,6 +306,8 @@ class Player(models.Model):
     jersey_number = models.PositiveSmallIntegerField(null=True, blank=True)
     must_change_password = models.BooleanField(default=False)
     temp_code = models.CharField(max_length=16, blank=True, default="")
+    temp_code_created_at = models.DateTimeField(null=True, blank=True)
+    temp_code_attempts = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -229,7 +318,73 @@ class Player(models.Model):
         pos = f" [{self.position}]" if self.position else ""
         return f"{self.name}{pos} ({self.player_id}) - {self.team.name}"
 
+    def set_password(self, raw_password):
+        from django.contrib.auth.hashers import make_password
+        if raw_password:
+            self.password = make_password(raw_password)
+        else:
+            self.password = make_password(None)
+
+    def check_password(self, raw_password):
+        from django.contrib.auth.hashers import check_password, is_password_usable
+        if not self.password or not raw_password:
+            return False
+        if not is_password_usable(self.password):
+            return False
+        # Never allow the legacy predictable default password to authenticate
+        if str(raw_password).strip() == "titans2026":
+            return False
+        # Detect standard Django password hashes
+        if self.password.startswith("pbkdf2_") or self.password.startswith("argon2") or self.password.startswith("bcrypt"):
+            return check_password(raw_password, self.password)
+        # Support legacy plaintext passwords and automatically upgrade them to hash on verification
+        if self.password == raw_password:
+            self.set_password(raw_password)
+            self.save(update_fields=["password"])
+            return True
+        return False
+
+    def is_temp_code_valid(self, code, max_age_hours=24):
+        import secrets
+        from datetime import timedelta
+        from django.utils import timezone
+        if not self.temp_code or not code:
+            return False
+        if getattr(self, "temp_code_attempts", 0) >= 5:
+            # Locked out after 5 failed attempts
+            return False
+        if self.temp_code_created_at:
+            if timezone.now() > self.temp_code_created_at + timedelta(hours=max_age_hours):
+                return False
+        match = secrets.compare_digest(str(self.temp_code).strip(), str(code).strip())
+        if not match:
+            self.temp_code_attempts = getattr(self, "temp_code_attempts", 0) + 1
+            if self.temp_code_attempts >= 5:
+                # Lockout: invalidate code upon reaching attempt limit
+                self.temp_code = ""
+                self.temp_code_created_at = None
+            if self.pk:
+                Player.objects.filter(pk=self.pk).update(
+                    temp_code_attempts=self.temp_code_attempts,
+                    temp_code=self.temp_code,
+                    temp_code_created_at=self.temp_code_created_at,
+                )
+            return False
+        # Reset failed attempts counter on successful verification
+        if getattr(self, "temp_code_attempts", 0) != 0:
+            self.temp_code_attempts = 0
+            if self.pk:
+                Player.objects.filter(pk=self.pk).update(temp_code_attempts=0)
+        return True
+
+    def clear_temp_code(self):
+        self.temp_code = ""
+        self.temp_code_created_at = None
+        self.temp_code_attempts = 0
+        self.must_change_password = False
+
     def save(self, *args, **kwargs):
+        from django.contrib.auth.hashers import make_password
         # Preserve permanent player_id once assigned, or assign a permanent unique ID on creation
         if self.pk:
             orig = Player.objects.filter(pk=self.pk).values_list("player_id", flat=True).first()
@@ -252,8 +407,17 @@ class Player(models.Model):
             if not self.username:
                 base_slug = slugify(self.name).replace("-", "_") or self.player_id.lower().replace("-", "_")
                 self.username = base_slug
-            if not self.password:
-                self.password = "titans2026"
+            if not self.password or self.password == "titans2026":
+                self.password = make_password(None)
+                if not self.pk:
+                    self.must_change_password = True
+            elif not (
+                self.password.startswith("!")
+                or self.password.startswith("pbkdf2_")
+                or self.password.startswith("argon2")
+                or self.password.startswith("bcrypt")
+            ):
+                self.password = make_password(self.password)
         super().save(*args, **kwargs)
 
     def to_dict(self):
@@ -315,6 +479,7 @@ class Fixture(models.Model):
     home_pens = models.PositiveSmallIntegerField(null=True, blank=True)
     away_pens = models.PositiveSmallIntegerField(null=True, blank=True)
     referee = models.CharField(max_length=128, blank=True, default="")
+    report = models.JSONField(default=dict, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -355,17 +520,18 @@ class Fixture(models.Model):
 
     def to_dict(self):
         events_data = [e.to_dict() for e in self.events.all().order_by("order", "id")]
+        is_completed = bool(self.played or self.walkover_winner_id or len(events_data) > 0)
         res = {
             "id": self.fixture_id,
             "date": self.date,
             "venue": self.category.schedule.get("venue", "Thoome Pri."),
             "home": self.home_team.team_id if self.home_team else None,
             "away": self.away_team.team_id if self.away_team else None,
-            "played": self.played,
+            "played": is_completed,
             "events": events_data,
         }
-        if self.referee:
-            res["referee"] = self.referee
+        res["referee"] = self.referee or ""
+        res["report"] = self.report or {}
         if self.walkover_winner:
             res["walkover"] = self.walkover_winner.team_id
         if self.home_pens is not None or self.away_pens is not None:

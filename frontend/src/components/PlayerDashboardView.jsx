@@ -81,7 +81,8 @@ export default function PlayerDashboardView({
   );
 
   allFixtures.forEach((f) => {
-    if (!f.played) return;
+    const isCompleted = Boolean(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0));
+    if (!isCompleted) return;
     (f.events || []).forEach((ev) => {
       const matchP = ev.playerId === targetId || (ev.name && ev.name.toLowerCase() === targetName);
       const matchA = ev.assistPlayerId === targetId || (ev.assistName && ev.assistName.toLowerCase() === targetName);
@@ -97,9 +98,10 @@ export default function PlayerDashboardView({
   });
 
   // Check next upcoming fixture for this team
-  const nextFixture = allFixtures.find(
-    (f) => !f.played && (f.home === team.id || f.away === team.id)
-  );
+  const nextFixture = allFixtures.find((f) => {
+    const isCompleted = Boolean(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0));
+    return !isCompleted && (f.home === team.id || f.away === team.id);
+  });
 
   const isSuspended = redsCount > 0 || yellowsCount >= 4;
 
