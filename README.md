@@ -114,6 +114,12 @@ ruirutitans/
 ├── ruiru-titans-1.html      # Original standalone HTML file (preserved)
 ├── requirements.txt         # Pinned Python dependencies
 ├── .env.example             # Safe environment variable template
+├── k8s/                     # Kubernetes manifests & deployment guide
 └── manage.py
 ```
 
+---
+
+## 🚢 Production Deployment (Kubernetes / K3s)
+
+For complete instructions on deploying Ruiru Titans to K3s with Traefik Ingress, TLS termination, and secret provisioning, see the [Kubernetes Deployment Guide](file:///home/marie/Desktop/ruirutitans/k8s/README.md).

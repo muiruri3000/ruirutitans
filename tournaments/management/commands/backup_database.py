@@ -57,6 +57,10 @@ class Command(BaseCommand):
             backup_dir = settings.BASE_DIR / "backups"
 
         backup_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            backup_dir.chmod(0o700)
+        except OSError:
+            pass
         now_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
         db_conf = settings.DATABASES["default"]
@@ -102,6 +106,13 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f"  ✓ Exported tournament state snapshot: {state_file.name} ({len(raw_json) / 1024:.1f} KB raw)"))
             except Exception as e:
                 self.stdout.write(self.style.WARNING(f"  ⚠ Failed to export tournament state snapshot: {e}"))
+
+        # Enforce secure file permissions (owner read/write only: 0o600)
+        for f in created_files:
+            try:
+                f.chmod(0o600)
+            except OSError:
+                pass
 
         # 3. Prune old backups according to retention policy
         self.prune_old_backups(backup_dir, max_backups=options["max_backups"], keep_days=options["keep_days"])
@@ -258,8 +269,36 @@ class Command(BaseCommand):
                 if not result or result[0] != "ok":
                     raise CommandError("SQLite backup failed integrity check!")
 
+                # Safely preserve existing database and WAL/SHM state before overwriting
+                if db_file.exists():
+                    failed_ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+                    failed_archive = db_file.with_name(f"{db_file.name}.failed_{failed_ts}")
+                    shutil.copy2(db_file, failed_archive)
+                    self.stdout.write(self.style.WARNING(f"  Preserved existing database state to: {failed_archive.name}"))
+
+                    wal_file = db_file.with_name(db_file.name + "-wal")
+                    shm_file = db_file.with_name(db_file.name + "-shm")
+                    if wal_file.exists():
+                        shutil.copy2(wal_file, db_file.with_name(f"{wal_file.name}.failed_{failed_ts}"))
+                        wal_file.unlink()
+                        self.stdout.write(self.style.WARNING(f"  Preserved and removed stale WAL file: {wal_file.name}"))
+                    if shm_file.exists():
+                        shutil.copy2(shm_file, db_file.with_name(f"{shm_file.name}.failed_{failed_ts}"))
+                        shm_file.unlink()
+                        self.stdout.write(self.style.WARNING(f"  Preserved and removed stale SHM file: {shm_file.name}"))
+
                 # Atomic swap into target database
                 shutil.copy2(restore_source, db_file)
+
+                # Final post-restore integrity check
+                post_conn = sqlite3.connect(str(db_file))
+                post_cur = post_conn.cursor()
+                post_cur.execute("PRAGMA integrity_check;")
+                post_res = post_cur.fetchone()
+                post_conn.close()
+                if not post_res or post_res[0] != "ok":
+                    raise CommandError("Restored SQLite database failed post-restoration integrity check!")
+
                 self.stdout.write(self.style.SUCCESS(f"Successfully restored SQLite database: {db_file}"))
             finally:
                 if temp_extracted.exists():
@@ -268,18 +307,79 @@ class Command(BaseCommand):
             raise CommandError("Automated restore currently implemented for SQLite. For MySQL/Postgres, use mysql/psql CLI with the dump file.")
 
     def prune_old_backups(self, backup_dir: Path, max_backups: int, keep_days: int):
-        files = sorted(
-            [f for f in backup_dir.glob("*.*") if f.is_file() and (f.name.endswith(".gz") or f.name.endswith(".sql") or f.name.endswith(".sqlite3"))],
-            key=lambda x: x.stat().st_mtime,
-            reverse=True,
-        )
-        if len(files) <= max_backups:
+        """
+        Prunes backup archives according to both keep_days (age-based retention)
+        and max_backups (maximum number of backup sets).
+        Treats a database snapshot (db_backup_<engine>_<timestamp>.*) and its
+        corresponding tournament state snapshot (state_snapshot_<timestamp>.json.gz)
+        as a single logical backup set.
+        Never deletes the newest valid backup set even if keep_days=0 or max_backups=1.
+        """
+        import re
+        from datetime import timedelta
+
+        valid_suffixes = (".gz", ".sql", ".sqlite3")
+        all_files = [
+            f for f in backup_dir.glob("*.*")
+            if f.is_file() and f.name.endswith(valid_suffixes)
+        ]
+        if not all_files:
             return
 
-        to_remove = files[max_backups:]
-        for f in to_remove:
+        ts_pattern = re.compile(r"(\d{8}_\d{6})")
+        sets_map = {}
+
+        for f in all_files:
             try:
-                f.unlink()
-                self.stdout.write(self.style.NOTICE(f"  - Pruned old backup: {f.name}"))
+                mtime = f.stat().st_mtime
             except OSError:
-                pass
+                continue
+            match = ts_pattern.search(f.name)
+            if match:
+                set_key = f"ts:{match.group(1)}"
+            else:
+                set_key = f"file:{f.name}"
+
+            entry = sets_map.setdefault(set_key, {"files": [], "mtime": mtime, "has_db": False})
+            entry["files"].append(f)
+            if mtime > entry["mtime"]:
+                entry["mtime"] = mtime
+            if f.name.startswith("db_backup_"):
+                entry["has_db"] = True
+
+        if not sets_map:
+            return
+
+        # Sort backup sets newest first by timestamp key / mtime
+        sorted_sets = sorted(
+            sets_map.values(),
+            key=lambda s: s["mtime"],
+            reverse=True,
+        )
+
+        # Always protect at least the newest valid backup set (preferring one with a DB dump)
+        protected_set = next((s for s in sorted_sets if s["has_db"]), sorted_sets[0])
+
+        eff_max = max(1, int(max_backups)) if max_backups is not None else 15
+        cutoff_epoch = None
+        if keep_days is not None and int(keep_days) >= 0:
+            cutoff_epoch = (datetime.now(timezone.utc) - timedelta(days=int(keep_days))).timestamp()
+
+        kept_count = 0
+        for bset in sorted_sets:
+            if bset is protected_set:
+                kept_count += 1
+                continue
+
+            is_over_max = kept_count >= eff_max
+            is_expired = (cutoff_epoch is not None) and (bset["mtime"] < cutoff_epoch)
+
+            if is_over_max or is_expired:
+                for f in bset["files"]:
+                    try:
+                        f.unlink()
+                        self.stdout.write(self.style.NOTICE(f"  - Pruned old backup: {f.name}"))
+                    except OSError:
+                        pass
+            else:
+                kept_count += 1

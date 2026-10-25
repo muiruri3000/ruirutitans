@@ -1,0 +1,643 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ category_name }} - {{ week_label }} Official AI Matchweek &amp; Daily Analytics Report | Ruiru Titans FC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    @page {
+      size: A4 portrait;
+      margin: 12mm 14mm;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F1F4F2;
+      color: #1A202C;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.45;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .sheet-wrapper {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      padding: 32px 36px;
+      border: 1px solid #D6DFD9;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+    }
+    .top-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    .btn {
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    .btn-print {
+      background: #0B3A2E;
+      color: #F4F2EA;
+      box-shadow: 0 4px 10px rgba(11, 58, 46, 0.25);
+    }
+    .btn-print:hover { background: #125543; }
+    .btn-back {
+      background: #E2E8F0;
+      color: #2D3748;
+    }
+    .btn-back:hover { background: #CBD5E0; }
+
+    /* Header Banner */
+    .header-box {
+      border-bottom: 3px solid #0B3A2E;
+      padding-bottom: 20px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .club-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 38px;
+      color: #0B3A2E;
+      letter-spacing: 0.04em;
+      margin: 0;
+      line-height: 1;
+    }
+    .sheet-subhead {
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #C9A227;
+      margin-top: 6px;
+    }
+    .comp-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #0F172A;
+      margin: 4px 0 2px;
+      letter-spacing: -0.01em;
+    }
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #0B3A2E, #14532D);
+      color: #F4F2EA;
+      box-shadow: 0 2px 6px rgba(11, 58, 46, 0.3);
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 26px;
+    }
+    .metric-card {
+      background: #F8FAF9;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      text-align: center;
+      border-top: 3px solid #0B3A2E;
+    }
+    .metric-card.gold-top {
+      border-top-color: #C9A227;
+    }
+    .metric-card .val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: #0B3A2E;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+    .metric-card .lbl {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #64748B;
+      letter-spacing: 0.05em;
+    }
+
+    /* Section Headers */
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14.5px;
+      font-weight: 900;
+      color: #0F172A;
+      margin: 24px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #E2E8F0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .section-title .badge {
+      font-size: 10px;
+      background: #0B3A2E;
+      color: #F4F2EA;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* Weekly Editorial Box */
+    .weekly-box {
+      background: #FAFCFA;
+      border: 1px solid #D6DFD9;
+      border-left: 5px solid #0B3A2E;
+      border-radius: 8px;
+      padding: 18px 22px;
+      margin-bottom: 24px;
+    }
+    .weekly-headline {
+      font-size: 18px;
+      font-weight: 900;
+      color: #0B3A2E;
+      margin: 0 0 10px;
+      line-height: 1.3;
+    }
+    .weekly-text {
+      font-size: 13.5px;
+      color: #334155;
+      line-height: 1.6;
+      white-space: pre-line;
+      margin: 0;
+    }
+
+    /* Daily Reports Cards */
+    .daily-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+      page-break-inside: avoid;
+    }
+    .daily-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed #CBD5E0;
+    }
+    .daily-date {
+      font-size: 12px;
+      font-weight: 800;
+      color: #FFFFFF;
+      background: #0B3A2E;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .daily-headline {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0F172A;
+      margin: 0;
+    }
+    .daily-narrative {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.55;
+      margin-bottom: 12px;
+    }
+
+    /* Match Detail Cards in Daily Section */
+    .match-strip {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 10px;
+    }
+    .match-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #64748B;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .match-versus-grid {
+      display: grid;
+      grid-template-columns: 1fr 100px 1fr;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .team-home-lbl { text-align: right; font-weight: 800; font-size: 13.5px; color: #0F172A; }
+    .team-away-lbl { text-align: left; font-weight: 800; font-size: 13.5px; color: #0F172A; }
+    .score-box {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      background: #0B3A2E;
+      color: #F4F2EA;
+      padding: 2px 12px;
+      border-radius: 6px;
+      display: inline-block;
+      line-height: 1.1;
+    }
+    .score-box.scheduled {
+      background: #E2E8F0;
+      color: #475569;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+    }
+    .color-pip {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    /* Admin Report Callout */
+    .admin-report-callout {
+      background: #FFFBEB;
+      border-left: 3px solid #C9A227;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #78350F;
+      margin-top: 8px;
+    }
+    .admin-report-callout strong {
+      color: #92400E;
+    }
+
+    /* AI Takeaways List */
+    .takeaway-item {
+      font-size: 12px;
+      color: #334155;
+      padding: 3px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    .takeaway-item::before {
+      content: "⚡";
+      font-size: 11px;
+    }
+
+    /* Two-column insights grid */
+    .insights-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .insight-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .insight-card h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0B3A2E;
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #F1F5F9;
+      padding-bottom: 6px;
+    }
+    .insight-card p, .insight-card li {
+      font-size: 12.5px;
+      color: #475569;
+      line-height: 1.5;
+      margin: 4px 0;
+    }
+    .insight-card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    /* MVP Showcase Banner */
+    .mvp-banner {
+      background: linear-gradient(135deg, #0B3A2E 0%, #164E63 100%);
+      color: #FFFFFF;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+    .mvp-left h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      color: #C9A227;
+      margin: 0;
+      letter-spacing: 0.05em;
+    }
+    .mvp-left .mvp-name {
+      font-size: 18px;
+      font-weight: 900;
+      color: #FFFFFF;
+      margin: 2px 0 4px;
+    }
+    .mvp-left .mvp-desc {
+      font-size: 12px;
+      color: #E2E8F0;
+      margin: 0;
+      line-height: 1.4;
+    }
+    .mvp-tag {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: #C9A227;
+      color: #0B3A2E;
+      padding: 6px 12px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    /* Footer */
+    .sheet-footer {
+      border-top: 1px solid #E2E8F0;
+      padding-top: 14px;
+      margin-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #718096;
+    }
+
+    @media print {
+      body { background: #FFFFFF; padding: 0; }
+      .sheet-wrapper { border: none; box-shadow: none; padding: 0; width: 100%; max-width: 100%; }
+      .top-actions { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sheet-wrapper">
+  <!-- Top Action Bar (Hidden during print) -->
+  <div class="top-actions">
+    <div>
+      <a href="/" class="btn btn-back">&larr; Back to Platform</a>
+      <a href="/api/categories/{{ category_key }}/export/fixtures-results-pdf/?auto=1" target="_blank" class="btn btn-back" style="margin-left: 8px;">
+        📄 Full Fixtures Dossier
+      </a>
+    </div>
+    <div>
+      <button type="button" onclick="window.print()" class="btn btn-print">
+        🖨️ Print / Save Official PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Header Banner -->
+  <div class="header-box">
+    <div>
+      <h1 class="club-title">RUIRU TITANS FOOTBALL CLUB</h1>
+      <div class="sheet-subhead">
+        ★ OFFICIAL AI-POWERED MATCHWEEK &amp; DAILY ANALYTICS DOSSIER ★
+      </div>
+      <div class="comp-title">{{ category_name }}</div>
+      <div style="font-size: 12px; color: #4A5568; margin-top: 4px;">
+        Official Venue: <b>{{ venue }}</b> &bull; Edition: <b>{{ week_label }}</b>
+      </div>
+    </div>
+    <div style="text-align: right;">
+      <span class="ai-badge">🤖 AI Analytics Engine</span>
+      <div style="font-size: 11px; color: #718096; margin-top: 8px;">
+        Generated: <b>{{ generated_at }}</b>
+      </div>
+      <div style="font-size: 11px; font-weight: 800; color: #0B3A2E; margin-top: 2px;">
+        Doc Ref: RTFC-AIMW-W{{ week_number }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Metrics Grid -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="val">{{ total_fixtures }}</div>
+      <div class="lbl">Week Fixtures</div>
+    </div>
+    <div class="metric-card">
+      <div class="val">{{ completed_fixtures }}</div>
+      <div class="lbl">Matches Concluded</div>
+    </div>
+    <div class="metric-card">
+      <div class="val">{{ total_goals }}</div>
+      <div class="lbl">Goals Scored</div>
+    </div>
+    <div class="metric-card gold-top">
+      <div class="val">{{ goals_per_game }}</div>
+      <div class="lbl">Goals / Game</div>
+    </div>
+    <div class="metric-card">
+      <div class="val" style="font-size: 20px; line-height: 1.4; color: #C9A227;">{{ ai.mvp_of_the_week.name|default:"TBD" }}</div>
+      <div class="lbl">Matchweek MVP</div>
+    </div>
+  </div>
+
+  <!-- MVP Spotlight Banner -->
+  <div class="mvp-banner">
+    <div class="mvp-left">
+      <h3>★ MATCHWEEK MVP &amp; STAR PERFORMER</h3>
+      <div class="mvp-name">{{ ai.mvp_of_the_week.name }} ({{ ai.mvp_of_the_week.team }})</div>
+      <p class="mvp-desc">{{ ai.mvp_of_the_week.rationale }}</p>
+    </div>
+    <div class="mvp-tag">⭐ OFFICIAL SELECTION</div>
+  </div>
+
+  <!-- Weekly Executive Overview -->
+  <div class="section-title">
+    <span>⚡ Executive Matchweek Synthesis &amp; Narrative</span>
+    <span class="badge">AI EDITORIAL</span>
+  </div>
+  <div class="weekly-box">
+    <h2 class="weekly-headline">{{ ai.weekly_headline }}</h2>
+    <p class="weekly-text">{{ ai.weekly_summary }}</p>
+  </div>
+
+  <!-- Daily Matchday Breakdowns -->
+  <div class="section-title">
+    <span>📅 Daily Matchday Analytical Breakdown</span>
+    <span class="badge">DAY-BY-DAY DOSSIER</span>
+  </div>
+
+  {% for day in ai.daily_reports %}
+  <div class="daily-card">
+    <div class="daily-header">
+      <span class="daily-date">{{ day.date }}</span>
+      <h3 class="daily-headline">{{ day.headline }}</h3>
+    </div>
+    <p class="daily-narrative">{{ day.narrative }}</p>
+
+    <!-- Daily Matches Breakdown -->
+    {% for match in matches %}
+      {% if match.day_label == day.date %}
+      <div class="match-strip">
+        <div class="match-header-row">
+          <div>Ref: <b>{{ match.fixture_id }}</b> &bull; {{ match.date }} &bull; Venue: {{ match.venue }}</div>
+          <div>Referee: <b>{{ match.referee }}</b></div>
+        </div>
+        <div class="match-versus-grid">
+          <div class="team-home-lbl">
+            <span class="color-pip" style="background: {{ match.home_team.color }};"></span>
+            {{ match.home_team.name }}
+          </div>
+          <div>
+            {% if match.played %}
+              <div class="score-box">{{ match.home_score }} - {{ match.away_score }}</div>
+            {% else %}
+              <div class="score-box scheduled">SCHEDULED</div>
+            {% endif %}
+          </div>
+          <div class="team-away-lbl">
+            <span class="color-pip" style="background: {{ match.away_team.color }};"></span>
+            {{ match.away_team.name }}
+          </div>
+        </div>
+
+        <!-- Goals & Events -->
+        {% if match.goals or match.yellows or match.reds %}
+        <div style="font-size: 11.5px; color: #475569; margin-top: 6px; border-top: 1px dotted #CBD5E0; padding-top: 6px;">
+          {% if match.goals %}
+            <div style="margin-bottom: 2px;">
+              ⚽ <b>Goals:</b>
+              {% for g in match.goals %}
+                <span>{{ g.player }} ({{ g.team }}){% if g.minute %} - {{ g.minute }}'{% endif %}{% if g.assist %} [Ast: {{ g.assist }}]{% endif %}{% if not forloop.last %}; {% endif %}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if match.yellows or match.reds %}
+            <div>
+              🟨/🟥 <b>Cards:</b>
+              {% for y in match.yellows %}
+                <span>🟨 {{ y.player }} ({{ y.team }}){% if not forloop.last %}, {% endif %}</span>
+              {% endfor %}
+              {% for r in match.reds %}
+                <span style="color: #DC2626; font-weight: 700;">🟥 {{ r.player }} ({{ r.team }}){% if not forloop.last %}, {% endif %}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Admin Match Report (if entered) -->
+        {% if match.report.title or match.report.content %}
+        <div class="admin-report-callout">
+          <strong>📝 Match Report:</strong> <em>"{{ match.report.title|default:'Game Report' }}"</em> &mdash;
+          {{ match.report.content }}
+          {% if match.report.motm %}
+            <div style="margin-top: 4px; font-weight: 700;">🏅 Man of the Match: {{ match.report.motm }}</div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    {% endfor %}
+
+    <!-- Key Takeaways for this Day -->
+    {% if day.match_takeaways %}
+    <div style="margin-top: 12px;">
+      <div style="font-size: 11.5px; font-weight: 800; color: #0B3A2E; text-transform: uppercase; margin-bottom: 4px;">
+        Key Analytical Takeaways:
+      </div>
+      {% for item in day.match_takeaways %}
+        <div class="takeaway-item">{{ item }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <!-- Tactical Trends & Disciplinary Insights Grid -->
+  <div class="insights-grid">
+    <div class="insight-card">
+      <h4>🔍 Tactical Trends &amp; Strategic Key Points</h4>
+      <ul>
+        {% for trend in ai.tactical_trends %}
+          <li>{{ trend }}</li>
+        {% empty %}
+          <li>High pressing intensity and structured defensive low-blocks observed across all matches.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="insight-card">
+      <h4>⚖️ Disciplinary &amp; Fair Play Audit</h4>
+      <p>{{ ai.disciplinary_and_fair_play_audit }}</p>
+    </div>
+  </div>
+
+  <!-- Title Race & Table Trajectory -->
+  <div class="insight-card" style="margin-bottom: 22px;">
+    <h4>📊 Title Race &amp; Table Movement Impact</h4>
+    <p>{{ ai.title_race_and_table_movement }}</p>
+  </div>
+
+  <!-- Next Matchweek Preview -->
+  <div class="insight-card" style="background: #FAFCFA; border-left: 4px solid #C9A227;">
+    <h4>🔮 Next Matchweek Outlook &amp; What to Watch</h4>
+    <p>{{ ai.next_week_preview }}</p>
+  </div>
+
+  <!-- Sheet Footer -->
+  <div class="sheet-footer">
+    <div>
+      Ruiru Titans Football Club &copy; 2026 &bull; Authentic Competition Records &bull; Official Matchweek Dossier
+    </div>
+    <div style="text-align: right;">
+      Verified by Titans Technical Committee &bull; {{ category_name }}
+    </div>
+  </div>
+</div>
+
+{% if auto_print %}
+<script>
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      window.print();
+    }, 450);
+  });
+</script>
+{% endif %}
+
+</body>
+</html>

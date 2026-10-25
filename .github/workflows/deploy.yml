@@ -1,0 +1,443 @@
+name: Build, Publish & Deploy to K3s
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (validate & build without deploying to K3s)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Run Checks & Automated Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+        cache: pip
+        cache-dependency-path: requirements.txt
+
+    - name: Install backend dependencies
+      run: python -m pip install -r requirements.txt
+
+    - name: Generate ephemeral CI test secret key
+      run: |
+        CI_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(50))")
+        echo "::add-mask::$CI_SECRET_KEY"
+        echo "SECRET_KEY=$CI_SECRET_KEY" >> "$GITHUB_ENV"
+
+    - name: Validate Django configuration (check --deploy)
+      env:
+        DEBUG: "False"
+        ALLOWED_HOSTS: localhost,127.0.0.1,ruirutitans.com,.ruirutitans.com
+        DB_ENGINE: sqlite
+        SECURE_SSL_REDIRECT: "True"
+        SECURE_HSTS_SECONDS: "31536000"
+      run: python manage.py check --deploy
+
+    - name: Run Django test suite
+      env:
+        DEBUG: "True"
+        ALLOWED_HOSTS: localhost,127.0.0.1,ruirutitans.com,.ruirutitans.com
+        DB_ENGINE: sqlite
+      run: python manage.py test
+
+    - name: Set up Node.js 22
+      uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Build React frontend
+      working-directory: frontend
+      run: |
+        npm ci
+        npm run build
+
+    - name: Validate Kubernetes manifests with Kustomize
+      run: |
+        kubectl kustomize k8s/ > /dev/null 2>&1
+
+  build-and-push:
+    name: Build & Publish Container Images to GHCR
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Lowercase repository name for image tagging
+      id: repo_slug
+      run: echo "IMAGE_PREFIX=ghcr.io/${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_OUTPUT"
+
+    - name: Announce build and publish mode
+      run: |
+        if [ "${{ github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || !inputs.dry_run) }}" = "true" ]; then
+          echo "Mode: Production build & push to GitHub Container Registry (GHCR) on branch main."
+        else
+          echo "Mode: Build-only validation (dry-run or non-main review branch; publishing to GHCR and deployment disabled)."
+        fi
+
+    - name: Log in to GitHub Container Registry (GHCR)
+      if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || !inputs.dry_run)
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build & push Backend Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.backend
+        push: ${{ github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || !inputs.dry_run) }}
+        tags: |
+          ${{ steps.repo_slug.outputs.IMAGE_PREFIX }}/ruirutitans-backend:${{ github.sha }}
+          ${{ steps.repo_slug.outputs.IMAGE_PREFIX }}/ruirutitans-backend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build & push Frontend Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile.frontend
+        push: ${{ github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || !inputs.dry_run) }}
+        tags: |
+          ${{ steps.repo_slug.outputs.IMAGE_PREFIX }}/ruirutitans-frontend:${{ github.sha }}
+          ${{ steps.repo_slug.outputs.IMAGE_PREFIX }}/ruirutitans-frontend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to K3s Cluster
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || !inputs.dry_run)
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://ruirutitans.com
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Kubectl and Kustomize
+      uses: azure/setup-kubectl@v4
+      with:
+        version: 'latest'
+
+    - name: Lowercase repository name for image reference
+      id: repo_slug
+      run: echo "IMAGE_PREFIX=ghcr.io/${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_OUTPUT"
+
+    - name: Configure Kubeconfig
+      env:
+        KUBECONFIG_RAW: ${{ secrets.KUBECONFIG }}
+      run: |
+        set -euo pipefail
+        if [ -z "${KUBECONFIG_RAW:-}" ]; then
+          echo "::error::GitHub Actions Secret 'KUBECONFIG' is empty or not configured!"
+          exit 1
+        fi
+        mkdir -p ~/.kube
+        printf '%s\n' "$KUBECONFIG_RAW" > ~/.kube/config
+        chmod 600 ~/.kube/config
+
+    - name: Pre-Flight Check — Verify Required Kubernetes Secrets & Namespace
+      run: |
+        set -euo pipefail
+        echo "=========================================================="
+        echo "Running Pre-Flight Checks on Kubernetes Secrets & Cluster"
+        echo "=========================================================="
+
+        # 0. Verify cluster connectivity
+        if ! kubectl cluster-info > /dev/null 2>&1; then
+          echo "::error::Unable to connect to the K3s cluster using KUBECONFIG."
+          exit 1
+        fi
+
+        # 1. Verify namespace exists before secret inspection
+        if ! kubectl get namespace ruirutitans > /dev/null 2>&1; then
+          echo "::error::Required Kubernetes Namespace 'ruirutitans' does not exist!"
+          echo "Create it first with: kubectl apply -f k8s/namespace.yaml"
+          exit 1
+        fi
+
+        # 2. Verify ruirutitans-secrets exists
+        if ! kubectl get secret ruirutitans-secrets -n ruirutitans > /dev/null 2>&1; then
+          echo "::error::Required Kubernetes Secret 'ruirutitans-secrets' does not exist in namespace 'ruirutitans'!"
+          echo "Deployment halted for safety. To fix this, create the secret on the K3s cluster:"
+          echo "  SECRET_KEY=\$(python3 -c \"import secrets; print(secrets.token_urlsafe(50))\")"
+          echo "  kubectl create secret generic ruirutitans-secrets -n ruirutitans --from-literal=SECRET_KEY=\"\$SECRET_KEY\""
+          exit 1
+        fi
+
+        # 3. Verify SECRET_KEY key exists in ruirutitans-secrets and is non-empty WITHOUT printing its value
+        HAS_SECRET_KEY=$(kubectl get secret ruirutitans-secrets -n ruirutitans -o jsonpath='{.data.SECRET_KEY}')
+        if [ -z "$HAS_SECRET_KEY" ]; then
+          echo "::error::Secret 'ruirutitans-secrets' exists in namespace 'ruirutitans' but 'SECRET_KEY' is missing or empty!"
+          echo "Please update the secret with a cryptographically secure Django SECRET_KEY."
+          exit 1
+        fi
+        echo "✓ Required secret 'ruirutitans-secrets' is verified with 'SECRET_KEY' populated."
+
+        # 4. Verify TLS Secret ruirutitans-tls-cert exists and contains valid tls.crt and tls.key
+        if ! kubectl get secret ruirutitans-tls-cert -n ruirutitans > /dev/null 2>&1; then
+          echo "::error::Required TLS Secret 'ruirutitans-tls-cert' was not found in namespace 'ruirutitans'!"
+          echo "Traefik Ingress HTTPS termination requires this certificate secret."
+          echo "To provision from Cloudflare Origin CA or Let's Encrypt certificates:"
+          echo "  kubectl create secret tls ruirutitans-tls-cert -n ruirutitans --cert=/path/to/origin-cert.pem --key=/path/to/origin-key.pem"
+          exit 1
+        fi
+        TLS_CRT_B64=$(kubectl get secret ruirutitans-tls-cert -n ruirutitans -o jsonpath='{.data.tls\.crt}')
+        TLS_KEY_B64=$(kubectl get secret ruirutitans-tls-cert -n ruirutitans -o jsonpath='{.data.tls\.key}')
+        if [ -z "$TLS_CRT_B64" ] || [ -z "$TLS_KEY_B64" ]; then
+          echo "::error::Secret 'ruirutitans-tls-cert' in namespace 'ruirutitans' is missing required 'tls.crt' or 'tls.key' data keys!"
+          exit 1
+        fi
+
+        # Validate certificate expiry, coverage for ruirutitans.com and www.ruirutitans.com,
+        # and verify cryptographic correspondence between certificate and private key
+        # without exposing private key contents or secret values.
+        CERT_TMP=$(mktemp)
+        KEY_TMP=$(mktemp)
+        chmod 600 "$KEY_TMP"
+        trap 'rm -f "$CERT_TMP" "$KEY_TMP"' EXIT
+
+        printf '%s' "$TLS_CRT_B64" | base64 -d > "$CERT_TMP"
+        printf '%s' "$TLS_KEY_B64" | base64 -d > "$KEY_TMP"
+
+        if ! openssl x509 -in "$CERT_TMP" -noout > /dev/null 2>&1; then
+          echo "::error::Secret 'ruirutitans-tls-cert' contains an unparseable X.509 certificate in 'tls.crt'!"
+          exit 1
+        fi
+
+        if ! openssl x509 -in "$CERT_TMP" -checkend 86400 -noout > /dev/null 2>&1; then
+          echo "::error::TLS certificate in 'ruirutitans-tls-cert' has expired or will expire within 24 hours!"
+          exit 1
+        fi
+
+        CERT_TEXT=$(openssl x509 -in "$CERT_TMP" -noout -text)
+        if ! echo "$CERT_TEXT" | grep -E "DNS:ruirutitans\.com|CN[[:space:]]*=[[:space:]]*ruirutitans\.com" > /dev/null 2>&1; then
+          echo "::error::TLS certificate in 'ruirutitans-tls-cert' does not cover required domain 'ruirutitans.com'!"
+          exit 1
+        fi
+
+        if ! echo "$CERT_TEXT" | grep -E "DNS:www\.ruirutitans\.com|DNS:\*\.ruirutitans\.com" > /dev/null 2>&1; then
+          echo "::error::TLS certificate in 'ruirutitans-tls-cert' does not cover required domain 'www.ruirutitans.com' (or wildcard '*.ruirutitans.com')!"
+          exit 1
+        fi
+
+        # Verify certificate and private key correspondence by comparing public key SHA256 hashes
+        # (Works for both RSA and ECDSA keys without printing private key material)
+        CERT_PUB_HASH=$(openssl x509 -in "$CERT_TMP" -pubkey -noout 2>/dev/null | openssl sha256 | awk '{print $NF}')
+        KEY_PUB_HASH=$(openssl pkey -in "$KEY_TMP" -pubout 2>/dev/null | openssl sha256 | awk '{print $NF}')
+
+        rm -f "$CERT_TMP" "$KEY_TMP"
+        trap - EXIT
+
+        if [ -z "$CERT_PUB_HASH" ] || [ -z "$KEY_PUB_HASH" ] || [ "$CERT_PUB_HASH" != "$KEY_PUB_HASH" ]; then
+          echo "::error::Cryptographic mismatch! The private key 'tls.key' does not correspond to certificate 'tls.crt' in 'ruirutitans-tls-cert'!"
+          exit 1
+        fi
+        echo "✓ Required TLS Secret 'ruirutitans-tls-cert' is present, valid for >24h, covers both ruirutitans.com and www.ruirutitans.com, and private key corresponds to certificate."
+
+        # 5. Verify GHCR image pull secret 'ghcr-secret' exists and contains .dockerconfigjson
+        if ! kubectl get secret ghcr-secret -n ruirutitans > /dev/null 2>&1; then
+          echo "::error::Required imagePullSecret 'ghcr-secret' was not found in namespace 'ruirutitans'!"
+          echo "Private GHCR container images require 'ghcr-secret' in namespace 'ruirutitans'."
+          echo "To create 'ghcr-secret' on the K3s cluster:"
+          echo "  kubectl create secret docker-registry ghcr-secret -n ruirutitans --docker-server=ghcr.io --docker-username=<GITHUB_USER> --docker-password=<GHCR_PAT>"
+          exit 1
+        fi
+        HAS_DOCKERCFG=$(kubectl get secret ghcr-secret -n ruirutitans -o jsonpath='{.data.\.dockerconfigjson}')
+        if [ -z "$HAS_DOCKERCFG" ]; then
+          echo "::error::Secret 'ghcr-secret' exists in namespace 'ruirutitans' but '.dockerconfigjson' key is missing or empty!"
+          exit 1
+        fi
+        echo "✓ Required image pull secret 'ghcr-secret' is present and valid."
+        echo "=========================================================="
+
+    - name: Update Kubernetes image references with commit SHA
+      env:
+        IMAGE_PREFIX: ${{ steps.repo_slug.outputs.IMAGE_PREFIX }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        set -euo pipefail
+
+        sed -i "s|image: ruirutitans-backend:latest|image: ${IMAGE_PREFIX}/ruirutitans-backend:${IMAGE_TAG}|g" \
+          k8s/backend.yaml k8s/backup-cronjob.yaml
+
+        sed -i "s|image: ruirutitans-frontend:latest|image: ${IMAGE_PREFIX}/ruirutitans-frontend:${IMAGE_TAG}|g" \
+          k8s/frontend.yaml
+
+        echo "Updated Kubernetes image references:"
+        grep -n 'image:' k8s/backend.yaml k8s/frontend.yaml k8s/backup-cronjob.yaml
+
+    - name: Stage 1 — Apply base resources (Namespace, PVCs, ConfigMap)
+      run: |
+        set -euo pipefail
+        kubectl apply -f k8s/namespace.yaml
+        kubectl apply -f k8s/pvc.yaml
+        kubectl apply -f k8s/config.yaml
+
+    - name: Stage 2 — Deploy application workloads (Backend and Frontend)
+      run: |
+        set -euo pipefail
+        kubectl apply -f k8s/backend.yaml
+        kubectl apply -f k8s/frontend.yaml
+
+    - name: Stage 3 — Wait for backend deployment rollout
+      run: |
+        kubectl rollout status deployment/ruirutitans-backend -n ruirutitans --timeout=180s
+
+    - name: Stage 3 — Wait for frontend deployment rollout
+      run: |
+        kubectl rollout status deployment/ruirutitans-frontend -n ruirutitans --timeout=120s
+
+    - name: Stage 4 — Apply production Ingress
+      run: |
+        set -euo pipefail
+        echo "Workloads are healthy. Applying production Ingress routing..."
+        kubectl apply -f k8s/ingress.yaml
+
+    - name: Stage 5 — Apply backup CronJob
+      run: |
+        set -euo pipefail
+        echo "Verifying backup CronJob configuration before applying:"
+        grep -E 'image:|claimName:' k8s/backup-cronjob.yaml
+        kubectl apply -f k8s/backup-cronjob.yaml
+
+    - name: Stage 6 — Post-Deployment Verification (Bounded Smoke Tests)
+      run: |
+        set -euo pipefail
+        echo "=========================================================="
+        echo "Running Post-Deployment Bounded Smoke Tests"
+        echo "=========================================================="
+
+        MAX_ATTEMPTS=12
+        SLEEP_SECONDS=10
+
+        check_endpoint() {
+          local url="$1"
+          local expected_code="$2"
+          local check_content="${3:-}"
+          local attempt=1
+          local status_code=""
+
+          echo "Probing $url (expecting HTTP $expected_code)..."
+          while [ "$attempt" -le "$MAX_ATTEMPTS" ]; do
+            # Bounded probe with separated timeout and status writeout parameters
+            rm -f /tmp/smoke_response.txt
+            status_code=$(curl -sS -o /tmp/smoke_response.txt --max-time 10 -w "%{http_code}" "$url" 2>/dev/null || true)
+            if [ -z "$status_code" ] || [ "$status_code" = "000" ]; then
+              status_code="000"
+            fi
+
+            if [ "$status_code" = "$expected_code" ]; then
+              if [ -n "$check_content" ]; then
+                if [ -f /tmp/smoke_response.txt ] && grep -q "$check_content" /tmp/smoke_response.txt; then
+                  echo "✓ $url returned HTTP $status_code and matched '$check_content' on attempt $attempt"
+                  rm -f /tmp/smoke_response.txt
+                  return 0
+                else
+                  echo "  [Attempt $attempt/$MAX_ATTEMPTS] $url returned HTTP $status_code but response missing '$check_content' (waiting ${SLEEP_SECONDS}s)..."
+                fi
+              else
+                echo "✓ $url returned HTTP $status_code on attempt $attempt"
+                rm -f /tmp/smoke_response.txt
+                return 0
+              fi
+            else
+              echo "  [Attempt $attempt/$MAX_ATTEMPTS] $url returned HTTP $status_code (waiting ${SLEEP_SECONDS}s)..."
+            fi
+            attempt=$((attempt + 1))
+            sleep "$SLEEP_SECONDS"
+          done
+
+          echo "::error::Smoke test failed! $url did not return HTTP $expected_code within $((MAX_ATTEMPTS * SLEEP_SECONDS))s (last status: $status_code)"
+          rm -f /tmp/smoke_response.txt
+          return 1
+        }
+
+        # Bounded smoke tests for root and health on apex and www domains
+        check_endpoint "https://ruirutitans.com/api/health/?check=live" "200" "ok"
+        check_endpoint "https://ruirutitans.com/" "200"
+        check_endpoint "https://www.ruirutitans.com/api/health/?check=live" "200" "ok"
+        check_endpoint "https://www.ruirutitans.com/" "200"
+
+        echo "=========================================================="
+        echo "✓ All post-deployment smoke tests passed successfully!"
+        echo "NOTE: Temporary routes (nginx-test, ruirutitans-https in default namespace) have NOT been touched."
+        echo "=========================================================="
+
+    - name: Automatic Rollback & Failure Diagnostics
+      if: failure()
+      run: |
+        set +e
+        echo "=========================================================="
+        echo "::error::Deployment failed! Collecting diagnostics and checking for previous revisions."
+        echo "NOTE: A container rollback only reverts pod images and deployment specifications."
+        echo "      It does NOT revert database schema migrations or persistent volume (PVC) data."
+        echo "=========================================================="
+
+        echo "--- Pod Status in Namespace ruirutitans ---"
+        kubectl get pods -n ruirutitans -o wide || true
+
+        echo "--- Recent Cluster Events ---"
+        kubectl get events -n ruirutitans --sort-by='.lastTimestamp' | tail -n 25 || true
+
+        echo "--- Backend Logs (tail 60) ---"
+        kubectl logs -n ruirutitans -l app.kubernetes.io/name=ruirutitans-backend --tail=60 || true
+
+        echo "--- Frontend Logs (tail 60) ---"
+        kubectl logs -n ruirutitans -l app.kubernetes.io/name=ruirutitans-frontend --tail=60 || true
+
+        for deployment in ruirutitans-backend ruirutitans-frontend; do
+          if kubectl get deployment "$deployment" -n ruirutitans > /dev/null 2>&1; then
+            echo "Checking rollout history for $deployment in namespace ruirutitans..."
+            history=$(kubectl rollout history deployment/"$deployment" -n ruirutitans)
+            echo "$history"
+            revisions=$(printf '%s\n' "$history" | awk '/^[[:space:]]*[0-9]+[[:space:]]/ { count++ } END { print count+0 }')
+
+            if [ "$revisions" -ge 2 ]; then
+              echo "Attempting rollback for $deployment (found $revisions revisions)..."
+              kubectl rollout undo deployment/"$deployment" -n ruirutitans
+              kubectl rollout status deployment/"$deployment" -n ruirutitans --timeout=120s
+            else
+              echo "First deployment or no previous revision available for $deployment (revision count: $revisions); skipping rollback."
+            fi
+          else
+            echo "Deployment $deployment does not exist in namespace ruirutitans; skipping rollback."
+          fi
+        done
+
+        echo "=========================================================="
+        echo "Rollback check complete. PVCs and application databases were never modified or deleted."
+        echo "=========================================================="
+        exit 1

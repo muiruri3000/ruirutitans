@@ -1,0 +1,64 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ruirutitans-backup-nightly
+  namespace: ruirutitans
+  labels:
+    app.kubernetes.io/name: ruirutitans-backup
+spec:
+  schedule: "0 2 * * *"  # Every night at 02:00 UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: ruirutitans-backup
+        spec:
+          restartPolicy: OnFailure
+          imagePullSecrets:
+            - name: ghcr-secret
+          securityContext:
+            fsGroup: 1000
+          containers:
+            - name: backup
+              image: ruirutitans-backend:latest
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              command:
+                - /bin/sh
+                - -c
+                - "set -e && python manage.py backup_database --keep-days=30 --max-backups=15"
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 300m
+                  memory: 256Mi
+              envFrom:
+                - configMapRef:
+                    name: ruirutitans-config
+                - secretRef:
+                    name: ruirutitans-secrets
+              volumeMounts:
+                - name: data-volume
+                  mountPath: /app/data
+                - name: backups-volume
+                  mountPath: /app/backups
+          volumes:
+            - name: data-volume
+              persistentVolumeClaim:
+                claimName: ruirutitans-data-pvc
+            - name: backups-volume
+              persistentVolumeClaim:
+                claimName: ruirutitans-backups-pvc

@@ -36,6 +36,11 @@ class ManualPlayerPositionTests(TestCase):
             password="admin_password_123",
             email="admin@ruirutitans.com",
         )
+        from tournaments.services import create_signed_token
+        self.cms_token = create_signed_token(
+            {"role": "cms", "username": "admin_test", "email": "admin@ruirutitans.com"},
+            salt="titans-cms-auth",
+        )
         self.client = Client()
 
     def test_ensure_player_default_positions_does_not_auto_assign(self):
@@ -115,6 +120,7 @@ class ManualPlayerPositionTests(TestCase):
             url,
             data=json.dumps({"player_id": self.player_unassigned.player_id, "position": "CDM"}),
             content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=self.cms_token,
         )
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
@@ -129,6 +135,7 @@ class ManualPlayerPositionTests(TestCase):
             url,
             data=json.dumps({"player_id": self.player_unassigned.player_id, "position": ""}),
             content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=self.cms_token,
         )
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
@@ -262,6 +269,7 @@ class ManualPlayerPositionTests(TestCase):
                 "new_players": new_players,
             }),
             content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=self.cms_token,
         )
         self.assertEqual(resp.status_code, 200)
         data = resp.json()

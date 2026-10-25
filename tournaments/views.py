@@ -1,10 +1,11 @@
 import json
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponse, Http404
-from rest_framework import status, views, viewsets
+from rest_framework import status, views, viewsets, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
+from .permissions import IsCMSAdmin, IsPlayerUser, IsPlayerSelfOrCMSAdmin, ReadOnlyOrCMSAdmin
 from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, HighlightVideo
 from .serializers import (
     CategorySerializer,
@@ -27,12 +28,40 @@ def home_view(request):
     return render(request, "index.html")
 
 
+class HealthCheckAPIView(views.APIView):
+    """
+    Lightweight liveness and readiness probe endpoint for Kubernetes / K3s.
+    Does not serialize tournament state or auto-seed categories.
+    - Liveness (default or ?check=live): verifies the WSGI process and request pipeline are responsive.
+    - Readiness (?check=ready): additionally verifies database connectivity with a minimal SELECT 1.
+    """
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        check_type = (request.query_params.get("check") or "live").strip().lower()
+        if check_type == "ready":
+            from django.db import connections
+            try:
+                with connections["default"].cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    cursor.fetchone()
+            except Exception:
+                return Response(
+                    {"status": "unhealthy", "check": "ready", "database": "unavailable"},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                )
+            return Response({"status": "ok", "check": "ready", "database": "ok"}, status=status.HTTP_200_OK)
+        return Response({"status": "ok", "check": "live"}, status=status.HTTP_200_OK)
+
+
 class StateAPIView(views.APIView):
     """
     Full tournament state synchronization endpoint.
     GET: Retrieve the complete state dictionary.
-    POST: Save full state changes atomically into relational models.
+    POST: Save full state changes atomically into relational models (requires CMS Administrator).
     """
+    permission_classes = [ReadOnlyOrCMSAdmin]
 
     def get(self, request):
         state = export_state_from_db()
@@ -54,6 +83,7 @@ class ResetSeasonAPIView(views.APIView):
     """
     Resets the Open League and Ruiru Titans Cup tournaments back to the official season data.
     """
+    permission_classes = [IsCMSAdmin]
 
     def post(self, request):
         from .services import build_default_homepage_data, ensure_archived_open_season
@@ -95,6 +125,7 @@ class HomepageAPIView(views.APIView):
     GET: Returns the Club Homepage data (carousel pictures, U13/U15/U17/Wazae jersey photos, upcoming fixtures).
     POST: Updates the Club Homepage data (Admin CMS).
     """
+    permission_classes = [ReadOnlyOrCMSAdmin]
 
     def get(self, request):
         from .services import build_default_homepage_data
@@ -126,6 +157,7 @@ class CategoryListCreateAPIView(views.APIView):
     """
     List and create categories.
     """
+    permission_classes = [ReadOnlyOrCMSAdmin]
 
     def get(self, request):
         categories = Category.objects.all().order_by("key")
@@ -172,6 +204,7 @@ class CategoryDetailAPIView(views.APIView):
     """
     Retrieve, update, and delete categories.
     """
+    permission_classes = [ReadOnlyOrCMSAdmin]
 
     def get(self, request, key):
         cat = get_object_or_404(Category, key=key)
@@ -266,7 +299,7 @@ class StandingsAPIView(views.APIView):
         }
 
         for f in fixtures:
-            if not f.played:
+            if not f.played and not f.events.exists() and not f.walkover_winner_id:
                 continue
             hs, as_score = f.score
             h_id = f.home_team.team_id if f.home_team else None
@@ -299,6 +332,8 @@ class StandingsAPIView(views.APIView):
             r["GD"] = r["GF"] - r["GA"]
 
         rows.sort(key=lambda x: (x["Pts"], x["GD"], x["GF"]), reverse=True)
+        for idx, r in enumerate(rows, 1):
+            r["pos"] = idx
         return Response(rows)
 
 
@@ -430,6 +465,95 @@ def category_fixtures_results_pdf_view(request, key):
     return render(request, "fixtures_results_pdf.html", context)
 
 
+def ai_matchweek_report_pdf_view(request, key):
+    """
+    Renders an official, AI-analyzed Matchweek and Daily dossier report PDF.
+    Analyzes raw match JSON data (scores, events, stats, admin reports)
+    and produces weekly narrative, day-by-day breakdowns, and tactical insights.
+    Supports ?week=<num>, ?auto=1, and ?format=json.
+    """
+    category = Category.objects.filter(key=key).first()
+    if not category:
+        category = Category.objects.filter(key__iexact=key).first()
+    if not category:
+        raise Http404(f"Category '{key}' not found.")
+
+    from .ai_report import get_ai_matchweek_report_context
+    week_param = request.GET.get("week")
+    week_number = None
+    if week_param:
+        try:
+            week_number = int(week_param)
+        except (ValueError, TypeError):
+            week_number = None
+
+    context = get_ai_matchweek_report_context(category, week_number=week_number)
+    context["auto_print"] = request.GET.get("auto") in ("1", "true")
+
+    if request.GET.get("format") == "json":
+        payload = json.loads(context["raw_json"])
+        payload["ai_analysis"] = context.get("ai", {})
+        payload["ai"] = context.get("ai", {})
+        return JsonResponse(payload, safe=False)
+
+    return render(request, "ai_matchweek_report_pdf.html", context)
+
+
+class FixtureReportAPIView(views.APIView):
+    """
+    Allows administrators to write and update official game reports for completed matches.
+    Public users can view match reports.
+    """
+    def get_permissions(self):
+        if self.request.method in ("GET", "HEAD", "OPTIONS"):
+            return [permissions.AllowAny()]
+        return [IsCMSAdmin()]
+
+    def get(self, request, key, fixture_id):
+        category = Category.objects.filter(key=key).first() or Category.objects.filter(key__iexact=key).first()
+        if not category:
+            return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+        fixture = category.fixtures.filter(fixture_id=fixture_id).first()
+        if not fixture:
+            return Response({"error": "Fixture not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({
+            "fixture_id": fixture.fixture_id,
+            "report": fixture.report or {},
+            "played": fixture.played,
+        })
+
+    def post(self, request, key, fixture_id):
+        from django.utils import timezone
+        category = Category.objects.filter(key=key).first() or Category.objects.filter(key__iexact=key).first()
+        if not category:
+            return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+        fixture = category.fixtures.filter(fixture_id=fixture_id).first()
+        if not fixture:
+            return Response({"error": "Fixture not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data or {}
+        report_data = {
+            "title": str(data.get("title", "")).strip(),
+            "content": str(data.get("content", "")).strip(),
+            "motm": str(data.get("motm", "")).strip(),
+            "motm_team": str(data.get("motm_team", "")).strip(),
+            "tactical_notes": str(data.get("tactical_notes", "")).strip(),
+            "attendance": str(data.get("attendance", "")).strip(),
+            "weather": str(data.get("weather", "")).strip(),
+            "author": request.user.username if (request.user and request.user.is_authenticated) else "admin",
+            "updated_at": timezone.now().isoformat(),
+        }
+        fixture.report = report_data
+        fixture.save(update_fields=["report", "updated_at"])
+
+        return Response({
+            "success": True,
+            "fixture_id": fixture.fixture_id,
+            "report": fixture.report,
+            "message": f"Match report for {fixture.fixture_id} updated successfully.",
+        })
+
+
 
 class VotingCurrentAPIView(views.APIView):
     """
@@ -455,6 +579,7 @@ class VotingSubmitAPIView(views.APIView):
     Submits a voter's ballot for positions (GK, DEF, MID, WING, ST).
     Strictly restricted: Only logged-in Ruiru Titans players can vote.
     """
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request, key):
         category = get_object_or_404(Category, key=key)
@@ -465,6 +590,11 @@ class VotingSubmitAPIView(views.APIView):
             return Response(
                 {"error": "Only logged-in Ruiru Titans players can vote. Please sign in with your player profile."},
                 status=status.HTTP_401_UNAUTHORIZED,
+            )
+        if player_auth.get("must_change_password"):
+            return Response(
+                {"error": "You must change your temporary password before voting or accessing protected player features."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         payload = request.data or {}
@@ -513,6 +643,7 @@ class VotingAdminToggleAPIView(views.APIView):
     and configure number of players being voted for (team_size, max_picks_per_position)
     and Goalkeeper (GK) inclusion toggle (include_gk).
     """
+    permission_classes = [IsCMSAdmin]
 
     def post(self, request, key):
         category = get_object_or_404(Category, key=key)
@@ -556,6 +687,8 @@ class AuthSessionAPIView(views.APIView):
     Returns current authentication status for CMS Admin and Club Player.
     Enforces that player and manager are mutually exclusive (cannot be signed in together).
     """
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request):
         from .services import get_authenticated_cms_from_request, get_authenticated_player_from_request
@@ -581,16 +714,30 @@ class CMSLoginAPIView(views.APIView):
     Does not auto-login to Django's /admin/ session so /admin/ always requires a password.
     Automatically logs off any former player account in this browser.
     """
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         from django.contrib.auth import authenticate
         from django.contrib.auth.models import User
-        from .services import ensure_default_cms_admin, create_signed_token
+        from .services import (
+            create_signed_token,
+            get_client_ip,
+            check_auth_rate_limit,
+            record_auth_failure,
+            clear_auth_failures,
+        )
 
-        ensure_default_cms_admin()
         payload = request.data or {}
         username = str(payload.get("username", "")).strip()
         password = str(payload.get("password", "")).strip()
+        client_ip = get_client_ip(request)
+
+        if check_auth_rate_limit("cms_login", client_ip, username):
+            return Response(
+                {"error": "Too many login attempts. Please wait a few minutes and try again."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
 
         if not username or not password:
             return Response(
@@ -602,21 +749,26 @@ class CMSLoginAPIView(views.APIView):
         auth_username = matched_user.username if matched_user else username
 
         user = authenticate(request, username=auth_username, password=password)
-        if not user or not (user.is_staff or user.is_superuser):
+        if not user or not user.is_active or not (user.is_staff or user.is_superuser):
+            record_auth_failure("cms_login", client_ip, username)
             return Response(
                 {"error": "Invalid Admin credentials. Please check your admin username and password."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+        clear_auth_failures("cms_login", client_ip, username)
+
         # Log off former player session immediately
-        request.session.pop("titans_player", None)
+        if hasattr(request, "session"):
+            request.session.pop("titans_player", None)
 
         cms_profile = {
             "role": "cms",
             "username": user.username,
             "email": user.email,
         }
-        request.session["titans_cms"] = cms_profile
+        if hasattr(request, "session"):
+            request.session["titans_cms"] = cms_profile
         token = create_signed_token(cms_profile, salt="titans-cms-auth")
         return Response({
             "success": True,
@@ -633,16 +785,32 @@ class PlayerLoginAPIView(views.APIView):
     so their permanent player_id is used for TOTW/TOTT voting and player identification.
     Automatically logs off any former manager/admin account in this browser.
     """
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         from django.contrib.auth import logout
-        from .services import authenticate_player_credentials
+        from .services import (
+            authenticate_player_credentials,
+            get_client_ip,
+            check_auth_rate_limit,
+            record_auth_failure,
+            clear_auth_failures,
+        )
         payload = request.data or {}
         username = str(payload.get("username", "")).strip() or None
         password = str(payload.get("password", "")).strip() or None
         player_id = str(payload.get("player_id", "")).strip() or None
         access_code = str(payload.get("access_code", "")).strip() or None
         category_key = str(payload.get("category_key", "")).strip() or None
+
+        ident = username or player_id or ""
+        client_ip = get_client_ip(request)
+        if check_auth_rate_limit("player_login", client_ip, ident):
+            return Response(
+                {"error": "Too many login attempts. Please wait a few minutes and try again."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
 
         try:
             profile, token = authenticate_player_credentials(
@@ -652,11 +820,12 @@ class PlayerLoginAPIView(views.APIView):
                 username=username,
                 password=password,
             )
+            clear_auth_failures("player_login", client_ip, ident)
             # Log off former manager/admin session immediately
-            request.session.pop("titans_cms", None)
-            logout(request)
-
-            request.session["titans_player"] = profile
+            if hasattr(request, "session"):
+                request.session.pop("titans_cms", None)
+                logout(request)
+                request.session["titans_player"] = profile
             return Response({
                 "success": True,
                 "role": "player",
@@ -666,6 +835,7 @@ class PlayerLoginAPIView(views.APIView):
                 "logged_off_former": "cms",
             })
         except ValueError as e:
+            record_auth_failure("player_login", client_ip, ident)
             return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -674,6 +844,7 @@ class AdminPlayerRegisterAPIView(views.APIView):
     Admin registers a new player.
     Generates a 4-digit activation code and flags must_change_password=True.
     """
+    permission_classes = [IsCMSAdmin]
 
     def post(self, request):
         from .services import register_player_by_admin
@@ -710,6 +881,7 @@ class AdminPlayerResetPasswordAPIView(views.APIView):
     Admin resets a player's password using their username.
     Generates a new 4-digit code and requires them to change password upon next login.
     """
+    permission_classes = [IsCMSAdmin]
 
     def post(self, request):
         from .services import reset_player_password_by_admin
@@ -748,6 +920,7 @@ class AdminPlayerToggleStatusAPIView(views.APIView):
     Admin disables or re-enables a player's account.
     Disabled player accounts cannot authenticate or access dashboard.
     """
+    permission_classes = [IsCMSAdmin]
 
     def post(self, request):
         from .services import set_player_active_status_admin
@@ -788,6 +961,7 @@ class AdminPlayerReleaseNumberAPIView(views.APIView):
     Admin releases the jersey number from a player so it is unassigned and available
     for another player to use.
     """
+    permission_classes = [IsCMSAdmin]
 
     def post(self, request):
         from .services import release_player_jersey_admin
@@ -826,6 +1000,7 @@ class AdminPlayerUpdatePositionAPIView(views.APIView):
     POST /api/admin/players/update-position/
     Allows an administrator to manually set, change, or clear a player's tactical position.
     """
+    permission_classes = [IsCMSAdmin]
 
     def post(self, request):
         from .services import update_player_position_by_admin
@@ -867,9 +1042,17 @@ class PlayerChangePasswordAPIView(views.APIView):
     """
 
     def post(self, request):
-        from .services import change_player_password, get_authenticated_player_from_request
+        from .services import (
+            change_player_password,
+            get_authenticated_player_from_request,
+            get_client_ip,
+            check_auth_rate_limit,
+            record_auth_failure,
+            clear_auth_failures,
+        )
         payload = request.data or {}
         new_password = payload.get("new_password") or payload.get("newPassword")
+        confirm_password = payload.get("confirm_password") or payload.get("confirmPassword")
         current_code = payload.get("current_code") or payload.get("currentCode")
         username = (
             payload.get("username")
@@ -878,8 +1061,41 @@ class PlayerChangePasswordAPIView(views.APIView):
             or payload.get("id")
         )
 
+        if confirm_password is not None and str(confirm_password).strip() != str(new_password or "").strip():
+            return Response(
+                {"error": "New password and confirmation do not match."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         authed_player = get_authenticated_player_from_request(request)
-        target = username or authed_player
+        if authed_player:
+            # If authenticated as a player, they can ONLY change their own password!
+            authed_id = str(authed_player.get("player_id", "")).strip().lower()
+            authed_user = str(authed_player.get("username", "")).strip().lower()
+            if username:
+                clean_target = str(username).strip().lower()
+                if clean_target != authed_id and clean_target != authed_user:
+                    return Response(
+                        {"error": "Forbidden: You cannot change another player's password."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+            target = authed_player
+            ident_for_rl = authed_id or authed_user
+        else:
+            if not username:
+                return Response(
+                    {"error": "Player username or ID is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            target = username
+            ident_for_rl = str(username).strip()
+
+        client_ip = get_client_ip(request)
+        if check_auth_rate_limit("player_pw_change", client_ip, ident_for_rl):
+            return Response(
+                {"error": "Too many password change attempts. Please wait a few minutes and try again."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
 
         try:
             profile, token = change_player_password(
@@ -887,6 +1103,7 @@ class PlayerChangePasswordAPIView(views.APIView):
                 new_password=new_password,
                 current_code=current_code,
             )
+            clear_auth_failures("player_pw_change", client_ip, ident_for_rl)
             request.session["titans_player"] = profile
             return Response({
                 "success": True,
@@ -895,6 +1112,7 @@ class PlayerChangePasswordAPIView(views.APIView):
                 "message": "Password updated successfully! Welcome to your Player Dashboard.",
             })
         except ValueError as e:
+            record_auth_failure("player_pw_change", client_ip, ident_for_rl)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -904,17 +1122,33 @@ class CMSChangePasswordAPIView(views.APIView):
     Allows an authenticated Manager / Staff Admin to change their password.
     Requires verification of their current password.
     """
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         from django.contrib.auth import update_session_auth_hash
         from django.contrib.auth.models import User
-        from .services import get_authenticated_cms_from_request, create_signed_token
+        from .services import (
+            get_authenticated_cms_from_request,
+            create_signed_token,
+            get_client_ip,
+            check_auth_rate_limit,
+            record_auth_failure,
+            clear_auth_failures,
+        )
 
         cms_info = get_authenticated_cms_from_request(request)
         if not cms_info or not cms_info.get("username"):
             return Response(
                 {"error": "Unauthorized. You must be signed in as Manager to change your password."},
                 status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        username = cms_info["username"]
+        client_ip = get_client_ip(request)
+        if check_auth_rate_limit("cms_pw_change", client_ip, username):
+            return Response(
+                {"error": "Too many password change attempts. Please wait a few minutes and try again."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
         payload = request.data or {}
@@ -934,12 +1168,12 @@ class CMSChangePasswordAPIView(views.APIView):
         if confirm_password and new_password != confirm_password:
             return Response({"error": "New password and confirmation do not match."}, status=status.HTTP_400_BAD_REQUEST)
 
-        username = cms_info["username"]
         user = User.objects.filter(username__iexact=username).first()
         if not user or not (user.is_staff or user.is_superuser):
             return Response({"error": "Manager account not found or lacks administrative privileges."}, status=status.HTTP_404_NOT_FOUND)
 
         if not user.check_password(current_password):
+            record_auth_failure("cms_pw_change", client_ip, username)
             return Response({"error": "Current manager password is incorrect."}, status=status.HTTP_400_BAD_REQUEST)
 
         from django.contrib.auth.password_validation import validate_password
@@ -951,6 +1185,7 @@ class CMSChangePasswordAPIView(views.APIView):
 
         user.set_password(new_password)
         user.save()
+        clear_auth_failures("cms_pw_change", client_ip, username)
 
         if hasattr(request, "user") and request.user.is_authenticated:
             update_session_auth_hash(request, user)
@@ -975,6 +1210,8 @@ class AuthLogoutAPIView(views.APIView):
     """
     Logs out CMS Admin, Player, or both.
     """
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         from django.contrib.auth import logout
@@ -1001,7 +1238,9 @@ class TeamBalancerAPIView(views.APIView):
     - `players_per_team` (int)
     - `team_names` (optional list of custom team names)
     Returns parsed players and/or balanced teams across categories (A = Elite down to last letter = Amateur).
+    Restricted strictly to authenticated CMS Administrators.
     """
+    permission_classes = [IsCMSAdmin]
 
     def post(self, request):
         import base64
@@ -1169,6 +1408,7 @@ class HighlightListCreateAPIView(views.APIView):
     POST /api/highlights/
     Creates a new highlight video (YouTube link, uploaded video file, or external link).
     """
+    permission_classes = [ReadOnlyOrCMSAdmin]
 
     def get(self, request):
         from django.db.models import Q
@@ -1227,6 +1467,7 @@ class HighlightDeleteAPIView(views.APIView):
     DELETE /api/highlights/<id>/
     Deletes a highlight video.
     """
+    permission_classes = [IsCMSAdmin]
 
     def delete(self, request, pk):
         highlight = HighlightVideo.objects.filter(pk=pk).first()
@@ -1248,6 +1489,7 @@ class CategoryToggleArchiveAPIView(views.APIView):
     Sets or toggles tournament archived / ended status.
     Payload: {"isEnded": bool, "championTeam": str, "runnerUpTeam": str}
     """
+    permission_classes = [IsCMSAdmin]
 
     def post(self, request, key):
         from django.utils import timezone

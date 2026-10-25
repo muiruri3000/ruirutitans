@@ -90,3 +90,66 @@ class ProductionConfigTests(TestCase):
             self.assertTrue(len(files) >= 1)
             for f in files:
                 self.assertGreater(f.stat().st_size, 0)
+
+    def test_restore_database_preserves_failed_state_and_cleans_wal(self):
+        """
+        Verify that restoring a database backup:
+        1. Validates backup integrity before restore.
+        2. Preserves existing failed database, WAL, and SHM files to a timestamped backup.
+        3. Removes active stale WAL/SHM files to prevent corruption.
+        4. Restores valid SQLite database passing integrity checks.
+        """
+        import sqlite3
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            fake_db = tmp_path / "test_db.sqlite3"
+            fake_wal = tmp_path / "test_db.sqlite3-wal"
+            fake_shm = tmp_path / "test_db.sqlite3-shm"
+
+            # Create a valid initial database
+            conn = sqlite3.connect(str(fake_db))
+            conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT);")
+            conn.execute("INSERT INTO users VALUES (1, 'Alice');")
+            conn.commit()
+            conn.close()
+
+            # Back it up using the management command helper
+            backup_archive = tmp_path / "db_backup_sqlite_20261024_120000.sqlite3.gz"
+            from tournaments.management.commands.backup_database import Command as BackupCommand
+            cmd = BackupCommand()
+            cmd.backup_sqlite(str(fake_db), backup_archive)
+            self.assertTrue(backup_archive.exists())
+
+            # Now modify fake_db (simulate failed state) and create WAL/SHM artifacts
+            conn = sqlite3.connect(str(fake_db))
+            conn.execute("INSERT INTO users VALUES (2, 'Bob_Corrupted_State');")
+            conn.commit()
+            conn.close()
+            fake_wal.write_bytes(b"STALE_WAL_DATA")
+            fake_shm.write_bytes(b"STALE_SHM_DATA")
+
+            # Point settings.DATABASES["default"]["NAME"] to fake_db for restore test
+            with self.settings(DATABASES={"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": str(fake_db)}}):
+                cmd.restore_backup(str(backup_archive))
+
+            # Verify active WAL and SHM are unlinked
+            self.assertFalse(fake_wal.exists())
+            self.assertFalse(fake_shm.exists())
+
+            # Verify failed state archives were created
+            failed_db_copies = list(tmp_path.glob("test_db.sqlite3.failed_*"))
+            failed_wal_copies = list(tmp_path.glob("test_db.sqlite3-wal.failed_*"))
+            failed_shm_copies = list(tmp_path.glob("test_db.sqlite3-shm.failed_*"))
+            self.assertEqual(len(failed_db_copies), 1)
+            self.assertEqual(len(failed_wal_copies), 1)
+            self.assertEqual(len(failed_shm_copies), 1)
+
+            # Verify restored DB contains original data and passes integrity check
+            conn = sqlite3.connect(str(fake_db))
+            cur = conn.cursor()
+            cur.execute("PRAGMA integrity_check;")
+            self.assertEqual(cur.fetchone()[0], "ok")
+            cur.execute("SELECT name FROM users;")
+            rows = [r[0] for r in cur.fetchall()]
+            conn.close()
+            self.assertEqual(rows, ["Alice"])

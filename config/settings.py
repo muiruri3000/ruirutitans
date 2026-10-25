@@ -6,7 +6,9 @@ Production-hardened settings for Ruiru Titans Football Platform.
 
 from pathlib import Path
 import os
+import sys
 import secrets
+import importlib.util
 import urllib.parse
 from django.core.exceptions import ImproperlyConfigured
 
@@ -97,7 +99,7 @@ else:
 
 # Allow local loopback addresses only during local development or unit testing
 if DEBUG:
-    for local_host in ["localhost", "127.0.0.1", "[::1]", "0.0.0.0"]:
+    for local_host in ["localhost", "127.0.0.1", "[::1]", "0.0.0.0", "testserver"]:
         if local_host not in ALLOWED_HOSTS:
             ALLOWED_HOSTS.append(local_host)
 
@@ -120,6 +122,11 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    *(
+        ["whitenoise.middleware.WhiteNoiseMiddleware"]
+        if importlib.util.find_spec("whitenoise") is not None
+        else []
+    ),
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -278,6 +285,11 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
 
+# Optimize PBKDF2 iterations during automated test runs per Django documentation
+if "test" in sys.argv:
+    from django.contrib.auth.hashers import PBKDF2PasswordHasher
+    PBKDF2PasswordHasher.iterations = 1
+
 # Standard Django production password validators
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -347,41 +359,147 @@ else:
 # 7. SECURITY HEADERS & SSL SETTINGS
 # ==============================================================================
 
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+
 if not DEBUG:
     # SSL/HTTPS enforcement
     SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True").strip().lower() in ("true", "1", "yes")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
+    # Exempt internal Kubernetes container health/readiness probe paths from HTTPS redirection.
+    # This prevents probes from receiving a 301 redirect if invoked without X-Forwarded-Proto,
+    # ensuring genuine 200/503 health assessment without disabling HTTPS enforcement globally.
+    SECURE_REDIRECT_EXEMPT = [
+        r"^api/health/?$",
+    ]
+
     # HTTP Strict Transport Security (HSTS)
     SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "31536000"))
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+        os.environ.get("SECURE_HSTS_INCLUDE_SUBDOMAINS", "True").strip().lower() in ("true", "1", "yes")
+    )
+    SECURE_HSTS_PRELOAD = (
+        os.environ.get("SECURE_HSTS_PRELOAD", "True").strip().lower() in ("true", "1", "yes")
+    )
 
     # Security Headers
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
     X_FRAME_OPTIONS = "DENY"
 
-    # Reverse proxy support (Nginx / ALB / Cloudflare)
+    # Reverse proxy support (Traefik / Cloudflare)
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 else:
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
     X_FRAME_OPTIONS = "SAMEORIGIN"
+    SECURE_REDIRECT_EXEMPT = []
+
+# Trusted proxy CIDRs allowed to supply X-Forwarded-For / CF-Connecting-IP headers.
+# Do not assume external CIDRs without explicit configuration; only trust forwarded IP headers
+# when REMOTE_ADDR belongs to an explicitly configured proxy CIDR (e.g. K3s Traefik pod network).
+_trusted_proxy_raw = os.environ.get("TRUSTED_PROXY_CIDRS", "").strip()
+TRUSTED_PROXY_CIDRS = [c.strip() for c in _trusted_proxy_raw.split(",") if c.strip()]
 
 
 # ==============================================================================
-# 8. STATIC, MEDIA & REST FRAMEWORK
+# 8. STATIC, MEDIA, CACHE, LOGGING & REST FRAMEWORK
 # ==============================================================================
+
+# Shared cache backend so authentication rate limits are enforced across all Gunicorn worker processes.
+# Uses FileBasedCache on persistent storage (/app/data/cache in K3s) to avoid SQLite write-lock contention.
+if "test" in sys.argv:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "ruirutitans-test-cache",
+        }
+    }
+else:
+    _cache_dir_raw = os.environ.get("DJANGO_CACHE_DIR", "").strip()
+    if _cache_dir_raw:
+        _cache_dir = Path(_cache_dir_raw)
+    elif os.environ.get("SQLITE_PATH", "").strip():
+        _cache_dir = Path(os.environ.get("SQLITE_PATH").strip()).resolve().parent / "cache"
+    else:
+        _cache_dir = BASE_DIR / "data" / "cache"
+    try:
+        _cache_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+            "LOCATION": str(_cache_dir),
+            "TIMEOUT": 300,
+            "OPTIONS": {"MAX_ENTRIES": 5000},
+        }
+    }
 
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+if importlib.util.find_spec("whitenoise") is not None:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        },
+    }
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
+        },
+    },
+    "formatters": {
+        "production": {
+            "format": "[{asctime}] {levelname} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "production",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -391,7 +509,10 @@ USE_I18N = True
 USE_TZ = True
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "tournaments.authentication.TitansCMSAuthentication",
+        "tournaments.authentication.TitansPlayerAuthentication",
+    ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
     ],
@@ -400,4 +521,5 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.FormParser",
         "rest_framework.parsers.MultiPartParser",
     ],
+    "EXCEPTION_HANDLER": "tournaments.exceptions.custom_exception_handler",
 }

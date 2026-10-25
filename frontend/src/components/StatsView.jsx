@@ -89,11 +89,16 @@ export default function StatsView({
   categories = {},
   leaderboardsByCategory = {},
   leaderboards,
-  activeCategoryKey = 'open',
+  activeCategoryKey = 'ruiru-titans-league-oct-nov-2026',
 }) {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
 
-  const categoryEntries = Object.entries(categories);
+  const categoryEntries = Object.entries(categories).filter(([k, c]) => {
+    if (c.isDeleted) return false;
+    const fixCount = (c.fixtures || []).length + Object.values(c.groupFixtures || {}).flat().length;
+    const playerCount = (c.teams || []).reduce((acc, t) => acc + (t.players || []).length, 0);
+    return fixCount > 0 || playerCount > 0;
+  });
   // Fallback if categories prop wasn't passed
   if (categoryEntries.length === 0 && leaderboards) {
     return (

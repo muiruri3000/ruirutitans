@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     home_view,
+    HealthCheckAPIView,
     StateAPIView,
     HomepageAPIView,
     ResetSeasonAPIView,
@@ -13,6 +14,8 @@ from .views import (
     ExportPlayersCSVView,
     match_sheet_view,
     category_fixtures_results_pdf_view,
+    ai_matchweek_report_pdf_view,
+    FixtureReportAPIView,
     VotingCurrentAPIView,
     VotingSubmitAPIView,
     VotingTOTTAPIView,
@@ -40,9 +43,15 @@ app_name = "tournaments"
 
 urlpatterns = [
     path("", home_view, name="home"),
+    path("fixtures/", home_view, name="fixtures_home"),
+    path("categories/", home_view, name="categories_home"),
     path("fixtures/<str:fixture_id>/sheet/", match_sheet_view, name="fixture_match_sheet"),
     path("categories/<str:key>/fixtures-results/pdf/", category_fixtures_results_pdf_view, name="category_fixtures_results_pdf"),
     path("api/categories/<str:key>/export/fixtures-results-pdf/", category_fixtures_results_pdf_view, name="api_category_fixtures_results_pdf"),
+    path("categories/<str:key>/reports/ai-matchweek-pdf/", ai_matchweek_report_pdf_view, name="category_ai_matchweek_report_pdf"),
+    path("api/categories/<str:key>/reports/ai-matchweek-pdf/", ai_matchweek_report_pdf_view, name="api_category_ai_matchweek_report_pdf"),
+    path("api/categories/<str:key>/fixtures/<str:fixture_id>/report/", FixtureReportAPIView.as_view(), name="api_category_fixture_report"),
+    path("api/health/", HealthCheckAPIView.as_view(), name="api_health"),
     path("api/state/", StateAPIView.as_view(), name="api_state"),
     path("api/homepage/", HomepageAPIView.as_view(), name="api_homepage"),
     path("api/reset-real-season/", ResetSeasonAPIView.as_view(), name="api_reset_season"),

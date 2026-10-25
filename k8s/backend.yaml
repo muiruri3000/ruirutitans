@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ruirutitans-backend
+  namespace: ruirutitans
+  labels:
+    app.kubernetes.io/name: ruirutitans-backend
+    app.kubernetes.io/part-of: ruirutitans-platform
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ruirutitans-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ruirutitans-backend
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: backend
+          image: ruirutitans-backend:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              python manage.py migrate --noinput
+              exec gunicorn config.wsgi:application \
+                --bind 0.0.0.0:8000 \
+                --workers 2 \
+                --threads 2 \
+                --timeout 60 \
+                --access-logfile - \
+                --error-logfile -
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: ruirutitans-config
+            - secretRef:
+                name: ruirutitans-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          startupProbe:
+            httpGet:
+              path: /api/health/?check=ready
+              port: 8000
+              httpHeaders:
+                - name: Host
+                  value: ruirutitans.com
+                - name: X-Forwarded-Proto
+                  value: https
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 18
+          livenessProbe:
+            httpGet:
+              path: /api/health/?check=live
+              port: 8000
+              httpHeaders:
+                - name: Host
+                  value: ruirutitans.com
+                - name: X-Forwarded-Proto
+                  value: https
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health/?check=ready
+              port: 8000
+              httpHeaders:
+                - name: Host
+                  value: ruirutitans.com
+                - name: X-Forwarded-Proto
+                  value: https
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/data
+            - name: media-volume
+              mountPath: /app/media
+            - name: backups-volume
+              mountPath: /app/backups
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: ruirutitans-data-pvc
+        - name: media-volume
+          persistentVolumeClaim:
+            claimName: ruirutitans-media-pvc
+        - name: backups-volume
+          persistentVolumeClaim:
+            claimName: ruirutitans-backups-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ruirutitans-backend-svc
+  namespace: ruirutitans
+  labels:
+    app.kubernetes.io/name: ruirutitans-backend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+  selector:
+    app.kubernetes.io/name: ruirutitans-backend

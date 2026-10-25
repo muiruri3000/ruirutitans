@@ -46,7 +46,8 @@ function computeGroupStandings(teams, fixtures) {
     table[t.id] = { id: t.id, name: t.name, color: t.color, P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, GD: 0, Pts: 0 };
   });
   (fixtures || []).forEach((f) => {
-    if (!f.played && !f.walkover) return;
+    const isPlayed = Boolean(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0));
+    if (!isPlayed) return;
     const { hs, as } = computeFixtureScore(f, f.home, f.away);
     const h = table[f.home];
     const a = table[f.away];
@@ -533,32 +534,82 @@ export default function CupProgressionView({
       if (!pool.length) return c;
       const pickRandomRef = () => pool[Math.floor(Math.random() * pool.length)];
 
+      const isCompleted = (f) =>
+        Boolean(
+          f?.played ||
+          f?.walkover ||
+          (Array.isArray(f?.events) && f.events.length > 0) ||
+          f?.match?.played ||
+          f?.match?.walkover ||
+          (Array.isArray(f?.match?.events) && f.match.events.length > 0) ||
+          f?.winner ||
+          (f?.home_score !== undefined && f?.home_score !== '') ||
+          (f?.score1 !== undefined && f?.score1 !== '')
+        );
+
+      const completedFixtureIds = new Set();
+      (c.fixtures || []).forEach((f) => {
+        if (isCompleted(f)) completedFixtureIds.add(f.id);
+      });
+      if (c.groupFixtures) {
+        Object.values(c.groupFixtures).forEach((list) => {
+          (list || []).forEach((f) => {
+            if (isCompleted(f)) completedFixtureIds.add(f.id);
+          });
+        });
+      }
+      if (c.rounds) {
+        (c.rounds || []).forEach((r) => {
+          const ties = Array.isArray(r) ? r : (r?.ties || []);
+          ties.forEach((t) => {
+            if (isCompleted(t)) completedFixtureIds.add(t.id);
+          });
+        });
+      }
+
       const nextGroupFixtures = {};
       const refByFixId = {};
       Object.entries(c.groupFixtures || {}).forEach(([letter, list]) => {
         nextGroupFixtures[letter] = (list || []).map((f) => {
-          if (f.played || f.walkover) return f;
+          if (completedFixtureIds.has(f.id) || isCompleted(f)) return f;
           const r = pickRandomRef();
           refByFixId[f.id] = r;
           return { ...f, referee: r };
         });
       });
 
-      const nextRounds = (c.rounds || []).map((r) =>
-        (r || []).map((tie) => {
-          if (!tie || tie.match?.played) return tie;
-          const rName = pickRandomRef();
-          if (tie.id) refByFixId[tie.id] = rName;
+      const nextRounds = (c.rounds || []).map((r) => {
+        if (Array.isArray(r)) {
+          return r.map((tie) => {
+            if (!tie || completedFixtureIds.has(tie.id) || isCompleted(tie)) return tie;
+            const rName = refByFixId[tie.id] || pickRandomRef();
+            if (tie.id) refByFixId[tie.id] = rName;
+            return {
+              ...tie,
+              referee: rName,
+              match: { ...(tie.match || {}), referee: rName },
+            };
+          });
+        } else if (r && typeof r === 'object' && Array.isArray(r.ties)) {
           return {
-            ...tie,
-            referee: rName,
-            match: { ...(tie.match || {}), referee: rName },
+            ...r,
+            ties: r.ties.map((tie) => {
+              if (!tie || completedFixtureIds.has(tie.id) || isCompleted(tie)) return tie;
+              const rName = refByFixId[tie.id] || pickRandomRef();
+              if (tie.id) refByFixId[tie.id] = rName;
+              return {
+                ...tie,
+                referee: rName,
+                match: { ...(tie.match || {}), referee: rName },
+              };
+            }),
           };
-        })
-      );
+        }
+        return r;
+      });
 
       const nextFixtures = (c.fixtures || []).map((f) => {
-        if (f.played || f.walkover) return f;
+        if (completedFixtureIds.has(f.id) || isCompleted(f)) return f;
         return { ...f, referee: refByFixId[f.id] || pickRandomRef() };
       });
 
@@ -615,10 +666,14 @@ export default function CupProgressionView({
     });
   };
 
-  if (!cupCategory) {
+  if (!cupCategory || cupCategory.mode !== 'cup') {
     return (
-      <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '14px', padding: '32px', textAlign: 'center', color: '#8FA89B' }}>
-        No Cup competition configured yet.
+      <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '14px', padding: '36px', textAlign: 'center', color: '#8FA89B' }}>
+        <div style={{ fontSize: '28px', marginBottom: '8px' }}>🏆</div>
+        <div style={{ fontSize: '16px', fontWeight: 700, color: '#F4F2EA', marginBottom: '6px' }}>No Active Cup Tournament</div>
+        <div style={{ fontSize: '13px', color: '#8FA89B' }}>
+          There is currently no knockout Cup tournament in progress. The active competition is <strong>Ruiru Titans League - Oct/Nov 2026</strong>.
+        </div>
       </div>
     );
   }
@@ -2035,8 +2090,9 @@ export default function CupProgressionView({
             {groupLetters.map((letter) => {
               const rows = groupTables[letter] || [];
               const gFixtures = (groupFixtures[letter] || []).filter((f) => {
-                if (fixtureFilter === 'results') return f.played || f.walkover;
-                if (fixtureFilter === 'upcoming') return !f.played && !f.walkover;
+                const isPlayed = Boolean(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0));
+                if (fixtureFilter === 'results') return isPlayed;
+                if (fixtureFilter === 'upcoming') return !isPlayed;
                 return true;
               });
 

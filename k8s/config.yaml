@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ruirutitans-config
+  namespace: ruirutitans
+data:
+  DEBUG: "False"
+  ALLOWED_HOSTS: "ruirutitans.com,.ruirutitans.com"
+  CORS_ALLOWED_ORIGINS: "https://ruirutitans.com,https://www.ruirutitans.com"
+  CSRF_TRUSTED_ORIGINS: "https://ruirutitans.com,https://*.ruirutitans.com"
+  DB_ENGINE: "sqlite"
+  SQLITE_PATH: "/app/data/db.sqlite3"
+  DJANGO_CACHE_DIR: "/app/data/cache"
+  USE_MYSQL: "False"
+  SECURE_SSL_REDIRECT: "True"
+  SECURE_HSTS_SECONDS: "31536000"
+  # Configure TRUSTED_PROXY_CIDRS with the K3s pod/Traefik CIDR (e.g. "10.42.0.0/16")
+  # only after verifying Traefik is configured to sanitize/overwrite X-Forwarded-For from Cloudflare.
+  TRUSTED_PROXY_CIDRS: ""
+

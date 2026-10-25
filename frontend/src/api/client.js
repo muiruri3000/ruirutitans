@@ -53,6 +53,14 @@ export function setCmsToken(token, userObj = null) {
   } catch {}
 }
 
+export function clearAuthTokens() {
+  setPlayerToken("");
+  setCmsToken("");
+  try {
+    localStorage.removeItem("ruiru_titans_player_session");
+  } catch {}
+}
+
 const defaultHeaders = () => {
   const headers = {
     "Content-Type": "application/json",
@@ -68,10 +76,18 @@ const defaultHeaders = () => {
 export const api = {
   async getState() {
     try {
-      const res = await fetch("/api/state/", { headers: defaultHeaders() });
+      let res = await fetch("/api/state/", { headers: defaultHeaders() });
+      if (res.status === 401 || res.status === 403) {
+        // Bad or expired credentials in headers - clear stale tokens and retry as public visitor
+        clearAuthTokens();
+        res = await fetch("/api/state/", { headers: { "Content-Type": "application/json" } });
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const serverData = await res.json();
       if (serverData && serverData.categories && Object.keys(serverData.categories).length > 0) {
+        try {
+          localStorage.setItem("ruiru_titans_react_state", JSON.stringify(serverData));
+        } catch {}
         return {
           ...serverData,
           homepage: serverData.homepage || DEFAULT_TITANS_STATE.homepage,
@@ -156,143 +172,105 @@ export const api = {
             player: data.player,
           };
         }
+        clearAuthTokens();
         return {
           cms: null,
           player: null,
         };
       }
+      if (res.status === 401 || res.status === 403) {
+        clearAuthTokens();
+      }
     } catch {}
-    let cms = null;
-    let player = null;
-    try {
-      const cRaw = localStorage.getItem(CMS_SESSION_KEY);
-      if (cRaw) cms = JSON.parse(cRaw);
-      const pRaw = localStorage.getItem(PLAYER_SESSION_KEY);
-      if (pRaw) player = JSON.parse(pRaw);
-    } catch {}
-    if (cms && player) {
-      setPlayerToken("");
-      player = null;
-    }
-    return { cms, player };
+    return { cms: null, player: null };
   },
 
   async loginCms(username, password) {
-    setPlayerToken("");
+    clearAuthTokens();
+    const cleanUser = (username || "").trim();
+    const cleanPass = (password || "").trim();
+    if (!cleanUser || !cleanPass) {
+      throw new Error("Please enter both username and password.");
+    }
+    let res;
     try {
-      const res = await fetch("/api/auth/cms-login/", {
+      res = await fetch("/api/auth/cms-login/", {
         method: "POST",
-        headers: defaultHeaders(),
-        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
+        body: JSON.stringify({ username: cleanUser, password: cleanPass }),
       });
-      if (res.status === 400 || res.status === 401) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Invalid Admin credentials.");
-      }
-      if (res.ok) {
-        const data = await res.json();
-        setPlayerToken("");
-        if (data.token) setCmsToken(data.token, data.cms_user);
-        return data;
-      }
-    } catch (err) {
-      if (err.message && err.message.includes("Invalid")) throw err;
+    } catch {
+      clearAuthTokens();
+      throw new Error("Unable to reach authentication server. Please check your connection and try again.");
     }
 
-    // Fallback verification when running frontend standalone
-    if (username.trim().toLowerCase() === "admin" && password.trim() === "admin123") {
-      setPlayerToken("");
-      const cmsUser = { username: "admin", is_staff: true };
-      setCmsToken("local-cms-token", cmsUser);
-      return { authenticated: true, cms_user: cmsUser, token: "local-cms-token" };
+    if (!res.ok) {
+      clearAuthTokens();
+      const errData = await res.json().catch(() => ({}));
+      if (res.status === 429) {
+        throw new Error(errData.error || errData.detail || "Too many login attempts. Please wait before trying again.");
+      }
+      throw new Error(errData.error || errData.detail || "Invalid Admin credentials.");
     }
-    throw new Error("Invalid Admin username or password. Default: admin / admin123");
+
+    const data = await res.json();
+    if (!data || !data.token) {
+      clearAuthTokens();
+      throw new Error("Invalid authentication response from server.");
+    }
+    setPlayerToken("");
+    setCmsToken(data.token, data.cms_user);
+    return data;
   },
 
   async loginPlayer(username, password, categoryKey = "") {
-    setCmsToken("");
+    clearAuthTokens();
+    const cleanUser = (username || "").trim();
+    const cleanPass = password || "";
+    if (!cleanUser || !cleanPass) {
+      throw new Error("Please enter your username/ID and password.");
+    }
+    let res;
     try {
-      const res = await fetch("/api/auth/player-login/", {
+      res = await fetch("/api/auth/player-login/", {
         method: "POST",
-        headers: defaultHeaders(),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
         body: JSON.stringify({
-          username: username,
-          password: password,
-          player_id: username,
-          access_code: password,
+          username: cleanUser,
+          password: cleanPass,
+          player_id: cleanUser,
+          access_code: cleanPass,
           category_key: categoryKey,
         }),
       });
-      if (res.status === 400 || res.status === 401) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Invalid player username or password.");
-      }
-      if (res.ok) {
-        const data = await res.json();
-        setCmsToken("");
-        if (data.token) setPlayerToken(data.token, data.player);
-        return data;
-      }
-    } catch (err) {
-      if (err.message && (err.message.includes("Invalid") || err.message.includes("not found") || err.message.includes("Please"))) {
-        throw err;
-      }
+    } catch {
+      clearAuthTokens();
+      throw new Error("Unable to reach authentication server. Please check your connection and try again.");
     }
 
-    // Fallback verification when running frontend standalone
-    const ident = (username || "").trim().toLowerCase();
-    const secret = (password || "").trim();
-    if (!ident || !secret) {
-      throw new Error("Please enter both your player username and password.");
+    if (!res.ok) {
+      clearAuthTokens();
+      const errData = await res.json().catch(() => ({}));
+      if (res.status === 429) {
+        throw new Error(errData.error || errData.detail || "Too many login attempts. Please wait before trying again.");
+      }
+      throw new Error(errData.error || errData.detail || "Invalid player username or password.");
     }
 
-    let stateSource = DEFAULT_TITANS_STATE;
-    try {
-      const cached = localStorage.getItem("ruiru_titans_react_state");
-      if (cached) stateSource = JSON.parse(cached);
-    } catch {}
-
-    let foundPlayer = null;
-    Object.entries(stateSource.categories || {}).forEach(([cKey, cat]) => {
-      (cat.teams || []).forEach((team) => {
-        (team.players || []).forEach((p) => {
-          if (p.unknown || foundPlayer) return;
-          const pUname = (p.username || p.name.toLowerCase().replace(/[^a-z0-9]+/g, "_")).toLowerCase();
-          if (
-            pUname === ident ||
-            p.name.toLowerCase() === ident ||
-            (p.id && p.id.toLowerCase() === ident)
-          ) {
-            const validPw =
-              secret === (p.password || "titans2026") ||
-              secret.toLowerCase() === "titans2026" ||
-              secret.toLowerCase() === "titans" ||
-              secret.toLowerCase() === (p.id || "").toLowerCase() ||
-              secret.toLowerCase() === `${p.name.toLowerCase()}2026`;
-            if (!validPw) {
-              throw new Error("Invalid player password. Please check your password and try again.");
-            }
-            foundPlayer = {
-              id: p.id,
-              player_id: p.id,
-              permanent_id: p.id,
-              username: p.username || pUname,
-              name: p.name,
-              position: p.position || "",
-              team_id: team.id,
-              team_name: team.name,
-              team_color: team.color,
-              category_key: cKey,
-            };
-          }
-        });
-      });
-    });
-    if (!foundPlayer) {
-      throw new Error("Player account not found. Please check your player username.");
+    const data = await res.json();
+    if (!data || !data.token) {
+      clearAuthTokens();
+      throw new Error("Invalid authentication response from server.");
     }
-    setPlayerToken(`local-player-${foundPlayer.player_id}`, foundPlayer);
-    return { authenticated: true, player: foundPlayer, token: `local-player-${foundPlayer.player_id}` };
+    setCmsToken("");
+    setPlayerToken(data.token, data.player);
+    return data;
   },
 
   async logout(role = "all") {
@@ -301,7 +279,10 @@ export const api = {
     try {
       const res = await fetch("/api/auth/logout/", {
         method: "POST",
-        headers: defaultHeaders(),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
         body: JSON.stringify({ role }),
       });
       return await res.json().catch(() => ({ success: true }));
@@ -460,36 +441,27 @@ export const api = {
   },
 
   async changeCmsPassword(payload) {
-    try {
-      const res = await fetch("/api/auth/cms-change-password/", {
-        method: "POST",
-        headers: defaultHeaders(),
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Failed to change manager password (${res.status})`);
-      }
-      const data = await res.json();
-      if (data.token) {
-        setCmsToken(data.token, data.cms_user);
-      }
-      return data;
-    } catch (err) {
-      if (err.message && (err.message.includes("password") || err.message.includes("Manager") || err.message.includes("match") || err.message.includes("least") || err.message.includes("Unauthorized"))) {
-        throw err;
-      }
-      // Standalone fallback:
-      const newPw = (payload.new_password || payload.newPassword || '').trim();
-      if (newPw.length < 8) throw new Error("New password must be at least 8 characters long.");
-      return { success: true, message: "Manager password updated successfully!" };
+    const res = await fetch("/api/auth/cms-change-password/", {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || err.detail || `Failed to change manager password (${res.status})`);
     }
+    const data = await res.json();
+    if (data.token) {
+      setCmsToken(data.token, data.cms_user);
+    }
+    return data;
   },
 
   setPlayerToken,
   getPlayerToken,
   setCmsToken,
   getCmsToken,
+  clearAuthTokens,
 
   async lookupPlayerUsername(name, categoryKey = null) {
     const q = (name || '').trim();
@@ -683,6 +655,27 @@ export const api = {
       console.warn("Toggle category archive API error:", err);
     }
     return null;
+  },
+
+  async getMatchReport(categoryKey, fixtureId) {
+    const res = await fetch(`/api/categories/${categoryKey}/fixtures/${fixtureId}/report/`, {
+      headers: defaultHeaders(),
+    });
+    if (!res.ok) throw new Error(`Failed to load match report: ${res.status}`);
+    return await res.json();
+  },
+
+  async saveMatchReport(categoryKey, fixtureId, reportData) {
+    const res = await fetch(`/api/categories/${categoryKey}/fixtures/${fixtureId}/report/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(reportData),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to save match report: ${res.status}`);
+    }
+    return await res.json();
   },
 };
 

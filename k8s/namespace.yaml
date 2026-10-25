@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ruirutitans
+  labels:
+    app.kubernetes.io/name: ruirutitans
+    app.kubernetes.io/part-of: ruirutitans-platform

@@ -18,7 +18,7 @@ export default function TopNav({
       ? 'Live Database Synced'
       : syncStatus === 'saving'
       ? 'Syncing Changes…'
-      : 'Offline Cache Active';
+      : '⚠️ Unsaved (Sign in to Save)';
 
   return (
     <nav className="top-nav-bar" aria-label="Club Portal & Authentication Bar">
@@ -125,9 +125,37 @@ export default function TopNav({
           >
             🏛️ Archives
           </a>
+          <a
+            href="#tactics"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onNavigate) onNavigate('tactics');
+            }}
+            style={{
+              textDecoration: 'none',
+              fontSize: '11.5px',
+              fontWeight: 800,
+              padding: '4px 10px',
+              borderRadius: '999px',
+              background: currentView === 'tactics' ? '#C9A227' : '#113328',
+              color: currentView === 'tactics' ? '#16201B' : '#DDE6DF',
+              border: '1px solid #2B5746',
+            }}
+          >
+            📋 Tactics
+          </a>
         </div>
 
-        <div className="sync-badge">
+        <div
+          className="sync-badge"
+          style={syncStatus === 'error' ? { cursor: 'pointer', border: '1px solid #FF6B6B' } : {}}
+          onClick={() => {
+            if (syncStatus === 'error' && onOpenAuthModal) {
+              onOpenAuthModal('cms');
+            }
+          }}
+          title={syncStatus === 'error' ? 'Manager login required to sync changes. Click to sign in.' : undefined}
+        >
           <span className={`sync-dot ${syncStatus}`} />
           <span>{statusText}</span>
         </div>
