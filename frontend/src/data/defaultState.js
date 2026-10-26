@@ -2189,34 +2189,51 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
       "referee": "Ref Tomaso"
     },
     {
-      "id": "F8",
+      "id": "F12",
       "date": "Sat, 24 Oct · 18:00",
       "venue": "Thoome Pri.",
-      "home": "MAS",
-      "away": "OXF",
-      "played": false,
-      "events": [],
-      "referee": "Ref Joseph"
+      "home": "MAN",
+      "away": "MAS",
+      "played": true,
+      "events": [
+        {
+          "teamId": "MAS",
+          "team": "MAS",
+          "playerId": "MAS-P1",
+          "player": "MAS-P1",
+          "playerName": "Gideon",
+          "type": "goal",
+          "assistPlayerId": null,
+          "assistPlayer": null,
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "MAN",
+          "team": "MAN",
+          "playerId": "MAN-P9",
+          "player": "MAN-P9",
+          "playerName": "Ng'ang'a",
+          "type": "goal",
+          "assistPlayerId": null,
+          "assistPlayer": null,
+          "penalty": false,
+          "is_penalty": false
+        }
+      ],
+      "referee": "Ref OG",
+      "report": {}
     },
     {
       "id": "F9",
-      "date": "Mon, 26 Oct · 17:10",
+      "date": "Mon, 26 Oct · 18:00",
       "venue": "Thoome Pri.",
       "home": "RAN",
       "away": "BAL",
       "played": false,
       "events": [],
-      "referee": "Ref OG"
-    },
-    {
-      "id": "F10",
-      "date": "Thu, 05 Nov · 18:10",
-      "venue": "Thoome Pri.",
-      "home": "EXM",
-      "away": "BLA",
-      "played": false,
-      "events": [],
-      "referee": ""
+      "referee": "Ref Joseph",
+      "report": {}
     },
     {
       "id": "F11",
@@ -2226,17 +2243,30 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
       "away": "SS",
       "played": false,
       "events": [],
-      "referee": "Ref Joseph"
+      "referee": "Ref Joseph",
+      "report": {}
     },
     {
-      "id": "F12",
-      "date": "Wed, 28 Oct · 18:10",
+      "id": "F10",
+      "date": "Thu, 05 Nov · 18:10",
       "venue": "Thoome Pri.",
-      "home": "MAN",
-      "away": "MAS",
+      "home": "EXM",
+      "away": "BLA",
       "played": false,
       "events": [],
-      "referee": "Ref OG"
+      "referee": "Ref Tomaso",
+      "report": {}
+    },
+    {
+      "id": "F8",
+      "date": "Wed, 28 Oct · 18:10",
+      "venue": "Thoome Pri.",
+      "home": "MAS",
+      "away": "OXF",
+      "played": false,
+      "events": [],
+      "referee": "Ref Joseph",
+      "report": {}
     },
     {
       "id": "F13",

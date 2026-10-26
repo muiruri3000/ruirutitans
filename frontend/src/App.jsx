@@ -19,7 +19,7 @@ import MatchReportModal from './components/MatchReportModal';
 import AIWeeklyReportModal from './components/AIWeeklyReportModal';
 import TacticsView from './components/TacticsView';
 import { openCategoryFixturesResultsPDF } from './utils/pdfExport';
-import { api } from './api/client';
+import { api, sanitizeExMilitaryFixtures } from './api/client';
 import { DEFAULT_TITANS_STATE, CORE_FIVE_TEAMS } from './data/defaultState';
 
 const PALETTE = [
@@ -281,8 +281,9 @@ export default function App() {
           api.getAuthSession().catch(() => ({ cms: null, player: null })),
         ]);
         if (serverState && serverState.categories) {
+          const sanitizedState = sanitizeExMilitaryFixtures(serverState);
           let needsReorg = false;
-          const nextCategories = { ...serverState.categories };
+          const nextCategories = { ...sanitizedState.categories };
           Object.keys(nextCategories).forEach((k) => {
             const cat = nextCategories[k];
             if (cat && cat.mode === 'league' && Array.isArray(cat.fixtures)) {
@@ -298,14 +299,12 @@ export default function App() {
               }
             }
           });
-          const finalState = needsReorg ? { ...serverState, categories: nextCategories } : serverState;
+          const finalState = needsReorg ? { ...sanitizedState, categories: nextCategories } : sanitizedState;
           setData(finalState);
           setSyncStatus('synced');
-          if (needsReorg) {
-            try {
-              localStorage.setItem('ruiru_titans_react_state', JSON.stringify(finalState));
-            } catch {}
-          }
+          try {
+            localStorage.setItem('ruiru_titans_react_state', JSON.stringify(finalState));
+          } catch {}
         }
         if (sessionInfo?.cms) {
           setCmsUser(sessionInfo.cms);
@@ -327,16 +326,20 @@ export default function App() {
           if (rawPending) {
             const pending = JSON.parse(rawPending);
             if (pending && pending.categories) {
+              const sanitizedPending = sanitizeExMilitaryFixtures(pending);
+              try {
+                localStorage.setItem('ruiru_titans_pending_sync', JSON.stringify(sanitizedPending));
+              } catch {}
               if (sessionInfo?.cms) {
                 try {
-                  await api.saveState(pending);
+                  await api.saveState(sanitizedPending);
                   localStorage.removeItem('ruiru_titans_pending_sync');
-                  setData(pending);
+                  setData(sanitizedPending);
                   setSyncStatus('synced');
                   return;
                 } catch {}
               } else {
-                setData(pending);
+                setData(sanitizedPending);
                 setSyncStatus('error');
                 return;
               }
@@ -625,7 +628,10 @@ export default function App() {
       totalGoals,
       cupRoundsCount,
       recentResults: completedResults.slice(-4).reverse(),
-      nextFixtures: upcomingFixtures.slice(0, 4),
+      nextFixtures: upcomingFixtures
+        .slice()
+        .sort((a, b) => getFixtureDateSortValue(a.date) - getFixtureDateSortValue(b.date))
+        .slice(0, 4),
     };
   }, [leagueCat, cupCat]);
 

@@ -73,6 +73,56 @@ const defaultHeaders = () => {
   return headers;
 };
 
+export function sanitizeExMilitaryFixtures(state) {
+  if (!state || !state.categories) return state;
+  let modified = false;
+  const nextCategories = { ...state.categories };
+
+  Object.keys(nextCategories).forEach((catKey) => {
+    const cat = nextCategories[catKey];
+    if (!cat || !Array.isArray(cat.fixtures)) return;
+
+    const hasWedConflict = cat.fixtures.some(
+      (f) =>
+        String(f.date || '').includes('28 Oct') &&
+        (f.home === 'EXM' || f.away === 'EXM' || f.home === 'BLA' || f.away === 'BLA' ||
+         f.home === 'ExMilitary FC' || f.away === 'ExMilitary FC' || f.home === 'Black Hawk' || f.away === 'Black Hawk')
+    );
+    const f10OnWed = cat.fixtures.some(
+      (f) => f.id === 'F10' && String(f.date || '').includes('28 Oct')
+    );
+
+    if (hasWedConflict || f10OnWed) {
+      modified = true;
+      const nextFixtures = cat.fixtures.map((f) => {
+        if (f.id === 'F10') {
+          return { ...f, date: 'Thu, 05 Nov · 18:10' };
+        }
+        if (f.id === 'F19') {
+          return { ...f, date: 'Wed, 28 Oct · 17:10' };
+        }
+        if (f.id === 'F8') {
+          return { ...f, date: 'Wed, 28 Oct · 18:10' };
+        }
+        if (f.id === 'F24') {
+          return { ...f, date: 'Mon, 02 Nov · 18:10' };
+        }
+        if (
+          String(f.date || '').includes('28 Oct') &&
+          (f.home === 'EXM' || f.away === 'EXM' || f.home === 'BLA' || f.away === 'BLA' ||
+           f.home === 'ExMilitary FC' || f.away === 'ExMilitary FC' || f.home === 'Black Hawk' || f.away === 'Black Hawk')
+        ) {
+          return { ...f, date: 'Thu, 05 Nov · 18:10' };
+        }
+        return f;
+      });
+      nextCategories[catKey] = { ...cat, fixtures: nextFixtures };
+    }
+  });
+
+  return modified ? { ...state, categories: nextCategories } : state;
+}
+
 export const api = {
   async getState() {
     try {
@@ -85,14 +135,15 @@ export const api = {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const serverData = await res.json();
       if (serverData && serverData.categories && Object.keys(serverData.categories).length > 0) {
+        const sanitized = sanitizeExMilitaryFixtures(serverData);
         try {
-          localStorage.setItem("ruiru_titans_react_state", JSON.stringify(serverData));
+          localStorage.setItem("ruiru_titans_react_state", JSON.stringify(sanitized));
         } catch {}
         return {
-          ...serverData,
-          homepage: serverData.homepage || DEFAULT_TITANS_STATE.homepage,
+          ...sanitized,
+          homepage: sanitized.homepage || DEFAULT_TITANS_STATE.homepage,
           categories: {
-            ...serverData.categories,
+            ...sanitized.categories,
           },
         };
       }
@@ -104,17 +155,21 @@ export const api = {
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && parsed.categories && Object.keys(parsed.categories).length > 0) {
+          const sanitizedCached = sanitizeExMilitaryFixtures(parsed);
+          try {
+            localStorage.setItem("ruiru_titans_react_state", JSON.stringify(sanitizedCached));
+          } catch {}
           return {
-            ...parsed,
-            homepage: parsed.homepage || DEFAULT_TITANS_STATE.homepage,
+            ...sanitizedCached,
+            homepage: sanitizedCached.homepage || DEFAULT_TITANS_STATE.homepage,
             categories: {
-              ...parsed.categories,
+              ...sanitizedCached.categories,
             },
           };
         }
       }
     } catch {}
-    return DEFAULT_TITANS_STATE;
+    return sanitizeExMilitaryFixtures(DEFAULT_TITANS_STATE);
   },
 
   async saveState(stateData) {
