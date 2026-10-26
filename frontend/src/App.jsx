@@ -3106,64 +3106,16 @@ export default function App() {
               </div>
             </div>
 
-            {/* Hero Action CTAs: Manager Dashboard Sign-In & Player Voting Sign-In */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '240px' }}>
-              {!playerUser && (
-                <>
-                  {cmsUser && isCmsMode ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCurrentView('manage');
-                        }}
-                        style={{
-                          background: '#FF9500',
-                          color: '#16201B',
-                          border: 'none',
-                          borderRadius: '10px',
-                          padding: '11px 18px',
-                          fontSize: '13px',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          boxShadow: '0 4px 16px rgba(255, 149, 0, 0.3)',
-                        }}
-                      >
-                        🛠️ Open Manager Dashboard
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setManageSection('players');
-                          setCurrentView('manage');
-                        }}
-                        style={{
-                          background: 'rgba(255, 149, 0, 0.16)',
-                          border: '1px solid #FF9500',
-                          color: '#FFFFFF',
-                          borderRadius: '10px',
-                          padding: '10px 16px',
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                        }}
-                      >
-                        📝 Register New Player (4-Digit Code)
-                      </button>
-                    </>
-                  ) : (
+            {/* Hero Action CTAs (Shown when logged in) */}
+            {(cmsUser || playerUser) && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '240px' }}>
+                {cmsUser && isCmsMode && (
+                  <>
                     <button
                       type="button"
-                      onClick={() => setAuthModal({ open: true, tab: 'cms' })}
+                      onClick={() => {
+                        setCurrentView('manage');
+                      }}
                       style={{
                         background: '#FF9500',
                         color: '#16201B',
@@ -3180,81 +3132,84 @@ export default function App() {
                         boxShadow: '0 4px 16px rgba(255, 149, 0, 0.3)',
                       }}
                     >
-                      🔐 Open Manager Dashboard
+                      🛠️ Open Manager Dashboard
                     </button>
-                  )}
-                </>
-              )}
 
-              {playerUser ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentView('player-dashboard')}
-                    style={{
-                      background: currentView === 'player-dashboard' ? '#FF9500' : '#1C1C1E',
-                      color: currentView === 'player-dashboard' ? '#16201B' : '#6CE5A0',
-                      border: '1px solid #3F7A4E',
-                      borderRadius: '10px',
-                      padding: '10px 16px',
-                      fontSize: '12.5px',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    👤 Player Dashboard ({playerUser.name})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setVotingInitialTab('ballot');
-                      setCurrentView('voting');
-                    }}
-                    style={{
-                      background: 'rgba(255, 149, 0, 0.15)',
-                      color: '#FF9500',
-                      border: '1px solid #FF9500',
-                      borderRadius: '10px',
-                      padding: '8px 14px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    🗳️ Cast Player Vote
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setAuthModal({ open: true, tab: 'player' })}
-                  style={{
-                    background: '#1C1C1E',
-                    color: '#FFFFFF',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '10px',
-                    padding: '10px 16px',
-                    fontSize: '12.5px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                  }}
-                >
-                  ⚽ Player Sign In (Dashboard &amp; Voting)
-                </button>
-              )}
-            </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setManageSection('players');
+                        setCurrentView('manage');
+                      }}
+                      style={{
+                        background: 'rgba(255, 149, 0, 0.16)',
+                        border: '1px solid #FF9500',
+                        color: '#FFFFFF',
+                        borderRadius: '10px',
+                        padding: '10px 16px',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      📝 Register New Player (4-Digit Code)
+                    </button>
+                  </>
+                )}
+
+                {playerUser && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('player-dashboard')}
+                      style={{
+                        background: currentView === 'player-dashboard' ? '#FF9500' : '#1C1C1E',
+                        color: currentView === 'player-dashboard' ? '#16201B' : '#6CE5A0',
+                        border: '1px solid #3F7A4E',
+                        borderRadius: '10px',
+                        padding: '10px 16px',
+                        fontSize: '12.5px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      👤 Player Dashboard ({playerUser.name})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVotingInitialTab('ballot');
+                        setCurrentView('voting');
+                      }}
+                      style={{
+                        background: 'rgba(255, 149, 0, 0.15)',
+                        color: '#FF9500',
+                        border: '1px solid #FF9500',
+                        borderRadius: '10px',
+                        padding: '8px 14px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      🗳️ Cast Player Vote
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Quick Stats Strip */}

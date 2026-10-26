@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export default function TopNav({
   syncStatus,
@@ -14,6 +14,23 @@ export default function TopNav({
   onLogoutPlayer,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const loginDropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (loginDropdownRef.current && !loginDropdownRef.current.contains(event.target)) {
+        setIsLoginOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
 
   const statusText =
     syncStatus === 'synced'
@@ -83,122 +100,250 @@ export default function TopNav({
             <span>{statusText}</span>
           </div>
 
-          {/* Player Auth Status */}
-          {playerUser ? (
-            <div
-              className="desktop-auth-pill"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: 'var(--bg-surface-elevated)',
-                border: 'var(--hairline-border)',
-                borderRadius: '999px',
-                padding: '4px 10px',
-                fontSize: '11.5px',
-                color: 'var(--text-primary)',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => onNavigate && onNavigate('player-dashboard')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: currentView === 'player-dashboard' ? 'var(--accent-orange-vibrant)' : '#FFFFFF',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  padding: 0,
-                  fontSize: '11.5px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                ⚽ <strong>{playerUser.name}</strong>
-              </button>
-              <button
-                type="button"
-                onClick={() => (onLogoutPlayer ? onLogoutPlayer() : onLogout && onLogout('player'))}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--status-danger)',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  padding: '1px 3px',
-                }}
-                title="Sign out"
-              >
-                ✕
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => onOpenAuthModal && onOpenAuthModal('player')}
-              className="admin-link desktop-auth-btn"
-              style={{
-                fontSize: '11.5px',
-                padding: '4px 10px',
-                minHeight: '34px',
-                cursor: 'pointer',
-              }}
-            >
-              ⚽ Sign In
-            </button>
-          )}
-
-          {/* Manager Auth Button */}
-          {!playerUser && (
-            cmsUser && isCmsMode ? (
-              <button
-                type="button"
-                onClick={() => onNavigate && onNavigate('manage')}
-                className="admin-link desktop-auth-btn"
-                style={{
-                  background: currentView === 'manage' ? 'var(--accent-orange)' : 'var(--bg-surface-elevated)',
-                  color: currentView === 'manage' ? '#000000' : 'var(--text-primary)',
-                  fontSize: '11.5px',
-                  padding: '4px 10px',
-                  minHeight: '34px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                }}
-              >
-                🛠️ CMS
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onOpenAuthModal && onOpenAuthModal('cms')}
-                className="admin-link desktop-auth-btn"
-                style={{
-                  background: 'var(--accent-orange)',
-                  color: '#000000',
-                  fontSize: '11.5px',
-                  padding: '4px 10px',
-                  minHeight: '34px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                }}
-              >
-                🔐 CMS
-              </button>
-            )
-          )}
-
           {/* Hamburger Menu Toggle Button for Small Screens */}
           <button
             type="button"
             className="hamburger-btn"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={() => {
+              setIsMenuOpen(!isMenuOpen);
+              setIsLoginOpen(false);
+            }}
             aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
             aria-expanded={isMenuOpen}
           >
             {isMenuOpen ? '✕' : '☰'}
           </button>
+
+          {/* Unified Log In Dropdown: Placed immediately after Hamburger Menu */}
+          <div className="login-dropdown-wrapper" ref={loginDropdownRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className="login-dropdown-btn"
+              onClick={() => {
+                setIsLoginOpen(!isLoginOpen);
+                setIsMenuOpen(false);
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: isLoginOpen
+                  ? '#FF9500'
+                  : playerUser || cmsUser
+                  ? 'var(--bg-surface-elevated)'
+                  : '#FF9500',
+                color: isLoginOpen
+                  ? '#000000'
+                  : playerUser || cmsUser
+                  ? 'var(--text-primary)'
+                  : '#16201B',
+                border: playerUser || cmsUser
+                  ? '1px solid rgba(255, 255, 255, 0.16)'
+                  : '1px solid #FF9500',
+                borderRadius: '999px',
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                minHeight: '34px',
+                transition: 'all 0.15s ease',
+                boxShadow: isLoginOpen || (!playerUser && !cmsUser) ? '0 2px 10px rgba(255, 149, 0, 0.25)' : 'none',
+              }}
+              aria-label="Account Login and Profile"
+              aria-expanded={isLoginOpen}
+            >
+              <span>
+                {playerUser
+                  ? `⚽ ${playerUser.name}`
+                  : cmsUser
+                  ? `🛠️ ${cmsUser.username || 'Manager'}`
+                  : 'Log in'}
+              </span>
+              <span
+                style={{
+                  fontSize: '9px',
+                  display: 'inline-block',
+                  transform: isLoginOpen ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.2s ease',
+                }}
+              >
+                ▼
+              </span>
+            </button>
+
+            {/* Dropdown Menu when clicked */}
+            {isLoginOpen && (
+              <div
+                className="login-dropdown-menu"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  minWidth: '280px',
+                  background: 'rgba(20, 20, 22, 0.98)',
+                  backdropFilter: 'blur(24px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                  border: '1px solid rgba(255, 255, 255, 0.14)',
+                  borderRadius: '16px',
+                  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 149, 0, 0.25)',
+                  padding: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  zIndex: 1100,
+                }}
+              >
+                {/* 1. Manager Login */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLoginOpen(false);
+                    if (cmsUser && isCmsMode) {
+                      if (onNavigate) onNavigate('manage');
+                    } else {
+                      if (onOpenAuthModal) onOpenAuthModal('cms');
+                    }
+                  }}
+                  className="login-dropdown-item"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: 'background 0.12s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <span style={{ fontSize: '18px' }}>🔐</span>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 800, color: '#FFFFFF' }}>
+                      {cmsUser && isCmsMode ? 'Manager Dashboard (Active)' : 'Manager Login'}
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#8E8E93', marginTop: '1px' }}>
+                      Fixtures, team rosters &amp; settings
+                    </span>
+                  </div>
+                </button>
+
+                {/* 2. Player Sign In (Dashboard and Voting) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLoginOpen(false);
+                    if (playerUser) {
+                      if (onNavigate) onNavigate('player-dashboard');
+                    } else {
+                      if (onOpenAuthModal) onOpenAuthModal('player');
+                    }
+                  }}
+                  className="login-dropdown-item"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: 'background 0.12s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <span style={{ fontSize: '18px' }}>⚽</span>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 800, color: '#FFFFFF' }}>
+                      {playerUser ? `Player Dashboard (${playerUser.name})` : 'Player Sign In (Dashboard and Voting)'}
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#8E8E93', marginTop: '1px' }}>
+                      Official TOTW/TOTT ballots &amp; profile
+                    </span>
+                  </div>
+                </button>
+
+                {/* Logged in User Management / Sign Out */}
+                {(playerUser || cmsUser) && (
+                  <>
+                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
+                    {playerUser && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsLoginOpen(false);
+                          if (onLogoutPlayer) onLogoutPlayer();
+                          else if (onLogout) onLogout('player');
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#FF453A',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 69, 58, 0.1)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <span>🚪</span> Sign Out Player ({playerUser.name})
+                      </button>
+                    )}
+                    {cmsUser && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsLoginOpen(false);
+                          if (onLogoutCms) onLogoutCms();
+                          else if (onLogout) onLogout('cms');
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#FF453A',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 69, 58, 0.1)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <span>🚪</span> Sign Out Manager
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -278,62 +423,6 @@ export default function TopNav({
                   </button>
                 );
               })}
-            </div>
-
-            <div className="hamburger-dropdown-divider" />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '8px' }}>
-              {playerUser ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onNavigate && onNavigate('player-dashboard');
-                  }}
-                  className="hamburger-action-btn"
-                  style={{ background: 'rgba(255, 149, 0, 0.15)', color: 'var(--accent-orange-vibrant)' }}
-                >
-                  ⚽ Player Dashboard ({playerUser.name})
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onOpenAuthModal && onOpenAuthModal('player');
-                  }}
-                  className="hamburger-action-btn"
-                  style={{ background: '#1C1C1E', color: '#FFFFFF' }}
-                >
-                  ⚽ Player Sign In (Vote & Dashboard)
-                </button>
-              )}
-
-              {cmsUser && isCmsMode ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onNavigate && onNavigate('manage');
-                  }}
-                  className="hamburger-action-btn"
-                  style={{ background: 'var(--accent-orange)', color: '#000000', fontWeight: 800 }}
-                >
-                  🛠️ Manager Dashboard Active
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onOpenAuthModal && onOpenAuthModal('cms');
-                  }}
-                  className="hamburger-action-btn"
-                  style={{ background: 'var(--accent-orange)', color: '#000000', fontWeight: 800 }}
-                >
-                  🔐 Open Manager Dashboard
-                </button>
-              )}
             </div>
           </div>
         </div>
