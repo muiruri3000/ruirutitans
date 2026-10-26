@@ -1,4 +1,5 @@
 import json
+from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponse, Http404
 from rest_framework import status, views, viewsets, permissions
@@ -849,12 +850,17 @@ class AdminPlayerRegisterAPIView(views.APIView):
     def post(self, request):
         from .services import register_player_by_admin
         payload = request.data or {}
+        first_name = payload.get("first_name") or payload.get("firstName")
+        surname = payload.get("surname")
         name = payload.get("name")
         username = payload.get("username")
         team_id = payload.get("team_id") or payload.get("teamId")
         category_key = payload.get("category_key") or payload.get("categoryKey") or "open"
         position = payload.get("position", "")
         jersey_number = payload.get("jersey_number") or payload.get("jerseyNumber")
+        date_of_birth = payload.get("date_of_birth") or payload.get("dob")
+        active_foot = payload.get("active_foot") or payload.get("activeFoot") or "right"
+        preferred_positions = payload.get("preferred_positions") or payload.get("preferredPositions")
 
         try:
             player, code = register_player_by_admin(
@@ -864,14 +870,83 @@ class AdminPlayerRegisterAPIView(views.APIView):
                 username=username,
                 position=position,
                 jersey_number=jersey_number,
+                first_name=first_name,
+                surname=surname,
+                date_of_birth=date_of_birth,
+                active_foot=active_foot,
+                preferred_positions=preferred_positions,
             )
             return Response({
                 "success": True,
                 "player": player.to_dict(),
                 "code": code,
                 "username": player.username,
-                "message": f"Player '{player.name}' registered successfully! 4-digit activation code: {code}",
+                "message": f"Player '{player.name}' registered successfully! Username: @{player.username}. 4-digit code: {code}",
             }, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PlayerUpdateProfileAPIView(views.APIView):
+    """
+    POST /api/players/update-profile/
+    Allows logged-in player (or CMS Admin) to update player personal details:
+    first_name, surname, date_of_birth, username, active_foot, preferred_positions.
+    """
+    def post(self, request):
+        from .services import (
+            get_authenticated_player_from_request,
+            get_authenticated_cms_from_request,
+            update_player_profile,
+        )
+        payload = request.data or {}
+        auth_player = get_authenticated_player_from_request(request)
+        auth_cms = get_authenticated_cms_from_request(request)
+
+        target_player = None
+        if auth_cms:
+            player_id = payload.get("player_id") or payload.get("id") or payload.get("username")
+            category_key = payload.get("category_key") or payload.get("categoryKey")
+            qs = Player.objects.filter(is_unknown=False)
+            if category_key:
+                qs = qs.filter(team__category__key=category_key)
+            if player_id:
+                target_player = qs.filter(
+                    Q(player_id=player_id) | Q(username__iexact=player_id) | Q(name__iexact=player_id)
+                ).first()
+
+        if not target_player and auth_player:
+            pid = auth_player.get("player_id") or auth_player.get("id")
+            cat_k = auth_player.get("category_key")
+            qs = Player.objects.filter(is_unknown=False)
+            if cat_k:
+                qs = qs.filter(team__category__key=cat_k)
+            target_player = qs.filter(Q(player_id=pid) | Q(username__iexact=auth_player.get("username"))).first()
+
+        if not target_player:
+            return Response({"error": "Authentication required to update player profile."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            updated_player = update_player_profile(target_player, payload)
+            p_dict = updated_player.to_dict()
+            p_dict["team_id"] = updated_player.team.team_id
+            p_dict["team_name"] = updated_player.team.name
+            p_dict["team_color"] = updated_player.team.color
+            p_dict["category_key"] = updated_player.team.category.key
+            p_dict["first_name"] = updated_player.first_name
+            p_dict["surname"] = updated_player.surname
+            p_dict["dob"] = str(updated_player.date_of_birth) if updated_player.date_of_birth else ""
+            p_dict["date_of_birth"] = str(updated_player.date_of_birth) if updated_player.date_of_birth else ""
+            p_dict["active_foot"] = updated_player.active_foot
+            p_dict["preferred_positions"] = updated_player.preferred_positions
+            # Update session if player is logged in
+            if hasattr(request, "session") and "titans_player" in request.session:
+                request.session["titans_player"] = p_dict
+            return Response({
+                "success": True,
+                "message": f"Personal details for @{updated_player.username} updated successfully!",
+                "player": p_dict,
+            })
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

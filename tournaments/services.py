@@ -3263,10 +3263,15 @@ def generate_four_digit_code():
 def register_player_by_admin(
     category_key,
     team_id,
-    name,
+    name=None,
     username=None,
     position="",
     jersey_number=None,
+    first_name=None,
+    surname=None,
+    date_of_birth=None,
+    active_foot="right",
+    preferred_positions=None,
 ):
     """
     Registers a new club player by Admin.
@@ -3286,9 +3291,15 @@ def register_player_by_admin(
     if not team:
         raise ValueError(f"Team '{team_id}' not found in category '{category.label}'.")
 
-    clean_name = str(name or "").strip()
+    f_name = str(first_name or "").strip()
+    s_name = str(surname or "").strip()
+    if f_name or s_name:
+        clean_name = f"{f_name} {s_name}".strip()
+    else:
+        clean_name = str(name or "").strip()
+
     if not clean_name:
-        raise ValueError("Player name is required.")
+        raise ValueError("Player name (first name and surname) is required.")
 
     # Player number is strictly mandatory in registration
     if jersey_number is None or str(jersey_number).strip() == "":
@@ -3323,11 +3334,30 @@ def register_player_by_admin(
 
     code = generate_four_digit_code()
 
+    parsed_dob = None
+    if date_of_birth:
+        from datetime import datetime, date
+        if isinstance(date_of_birth, (datetime, date)):
+            parsed_dob = date_of_birth
+        else:
+            try:
+                parsed_dob = datetime.strptime(str(date_of_birth)[:10], "%Y-%m-%d").date()
+            except ValueError:
+                parsed_dob = None
+
+    pos_list = preferred_positions if isinstance(preferred_positions, list) else []
+    primary_pos = position or (pos_list[0] if pos_list else "")
+
     player = Player.objects.create(
         team=team,
         name=clean_name,
+        first_name=f_name,
+        surname=s_name,
+        date_of_birth=parsed_dob,
+        active_foot=str(active_foot or "right").strip().lower(),
+        preferred_positions=pos_list,
         username=uname,
-        position=position or "",
+        position=primary_pos,
         jersey_number=j_num,
         password=code,
         temp_code=code,
@@ -3337,6 +3367,64 @@ def register_player_by_admin(
     )
 
     return player, code
+
+
+def update_player_profile(player_record, data):
+    """
+    Updates a player's personal details:
+    - first_name, surname, date_of_birth, username, active_foot, preferred_positions
+    """
+    from datetime import datetime, date
+    first_name = str(data.get("first_name", "") or data.get("firstName", "")).strip()
+    surname = str(data.get("surname", "")).strip()
+    dob_raw = data.get("date_of_birth") or data.get("dob")
+    active_foot = str(data.get("active_foot", "") or data.get("activeFoot", "")).strip().lower()
+    pref_positions = data.get("preferred_positions") or data.get("preferredPositions")
+    new_username = str(data.get("username", "")).strip()
+
+    if first_name:
+        player_record.first_name = first_name
+    if surname:
+        player_record.surname = surname
+    if first_name or surname:
+        player_record.name = f"{player_record.first_name} {player_record.surname}".strip()
+
+    if dob_raw:
+        if isinstance(dob_raw, (datetime, date)):
+            player_record.date_of_birth = dob_raw
+        else:
+            try:
+                player_record.date_of_birth = datetime.strptime(str(dob_raw)[:10], "%Y-%m-%d").date()
+            except ValueError:
+                pass
+
+    if active_foot in ("left", "right", "both"):
+        player_record.active_foot = active_foot
+
+    if isinstance(pref_positions, list):
+        player_record.preferred_positions = pref_positions
+        if pref_positions:
+            if not player_record.position or player_record.position not in pref_positions:
+                player_record.position = pref_positions[0]
+
+    player_pos = str(data.get("position", "")).strip()
+    if player_pos:
+        player_record.position = player_pos
+
+    if new_username:
+        norm_uname = slugify(new_username).replace("-", "_")
+        if norm_uname and norm_uname != player_record.username:
+            # Check uniqueness within this category
+            existing = Player.objects.filter(
+                team__category=player_record.team.category,
+                username__iexact=norm_uname,
+            ).exclude(pk=player_record.pk).exists()
+            if existing:
+                raise ValueError(f"Username '@{norm_uname}' is already in use by another player.")
+            player_record.username = norm_uname
+
+    player_record.save()
+    return player_record
 
 
 def reset_player_password_by_admin(username_or_ident, category_key=None, team_id=None):
@@ -3769,6 +3857,12 @@ def authenticate_player_credentials(
         "permanent_id": player.player_id,
         "username": player.username or slugify(player.name).replace("-", "_"),
         "name": player.name,
+        "first_name": player.first_name or (player.name.split(" ", 1)[0] if player.name else ""),
+        "surname": player.surname or (player.name.split(" ", 1)[1] if (player.name and " " in player.name) else ""),
+        "dob": str(player.date_of_birth) if player.date_of_birth else "",
+        "date_of_birth": str(player.date_of_birth) if player.date_of_birth else "",
+        "active_foot": player.active_foot or "right",
+        "preferred_positions": player.preferred_positions or ([player.position] if player.position else []),
         "position": player.position or "",
         "jersey_number": player.jersey_number,
         "team_id": player.team.team_id,
@@ -3818,6 +3912,12 @@ def _resolve_active_player_record(payload, require_cv=True):
         "permanent_id": player.player_id,
         "username": player.username or slugify(player.name).replace("-", "_"),
         "name": player.name,
+        "first_name": player.first_name or (player.name.split(" ", 1)[0] if player.name else ""),
+        "surname": player.surname or (player.name.split(" ", 1)[1] if (player.name and " " in player.name) else ""),
+        "dob": str(player.date_of_birth) if player.date_of_birth else "",
+        "date_of_birth": str(player.date_of_birth) if player.date_of_birth else "",
+        "active_foot": player.active_foot or "right",
+        "preferred_positions": player.preferred_positions or ([player.position] if player.position else []),
         "position": player.position or "",
         "jersey_number": player.jersey_number,
         "team_id": player.team.team_id,

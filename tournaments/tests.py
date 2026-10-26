@@ -1665,6 +1665,88 @@ class PlayerManagementAndJerseyTests(TestCase):
         self.assertTrue(self.player.must_change_password)
         self.assertEqual(self.player.temp_code, data["code"])
 
+    def test_register_player_with_personal_details(self):
+        url = reverse("tournaments:api_admin_players_register")
+        payload = {
+            "category_key": "test-league",
+            "team_id": "TL1",
+            "first_name": "Samuel",
+            "surname": "Kibe",
+            "date_of_birth": "2002-05-14",
+            "username": "samuel_kibe",
+            "active_foot": "left",
+            "preferred_positions": ["ST", "LW"],
+            "jersey_number": 9,
+        }
+        res = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=self.cms_token,
+        )
+        self.assertEqual(res.status_code, 201)
+        data = res.json()
+        self.assertEqual(data["username"], "samuel_kibe")
+        p = data["player"]
+        self.assertEqual(p["name"], "Samuel Kibe")
+        self.assertEqual(p["firstName"], "Samuel")
+        self.assertEqual(p["surname"], "Kibe")
+        self.assertEqual(p["dob"], "2002-05-14")
+        self.assertEqual(p["activeFoot"], "left")
+        self.assertEqual(p["preferredPositions"], ["ST", "LW"])
+        self.assertEqual(p["position"], "ST")
+
+    def test_player_update_profile_and_login_with_new_username(self):
+        from tournaments.services import create_signed_token, get_player_credential_fingerprint
+        p_token = create_signed_token(
+            {
+                "role": "player",
+                "player_id": self.player.player_id,
+                "category_key": "test-league",
+                "_cv": get_player_credential_fingerprint(self.player),
+            },
+            salt="titans-player-auth",
+        )
+
+        update_url = reverse("tournaments:api_player_update_profile")
+        update_res = self.client.post(
+            update_url,
+            data=json.dumps({
+                "first_name": "Victor",
+                "surname": "Mugubi",
+                "date_of_birth": "1991-06-25",
+                "username": "wanyama_lion",
+                "active_foot": "both",
+                "preferred_positions": ["CDM", "CM", "CB"],
+            }),
+            content_type="application/json",
+            HTTP_X_TITANS_PLAYER_TOKEN=p_token,
+        )
+        self.assertEqual(update_res.status_code, 200)
+        u_data = update_res.json()
+        self.assertEqual(u_data["player"]["username"], "wanyama_lion")
+        self.assertEqual(u_data["player"]["firstName"], "Victor")
+        self.assertEqual(u_data["player"]["surname"], "Mugubi")
+        self.assertEqual(u_data["player"]["name"], "Victor Mugubi")
+        self.assertEqual(u_data["player"]["dob"], "1991-06-25")
+        self.assertEqual(u_data["player"]["activeFoot"], "both")
+        self.assertEqual(u_data["player"]["preferredPositions"], ["CDM", "CM", "CB"])
+
+        # Verify player can now log in using the newly set username
+        login_url = reverse("tournaments:api_auth_player_login")
+        login_res = self.client.post(
+            login_url,
+            data=json.dumps({
+                "username": "wanyama_lion",
+                "password": "titans_secret",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(login_res.status_code, 200)
+        l_data = login_res.json()
+        self.assertEqual(l_data["player"]["username"], "wanyama_lion")
+        self.assertEqual(l_data["player"]["name"], "Victor Mugubi")
+
     def test_toggle_player_status_disable_and_enable(self):
         toggle_url = reverse("tournaments:api_admin_players_toggle_status")
         login_url = reverse("tournaments:api_auth_player_login")

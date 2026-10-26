@@ -283,6 +283,16 @@ class Player(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players")
     player_id = models.CharField(max_length=64)
     name = models.CharField(max_length=128)
+    first_name = models.CharField(max_length=64, blank=True, default="")
+    surname = models.CharField(max_length=64, blank=True, default="")
+    date_of_birth = models.DateField(null=True, blank=True)
+    active_foot = models.CharField(
+        max_length=16,
+        blank=True,
+        default="right",
+        choices=[("left", "Left"), ("right", "Right"), ("both", "Both")],
+    )
+    preferred_positions = models.JSONField(default=list, blank=True)
     username = models.CharField(max_length=64, blank=True, default="")
     password = models.CharField(max_length=128, blank=True, default="")
     position = models.CharField(
@@ -403,6 +413,16 @@ class Player(models.Model):
                     seq += 1
                 self.player_id = f"{prefix}-P{seq}"
 
+        if self.first_name or self.surname:
+            self.name = f"{self.first_name} {self.surname}".strip()
+        elif self.name and not (self.first_name or self.surname):
+            parts = self.name.strip().split(" ", 1)
+            self.first_name = parts[0]
+            self.surname = parts[1] if len(parts) > 1 else ""
+
+        if isinstance(self.preferred_positions, list) and self.preferred_positions and not self.position:
+            self.position = self.preferred_positions[0]
+
         if not self.is_unknown:
             if not self.username:
                 base_slug = slugify(self.name).replace("-", "_") or self.player_id.lower().replace("-", "_")
@@ -424,12 +444,20 @@ class Player(models.Model):
         default_uname = self.username or (
             slugify(self.name).replace("-", "_") if not self.is_unknown else ""
         )
+        first_n = self.first_name or (self.name.split(" ", 1)[0] if self.name else "")
+        sur_n = self.surname or (self.name.split(" ", 1)[1] if (self.name and " " in self.name) else "")
         res = {
             "id": self.player_id,
             "permanentId": self.player_id,
             "name": self.name,
+            "firstName": first_n,
+            "surname": sur_n,
+            "dob": str(self.date_of_birth) if self.date_of_birth else "",
+            "dateOfBirth": str(self.date_of_birth) if self.date_of_birth else "",
             "username": default_uname,
-            "position": self.position or "",
+            "activeFoot": self.active_foot or "right",
+            "preferredPositions": self.preferred_positions or ([self.position] if self.position else []),
+            "position": self.position or (self.preferred_positions[0] if (isinstance(self.preferred_positions, list) and self.preferred_positions) else ""),
             "jerseyNumber": self.jersey_number,
             "mustChangePassword": bool(self.must_change_password),
             "isActive": bool(self.is_active),
