@@ -44,21 +44,33 @@ function JerseyRowCarousel({
   cmsUser,
   onNavigateManageHomepage,
 }) {
-  const PAGE_SIZE = 4;
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') return window.innerWidth <= 640;
+    return false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // On mobile show 1 kit per view; on tablet/desktop show 2 kits per view so it always carousels
+  const pageSize = isMobile ? 1 : 2;
   const pages = useMemo(() => {
     if (!photos || photos.length === 0) return [];
     const chunks = [];
-    for (let i = 0; i < photos.length; i += PAGE_SIZE) {
-      chunks.push(photos.slice(i, i + PAGE_SIZE));
+    for (let i = 0; i < photos.length; i += pageSize) {
+      chunks.push(photos.slice(i, i + pageSize));
     }
     return chunks;
-  }, [photos]);
+  }, [photos, pageSize]);
 
   const [activePageIdx, setActivePageIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [touchStartX, setTouchStartX] = useState(null);
 
-  // Auto-advance carousel by 4 (next page of 4) at row's specific speed
+  // Auto-advance carousel smoothly at row's specific speed
   useEffect(() => {
     if (pages.length <= 1 || isPaused) return;
     const timer = setInterval(() => {
@@ -221,7 +233,7 @@ function JerseyRowCarousel({
               }}
             >
               {pages.length > 1
-                ? `${activePageIdx * PAGE_SIZE + 1}–${Math.min((activePageIdx + 1) * PAGE_SIZE, photos.length)} / ${photos.length}`
+                ? `${activePageIdx * pageSize + 1}–${Math.min((activePageIdx + 1) * pageSize, photos.length)} / ${photos.length}`
                 : `${photos.length} Kits`}
             </span>
           )}
@@ -232,7 +244,7 @@ function JerseyRowCarousel({
               <button
                 type="button"
                 onClick={handlePrev}
-                aria-label="Previous 4 kits"
+                aria-label="Previous kits"
                 style={{
                   background: '#1C1C1E',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -249,7 +261,7 @@ function JerseyRowCarousel({
               <button
                 type="button"
                 onClick={handleNext}
-                aria-label="Next 4 kits"
+                aria-label="Next kits"
                 style={{
                   background: '#1C1C1E',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -323,11 +335,14 @@ function JerseyRowCarousel({
             {pages.map((group, pageIndex) => (
               <div
                 key={pageIndex}
-                className="jersey-four-grid"
                 style={{
                   flex: '0 0 100%',
                   minWidth: '100%',
                   boxSizing: 'border-box',
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${group.length}, minmax(0, 1fr))`,
+                  gap: '16px',
+                  padding: '2px',
                 }}
               >
                 {group.map((item, idx) => (
@@ -473,54 +488,76 @@ function JerseyRowCarousel({
             <>
               <button
                 type="button"
-                aria-label="Previous 4 kits"
+                aria-label="Previous kits"
                 onClick={handlePrev}
                 style={{
                   position: 'absolute',
-                  left: '10px',
+                  left: '12px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  width: '36px',
-                  height: '36px',
+                  width: '42px',
+                  height: '42px',
                   borderRadius: '50%',
-                  background: 'rgba(8, 32, 24, 0.88)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(18, 18, 18, 0.88)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                   color: '#FFFFFF',
                   cursor: 'pointer',
                   fontWeight: 900,
-                  fontSize: '18px',
+                  fontSize: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  zIndex: 2,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                  zIndex: 4,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                  transition: 'transform 0.15s ease, background 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 149, 0, 0.9)';
+                  e.currentTarget.style.color = '#000000';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(18, 18, 18, 0.88)';
+                  e.currentTarget.style.color = '#FFFFFF';
                 }}
               >
                 ‹
               </button>
               <button
                 type="button"
-                aria-label="Next 4 kits"
+                aria-label="Next kits"
                 onClick={handleNext}
                 style={{
                   position: 'absolute',
-                  right: '10px',
+                  right: '12px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  width: '36px',
-                  height: '36px',
+                  width: '42px',
+                  height: '42px',
                   borderRadius: '50%',
-                  background: 'rgba(8, 32, 24, 0.88)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(18, 18, 18, 0.88)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                   color: '#FFFFFF',
                   cursor: 'pointer',
                   fontWeight: 900,
-                  fontSize: '18px',
+                  fontSize: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  zIndex: 2,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                  zIndex: 4,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                  transition: 'transform 0.15s ease, background 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 149, 0, 0.9)';
+                  e.currentTarget.style.color = '#000000';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(18, 18, 18, 0.88)';
+                  e.currentTarget.style.color = '#FFFFFF';
                 }}
               >
                 ›
