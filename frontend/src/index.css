@@ -562,88 +562,36 @@ button {
 }
 
 /* ==========================================================================
-   MOBILE-FIRST iOS BOTTOM TAB BAR & ACCESSIBILITY (APPLE HIG)
+   MOBILE-FIRST TOP NAVIGATION & RESPONSIVENESS (APPLE HIG)
    ========================================================================== */
-
-/* Bottom tab bar container: hidden on desktop, visible on mobile */
-.mobile-tab-bar {
-  display: none;
-}
 
 @media (max-width: 768px) {
   .top-nav-bar {
-    position: static !important;
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 850 !important;
+    padding: 8px 12px !important;
   }
 
+  /* Fixed at TOP right under header on mobile */
   .club-section-navbar {
-    top: max(8px, env(safe-area-inset-top, 0px)) !important;
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 48px !important;
+    z-index: 840 !important;
     border-radius: 12px !important;
-    padding: 6px 8px !important;
+    padding: 6px 8px 10px !important;
     margin-bottom: 12px !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7) !important;
   }
 
   .desktop-nav-segments {
     display: none !important;
   }
 
-  .mobile-tab-bar {
-    display: flex !important;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 950;
-    background: rgba(18, 18, 18, 0.88);
-    backdrop-filter: blur(28px) saturate(190%);
-    -webkit-backdrop-filter: blur(28px) saturate(190%);
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    padding-top: 8px;
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    justify-content: space-around;
-    align-items: center;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
-  }
-
-  .mobile-tab-item {
-    background: none;
-    border: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    min-width: 58px;
-    min-height: 44px;
-    padding: 0 4px;
-    transition: color 0.15s ease, transform 0.12s ease;
-  }
-
-  .mobile-tab-item .tab-icon {
-    font-size: 20px;
-    line-height: 1;
-  }
-
-  .mobile-tab-item .tab-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-  }
-
-  .mobile-tab-item.active {
-    color: var(--accent-orange-vibrant);
-  }
-
-  .mobile-tab-item.active .tab-icon {
-    transform: scale(1.08);
-  }
-
   body {
-    padding-bottom: calc(74px + var(--safe-bottom)) !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
   }
 
   main {
