@@ -181,8 +181,8 @@ export default function HighlightsView({
       {/* Top Header Card */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #0B281F 0%, #0F382B 100%)',
-          border: '1px solid #2B5746',
+          background: 'linear-gradient(135deg, #121212 0%, #0F382B 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '16px',
           padding: '24px',
           boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
@@ -197,9 +197,9 @@ export default function HighlightsView({
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span
               style={{
-                background: 'rgba(201, 162, 39, 0.2)',
-                border: '1px solid #C9A227',
-                color: '#C9A227',
+                background: 'rgba(255, 149, 0, 0.2)',
+                border: '1px solid #FF9500',
+                color: '#FF9500',
                 padding: '2px 8px',
                 borderRadius: '999px',
                 fontSize: '11px',
@@ -209,20 +209,20 @@ export default function HighlightsView({
             >
               🎥 MATCH HIGHLIGHTS &amp; REPLAYS
             </span>
-            <span style={{ fontSize: '11px', color: '#8FA89B' }}>Ruiru Titans FC Official Channel</span>
+            <span style={{ fontSize: '11px', color: '#8E8E93' }}>Ruiru Titans FC Official Channel</span>
           </div>
           <h1
             className="scoreboard"
             style={{
               margin: '0 0 6px',
               fontSize: '28px',
-              color: '#F4F2EA',
+              color: '#FFFFFF',
               letterSpacing: '0.04em',
             }}
           >
             TITANS HIGHLIGHT REEL &amp; VIDEO VAULT
           </h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#9BB5A8', maxWidth: '640px' }}>
+          <p style={{ margin: 0, fontSize: '13px', color: '#8E8E93', maxWidth: '640px' }}>
             Catch all the key goals, wonder strikes, goalkeeper saves, and pivotal tournament moments from Thoome Pri.
             Featuring match replays, YouTube uploads, and exclusive club recordings.
           </p>
@@ -234,7 +234,7 @@ export default function HighlightsView({
             type="button"
             onClick={handleOpenAddModal}
             style={{
-              background: '#C9A227',
+              background: '#FF9500',
               color: '#16201B',
               border: 'none',
               padding: '10px 18px',
@@ -245,7 +245,7 @@ export default function HighlightsView({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              boxShadow: '0 4px 12px rgba(201, 162, 39, 0.3)',
+              boxShadow: '0 4px 12px rgba(255, 149, 0, 0.3)',
             }}
           >
             ➕ Upload / Add Highlight
@@ -258,7 +258,7 @@ export default function HighlightsView({
         <section
           style={{
             background: '#0B261D',
-            border: '1px solid #1E4636',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '16px',
             overflow: 'hidden',
             boxShadow: '0 12px 30px rgba(0,0,0,0.4)',
@@ -327,7 +327,7 @@ export default function HighlightsView({
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                   <span
                     style={{
-                      background: '#163E31',
+                      background: '#1C1C1E',
                       color: '#4ADE80',
                       border: '1px solid #2F7D5C',
                       padding: '2px 8px',
@@ -339,21 +339,21 @@ export default function HighlightsView({
                     🏆 {categories[activePlayerVideo.categoryKey]?.label || activePlayerVideo.categoryKey || 'Titans Tournament'}
                   </span>
                   {activePlayerVideo.matchDate && (
-                    <span style={{ fontSize: '11.5px', color: '#C9A227', fontWeight: 600 }}>
+                    <span style={{ fontSize: '11.5px', color: '#FF9500', fontWeight: 600 }}>
                       📅 {activePlayerVideo.matchDate}
                     </span>
                   )}
                   {activePlayerVideo.duration && (
-                    <span style={{ fontSize: '11.5px', color: '#8FA89B' }}>
+                    <span style={{ fontSize: '11.5px', color: '#8E8E93' }}>
                       ⏱️ {activePlayerVideo.duration}
                     </span>
                   )}
                 </div>
-                <h2 style={{ margin: '0 0 8px', fontSize: '20px', color: '#F4F2EA', fontWeight: 800 }}>
+                <h2 style={{ margin: '0 0 8px', fontSize: '20px', color: '#FFFFFF', fontWeight: 800 }}>
                   {activePlayerVideo.title}
                 </h2>
                 {activePlayerVideo.description && (
-                  <p style={{ margin: 0, fontSize: '13px', color: '#9BB5A8', lineHeight: 1.5, maxWidth: '800px' }}>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#8E8E93', lineHeight: 1.5, maxWidth: '800px' }}>
                     {activePlayerVideo.description}
                   </p>
                 )}
@@ -385,8 +385,8 @@ export default function HighlightsView({
       {/* Filter and Search Bar */}
       <div
         style={{
-          background: '#0F2E24',
-          border: '1px solid #1E4636',
+          background: '#121212',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '12px',
           padding: '12px 16px',
           display: 'flex',
@@ -397,7 +397,7 @@ export default function HighlightsView({
         }}
       >
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase' }}>
             Filter by:
           </span>
           <button
@@ -406,9 +406,9 @@ export default function HighlightsView({
             style={{
               padding: '6px 12px',
               borderRadius: '999px',
-              border: selectedCategory === 'all' ? '1px solid #C9A227' : '1px solid #2B5746',
-              background: selectedCategory === 'all' ? '#C9A227' : '#113328',
-              color: selectedCategory === 'all' ? '#16201B' : '#DDE6DF',
+              border: selectedCategory === 'all' ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+              background: selectedCategory === 'all' ? '#FF9500' : '#121212',
+              color: selectedCategory === 'all' ? '#16201B' : '#EBEBF5',
               fontSize: '11.5px',
               fontWeight: 800,
               cursor: 'pointer',
@@ -424,9 +424,9 @@ export default function HighlightsView({
               style={{
                 padding: '6px 12px',
                 borderRadius: '999px',
-                border: selectedCategory === key ? '1px solid #C9A227' : '1px solid #2B5746',
-                background: selectedCategory === key ? '#C9A227' : '#113328',
-                color: selectedCategory === key ? '#16201B' : '#DDE6DF',
+                border: selectedCategory === key ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                background: selectedCategory === key ? '#FF9500' : '#121212',
+                color: selectedCategory === key ? '#16201B' : '#EBEBF5',
                 fontSize: '11.5px',
                 fontWeight: 800,
                 cursor: 'pointer',
@@ -445,11 +445,11 @@ export default function HighlightsView({
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               background: '#0B261D',
-              border: '1px solid #2B5746',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '8px',
               padding: '7px 12px',
               fontSize: '12px',
-              color: '#F4F2EA',
+              color: '#FFFFFF',
               outline: 'none',
               width: '200px',
             }}
@@ -461,7 +461,7 @@ export default function HighlightsView({
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#8FA89B',
+                color: '#8E8E93',
                 cursor: 'pointer',
                 fontSize: '13px',
               }}
@@ -474,22 +474,22 @@ export default function HighlightsView({
 
       {/* Highlights Video Grid */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '48px', color: '#8FA89B' }}>
+        <div style={{ textAlign: 'center', padding: '48px', color: '#8E8E93' }}>
           Loading Ruiru Titans highlights…
         </div>
       ) : filteredHighlights.length === 0 ? (
         <div
           style={{
-            background: '#0F2E24',
-            border: '1px dashed #2B5746',
+            background: '#121212',
+            border: '1px dashed rgba(255, 255, 255, 0.1)',
             borderRadius: '14px',
             padding: '40px 20px',
             textAlign: 'center',
           }}
         >
           <div style={{ fontSize: '32px', marginBottom: '8px' }}>🎥</div>
-          <h3 style={{ margin: '0 0 6px', color: '#F4F2EA', fontSize: '18px' }}>No Highlights Found</h3>
-          <p style={{ margin: '0 auto 16px', color: '#8FA89B', fontSize: '13px', maxWidth: '420px' }}>
+          <h3 style={{ margin: '0 0 6px', color: '#FFFFFF', fontSize: '18px' }}>No Highlights Found</h3>
+          <p style={{ margin: '0 auto 16px', color: '#8E8E93', fontSize: '13px', maxWidth: '420px' }}>
             {searchQuery || selectedCategory !== 'all'
               ? 'Try adjusting your search query or competition filter.'
               : 'Highlights will be posted as the tournament progresses.'}
@@ -499,7 +499,7 @@ export default function HighlightsView({
               type="button"
               onClick={handleOpenAddModal}
               style={{
-                background: '#C9A227',
+                background: '#FF9500',
                 color: '#16201B',
                 border: 'none',
                 padding: '8px 16px',
@@ -527,8 +527,8 @@ export default function HighlightsView({
               <div
                 key={item.id}
                 style={{
-                  background: isCurrentPlaying ? '#133A2D' : '#0F2E24',
-                  border: isCurrentPlaying ? '2px solid #C9A227' : '1px solid #1E4636',
+                  background: isCurrentPlaying ? '#133A2D' : '#121212',
+                  border: isCurrentPlaying ? '2px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '12px',
                   overflow: 'hidden',
                   display: 'flex',
@@ -585,7 +585,7 @@ export default function HighlightsView({
                             width: '44px',
                             height: '44px',
                             borderRadius: '50%',
-                            background: '#C9A227',
+                            background: '#FF9500',
                             color: '#16201B',
                             display: 'flex',
                             alignItems: 'center',
@@ -600,9 +600,9 @@ export default function HighlightsView({
                       </div>
                     </div>
                   ) : (
-                    <div style={{ textAlign: 'center', color: '#8FA89B' }}>
+                    <div style={{ textAlign: 'center', color: '#8E8E93' }}>
                       <div style={{ fontSize: '32px', marginBottom: '4px' }}>🎬</div>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#C9A227' }}>Click to Play Match Video</span>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#FF9500' }}>Click to Play Match Video</span>
                     </div>
                   )}
 
@@ -614,7 +614,7 @@ export default function HighlightsView({
                         bottom: '8px',
                         right: '8px',
                         background: 'rgba(0,0,0,0.8)',
-                        color: '#F4F2EA',
+                        color: '#FFFFFF',
                         fontSize: '11px',
                         fontWeight: 700,
                         padding: '2px 6px',
@@ -648,10 +648,10 @@ export default function HighlightsView({
                 {/* Card Info */}
                 <div style={{ padding: '14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '11px', color: '#C9A227', fontWeight: 700 }}>
+                    <span style={{ fontSize: '11px', color: '#FF9500', fontWeight: 700 }}>
                       {categories[item.categoryKey]?.label || item.categoryKey || 'Titans'}
                     </span>
-                    <span style={{ fontSize: '11px', color: '#8FA89B' }}>
+                    <span style={{ fontSize: '11px', color: '#8E8E93' }}>
                       {item.matchDate}
                     </span>
                   </div>
@@ -660,7 +660,7 @@ export default function HighlightsView({
                     style={{
                       margin: '0 0 6px',
                       fontSize: '14.5px',
-                      color: isCurrentPlaying ? '#C9A227' : '#F4F2EA',
+                      color: isCurrentPlaying ? '#FF9500' : '#FFFFFF',
                       fontWeight: 800,
                       lineHeight: 1.3,
                     }}
@@ -673,7 +673,7 @@ export default function HighlightsView({
                       style={{
                         margin: '0 0 12px',
                         fontSize: '12px',
-                        color: '#8FA89B',
+                        color: '#8E8E93',
                         lineHeight: 1.4,
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
@@ -745,7 +745,7 @@ export default function HighlightsView({
           <div
             style={{
               background: '#0B261D',
-              border: '1px solid #2B5746',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '16px',
               padding: '24px',
               maxWidth: '520px',
@@ -757,13 +757,13 @@ export default function HighlightsView({
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 className="scoreboard" style={{ margin: 0, fontSize: '20px', color: '#F4F2EA' }}>
+              <h2 className="scoreboard" style={{ margin: 0, fontSize: '20px', color: '#FFFFFF' }}>
                 🎥 UPLOAD / ADD HIGHLIGHT VIDEO
               </h2>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                style={{ background: 'none', border: 'none', color: '#8FA89B', fontSize: '18px', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: '#8E8E93', fontSize: '18px', cursor: 'pointer' }}
               >
                 ✕
               </button>
@@ -788,7 +788,7 @@ export default function HighlightsView({
             <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {/* Video Source Type */}
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#C9A227', fontWeight: 800, marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#FF9500', fontWeight: 800, marginBottom: '6px' }}>
                   Video Source:
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
@@ -798,9 +798,9 @@ export default function HighlightsView({
                     style={{
                       padding: '8px',
                       borderRadius: '8px',
-                      border: formVideoType === 'youtube' ? '1px solid #C9A227' : '1px solid #1E4636',
-                      background: formVideoType === 'youtube' ? '#C9A227' : '#0F2E24',
-                      color: formVideoType === 'youtube' ? '#16201B' : '#DDE6DF',
+                      border: formVideoType === 'youtube' ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                      background: formVideoType === 'youtube' ? '#FF9500' : '#121212',
+                      color: formVideoType === 'youtube' ? '#16201B' : '#EBEBF5',
                       fontSize: '11px',
                       fontWeight: 800,
                       cursor: 'pointer',
@@ -814,9 +814,9 @@ export default function HighlightsView({
                     style={{
                       padding: '8px',
                       borderRadius: '8px',
-                      border: formVideoType === 'upload' ? '1px solid #C9A227' : '1px solid #1E4636',
-                      background: formVideoType === 'upload' ? '#C9A227' : '#0F2E24',
-                      color: formVideoType === 'upload' ? '#16201B' : '#DDE6DF',
+                      border: formVideoType === 'upload' ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                      background: formVideoType === 'upload' ? '#FF9500' : '#121212',
+                      color: formVideoType === 'upload' ? '#16201B' : '#EBEBF5',
                       fontSize: '11px',
                       fontWeight: 800,
                       cursor: 'pointer',
@@ -830,9 +830,9 @@ export default function HighlightsView({
                     style={{
                       padding: '8px',
                       borderRadius: '8px',
-                      border: formVideoType === 'external' ? '1px solid #C9A227' : '1px solid #1E4636',
-                      background: formVideoType === 'external' ? '#C9A227' : '#0F2E24',
-                      color: formVideoType === 'external' ? '#16201B' : '#DDE6DF',
+                      border: formVideoType === 'external' ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                      background: formVideoType === 'external' ? '#FF9500' : '#121212',
+                      color: formVideoType === 'external' ? '#16201B' : '#EBEBF5',
                       fontSize: '11px',
                       fontWeight: 800,
                       cursor: 'pointer',
@@ -845,7 +845,7 @@ export default function HighlightsView({
 
               {/* Title */}
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#8FA89B', fontWeight: 700, marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#8E8E93', fontWeight: 700, marginBottom: '4px' }}>
                   Highlight Title *
                 </label>
                 <input
@@ -856,12 +856,12 @@ export default function HighlightsView({
                   style={{
                     width: '100%',
                     boxSizing: 'border-box',
-                    background: '#0F2E24',
-                    border: '1px solid #1E4636',
+                    background: '#121212',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     padding: '8px 12px',
                     fontSize: '13px',
-                    color: '#F4F2EA',
+                    color: '#FFFFFF',
                     outline: 'none',
                   }}
                   required
@@ -871,7 +871,7 @@ export default function HighlightsView({
               {/* Video URL or File Input */}
               {formVideoType === 'upload' ? (
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#8FA89B', fontWeight: 700, marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: '#8E8E93', fontWeight: 700, marginBottom: '4px' }}>
                     Select Video File (.mp4, .webm, .mov) *
                   </label>
                   <input
@@ -881,12 +881,12 @@ export default function HighlightsView({
                     style={{
                       width: '100%',
                       boxSizing: 'border-box',
-                      background: '#0F2E24',
+                      background: '#121212',
                       border: '1px dashed #2F7D5C',
                       borderRadius: '8px',
                       padding: '12px',
                       fontSize: '12px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       cursor: 'pointer',
                     }}
                     required
@@ -899,7 +899,7 @@ export default function HighlightsView({
                 </div>
               ) : (
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#8FA89B', fontWeight: 700, marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: '#8E8E93', fontWeight: 700, marginBottom: '4px' }}>
                     {formVideoType === 'youtube' ? 'YouTube Video or Shorts Link *' : 'Direct Video Link (.mp4 / stream) *'}
                   </label>
                   <input
@@ -914,12 +914,12 @@ export default function HighlightsView({
                     style={{
                       width: '100%',
                       boxSizing: 'border-box',
-                      background: '#0F2E24',
-                      border: '1px solid #1E4636',
+                      background: '#121212',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '8px 12px',
                       fontSize: '13px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       outline: 'none',
                     }}
                     required
@@ -930,7 +930,7 @@ export default function HighlightsView({
               {/* Competition & Match Date */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#8FA89B', fontWeight: 700, marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: '#8E8E93', fontWeight: 700, marginBottom: '4px' }}>
                     Competition
                   </label>
                   <select
@@ -939,12 +939,12 @@ export default function HighlightsView({
                     style={{
                       width: '100%',
                       boxSizing: 'border-box',
-                      background: '#0F2E24',
-                      border: '1px solid #1E4636',
+                      background: '#121212',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '8px 12px',
                       fontSize: '13px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       outline: 'none',
                     }}
                   >
@@ -957,7 +957,7 @@ export default function HighlightsView({
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#8FA89B', fontWeight: 700, marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: '#8E8E93', fontWeight: 700, marginBottom: '4px' }}>
                     Match Date
                   </label>
                   <input
@@ -968,12 +968,12 @@ export default function HighlightsView({
                     style={{
                       width: '100%',
                       boxSizing: 'border-box',
-                      background: '#0F2E24',
-                      border: '1px solid #1E4636',
+                      background: '#121212',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '8px 12px',
                       fontSize: '13px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       outline: 'none',
                     }}
                   />
@@ -983,7 +983,7 @@ export default function HighlightsView({
               {/* Match Name & Duration */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#8FA89B', fontWeight: 700, marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: '#8E8E93', fontWeight: 700, marginBottom: '4px' }}>
                     Fixture / Match Name
                   </label>
                   <input
@@ -994,19 +994,19 @@ export default function HighlightsView({
                     style={{
                       width: '100%',
                       boxSizing: 'border-box',
-                      background: '#0F2E24',
-                      border: '1px solid #1E4636',
+                      background: '#121212',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '8px 12px',
                       fontSize: '13px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       outline: 'none',
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: '#8FA89B', fontWeight: 700, marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: '#8E8E93', fontWeight: 700, marginBottom: '4px' }}>
                     Duration (e.g. 08:42)
                   </label>
                   <input
@@ -1017,12 +1017,12 @@ export default function HighlightsView({
                     style={{
                       width: '100%',
                       boxSizing: 'border-box',
-                      background: '#0F2E24',
-                      border: '1px solid #1E4636',
+                      background: '#121212',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '8px 12px',
                       fontSize: '13px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       outline: 'none',
                     }}
                   />
@@ -1031,7 +1031,7 @@ export default function HighlightsView({
 
               {/* Description */}
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#8FA89B', fontWeight: 700, marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#8E8E93', fontWeight: 700, marginBottom: '4px' }}>
                   Description / Match Story
                 </label>
                 <textarea
@@ -1042,12 +1042,12 @@ export default function HighlightsView({
                   style={{
                     width: '100%',
                     boxSizing: 'border-box',
-                    background: '#0F2E24',
-                    border: '1px solid #1E4636',
+                    background: '#121212',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     padding: '8px 12px',
                     fontSize: '13px',
-                    color: '#F4F2EA',
+                    color: '#FFFFFF',
                     outline: 'none',
                     resize: 'vertical',
                   }}
@@ -1061,8 +1061,8 @@ export default function HighlightsView({
                   onClick={() => setShowAddModal(false)}
                   style={{
                     background: 'none',
-                    border: '1px solid #2B5746',
-                    color: '#8FA89B',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#8E8E93',
                     padding: '8px 16px',
                     borderRadius: '8px',
                     fontSize: '13px',
@@ -1076,7 +1076,7 @@ export default function HighlightsView({
                   type="submit"
                   disabled={submitting}
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     border: 'none',
                     padding: '8px 20px',

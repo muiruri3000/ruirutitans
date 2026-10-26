@@ -2,7 +2,7 @@ export const CORE_FIVE_TEAMS = [
   {
     "id": "MAN",
     "name": "Mancheli",
-    "color": "#C9A227",
+    "color": "#FF9500",
     "players": []
   },
   {
@@ -20,7 +20,7 @@ export const CORE_FIVE_TEAMS = [
   {
     "id": "MAS",
     "name": "Masters",
-    "color": "#D97B29",
+    "color": "#FF9500",
     "players": []
   },
   {
@@ -195,7 +195,7 @@ export const OPEN_2026_ARCHIVED_SEASON = {
     {
       "id": "MAS",
       "name": "Masters",
-      "color": "#D97B29",
+      "color": "#FF9500",
       "players": [
         {
           "id": "MAS-P1",
@@ -232,7 +232,7 @@ export const OPEN_2026_ARCHIVED_SEASON = {
     {
       "id": "MAN",
       "name": "Mancheli",
-      "color": "#C9A227",
+      "color": "#FF9500",
       "players": [
         {
           "id": "MAN-P1",
@@ -1253,7 +1253,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     {
       "id": "MAN",
       "name": "Mancheli",
-      "color": "#C9A227",
+      "color": "#FF9500",
       "players": [
         {
           "id": "MAN-UNK",
@@ -1507,7 +1507,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     {
       "id": "MAS",
       "name": "Masters",
-      "color": "#D97B29",
+      "color": "#FF9500",
       "players": [
         {
           "id": "MAS-UNK",

@@ -4,24 +4,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="csrf-token" content="{{ csrf_token }}" />
   <title>Ruiru Titans — Football Leagues &amp; Cups</title>
   <link rel="icon" type="image/jpeg" href="{% static 'images/club-logo.jpg' %}" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/titans.css' %}?v=20261026-tactics-hash" />
+  <link rel="stylesheet" href="{% static 'css/titans-2HfkIrS6.css' %}?v=20261026-apple" />
 </head>
-<body>
+<body style="background: #000000; color: #FFFFFF; margin: 0; padding: 0;">
   <div id="root">
-    <div style="font-family: 'Inter', sans-serif; padding: 40px; color: #8FA89B; text-align: center;">
-      <img src="{% static 'images/club-logo.jpg' %}" alt="Ruiru Titans" style="width: 64px; height: 64px; margin-bottom: 16px; object-fit: contain;" />
-      <div style="color: #F4F2EA; font-weight: 600; font-size: 16px;">Loading Ruiru Titans Tournament Platform…</div>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; padding: 60px 20px; color: #8E8E93; text-align: center; min-height: 100vh; background: #000000; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      <img src="{% static 'images/club-logo.jpg' %}" alt="Ruiru Titans" style="width: 72px; height: 72px; margin-bottom: 20px; object-fit: contain; border-radius: 16px; border: 2px solid #FF9500; box-shadow: 0 8px 24px rgba(255, 149, 0, 0.3);" />
+      <div style="color: #FFFFFF; font-weight: 700; font-size: 17px; letter-spacing: -0.01em;">Loading Ruiru Titans Official Portal…</div>
+      <div style="color: #8E8E93; font-size: 13px; margin-top: 6px;">Apple HIG Mobile First · 2026 Season</div>
     </div>
   </div>
 
   <noscript>
-    <div style="padding: 20px; color: #EF4444; text-align: center;">
+    <div style="padding: 20px; color: #FF453A; text-align: center; background: #121212;">
       JavaScript is required to run the Ruiru Titans tournament platform.
     </div>
   </noscript>
@@ -29,7 +33,7 @@
   <script>
     window.CLUB_LOGO_URL = "{% static 'images/club-logo.jpg' %}";
   </script>
-  <script type="module" src="{% static 'js/titans.js' %}?v=20261026-tactics-hash"></script>
+  <script type="module" src="{% static 'js/titans-tq3woWg8.js' %}?v=20261026-apple"></script>
 </body>
 </html>
 

@@ -32,7 +32,7 @@ const FIXTURE_CATEGORY_OPTIONS = [
 ];
 
 const LEAGUE_PALETTE = [
-  '#B23A2E', '#C9A227', '#2E5A8F', '#3F7A4E', '#7A3F8F', '#D97B29',
+  '#B23A2E', '#FF9500', '#2E5A8F', '#3F7A4E', '#7A3F8F', '#FF9500',
   '#1F6E5C', '#8F2E5A', '#4E4E4E', '#2E7A7A', '#A2451F', '#3F5A2E',
   '#0284C7', '#7C3AED', '#DB2777', '#059669',
 ];
@@ -742,8 +742,8 @@ export default function ManageView({
       {/* Admin Section Switcher */}
       <div
         style={{
-          background: '#0F2E24',
-          border: '1px solid #1E4636',
+          background: '#121212',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '12px',
           padding: '10px',
           display: 'flex',
@@ -759,8 +759,8 @@ export default function ManageView({
             padding: '10px 14px',
             borderRadius: '8px',
             border: 'none',
-            background: adminSection === 'players' ? '#C9A227' : '#16352A',
-            color: adminSection === 'players' ? '#16201B' : '#DDE6DF',
+            background: adminSection === 'players' ? '#FF9500' : '#1C1C1E',
+            color: adminSection === 'players' ? '#16201B' : '#EBEBF5',
             fontWeight: 800,
             fontSize: '12.5px',
             cursor: 'pointer',
@@ -776,8 +776,8 @@ export default function ManageView({
             padding: '10px 14px',
             borderRadius: '8px',
             border: 'none',
-            background: adminSection === 'balancer' ? '#C9A227' : '#16352A',
-            color: adminSection === 'balancer' ? '#16201B' : '#DDE6DF',
+            background: adminSection === 'balancer' ? '#FF9500' : '#1C1C1E',
+            color: adminSection === 'balancer' ? '#16201B' : '#EBEBF5',
             fontWeight: 800,
             fontSize: '12.5px',
             cursor: 'pointer',
@@ -793,8 +793,8 @@ export default function ManageView({
             padding: '10px 14px',
             borderRadius: '8px',
             border: 'none',
-            background: adminSection === 'homepage' ? '#C9A227' : '#16352A',
-            color: adminSection === 'homepage' ? '#16201B' : '#DDE6DF',
+            background: adminSection === 'homepage' ? '#FF9500' : '#1C1C1E',
+            color: adminSection === 'homepage' ? '#16201B' : '#EBEBF5',
             fontWeight: 800,
             fontSize: '12.5px',
             cursor: 'pointer',
@@ -810,8 +810,8 @@ export default function ManageView({
             padding: '10px 14px',
             borderRadius: '8px',
             border: 'none',
-            background: adminSection === 'voting' ? '#C9A227' : '#16352A',
-            color: adminSection === 'voting' ? '#16201B' : '#DDE6DF',
+            background: adminSection === 'voting' ? '#FF9500' : '#1C1C1E',
+            color: adminSection === 'voting' ? '#16201B' : '#EBEBF5',
             fontWeight: 800,
             fontSize: '12.5px',
             cursor: 'pointer',
@@ -827,8 +827,8 @@ export default function ManageView({
             padding: '10px 14px',
             borderRadius: '8px',
             border: 'none',
-            background: adminSection === 'teams' ? '#C9A227' : '#16352A',
-            color: adminSection === 'teams' ? '#16201B' : '#DDE6DF',
+            background: adminSection === 'teams' ? '#FF9500' : '#1C1C1E',
+            color: adminSection === 'teams' ? '#16201B' : '#EBEBF5',
             fontWeight: 800,
             fontSize: '12.5px',
             cursor: 'pointer',
@@ -844,8 +844,8 @@ export default function ManageView({
             padding: '10px 14px',
             borderRadius: '8px',
             border: 'none',
-            background: adminSection === 'security' ? '#C9A227' : '#16352A',
-            color: adminSection === 'security' ? '#16201B' : '#DDE6DF',
+            background: adminSection === 'security' ? '#FF9500' : '#1C1C1E',
+            color: adminSection === 'security' ? '#16201B' : '#EBEBF5',
             fontWeight: 800,
             fontSize: '12.5px',
             cursor: 'pointer',
@@ -884,7 +884,7 @@ export default function ManageView({
       {/* ALWAYS-ACCESSIBLE REFEREES FORM (ANY COMPETITION) & SOFT-DELETE / RESTORE BAR */}
       <div
         style={{
-          background: '#0F2E24',
+          background: '#121212',
           border: '1px solid #2A5A46',
           borderRadius: '12px',
           padding: '16px 18px',
@@ -896,8 +896,8 @@ export default function ManageView({
         {/* Left Column: Referees Form for Any Competition */}
         <div
           style={{
-            background: '#08231B',
-            border: '1px solid #1E4636',
+            background: '#121212',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '10px',
             padding: '14px',
             display: 'flex',
@@ -907,10 +907,10 @@ export default function ManageView({
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 🧑‍⚖️ Referees Form &amp; Randomizer (Any Competition)
               </div>
-              <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+              <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                 Add referees for any League/Cup/Tournament and randomize across unplayed fixtures.
               </div>
             </div>
@@ -958,7 +958,7 @@ export default function ManageView({
                   <button
                     type="submit"
                     className="stat-btn"
-                    style={{ background: '#C9A227', color: '#16201B', fontWeight: 800, padding: '8px 14px' }}
+                    style={{ background: '#FF9500', color: '#16201B', fontWeight: 800, padding: '8px 14px' }}
                   >
                     + Add Referee(s)
                   </button>
@@ -974,7 +974,7 @@ export default function ManageView({
                         );
                       }}
                       style={{
-                        background: '#163E31',
+                        background: '#1C1C1E',
                         color: '#6CE5A0',
                         border: '1px solid #2F7D5C',
                         fontWeight: 800,
@@ -988,7 +988,7 @@ export default function ManageView({
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {targetRefs.length === 0 ? (
-                    <span style={{ fontSize: '11px', color: '#8FA89B' }}>
+                    <span style={{ fontSize: '11px', color: '#8E8E93' }}>
                       No referees added to &ldquo;{targetCat?.label}&rdquo; yet.
                     </span>
                   ) : (
@@ -1004,7 +1004,7 @@ export default function ManageView({
                           borderRadius: '999px',
                           padding: '3px 10px',
                           fontSize: '11.5px',
-                          color: '#F4F2EA',
+                          color: '#FFFFFF',
                           fontWeight: 600,
                         }}
                       >
@@ -1028,8 +1028,8 @@ export default function ManageView({
         {/* Right Column: Soft Delete & Trash / Archive Restore */}
         <div
           style={{
-            background: '#08231B',
-            border: '1px solid #1E4636',
+            background: '#121212',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '10px',
             padding: '14px',
             display: 'flex',
@@ -1042,7 +1042,7 @@ export default function ManageView({
               <div style={{ fontSize: '12px', fontWeight: 800, color: '#F59E0B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 🗑️ Soft Delete &amp; Archived Competitions ({Object.keys(deletedCategories || {}).length})
               </div>
-              <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+              <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                 Soft-deleting hides a League, Cup, or Tournament while preserving all teams, fixtures &amp; votes so you can restore it anytime.
               </div>
             </div>
@@ -1084,7 +1084,7 @@ export default function ManageView({
                 <button
                   type="button"
                   className="stat-btn"
-                  style={{ background: '#2B4E40', color: '#FFF', padding: '5px 10px', fontSize: '11.5px' }}
+                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#FFF', padding: '5px 10px', fontSize: '11.5px' }}
                   onClick={() => setConfirmDelete(false)}
                 >
                   Cancel
@@ -1094,7 +1094,7 @@ export default function ManageView({
           </div>
 
           {Object.keys(deletedCategories || {}).length === 0 ? (
-            <div style={{ fontSize: '11.5px', color: '#6E9080', padding: '6px 0' }}>
+            <div style={{ fontSize: '11.5px', color: '#8E8E93', padding: '6px 0' }}>
               ✓ No soft-deleted competitions in the archive.
             </div>
           ) : (
@@ -1107,19 +1107,19 @@ export default function ManageView({
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     gap: '8px',
-                    background: '#0F2E24',
-                    border: '1px solid #2B4E40',
+                    background: '#121212',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     padding: '7px 10px',
                     flexWrap: 'wrap',
                   }}
                 >
                   <div>
-                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#F4F2EA' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#FFFFFF' }}>
                       {delCat.mode === 'cup' ? '🏆 ' : '📊 '}
                       {delCat.label || delKey}
                     </span>
-                    <span style={{ fontSize: '11px', color: '#8FA89B', marginLeft: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#8E8E93', marginLeft: '6px' }}>
                       ({(delCat.teams || []).length} teams)
                     </span>
                   </div>
@@ -1133,7 +1133,7 @@ export default function ManageView({
                         }}
                         style={{
                           background: '#2E8B57',
-                          color: '#F4F2EA',
+                          color: '#FFFFFF',
                           border: 'none',
                           borderRadius: '6px',
                           padding: '4px 10px',
@@ -1191,19 +1191,19 @@ export default function ManageView({
       {adminSection === 'homepage' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* 1A. Carousel Pictures Upload */}
-          <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '12px', padding: '18px' }}>
-            <div className="scoreboard" style={{ color: '#C9A227', fontSize: '22px', marginBottom: '4px' }}>
+          <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '18px' }}>
+            <div className="scoreboard" style={{ color: '#FF9500', fontSize: '22px', marginBottom: '4px' }}>
               📸 HOMEPAGE CAROUSEL PICTURES UPLOAD
             </div>
-            <p style={{ fontSize: '12px', color: '#8FA89B', margin: '0 0 14px' }}>
+            <p style={{ fontSize: '12px', color: '#8E8E93', margin: '0 0 14px' }}>
               Upload pictures from your device or paste an image URL to display in the main Homepage hero carousel.
             </p>
 
             <form
               onSubmit={handleAddCarouselSlide}
               style={{
-                background: '#08231B',
-                border: '1px solid #16352A',
+                background: '#121212',
+                border: '1px solid #1C1C1E',
                 borderRadius: '10px',
                 padding: '14px',
                 display: 'grid',
@@ -1213,7 +1213,7 @@ export default function ManageView({
               }}
             >
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Slide Headline / Title
                 </label>
                 <input
@@ -1225,7 +1225,7 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Subtitle / Caption
                 </label>
                 <input
@@ -1237,7 +1237,7 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Badge Tag
                 </label>
                 <input
@@ -1249,19 +1249,19 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#C9A227', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#FF9500', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                   Upload Picture File (JPG/PNG/SVG/WebP)
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={(e) => handleFileUploadToDataUrl(e.target.files?.[0], setSlideImage)}
-                  style={{ fontSize: '11.5px', color: '#DDE6DF', width: '100%' }}
+                  style={{ fontSize: '11.5px', color: '#EBEBF5', width: '100%' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Or Paste Image URL
                 </label>
                 <input
@@ -1273,11 +1273,11 @@ export default function ManageView({
               </div>
 
               {slideImage && (
-                <div style={{ gridColumn: '1 / -1', background: '#051611', padding: '10px', borderRadius: '8px', border: '1px solid #1E4636', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ gridColumn: '1 / -1', background: '#051611', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <img
                     src={slideImage}
                     alt="Preview"
-                    style={{ width: '120px', height: '70px', objectFit: 'contain', background: '#08231B', borderRadius: '6px' }}
+                    style={{ width: '120px', height: '70px', objectFit: 'contain', background: '#121212', borderRadius: '6px' }}
                   />
                   <div style={{ fontSize: '11.5px', color: '#6CE5A0' }}>
                     ✓ Image bounded and ready to add ({slideTitle || 'Slide'})
@@ -1291,7 +1291,7 @@ export default function ManageView({
                   className="stat-btn"
                   style={{
                     width: '100%',
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     fontWeight: 800,
                     padding: '10px 14px',
@@ -1308,8 +1308,8 @@ export default function ManageView({
                 <div
                   key={slide.id}
                   style={{
-                    background: '#08231B',
-                    border: '1px solid #1E4636',
+                    background: '#121212',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '10px',
                     overflow: 'hidden',
                   }}
@@ -1321,10 +1321,10 @@ export default function ManageView({
                   />
                   <div style={{ padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#F4F2EA', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {slide.title}
                       </div>
-                      <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>{slide.tag}</div>
+                      <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>{slide.tag}</div>
                     </div>
                     <button
                       type="button"
@@ -1349,11 +1349,11 @@ export default function ManageView({
           </div>
 
           {/* 1B. Jersey Photos Upload (U13, U15, U17, Wazae) */}
-          <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '12px', padding: '18px' }}>
-            <div className="scoreboard" style={{ color: '#C9A227', fontSize: '22px', marginBottom: '4px' }}>
+          <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '18px' }}>
+            <div className="scoreboard" style={{ color: '#FF9500', fontSize: '22px', marginBottom: '4px' }}>
               👕 JERSEY PHOTOS MANAGER (U13 • U15 • U17 • WAZAE)
             </div>
-            <p style={{ fontSize: '12px', color: '#8FA89B', margin: '0 0 14px' }}>
+            <p style={{ fontSize: '12px', color: '#8E8E93', margin: '0 0 14px' }}>
               Upload jersey photos for each squad row on the Homepage: U13, U15, U17, and Wazae.
             </p>
 
@@ -1367,9 +1367,9 @@ export default function ManageView({
                   style={{
                     padding: '8px 16px',
                     borderRadius: '8px',
-                    border: selectedJerseyGroup === grp.key ? '1px solid #C9A227' : '1px solid #2B4E40',
-                    background: selectedJerseyGroup === grp.key ? '#C9A227' : '#16352A',
-                    color: selectedJerseyGroup === grp.key ? '#16201B' : '#F4F2EA',
+                    border: selectedJerseyGroup === grp.key ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                    background: selectedJerseyGroup === grp.key ? '#FF9500' : '#1C1C1E',
+                    color: selectedJerseyGroup === grp.key ? '#16201B' : '#FFFFFF',
                     fontWeight: 800,
                     fontSize: '12px',
                     cursor: 'pointer',
@@ -1383,8 +1383,8 @@ export default function ManageView({
             <form
               onSubmit={handleAddJerseyPhoto}
               style={{
-                background: '#08231B',
-                border: '1px solid #16352A',
+                background: '#121212',
+                border: '1px solid #1C1C1E',
                 borderRadius: '10px',
                 padding: '14px',
                 display: 'grid',
@@ -1394,7 +1394,7 @@ export default function ManageView({
               }}
             >
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Jersey Title ({selectedJerseyGroup.toUpperCase()})
                 </label>
                 <input
@@ -1406,7 +1406,7 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Kit Description / Subtitle
                 </label>
                 <input
@@ -1418,7 +1418,7 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Kit Type Badge
                 </label>
                 <input
@@ -1430,19 +1430,19 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#C9A227', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#FF9500', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                   Upload Jersey Photo File
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={(e) => handleFileUploadToDataUrl(e.target.files?.[0], setJerseyImage)}
-                  style={{ fontSize: '11.5px', color: '#DDE6DF', width: '100%' }}
+                  style={{ fontSize: '11.5px', color: '#EBEBF5', width: '100%' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Or Paste Jersey Image URL
                 </label>
                 <input
@@ -1454,11 +1454,11 @@ export default function ManageView({
               </div>
 
               {jerseyImage && (
-                <div style={{ gridColumn: '1 / -1', background: '#051611', padding: '10px', borderRadius: '8px', border: '1px solid #1E4636', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ gridColumn: '1 / -1', background: '#051611', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <img
                     src={jerseyImage}
                     alt="Jersey Preview"
-                    style={{ width: '80px', height: '80px', objectFit: 'contain', background: '#08231B', borderRadius: '6px' }}
+                    style={{ width: '80px', height: '80px', objectFit: 'contain', background: '#121212', borderRadius: '6px' }}
                   />
                   <div style={{ fontSize: '11.5px', color: '#6CE5A0' }}>
                     ✓ Jersey image bounded and ready to add ({jerseyTitle || 'Jersey'})
@@ -1472,7 +1472,7 @@ export default function ManageView({
                   className="stat-btn"
                   style={{
                     width: '100%',
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     fontWeight: 800,
                     padding: '10px 14px',
@@ -1489,8 +1489,8 @@ export default function ManageView({
                 <div
                   key={photo.id}
                   style={{
-                    background: '#08231B',
-                    border: '1px solid #1E4636',
+                    background: '#121212',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '10px',
                     overflow: 'hidden',
                   }}
@@ -1502,10 +1502,10 @@ export default function ManageView({
                   />
                   <div style={{ padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#F4F2EA', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {photo.title}
                       </div>
-                      <div style={{ fontSize: '10px', color: '#C9A227' }}>{photo.badge}</div>
+                      <div style={{ fontSize: '10px', color: '#FF9500' }}>{photo.badge}</div>
                     </div>
                     <button
                       type="button"
@@ -1530,19 +1530,19 @@ export default function ManageView({
           </div>
 
           {/* 1C. Right Sidebar Upcoming Fixtures Manager */}
-          <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '12px', padding: '18px' }}>
-            <div className="scoreboard" style={{ color: '#C9A227', fontSize: '22px', marginBottom: '4px' }}>
+          <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '18px' }}>
+            <div className="scoreboard" style={{ color: '#FF9500', fontSize: '22px', marginBottom: '4px' }}>
               🗓️ HOMEPAGE RIGHT SIDEBAR UPCOMING FIXTURES
             </div>
-            <p style={{ fontSize: '12px', color: '#8FA89B', margin: '0 0 14px' }}>
+            <p style={{ fontSize: '12px', color: '#8E8E93', margin: '0 0 14px' }}>
               Schedule upcoming fixtures across categories (Internal, Friendly, Tournament, League, Cup) for quick viewing in the Homepage right sidebar.
             </p>
 
             <form
               onSubmit={handleAddUpcomingFixture}
               style={{
-                background: '#08231B',
-                border: '1px solid #16352A',
+                background: '#121212',
+                border: '1px solid #1C1C1E',
                 borderRadius: '10px',
                 padding: '14px',
                 display: 'grid',
@@ -1552,7 +1552,7 @@ export default function ManageView({
               }}
             >
               <div>
-                <label style={{ fontSize: '11px', color: '#C9A227', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#FF9500', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                   Fixture Category
                 </label>
                 <select
@@ -1560,9 +1560,9 @@ export default function ManageView({
                   onChange={(e) => setFixCategory(e.target.value)}
                   style={{
                     width: '100%',
-                    background: '#0F2E24',
-                    color: '#F4F2EA',
-                    border: '1px solid #2B4E40',
+                    background: '#121212',
+                    color: '#FFFFFF',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '6px',
                     padding: '8px 10px',
                     fontSize: '12px',
@@ -1578,7 +1578,7 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Match Title / Competition
                 </label>
                 <input
@@ -1590,7 +1590,7 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Home Team
                 </label>
                 <input
@@ -1602,7 +1602,7 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Away Team
                 </label>
                 <input
@@ -1614,7 +1614,7 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Date &amp; Kickoff Time
                 </label>
                 <input
@@ -1626,7 +1626,7 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                   Venue
                 </label>
                 <input
@@ -1643,7 +1643,7 @@ export default function ManageView({
                   className="stat-btn"
                   style={{
                     width: '100%',
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     fontWeight: 800,
                     padding: '10px 14px',
@@ -1659,8 +1659,8 @@ export default function ManageView({
                 <div
                   key={f.id}
                   style={{
-                    background: '#08231B',
-                    border: '1px solid #16352A',
+                    background: '#121212',
+                    border: '1px solid #1C1C1E',
                     borderRadius: '8px',
                     padding: '10px 14px',
                     display: 'flex',
@@ -1678,16 +1678,16 @@ export default function ManageView({
                         textTransform: 'uppercase',
                         padding: '2px 8px',
                         borderRadius: '999px',
-                        background: 'rgba(201,162,39,0.16)',
-                        color: '#C9A227',
+                        background: 'rgba(255, 149, 0,0.16)',
+                        color: '#FF9500',
                       }}
                     >
                       {f.category}
                     </span>
-                    <strong style={{ color: '#F4F2EA', fontSize: '13px' }}>
+                    <strong style={{ color: '#FFFFFF', fontSize: '13px' }}>
                       {f.home} vs {f.away}
                     </strong>
-                    <span style={{ color: '#8FA89B', fontSize: '12px' }}>
+                    <span style={{ color: '#8E8E93', fontSize: '12px' }}>
                       • {f.date} ({f.venue})
                     </span>
                   </div>
@@ -1717,7 +1717,7 @@ export default function ManageView({
           {/* Master Toggle Card for Voting Window (ON / OFF) */}
           <div
             style={{
-              background: '#0F2E24',
+              background: '#121212',
               border: votingRoundData?.is_open ? '2px solid #3F7A4E' : '2px solid #B23A2E',
               borderRadius: '12px',
               padding: '20px',
@@ -1728,11 +1728,11 @@ export default function ManageView({
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '20px' }}>{votingRoundData?.is_open ? '🟢' : '🔴'}</span>
-                  <div className="scoreboard" style={{ color: '#C9A227', fontSize: '22px' }}>
+                  <div className="scoreboard" style={{ color: '#FF9500', fontSize: '22px' }}>
                     WEEKLY VOTING WINDOW STATUS ({cat?.label || 'COMPETITION'})
                   </div>
                 </div>
-                <p style={{ fontSize: '13px', color: '#8FA89B', margin: '4px 0 0' }}>
+                <p style={{ fontSize: '13px', color: '#8E8E93', margin: '4px 0 0' }}>
                   Toggle player voting for the week ON or OFF. When OFF, voting is disabled and players cannot vote or submit ballots.
                 </p>
               </div>
@@ -1760,8 +1760,8 @@ export default function ManageView({
             {/* Current Round Details and Actions */}
             <div
               style={{
-                background: '#08231B',
-                border: '1px solid #1E4636',
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '10px',
                 padding: '16px',
                 display: 'flex',
@@ -1772,13 +1772,13 @@ export default function ManageView({
               }}
             >
               <div>
-                <div style={{ fontSize: '11px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Active Competition Round
                 </div>
-                <div style={{ fontSize: '18px', fontWeight: 800, color: '#F4F2EA', margin: '2px 0' }}>
+                <div style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF', margin: '2px 0' }}>
                   {votingRoundData?.title || 'Week 1'}
                 </div>
-                <div style={{ fontSize: '12.5px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '12.5px', color: '#8E8E93' }}>
                   {votingRoundData?.is_open
                     ? '✅ Voting is open! Registered players in this competition can select candidates and cast ballots.'
                     : '⛔ Voting is turned OFF. Player ballot submission is completely blocked and disabled.'}
@@ -1840,9 +1840,9 @@ export default function ManageView({
                   disabled={votingToggleLoading}
                   onClick={handleCreateNewVotingRound}
                   style={{
-                    background: '#16352A',
-                    color: '#C9A227',
-                    border: '1px solid #C9A227',
+                    background: '#1C1C1E',
+                    color: '#FF9500',
+                    border: '1px solid #FF9500',
                     borderRadius: '8px',
                     padding: '12px 18px',
                     fontSize: '13px',
@@ -1861,11 +1861,11 @@ export default function ManageView({
           </div>
 
           {/* Configuration Card: Team Size, Max Picks, Include GK */}
-          <div style={{ background: '#0F2E24', border: '1px solid #C9A227', borderRadius: '12px', padding: '20px' }}>
-            <div className="scoreboard" style={{ color: '#C9A227', fontSize: '22px', marginBottom: '6px' }}>
+          <div style={{ background: '#121212', border: '1px solid #FF9500', borderRadius: '12px', padding: '20px' }}>
+            <div className="scoreboard" style={{ color: '#FF9500', fontSize: '22px', marginBottom: '6px' }}>
               ⚙️ ADMIN VOTING CONFIGURATION — TOTW &amp; TEAM OF THE SEASON (TOTT)
             </div>
-            <p style={{ fontSize: '12.5px', color: '#8FA89B', margin: '0 0 18px' }}>
+            <p style={{ fontSize: '12.5px', color: '#8E8E93', margin: '0 0 18px' }}>
               Configure how many players are voted for and displayed in the Team of the Week (TOTW) and Team of the Season (TOTT), and toggle whether the Goalkeeper (GK) position is included. When GK is toggled OFF, GK is excluded from the voting ballot, TOTW, and TOTT.
             </p>
 
@@ -1878,11 +1878,11 @@ export default function ManageView({
                 alignItems: 'end',
               }}
             >
-              <div style={{ background: '#08231B', border: '1px solid #1E4636', borderRadius: '10px', padding: '14px' }}>
-                <label style={{ fontSize: '12.5px', fontWeight: 800, color: '#F4F2EA', display: 'block', marginBottom: '4px' }}>
+              <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '14px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', display: 'block', marginBottom: '4px' }}>
                   Number of Players in TOTW &amp; Season Lineup
                 </label>
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginBottom: '8px' }}>
                   Reflected directly in Team of the Week and Team of the Tournament/Season (e.g. 5, 6, 7, 11)
                 </div>
                 <input
@@ -1892,15 +1892,15 @@ export default function ManageView({
                   value={teamSize}
                   onChange={(e) => setTeamSize(e.target.value)}
                   className="form-input"
-                  style={{ fontWeight: 800, fontSize: '15px', color: '#C9A227' }}
+                  style={{ fontWeight: 800, fontSize: '15px', color: '#FF9500' }}
                 />
               </div>
 
-              <div style={{ background: '#08231B', border: '1px solid #1E4636', borderRadius: '10px', padding: '14px' }}>
-                <label style={{ fontSize: '12.5px', fontWeight: 800, color: '#F4F2EA', display: 'block', marginBottom: '4px' }}>
+              <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '14px' }}>
+                <label style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', display: 'block', marginBottom: '4px' }}>
                   Max Players Voted Per Outfield Position
                 </label>
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginBottom: '8px' }}>
                   How many players a voter can pick per position on their ballot (1–5)
                 </div>
                 <input
@@ -1910,20 +1910,20 @@ export default function ManageView({
                   value={maxPicks}
                   onChange={(e) => setMaxPicks(e.target.value)}
                   className="form-input"
-                  style={{ fontWeight: 800, fontSize: '15px', color: '#C9A227' }}
+                  style={{ fontWeight: 800, fontSize: '15px', color: '#FF9500' }}
                 />
               </div>
 
               <div
                 style={{
-                  background: '#08231B',
+                  background: '#121212',
                   border: includeGk ? '1px solid #3F7A4E' : '1px solid #B23A2E',
                   borderRadius: '10px',
                   padding: '14px',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#F4F2EA' }}>
+                  <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF' }}>
                     🧤 Include Goalkeeper (GK)
                   </span>
                   <span
@@ -1939,7 +1939,7 @@ export default function ManageView({
                     {includeGk ? 'INCLUDED' : 'EXCLUDED'}
                   </span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginBottom: '10px' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginBottom: '10px' }}>
                   {includeGk
                     ? 'Goalkeeper is included in ballot voting, TOTW, and TOTT.'
                     : 'Goalkeeper is excluded from ballot voting, TOTW, and TOTT.'}
@@ -1969,7 +1969,7 @@ export default function ManageView({
                   className="stat-btn"
                   style={{
                     width: '100%',
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     fontWeight: 800,
                     padding: '12px 18px',
@@ -1986,9 +1986,9 @@ export default function ManageView({
 
       {/* SECTION 3: CHAMPIONSHIP TEAMS, SQUAD POSITIONS & OFFICIALS */}
       {(adminSection === 'teams' || adminSection === 'players') && (
-        <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '12px', padding: '16px' }}>
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-            <div className="scoreboard" style={{ color: '#C9A227', fontSize: '20px' }}>
+            <div className="scoreboard" style={{ color: '#FF9500', fontSize: '20px' }}>
               CATEGORY SETTINGS &amp; TEAMS ({cat.label})
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -1996,7 +1996,7 @@ export default function ManageView({
                 type="button"
                 onClick={() => setShowAddTeamModal(true)}
                 style={{
-                  background: '#163E31',
+                  background: '#1C1C1E',
                   color: '#6CE5A0',
                   border: '1px solid #2F7D5C',
                   borderRadius: '6px',
@@ -2016,7 +2016,7 @@ export default function ManageView({
                   type="button"
                   onClick={onOpenEditCategory}
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     border: 'none',
                     borderRadius: '6px',
@@ -2080,7 +2080,7 @@ export default function ManageView({
                 <div style={{ fontWeight: 800, color: '#6CE5A0', fontSize: '13px' }}>
                   🎉 New League Team Added Successfully: {teamCreationMsg.name} ({teamCreationMsg.code})
                 </div>
-                <div style={{ fontSize: '11.5px', color: '#DDE6DF', marginTop: '2px' }}>
+                <div style={{ fontSize: '11.5px', color: '#EBEBF5', marginTop: '2px' }}>
                   Squad seeded with {teamCreationMsg.playersCount} player(s) · Generated {teamCreationMsg.fixturesCount || 'league'} match fixture(s) with automatic referee rotations. Standings, fixtures, and roster have been updated seamlessly!
                 </div>
               </div>
@@ -2088,8 +2088,8 @@ export default function ManageView({
                 type="button"
                 onClick={() => setTeamCreationMsg(null)}
                 style={{
-                  background: '#16352A',
-                  color: '#8FA89B',
+                  background: '#1C1C1E',
+                  color: '#8E8E93',
                   border: '1px solid #2F7D5C',
                   borderRadius: '6px',
                   padding: '4px 10px',
@@ -2114,8 +2114,8 @@ export default function ManageView({
             {/* CARD 1: Admin Register New Player */}
             <div
               style={{
-                background: '#08231B',
-                border: '1px solid #2B5746',
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '10px',
                 padding: '16px',
                 display: 'flex',
@@ -2124,10 +2124,10 @@ export default function ManageView({
               }}
             >
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   📝 Register New Player (4-Digit Activation Code)
                 </div>
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '2px', lineHeight: 1.4 }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px', lineHeight: 1.4 }}>
                   Registers a player and generates a 4-digit code. Hand the code to the player; upon first login, they are required to change password before accessing their dashboard.
                 </div>
               </div>
@@ -2140,7 +2140,7 @@ export default function ManageView({
                     borderRadius: '8px',
                     padding: '12px',
                     fontSize: '12px',
-                    color: '#F4F2EA',
+                    color: '#FFFFFF',
                   }}
                 >
                   <div style={{ fontWeight: 800, color: '#6CE5A0', marginBottom: '4px' }}>
@@ -2148,14 +2148,14 @@ export default function ManageView({
                   </div>
                   <div><strong>Player:</strong> {regSuccess.player?.name} (@{regSuccess.player?.username})</div>
                   <div><strong>Position:</strong> {regSuccess.player?.position} · <strong>Team:</strong> {regSuccess.player?.team_name || 'Assigned'}</div>
-                  <div style={{ marginTop: '8px', padding: '8px', background: '#051913', borderRadius: '6px', border: '1px dashed #C9A227' }}>
-                    <div style={{ fontSize: '11px', color: '#C9A227', fontWeight: 800, textTransform: 'uppercase' }}>
+                  <div style={{ marginTop: '8px', padding: '8px', background: '#051913', borderRadius: '6px', border: '1px dashed #FF9500' }}>
+                    <div style={{ fontSize: '11px', color: '#FF9500', fontWeight: 800, textTransform: 'uppercase' }}>
                       🔑 4-Digit Activation Code for Manager:
                     </div>
-                    <div style={{ fontSize: '24px', fontWeight: 900, color: '#F4F2EA', letterSpacing: '4px', margin: '4px 0' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 900, color: '#FFFFFF', letterSpacing: '4px', margin: '4px 0' }}>
                       {regSuccess.code}
                     </div>
-                    <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>
+                    <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>
                       Give this 4-digit code to {regSuccess.player?.name}. When they sign in with this code, they will be required to change their password to access their Player Dashboard.
                     </div>
                   </div>
@@ -2169,7 +2169,7 @@ export default function ManageView({
                         alert('Copied player credentials & activation code to clipboard!');
                       }}
                       style={{
-                        background: '#163E31',
+                        background: '#1C1C1E',
                         color: '#6CE5A0',
                         border: '1px solid #2F7D5C',
                         borderRadius: '6px',
@@ -2187,7 +2187,7 @@ export default function ManageView({
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#8FA89B',
+                        color: '#8E8E93',
                         fontSize: '11px',
                         cursor: 'pointer',
                         textDecoration: 'underline',
@@ -2207,7 +2207,7 @@ export default function ManageView({
 
               <form onSubmit={handleAdminRegisterPlayer} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div>
-                  <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                     Player Full Name *
                   </label>
                   <input
@@ -2222,7 +2222,7 @@ export default function ManageView({
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div>
-                    <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                    <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                       Assign to Team *
                     </label>
                     <select
@@ -2240,7 +2240,7 @@ export default function ManageView({
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                    <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                       Position *
                     </label>
                     <select
@@ -2259,7 +2259,7 @@ export default function ManageView({
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div>
-                    <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                    <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                       Username (Optional)
                     </label>
                     <input
@@ -2293,7 +2293,7 @@ export default function ManageView({
                   disabled={regLoading}
                   className="stat-btn"
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     fontWeight: 800,
                     padding: '9px 14px',
@@ -2309,8 +2309,8 @@ export default function ManageView({
             {/* CARD 2: Admin Reset Player Password by Username */}
             <div
               style={{
-                background: '#08231B',
-                border: '1px solid #2B5746',
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '10px',
                 padding: '16px',
                 display: 'flex',
@@ -2322,7 +2322,7 @@ export default function ManageView({
                 <div style={{ fontSize: '13px', fontWeight: 800, color: '#F59E0B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   🔑 Reset Player Password by Username
                 </div>
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '2px', lineHeight: 1.4 }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px', lineHeight: 1.4 }}>
                   Generates a new 4-digit code for an existing player. When the player signs in with this code, they are required to choose a new password before accessing their dashboard.
                 </div>
               </div>
@@ -2335,7 +2335,7 @@ export default function ManageView({
                     borderRadius: '8px',
                     padding: '12px',
                     fontSize: '12px',
-                    color: '#F4F2EA',
+                    color: '#FFFFFF',
                   }}
                 >
                   <div style={{ fontWeight: 800, color: '#F59E0B', marginBottom: '4px' }}>
@@ -2347,10 +2347,10 @@ export default function ManageView({
                     <div style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 800, textTransform: 'uppercase' }}>
                       🔑 New 4-Digit Reset Code:
                     </div>
-                    <div style={{ fontSize: '24px', fontWeight: 900, color: '#F4F2EA', letterSpacing: '4px', margin: '4px 0' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 900, color: '#FFFFFF', letterSpacing: '4px', margin: '4px 0' }}>
                       {resetSuccess.code}
                     </div>
-                    <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>
+                    <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>
                       Give this 4-digit code to the player. Upon entering it at sign-in, they will be prompted to set a new permanent password.
                     </div>
                   </div>
@@ -2364,7 +2364,7 @@ export default function ManageView({
                         alert('Copied reset code to clipboard!');
                       }}
                       style={{
-                        background: '#163E31',
+                        background: '#1C1C1E',
                         color: '#6CE5A0',
                         border: '1px solid #2F7D5C',
                         borderRadius: '6px',
@@ -2382,7 +2382,7 @@ export default function ManageView({
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#8FA89B',
+                        color: '#8E8E93',
                         fontSize: '11px',
                         cursor: 'pointer',
                         textDecoration: 'underline',
@@ -2402,7 +2402,7 @@ export default function ManageView({
 
               <form onSubmit={handleAdminResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {/* Search player by name or jersey # to get their username */}
-                <div style={{ background: '#051913', border: '1px dashed #2B5746', borderRadius: '8px', padding: '10px' }}>
+                <div style={{ background: '#051913', border: '1px dashed rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '10px' }}>
                   <div style={{ fontSize: '11px', color: '#6CE5A0', fontWeight: 800, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     🔍 Search Player by Name or Jersey #
                   </div>
@@ -2423,9 +2423,9 @@ export default function ManageView({
                           setResetSearchResults([]);
                         }}
                         style={{
-                          background: '#113328',
-                          border: '1px solid #2B5746',
-                          color: '#8FA89B',
+                          background: '#121212',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#8E8E93',
                           borderRadius: '6px',
                           padding: '0 8px',
                           fontSize: '11px',
@@ -2437,7 +2437,7 @@ export default function ManageView({
                     )}
                   </div>
                   {resetSearchLoading && (
-                    <div style={{ fontSize: '10.5px', color: '#8FA89B', marginTop: '4px' }}>
+                    <div style={{ fontSize: '10.5px', color: '#8E8E93', marginTop: '4px' }}>
                       Searching players…
                     </div>
                   )}
@@ -2463,9 +2463,9 @@ export default function ManageView({
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontWeight: 800, color: '#F4F2EA' }}>{p.name}</span>
+                            <span style={{ fontWeight: 800, color: '#FFFFFF' }}>{p.name}</span>
                             {p.jersey_number != null && (
-                              <span style={{ background: '#0B2920', border: '1px solid #C9A227', color: '#C9A227', borderRadius: '4px', padding: '0 4px', fontSize: '9.5px', fontWeight: 800 }}>
+                              <span style={{ background: '#0B2920', border: '1px solid #FF9500', color: '#FF9500', borderRadius: '4px', padding: '0 4px', fontSize: '9.5px', fontWeight: 800 }}>
                                 #{p.jersey_number}
                               </span>
                             )}
@@ -2474,9 +2474,9 @@ export default function ManageView({
                                 DISABLED
                               </span>
                             )}
-                            <span style={{ color: '#8FA89B', fontSize: '10px' }}>({p.team_name || 'Team'})</span>
+                            <span style={{ color: '#8E8E93', fontSize: '10px' }}>({p.team_name || 'Team'})</span>
                           </div>
-                          <span style={{ color: '#C9A227', fontWeight: 800, fontFamily: 'monospace' }}>
+                          <span style={{ color: '#FF9500', fontWeight: 800, fontFamily: 'monospace' }}>
                             @{p.username} ↵
                           </span>
                         </div>
@@ -2486,7 +2486,7 @@ export default function ManageView({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                     Player Username, ID, or Jersey Number *
                   </label>
                   <input
@@ -2499,7 +2499,7 @@ export default function ManageView({
                   />
                 </div>
 
-                <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>
                   💡 Tip: Enter player's username, permanent ID, or squad jersey number (#10) to generate their 4-digit reset code.
                 </div>
 
@@ -2524,8 +2524,8 @@ export default function ManageView({
             {/* CARD 3: Manager Account Password Change */}
             <div
               style={{
-                background: '#08231B',
-                border: '1px solid #2B5746',
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '10px',
                 padding: '16px',
                 display: 'flex',
@@ -2534,10 +2534,10 @@ export default function ManageView({
               }}
             >
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   🔐 Change Manager Password
                 </div>
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '2px', lineHeight: 1.4 }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px', lineHeight: 1.4 }}>
                   Update your Manager / Admin password. Signed in as <strong>@{cmsUser?.username || 'admin'}</strong>.
                 </div>
               </div>
@@ -2576,7 +2576,7 @@ export default function ManageView({
 
               <form onSubmit={handleChangeCmsPassword} style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
                 <div>
-                  <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                     Current Manager Password *
                   </label>
                   <PasswordInput
@@ -2588,7 +2588,7 @@ export default function ManageView({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                     New Password (min. 4 chars) *
                   </label>
                   <PasswordInput
@@ -2600,7 +2600,7 @@ export default function ManageView({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                     Confirm New Password *
                   </label>
                   <PasswordInput
@@ -2616,7 +2616,7 @@ export default function ManageView({
                   disabled={cmsPassLoading}
                   className="stat-btn"
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     fontWeight: 800,
                     padding: '9px 14px',
@@ -2632,8 +2632,8 @@ export default function ManageView({
             {/* CARD 4: Quick Player Transfer Between Teams */}
             <div
               style={{
-                background: '#08231B',
-                border: '1px solid #2B5746',
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '10px',
                 padding: '16px',
                 display: 'flex',
@@ -2642,17 +2642,17 @@ export default function ManageView({
               }}
             >
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   ⇄ Quick Player Transfer
                 </div>
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '2px', lineHeight: 1.4 }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px', lineHeight: 1.4 }}>
                   Instantly move a player from one team to another. All individual player stats, cards, and login credentials are automatically preserved.
                 </div>
               </div>
 
               <form onSubmit={handleExecuteQuickTransfer} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div>
-                  <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                     1. Source Team (Current)
                   </label>
                   <select
@@ -2673,7 +2673,7 @@ export default function ManageView({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                     2. Select Player to Move
                   </label>
                   <select
@@ -2696,7 +2696,7 @@ export default function ManageView({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                     3. Destination Team
                   </label>
                   <select
@@ -2722,11 +2722,11 @@ export default function ManageView({
                   style={{
                     background:
                       !quickTransferSourceTeam || !quickTransferPlayerId || !quickTransferTargetTeam
-                        ? '#16352A'
-                        : '#C9A227',
+                        ? '#1C1C1E'
+                        : '#FF9500',
                     color:
                       !quickTransferSourceTeam || !quickTransferPlayerId || !quickTransferTargetTeam
-                        ? '#6E9080'
+                        ? '#8E8E93'
                         : '#16201B',
                     fontWeight: 800,
                     padding: '9px 14px',
@@ -2746,7 +2746,7 @@ export default function ManageView({
 
           {/* Teams & Squad Management */}
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#F4F2EA', marginBottom: '10px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginBottom: '10px' }}>
               Teams ({cat.teams.length})
             </div>
 
@@ -2757,8 +2757,8 @@ export default function ManageView({
                   <div
                     key={t.id}
                     style={{
-                      background: '#082820',
-                      border: '1px solid #1E4636',
+                      background: '#121212',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '10px 14px',
                     }}
@@ -2771,15 +2771,15 @@ export default function ManageView({
                             type="button"
                             className="team-link-btn"
                             onClick={() => onSelectTeam(t.id, activeCategoryKey)}
-                            style={{ fontWeight: 700, color: '#F4F2EA', fontSize: '13.5px' }}
+                            style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '13.5px' }}
                             title={`Click to view ${t.name} performance profile & analytics`}
                           >
                             {t.name}
                           </button>
                         ) : (
-                          <span style={{ fontWeight: 700, color: '#F4F2EA', fontSize: '13.5px' }}>{t.name}</span>
+                          <span style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '13.5px' }}>{t.name}</span>
                         )}
-                        <span style={{ fontSize: '11px', color: '#8FA89B' }}>
+                        <span style={{ fontSize: '11px', color: '#8E8E93' }}>
                           ({t.players.filter((p) => !p.unknown).length} players)
                         </span>
                         {onSelectTeam && (
@@ -2796,14 +2796,14 @@ export default function ManageView({
                       </div>
                       <button
                         onClick={() => toggleTeam(t.id)}
-                        style={{ background: 'none', border: 'none', color: '#6E9080', fontSize: '12px', cursor: 'pointer' }}
+                        style={{ background: 'none', border: 'none', color: '#8E8E93', fontSize: '12px', cursor: 'pointer' }}
                       >
                         {isOpen ? 'Close roster ▲' : 'Manage roster ▾'}
                       </button>
                     </div>
 
                     {isOpen && (
-                      <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #16352A' }}>
+                      <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #1C1C1E' }}>
                         {/* Players list */}
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
                           {t.players
@@ -2817,23 +2817,23 @@ export default function ManageView({
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '6px',
-                                    background: '#16352A',
+                                    background: '#1C1C1E',
                                     padding: '4px 8px',
                                     borderRadius: '6px',
                                     fontSize: '11.5px',
-                                    color: '#DDE6DF',
+                                    color: '#EBEBF5',
                                     border: '1px solid #224B3B',
                                   }}
                                 >
-                                  <span style={{ fontWeight: 700, color: '#F4F2EA' }}>{p.name}</span>
+                                  <span style={{ fontWeight: 700, color: '#FFFFFF' }}>{p.name}</span>
                                   <span
                                     title="System-assigned permanent Player ID (used for voting & unique identification)"
                                     style={{
                                       fontSize: '9.5px',
                                       fontWeight: 800,
-                                      background: '#0A241C',
+                                      background: '#121212',
                                       color: '#6CE5A0',
-                                      border: '1px solid #2B5746',
+                                      border: '1px solid rgba(255, 255, 255, 0.1)',
                                       borderRadius: '4px',
                                       padding: '1px 5px',
                                     }}
@@ -2844,7 +2844,7 @@ export default function ManageView({
                                     title="Player Login Username"
                                     style={{
                                       fontSize: '10px',
-                                      color: '#9BB5A8',
+                                      color: '#8E8E93',
                                     }}
                                   >
                                     @{uname}
@@ -2858,12 +2858,12 @@ export default function ManageView({
                                         alignItems: 'center',
                                         gap: '3px',
                                         background: '#0B2920',
-                                        border: '1px solid #C9A227',
+                                        border: '1px solid #FF9500',
                                         borderRadius: '4px',
                                         padding: '1px 5px',
                                         fontSize: '9.5px',
                                         fontWeight: 800,
-                                        color: '#C9A227',
+                                        color: '#FF9500',
                                       }}
                                     >
                                       #{p.jerseyNumber ?? p.jersey_number}
@@ -2888,8 +2888,8 @@ export default function ManageView({
                                     <span
                                       style={{
                                         fontSize: '9px',
-                                        color: '#8FA89B',
-                                        border: '1px dashed #2B5746',
+                                        color: '#8E8E93',
+                                        border: '1px dashed rgba(255, 255, 255, 0.1)',
                                         borderRadius: '4px',
                                         padding: '1px 4px',
                                       }}
@@ -2922,7 +2922,7 @@ export default function ManageView({
                                         style={{
                                           background: '#166534',
                                           border: 'none',
-                                          color: '#F4F2EA',
+                                          color: '#FFFFFF',
                                           borderRadius: '3px',
                                           padding: '1px 4px',
                                           fontSize: '8.5px',
@@ -2975,9 +2975,9 @@ export default function ManageView({
                                     onChange={(e) => onUpdatePlayerPosition && onUpdatePlayerPosition(t.id, p.id, e.target.value)}
                                     title={p.position ? `Assigned position: ${p.position} (click to change)` : 'No position assigned (click to assign manually)'}
                                     style={{
-                                      background: p.position ? '#0F2E24' : '#1F2937',
-                                      color: p.position ? '#C9A227' : '#9CA3AF',
-                                      border: p.position ? '1px solid #2B4E40' : '1px dashed #6B7280',
+                                      background: p.position ? '#121212' : '#1F2937',
+                                      color: p.position ? '#FF9500' : '#9CA3AF',
+                                      border: p.position ? '1px solid rgba(255, 255, 255, 0.1)' : '1px dashed #6B7280',
                                       borderRadius: '3px',
                                       fontSize: '10px',
                                       padding: '1px 3px',
@@ -3004,7 +3004,7 @@ export default function ManageView({
                                       style={{
                                         background: '#0B2920',
                                         color: '#6CE5A0',
-                                        border: '1px solid #2B5746',
+                                        border: '1px solid rgba(255, 255, 255, 0.1)',
                                         borderRadius: '3px',
                                         fontSize: '9.5px',
                                         padding: '1px 3px',
@@ -3063,9 +3063,9 @@ export default function ManageView({
                             value={newPlayerPositions[t.id] || ''}
                             onChange={(e) => setNewPlayerPositions({ ...newPlayerPositions, [t.id]: e.target.value })}
                             style={{
-                              background: '#0F2E24',
-                              color: '#C9A227',
-                              border: '1px solid #2B4E40',
+                              background: '#121212',
+                              color: '#FF9500',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
                               borderRadius: '6px',
                               fontSize: '12px',
                               padding: '0 10px',
@@ -3081,13 +3081,13 @@ export default function ManageView({
                           </select>
                           <button
                             className="stat-btn"
-                            style={{ background: '#C9A227', color: '#16201B', fontWeight: 700, padding: '0 14px' }}
+                            style={{ background: '#FF9500', color: '#16201B', fontWeight: 700, padding: '0 14px' }}
                             onClick={() => handleAddPlayer(t.id)}
                           >
                             + Add Player
                           </button>
                         </div>
-                        <div style={{ fontSize: '10.5px', color: '#8FA89B', marginTop: '6px' }}>
+                        <div style={{ fontSize: '10.5px', color: '#8E8E93', marginTop: '6px' }}>
                           💡 System automatically assigns a permanent unique Player ID (e.g. <code>{t.id}-P…</code>) used for voting and all player records.
                         </div>
                       </div>
@@ -3111,10 +3111,10 @@ export default function ManageView({
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
-                  <div style={{ fontWeight: 800, color: '#F4F2EA', fontSize: '14px' }}>
+                  <div style={{ fontWeight: 800, color: '#FFFFFF', fontSize: '14px' }}>
                     ➕ Add Another Team to {cat.label}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#8FA89B', marginTop: '2px' }}>
+                  <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '2px' }}>
                     Configure squad roster, transfer players, auto-balance across existing teams, and automatically generate league fixtures.
                   </div>
                 </div>
@@ -3122,7 +3122,7 @@ export default function ManageView({
                   type="button"
                   onClick={() => setShowAddTeamModal(true)}
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     border: 'none',
                     borderRadius: '8px',
@@ -3154,7 +3154,7 @@ export default function ManageView({
                   <button
                     type="submit"
                     className="stat-btn"
-                    style={{ background: '#163E31', color: '#6CE5A0', border: '1px solid #2F7D5C', fontWeight: 700, padding: '0 14px' }}
+                    style={{ background: '#1C1C1E', color: '#6CE5A0', border: '1px solid #2F7D5C', fontWeight: 700, padding: '0 14px' }}
                   >
                     + Quick Add
                   </button>
@@ -3164,9 +3164,9 @@ export default function ManageView({
           </div>
 
           {/* Referees Management */}
-          <div style={{ marginBottom: '24px', borderTop: '1px solid #16352A', paddingTop: '16px' }}>
+          <div style={{ marginBottom: '24px', borderTop: '1px solid #1C1C1E', paddingTop: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#F4F2EA' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>
                 Match Officials / Referees ({cat.referees?.length || 0})
               </div>
               {onRandomizeReferees && (
@@ -3178,7 +3178,7 @@ export default function ManageView({
                     const count = onRandomizeReferees(activeCategoryKey);
                     setStatusBanner(`🎲 Randomized referees across ${count ?? 'all'} unplayed fixture(s) in "${cat.label}"!`);
                   }}
-                  style={{ background: '#163E31', color: '#6CE5A0', border: '1px solid #2F7D5C', fontWeight: 800, padding: '6px 12px' }}
+                  style={{ background: '#1C1C1E', color: '#6CE5A0', border: '1px solid #2F7D5C', fontWeight: 800, padding: '6px 12px' }}
                 >
                   🎲 Randomize Referees Across Unplayed Fixtures
                 </button>
@@ -3192,17 +3192,17 @@ export default function ManageView({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    background: '#16352A',
+                    background: '#1C1C1E',
                     padding: '4px 10px',
                     borderRadius: '6px',
                     fontSize: '12px',
-                    color: '#DDE6DF',
+                    color: '#EBEBF5',
                   }}
                 >
                   <span>🧑‍⚖️ {r}</span>
                   <span
                     onClick={() => onRemoveReferee(r, activeCategoryKey)}
-                    style={{ cursor: 'pointer', color: '#8FA89B', fontWeight: 700 }}
+                    style={{ cursor: 'pointer', color: '#8E8E93', fontWeight: 700 }}
                   >
                     ✕
                   </span>
@@ -3218,7 +3218,7 @@ export default function ManageView({
               />
               <button
                 className="stat-btn"
-                style={{ background: '#C9A227', color: '#16201B', fontWeight: 700, padding: '0 14px' }}
+                style={{ background: '#FF9500', color: '#16201B', fontWeight: 700, padding: '0 14px' }}
                 onClick={() => {
                   if (newRefName.trim()) {
                     onAddReferee(newRefName.trim(), activeCategoryKey);
@@ -3233,8 +3233,8 @@ export default function ManageView({
           </div>
 
           {/* Database Quick Actions */}
-          <div style={{ borderTop: '1px solid #16352A', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#F4F2EA' }}>
+          <div style={{ borderTop: '1px solid #1C1C1E', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>
               Tournament Actions
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -3246,7 +3246,7 @@ export default function ManageView({
                     onGenerateFixtures(activeCategoryKey);
                     setStatusBanner(`⚡ Generated fixtures with randomized referees for "${cat.label}"!`);
                   }}
-                  style={{ background: '#C9A227', color: '#16201B', fontWeight: 800, padding: '8px 14px' }}
+                  style={{ background: '#FF9500', color: '#16201B', fontWeight: 800, padding: '8px 14px' }}
                 >
                   ⚡ Generate / Regenerate Fixtures for &ldquo;{cat.label}&rdquo;
                 </button>
@@ -3267,7 +3267,7 @@ export default function ManageView({
               <button
                 className="stat-btn"
                 onClick={onResetRealSeason}
-                style={{ background: '#163E31', color: '#DDE6DF', border: '1px solid #2B5746', padding: '8px 14px' }}
+                style={{ background: '#1C1C1E', color: '#EBEBF5', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '8px 14px' }}
               >
                 🔄 Restore 2026 Ruiru Titans Real Season Data
               </button>
@@ -3299,7 +3299,7 @@ export default function ManageView({
                   </button>
                   <button
                     className="stat-btn"
-                    style={{ background: '#2B4E40', color: '#FFF' }}
+                    style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#FFF' }}
                     onClick={() => setConfirmDelete(false)}
                   >
                     Cancel
@@ -3313,33 +3313,33 @@ export default function ManageView({
 
       {/* SECTION 5: MANAGER ACCOUNT & SECURITY */}
       {adminSection === 'security' && (
-        <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '12px', padding: '24px' }}>
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
             <div>
-              <div className="scoreboard" style={{ color: '#C9A227', fontSize: '20px' }}>
+              <div className="scoreboard" style={{ color: '#FF9500', fontSize: '20px' }}>
                 🔐 MANAGER ACCOUNT &amp; PASSWORD SECURITY
               </div>
-              <div style={{ fontSize: '12px', color: '#8FA89B', marginTop: '4px' }}>
+              <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '4px' }}>
                 Manage and update your platform manager password. Your active session will automatically renew with the updated credentials.
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ background: '#163E31', border: '1px solid #2F7D5C', color: '#6CE5A0', padding: '5px 12px', borderRadius: '20px', fontSize: '11.5px', fontWeight: 700 }}>
+              <span style={{ background: '#1C1C1E', border: '1px solid #2F7D5C', color: '#6CE5A0', padding: '5px 12px', borderRadius: '20px', fontSize: '11.5px', fontWeight: 700 }}>
                 ● Active Manager: @{cmsUser?.username || 'admin'}
               </span>
             </div>
           </div>
 
-          <div style={{ maxWidth: '540px', margin: '0 auto', background: '#08231B', border: '1px solid #2B5746', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ maxWidth: '540px', margin: '0 auto', background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '24px' }}>
             <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(201, 162, 39, 0.15)', border: '1px solid #C9A227', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(255, 149, 0, 0.15)', border: '1px solid #FF9500', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
                 🔑
               </div>
               <div>
-                <div style={{ fontSize: '14px', fontWeight: 800, color: '#F4F2EA' }}>
+                <div style={{ fontSize: '14px', fontWeight: 800, color: '#FFFFFF' }}>
                   Update Administrator Password
                 </div>
-                <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                   Requires verifying your current password before saving new credentials.
                 </div>
               </div>
@@ -3381,7 +3381,7 @@ export default function ManageView({
 
             <form onSubmit={handleChangeCmsPassword} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ fontSize: '12px', color: '#F4F2EA', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                <label style={{ fontSize: '12px', color: '#FFFFFF', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
                   Current Manager Password *
                 </label>
                 <PasswordInput
@@ -3393,7 +3393,7 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '12px', color: '#F4F2EA', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                <label style={{ fontSize: '12px', color: '#FFFFFF', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
                   New Password (min. 4 characters) *
                 </label>
                 <PasswordInput
@@ -3405,7 +3405,7 @@ export default function ManageView({
               </div>
 
               <div>
-                <label style={{ fontSize: '12px', color: '#F4F2EA', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                <label style={{ fontSize: '12px', color: '#FFFFFF', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
                   Confirm New Password *
                 </label>
                 <PasswordInput
@@ -3421,7 +3421,7 @@ export default function ManageView({
                 disabled={cmsPassLoading}
                 className="stat-btn"
                 style={{
-                  background: '#C9A227',
+                  background: '#FF9500',
                   color: '#16201B',
                   fontWeight: 800,
                   padding: '12px 18px',
@@ -3446,23 +3446,23 @@ export default function ManageView({
             if (e.target.classList.contains('h2h-overlay')) setShowAddTeamModal(false);
           }}
         >
-          <div className="h2h-modal" style={{ maxWidth: '820px', padding: '24px', background: '#0A241C', border: '1px solid #285444' }}>
+          <div className="h2h-modal" style={{ maxWidth: '820px', padding: '24px', background: '#121212', border: '1px solid #285444' }}>
             {/* Header */}
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
-                borderBottom: '1px solid #1E4636',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                 paddingBottom: '14px',
                 marginBottom: '18px',
               }}
             >
               <div>
-                <div className="scoreboard" style={{ color: '#C9A227', fontSize: '20px' }}>
+                <div className="scoreboard" style={{ color: '#FF9500', fontSize: '20px' }}>
                   🏆 Add New League Team &amp; Fixtures
                 </div>
-                <div style={{ fontSize: '12px', color: '#8FA89B', marginTop: '4px' }}>
+                <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '4px' }}>
                   Category: <strong>{cat.label}</strong> · Add a club, configure standard positions, transfer or auto-draft players, and generate league matches.
                 </div>
               </div>
@@ -3472,7 +3472,7 @@ export default function ManageView({
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#8FA89B',
+                  color: '#8E8E93',
                   fontSize: '22px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -3485,15 +3485,15 @@ export default function ManageView({
 
             <form onSubmit={handleConfirmCreateLeagueTeam} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {/* Step 1: Team Details & Identity */}
-              <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#F4F2EA', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ background: '#C9A227', color: '#16201B', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 900 }}>1</span>
+              <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ background: '#FF9500', color: '#16201B', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 900 }}>1</span>
                   Team Identity &amp; Colors
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '14px' }}>
                   <div>
-                    <label style={{ fontSize: '11.5px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '11.5px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                       Team Full Name *
                     </label>
                     <input
@@ -3513,7 +3513,7 @@ export default function ManageView({
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '11.5px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '11.5px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                       Team Code (3 Letters) *
                     </label>
                     <input
@@ -3527,7 +3527,7 @@ export default function ManageView({
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '11.5px', color: '#8FA89B', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '11.5px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                       Team Primary Color
                     </label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -3583,25 +3583,25 @@ export default function ManageView({
               </div>
 
               {/* Step 2: Squad Building & Roster Options */}
-              <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px' }}>
+              <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#F4F2EA', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ background: '#C9A227', color: '#16201B', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 900 }}>2</span>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ background: '#FF9500', color: '#16201B', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 900 }}>2</span>
                     Build Squad Roster
                   </div>
-                  <div style={{ fontSize: '11.5px', color: '#8FA89B' }}>
+                  <div style={{ fontSize: '11.5px', color: '#8E8E93' }}>
                     You can combine direct players, transfers, and auto-balance.
                   </div>
                 </div>
 
                 {/* Squad Method Tabs */}
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', borderBottom: '1px solid #1E4636', paddingBottom: '8px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '8px', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     onClick={() => setSquadMethod('direct')}
                     style={{
-                      background: squadMethod === 'direct' ? '#C9A227' : '#16352A',
-                      color: squadMethod === 'direct' ? '#16201B' : '#DDE6DF',
+                      background: squadMethod === 'direct' ? '#FF9500' : '#1C1C1E',
+                      color: squadMethod === 'direct' ? '#16201B' : '#EBEBF5',
                       border: 'none',
                       borderRadius: '6px',
                       padding: '7px 14px',
@@ -3616,8 +3616,8 @@ export default function ManageView({
                     type="button"
                     onClick={() => setSquadMethod('transfer')}
                     style={{
-                      background: squadMethod === 'transfer' ? '#C9A227' : '#16352A',
-                      color: squadMethod === 'transfer' ? '#16201B' : '#DDE6DF',
+                      background: squadMethod === 'transfer' ? '#FF9500' : '#1C1C1E',
+                      color: squadMethod === 'transfer' ? '#16201B' : '#EBEBF5',
                       border: 'none',
                       borderRadius: '6px',
                       padding: '7px 14px',
@@ -3632,8 +3632,8 @@ export default function ManageView({
                     type="button"
                     onClick={() => setSquadMethod('autobalance')}
                     style={{
-                      background: squadMethod === 'autobalance' ? '#C9A227' : '#16352A',
-                      color: squadMethod === 'autobalance' ? '#16201B' : '#DDE6DF',
+                      background: squadMethod === 'autobalance' ? '#FF9500' : '#1C1C1E',
+                      color: squadMethod === 'autobalance' ? '#16201B' : '#EBEBF5',
                       border: 'none',
                       borderRadius: '6px',
                       padding: '7px 14px',
@@ -3649,7 +3649,7 @@ export default function ManageView({
                 {/* Tab A: Direct Entry */}
                 {squadMethod === 'direct' && (
                   <div>
-                    <div style={{ fontSize: '11.5px', color: '#8FA89B', marginBottom: '10px' }}>
+                    <div style={{ fontSize: '11.5px', color: '#8E8E93', marginBottom: '10px' }}>
                       Assign starting positions and squad depth. Each registered player gets a permanent system ID, login credentials, and tracking.
                     </div>
 
@@ -3663,9 +3663,9 @@ export default function ManageView({
                             value={row.position}
                             onChange={(e) => updateDirectPlayerRow(idx, 'position', e.target.value)}
                             style={{
-                              background: '#08231B',
-                              color: '#C9A227',
-                              border: '1px solid #2B4E40',
+                              background: '#121212',
+                              color: '#FF9500',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
                               borderRadius: '6px',
                               fontSize: '11.5px',
                               padding: '6px 8px',
@@ -3718,7 +3718,7 @@ export default function ManageView({
                         type="button"
                         onClick={addDirectPlayerRow}
                         style={{
-                          background: '#163E31',
+                          background: '#1C1C1E',
                           color: '#6CE5A0',
                           border: '1px solid #2F7D5C',
                           borderRadius: '6px',
@@ -3732,8 +3732,8 @@ export default function ManageView({
                       </button>
                     </div>
 
-                    <div style={{ marginTop: '12px', borderTop: '1px solid #1E4636', paddingTop: '10px' }}>
-                      <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                    <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '10px' }}>
+                      <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                         Or Paste Bulk Player Names (comma or newline separated, optional position in brackets like <code>John Doe (GK)</code>):
                       </label>
                       <textarea
@@ -3752,7 +3752,7 @@ export default function ManageView({
                 {squadMethod === 'transfer' && (
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-                      <div style={{ fontSize: '11.5px', color: '#8FA89B' }}>
+                      <div style={{ fontSize: '11.5px', color: '#8E8E93' }}>
                         Select players from other clubs to transfer into the new team. Permanent IDs, career statistics, and passwords are fully preserved.
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -3761,9 +3761,9 @@ export default function ManageView({
                           value={transferFilterTeam}
                           onChange={(e) => setTransferFilterTeam(e.target.value)}
                           style={{
-                            background: '#08231B',
-                            color: '#F4F2EA',
-                            border: '1px solid #2B4E40',
+                            background: '#121212',
+                            color: '#FFFFFF',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
                             borderRadius: '6px',
                             fontSize: '11.5px',
                             padding: '4px 8px',
@@ -3794,8 +3794,8 @@ export default function ManageView({
                                   key={`${t.id}-${p.id}`}
                                   onClick={() => toggleTransferPlayer(t.id, p)}
                                   style={{
-                                    background: isSelected ? 'rgba(201, 162, 39, 0.16)' : '#08231B',
-                                    border: isSelected ? '1px solid #C9A227' : '1px solid #1E4636',
+                                    background: isSelected ? 'rgba(255, 149, 0, 0.16)' : '#121212',
+                                    border: isSelected ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                                     borderRadius: '6px',
                                     padding: '8px 10px',
                                     cursor: 'pointer',
@@ -3809,14 +3809,14 @@ export default function ManageView({
                                     type="checkbox"
                                     checked={isSelected}
                                     onChange={() => {}}
-                                    style={{ cursor: 'pointer', accentColor: '#C9A227' }}
+                                    style={{ cursor: 'pointer', accentColor: '#FF9500' }}
                                   />
                                   <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#F4F2EA', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                       {p.name}
                                     </div>
-                                    <div style={{ fontSize: '10.5px', color: '#8FA89B', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                      <span style={{ color: '#C9A227', fontWeight: 600 }}>{p.position || 'CM'}</span>
+                                    <div style={{ fontSize: '10.5px', color: '#8E8E93', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                      <span style={{ color: '#FF9500', fontWeight: 600 }}>{p.position || 'CM'}</span>
                                       <span>·</span>
                                       <span>{t.id}</span>
                                       {p.jerseyNumber && <span>#{p.jerseyNumber}</span>}
@@ -3833,19 +3833,19 @@ export default function ManageView({
                 {/* Tab C: Intelligent Auto-Balance */}
                 {squadMethod === 'autobalance' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ background: '#08231B', border: '1px solid #2B5746', borderRadius: '8px', padding: '12px' }}>
+                    <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '12px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                         <input
                           type="checkbox"
                           checked={enableIntelligentPull}
                           onChange={(e) => setEnableIntelligentPull(e.target.checked)}
-                          style={{ width: '18px', height: '18px', accentColor: '#C9A227' }}
+                          style={{ width: '18px', height: '18px', accentColor: '#FF9500' }}
                         />
                         <span style={{ fontWeight: 800, color: '#6CE5A0', fontSize: '13px' }}>
                           ⚡ Enable Competitive Auto-Balance Draft for this Team
                         </span>
                       </label>
-                      <div style={{ fontSize: '11.5px', color: '#DDE6DF', marginTop: '6px', marginLeft: '28px' }}>
+                      <div style={{ fontSize: '11.5px', color: '#EBEBF5', marginTop: '6px', marginLeft: '28px' }}>
                         Automatically drafts players from other clubs across standard positional lines (1 GK, 2 DEF, 2 MID, 1 FWD) to seed an instantly competitive starting roster.
                       </div>
                     </div>
@@ -3853,16 +3853,16 @@ export default function ManageView({
                     {enableIntelligentPull && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingLeft: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                          <label style={{ fontSize: '12px', color: '#F4F2EA', fontWeight: 700 }}>
+                          <label style={{ fontSize: '12px', color: '#FFFFFF', fontWeight: 700 }}>
                             Target Players to Draft:
                           </label>
                           <select
                             value={intelligentPullCount}
                             onChange={(e) => setIntelligentPullCount(e.target.value)}
                             style={{
-                              background: '#08231B',
-                              color: '#C9A227',
-                              border: '1px solid #2B4E40',
+                              background: '#121212',
+                              color: '#FF9500',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
                               borderRadius: '6px',
                               padding: '6px 12px',
                               fontWeight: 800,
@@ -3876,8 +3876,8 @@ export default function ManageView({
                           </select>
                         </div>
 
-                        <div style={{ background: 'rgba(22, 62, 49, 0.5)', border: '1px solid #1E4636', borderRadius: '6px', padding: '10px' }}>
-                          <div style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, marginBottom: '6px' }}>
+                        <div style={{ background: 'rgba(22, 62, 49, 0.5)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '6px', padding: '10px' }}>
+                          <div style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, marginBottom: '6px' }}>
                             🛡️ Donor Protection Rules:
                           </div>
                           <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '11px', color: '#A0C2B0', lineHeight: 1.5 }}>
@@ -3900,12 +3900,12 @@ export default function ManageView({
                                 <span
                                   key={t.id}
                                   style={{
-                                    background: surplus > 0 ? '#163E31' : '#162822',
+                                    background: surplus > 0 ? '#1C1C1E' : '#162822',
                                     border: surplus > 0 ? '1px solid #2F7D5C' : '1px solid #1F362D',
                                     borderRadius: '4px',
                                     padding: '3px 8px',
                                     fontSize: '11px',
-                                    color: surplus > 0 ? '#6CE5A0' : '#8FA89B',
+                                    color: surplus > 0 ? '#6CE5A0' : '#8E8E93',
                                   }}
                                 >
                                   {t.title || t.name}: {validCount} players ({surplus > 0 ? `+${surplus} eligible` : 'safe'})
@@ -3921,9 +3921,9 @@ export default function ManageView({
               </div>
 
               {/* Step 3: League Fixtures & Schedule Generation */}
-              <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#F4F2EA', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ background: '#C9A227', color: '#16201B', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 900 }}>3</span>
+              <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ background: '#FF9500', color: '#16201B', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 900 }}>3</span>
                   Automated League Fixtures &amp; Scheduling
                 </div>
 
@@ -3933,9 +3933,9 @@ export default function ManageView({
                       type="checkbox"
                       checked={autoGenFixtures}
                       onChange={(e) => setAutoGenFixtures(e.target.checked)}
-                      style={{ width: '18px', height: '18px', accentColor: '#C9A227' }}
+                      style={{ width: '18px', height: '18px', accentColor: '#FF9500' }}
                     />
-                    <span style={{ fontWeight: 700, color: '#F4F2EA', fontSize: '12.5px' }}>
+                    <span style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '12.5px' }}>
                       Automatically generate league fixtures against all {(cat.teams || []).length} existing clubs
                     </span>
                   </label>
@@ -3943,31 +3943,31 @@ export default function ManageView({
                   {autoGenFixtures && (
                     <div style={{ paddingLeft: '28px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#DDE6DF', cursor: 'pointer' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#EBEBF5', cursor: 'pointer' }}>
                           <input
                             type="radio"
                             name="fixtureFormat"
                             value="double"
                             checked={fixtureFormatChoice === 'double'}
                             onChange={() => setFixtureFormatChoice('double')}
-                            style={{ accentColor: '#C9A227' }}
+                            style={{ accentColor: '#FF9500' }}
                           />
                           <span>Home &amp; Away (Double Round-Robin) — <strong>{(cat.teams || []).length * 2} fixtures</strong></span>
                         </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#DDE6DF', cursor: 'pointer' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#EBEBF5', cursor: 'pointer' }}>
                           <input
                             type="radio"
                             name="fixtureFormat"
                             value="single"
                             checked={fixtureFormatChoice === 'single'}
                             onChange={() => setFixtureFormatChoice('single')}
-                            style={{ accentColor: '#C9A227' }}
+                            style={{ accentColor: '#FF9500' }}
                           />
                           <span>Single Leg (Single Round-Robin) — <strong>{(cat.teams || []).length} fixtures</strong></span>
                         </label>
                       </div>
 
-                      <div style={{ fontSize: '11px', color: '#8FA89B', lineHeight: 1.5 }}>
+                      <div style={{ fontSize: '11px', color: '#8E8E93', lineHeight: 1.5 }}>
                         ⚖️ <strong>Catch-Up Schedule Reorganization:</strong> Unplayed fixtures are automatically restructured so that the new team plays catch-up matches immediately at the front of the schedule. No team will play an additional game ahead of the new team.<br />
                         ⚡ <strong>Referee Rotation:</strong> Officials are automatically assigned and rotated from <em>{(cat.referees || []).join(', ') || 'League Referee Pool'}</em>.<br />
                         📅 <strong>Match Scheduling:</strong> Chronological match dates and times are generated seamlessly without overlapping.<br />
@@ -3981,8 +3981,8 @@ export default function ManageView({
               {/* Summary Bar & Actions */}
               <div
                 style={{
-                  background: '#08231B',
-                  border: '1px solid #2B5746',
+                  background: '#121212',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '10px',
                   padding: '14px 18px',
                   display: 'flex',
@@ -3993,10 +3993,10 @@ export default function ManageView({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: 800, color: '#F4F2EA' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 800, color: '#FFFFFF' }}>
                     Team Summary: {newTeamTitle ? `"${newTeamTitle}" (${newTeamCodeInput || 'CODE'})` : 'Enter Team Name'}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#8FA89B', display: 'flex', gap: '10px', marginTop: '2px', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '11px', color: '#8E8E93', display: 'flex', gap: '10px', marginTop: '2px', flexWrap: 'wrap' }}>
                     <span>Direct: {directPlayerRows.filter((r) => r.name.trim()).length}</span>
                     <span>·</span>
                     <span>Transfers: {selectedTransfers.length}</span>
@@ -4009,7 +4009,7 @@ export default function ManageView({
                     {autoGenFixtures && (
                       <>
                         <span>·</span>
-                        <strong style={{ color: '#C9A227' }}>
+                        <strong style={{ color: '#FF9500' }}>
                           Fixtures: {(cat.teams || []).length * (fixtureFormatChoice === 'double' ? 2 : 1)} matches
                         </strong>
                       </>
@@ -4022,8 +4022,8 @@ export default function ManageView({
                     type="button"
                     onClick={() => setShowAddTeamModal(false)}
                     style={{
-                      background: '#16352A',
-                      color: '#DDE6DF',
+                      background: '#1C1C1E',
+                      color: '#EBEBF5',
                       border: '1px solid #2F7D5C',
                       borderRadius: '6px',
                       padding: '8px 16px',
@@ -4038,15 +4038,15 @@ export default function ManageView({
                     type="submit"
                     disabled={!newTeamTitle.trim()}
                     style={{
-                      background: newTeamTitle.trim() ? '#C9A227' : '#4E4E4E',
-                      color: newTeamTitle.trim() ? '#16201B' : '#8FA89B',
+                      background: newTeamTitle.trim() ? '#FF9500' : '#4E4E4E',
+                      color: newTeamTitle.trim() ? '#16201B' : '#8E8E93',
                       border: 'none',
                       borderRadius: '6px',
                       padding: '8px 20px',
                       fontWeight: 800,
                       fontSize: '12.5px',
                       cursor: newTeamTitle.trim() ? 'pointer' : 'not-allowed',
-                      boxShadow: newTeamTitle.trim() ? '0 2px 8px rgba(201, 162, 39, 0.3)' : 'none',
+                      boxShadow: newTeamTitle.trim() ? '0 2px 8px rgba(255, 149, 0, 0.3)' : 'none',
                     }}
                   >
                     🚀 Confirm &amp; Add Team to League

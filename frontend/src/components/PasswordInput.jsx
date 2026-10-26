@@ -91,7 +91,7 @@ export default function PasswordInput({
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          color: isVisible ? '#C9A227' : isHovered ? '#F4F2EA' : '#8FA89B',
+          color: isVisible ? '#FF9500' : isHovered ? '#FFFFFF' : '#8E8E93',
           borderRadius: '4px',
           transition: 'color 0.15s ease, transform 0.15s ease',
         }}

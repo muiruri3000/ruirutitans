@@ -162,7 +162,7 @@ export default function AuthModal({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            borderBottom: '1px solid #1E4636',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             paddingBottom: '14px',
             marginBottom: '18px',
           }}
@@ -176,7 +176,7 @@ export default function AuthModal({
             <div>
               <div
                 style={{
-                  color: '#C9A227',
+                  color: '#FF9500',
                   fontSize: '11px',
                   fontWeight: 800,
                   letterSpacing: '0.14em',
@@ -185,7 +185,7 @@ export default function AuthModal({
               >
                 RUIRU TITANS FC PORTAL
               </div>
-              <h2 className="scoreboard" style={{ margin: '2px 0 0', fontSize: '26px', color: '#F4F2EA' }}>
+              <h2 className="scoreboard" style={{ margin: '2px 0 0', fontSize: '26px', color: '#FFFFFF' }}>
                 {mode === 'cms' ? 'MANAGER DASHBOARD SIGN IN' : mode === 'lookup' ? 'FIND PLAYER USERNAME' : 'PLAYER VOTING SIGN IN'}
               </h2>
             </div>
@@ -197,7 +197,7 @@ export default function AuthModal({
             style={{
               background: 'none',
               border: 'none',
-              color: '#8FA89B',
+              color: '#8E8E93',
               fontSize: '20px',
               cursor: 'pointer',
               padding: '4px 8px',
@@ -212,10 +212,10 @@ export default function AuthModal({
           style={{
             display: 'flex',
             gap: '6px',
-            background: '#08231B',
+            background: '#121212',
             padding: '5px',
             borderRadius: '10px',
-            border: '1px solid #1E4636',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             marginBottom: '18px',
           }}
         >
@@ -233,8 +233,8 @@ export default function AuthModal({
               cursor: 'pointer',
               fontWeight: 700,
               fontSize: '11.5px',
-              background: mode === 'player' ? '#C9A227' : 'transparent',
-              color: mode === 'player' ? '#16201B' : '#8FA89B',
+              background: mode === 'player' ? '#FF9500' : 'transparent',
+              color: mode === 'player' ? '#16201B' : '#8E8E93',
             }}
           >
             ⚽ Player Sign In
@@ -255,8 +255,8 @@ export default function AuthModal({
               cursor: 'pointer',
               fontWeight: 700,
               fontSize: '11.5px',
-              background: mode === 'lookup' ? '#C9A227' : 'transparent',
-              color: mode === 'lookup' ? '#16201B' : '#8FA89B',
+              background: mode === 'lookup' ? '#FF9500' : 'transparent',
+              color: mode === 'lookup' ? '#16201B' : '#8E8E93',
             }}
           >
             🔍 Find Username
@@ -275,8 +275,8 @@ export default function AuthModal({
               cursor: 'pointer',
               fontWeight: 700,
               fontSize: '11.5px',
-              background: mode === 'cms' ? '#C9A227' : 'transparent',
-              color: mode === 'cms' ? '#16201B' : '#8FA89B',
+              background: mode === 'cms' ? '#FF9500' : 'transparent',
+              color: mode === 'cms' ? '#16201B' : '#8E8E93',
             }}
           >
             🛠️ Manager Dashboard
@@ -302,12 +302,12 @@ export default function AuthModal({
 
         {mode === 'cms' ? (
           <form onSubmit={handleCmsSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ fontSize: '12.5px', color: '#8FA89B', lineHeight: 1.5 }}>
+            <div style={{ fontSize: '12.5px', color: '#8E8E93', lineHeight: 1.5 }}>
               Enter your credentials to access the <strong>Manager Dashboard</strong> to manage league &amp; cup competitions, record live match events, update rosters, and control voting settings.
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '5px' }}>
+              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '5px' }}>
                 Username
               </label>
               <input
@@ -321,7 +321,7 @@ export default function AuthModal({
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '5px' }}>
+              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '5px' }}>
                 Password
               </label>
               <PasswordInput
@@ -336,7 +336,7 @@ export default function AuthModal({
               type="submit"
               disabled={loading}
               style={{
-                background: '#C9A227',
+                background: '#FF9500',
                 color: '#16201B',
                 border: 'none',
                 borderRadius: '8px',
@@ -354,16 +354,16 @@ export default function AuthModal({
           <form onSubmit={handlePasswordChangeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div
               style={{
-                background: 'rgba(201, 162, 39, 0.15)',
-                border: '1px solid #C9A227',
+                background: 'rgba(255, 149, 0, 0.15)',
+                border: '1px solid #FF9500',
                 borderRadius: '8px',
                 padding: '12px',
-                color: '#F4F2EA',
+                color: '#FFFFFF',
                 fontSize: '12.5px',
                 lineHeight: 1.5,
               }}
             >
-              <div style={{ fontWeight: 800, color: '#FCD34D', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ fontWeight: 800, color: '#FF9F0A', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span>🔑</span> First-Time Activation / Password Reset Required
               </div>
               Welcome, <strong>{pendingPlayer?.name}</strong> ({pendingPlayer?.team_name})! You signed in using a temporary 4-digit code. Please set your permanent password to unlock your <strong>Player Dashboard</strong>.
@@ -376,7 +376,7 @@ export default function AuthModal({
             )}
 
             <div>
-              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '5px' }}>
+              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '5px' }}>
                 Create New Password (min. 4 characters)
               </label>
               <PasswordInput
@@ -389,7 +389,7 @@ export default function AuthModal({
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '5px' }}>
+              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '5px' }}>
                 Confirm New Password
               </label>
               <PasswordInput
@@ -420,7 +420,7 @@ export default function AuthModal({
           </form>
         ) : mode === 'lookup' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ fontSize: '12.5px', color: '#8FA89B', lineHeight: 1.5 }}>
+            <div style={{ fontSize: '12.5px', color: '#8E8E93', lineHeight: 1.5 }}>
               Forgot your player username? Enter your name or squad jersey number below to retrieve your official account username.
             </div>
 
@@ -448,7 +448,7 @@ export default function AuthModal({
                 onClick={() => handleSearchPlayerName(lookupQuery)}
                 disabled={lookupLoading}
                 style={{
-                  background: '#C9A227',
+                  background: '#FF9500',
                   color: '#16201B',
                   border: 'none',
                   borderRadius: '8px',
@@ -488,22 +488,22 @@ export default function AuthModal({
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         background: '#092118',
-                        border: '1px solid #2B5746',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '8px',
                         padding: '10px 12px',
                         gap: '10px',
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#F4F2EA', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span>{p.name}</span>
                           {p.jersey_number != null && (
                             <span
                               style={{
                                 fontSize: '10px',
-                                color: '#C9A227',
-                                background: 'rgba(201,162,39,0.18)',
-                                border: '1px solid #C9A227',
+                                color: '#FF9500',
+                                background: 'rgba(255, 149, 0,0.18)',
+                                border: '1px solid #FF9500',
                                 padding: '1px 5px',
                                 borderRadius: '4px',
                                 fontWeight: 800,
@@ -553,7 +553,7 @@ export default function AuthModal({
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '2px' }}>
+                        <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px' }}>
                           Team: <strong>{p.team_name}</strong> · Username:{' '}
                           <span style={{ color: '#6CE5A0', fontWeight: 800, fontSize: '12px' }}>
                             @{p.username}
@@ -594,14 +594,14 @@ export default function AuthModal({
             )}
 
             {!lookupSearched && (
-              <div style={{ fontSize: '11.5px', color: '#6E9080', textAlign: 'center', padding: '12px 0' }}>
+              <div style={{ fontSize: '11.5px', color: '#8E8E93', textAlign: 'center', padding: '12px 0' }}>
                 💡 Tip: Type any part of your first or last name, or your squad jersey number (e.g. 10) to see your registered player username.
               </div>
             )}
           </div>
         ) : (
           <form onSubmit={handlePlayerSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ fontSize: '12.5px', color: '#8FA89B', lineHeight: 1.5 }}>
+            <div style={{ fontSize: '12.5px', color: '#8E8E93', lineHeight: 1.5 }}>
               Sign in with your <strong>Player Username</strong> and <strong>Password or 4-digit code</strong>. Your system-assigned permanent Player ID will automatically be linked for voting, records, and your player dashboard.
             </div>
 
@@ -613,7 +613,7 @@ export default function AuthModal({
 
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5' }}>
                   Player Username
                 </label>
                 <button
@@ -644,13 +644,13 @@ export default function AuthModal({
                 <div
                   style={{
                     background: '#092118',
-                    border: '1px solid #2B5746',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     padding: '10px',
                     marginBottom: '10px',
                   }}
                 >
-                  <div style={{ fontSize: '11.5px', color: '#C9A227', fontWeight: 800, marginBottom: '6px' }}>
+                  <div style={{ fontSize: '11.5px', color: '#FF9500', fontWeight: 800, marginBottom: '6px' }}>
                     Type your name or jersey number to find your username:
                   </div>
                   <div style={{ display: 'flex', gap: '6px', marginBottom: '6px' }}>
@@ -677,7 +677,7 @@ export default function AuthModal({
                       onClick={() => handleSearchPlayerName(lookupQuery)}
                       disabled={lookupLoading}
                       style={{
-                        background: '#C9A227',
+                        background: '#FF9500',
                         color: '#16201B',
                         border: 'none',
                         borderRadius: '6px',
@@ -702,19 +702,19 @@ export default function AuthModal({
                               display: 'flex',
                               justifyContent: 'space-between',
                               alignItems: 'center',
-                              background: '#113328',
+                              background: '#121212',
                               padding: '5px 8px',
                               borderRadius: '4px',
                             }}
                           >
-                            <span style={{ fontSize: '11.5px', color: '#F4F2EA', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '11.5px', color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <span>{p.name}</span>
                               {p.jersey_number != null && (
-                                <span style={{ color: '#C9A227', fontSize: '10px', fontWeight: 800 }}>
+                                <span style={{ color: '#FF9500', fontSize: '10px', fontWeight: 800 }}>
                                   #{p.jersey_number}
                                 </span>
                               )}
-                              <span style={{ color: '#8FA89B', fontSize: '10px' }}>({p.team_name}):</span>
+                              <span style={{ color: '#8E8E93', fontSize: '10px' }}>({p.team_name}):</span>
                               <strong style={{ color: '#6CE5A0' }}>@{p.username}</strong>
                               {p.is_active === false && (
                                 <span style={{ color: '#FCA5A5', fontSize: '9.5px', fontWeight: 800 }}>
@@ -766,7 +766,7 @@ export default function AuthModal({
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '5px' }}>
+              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '5px' }}>
                 Password or 4-Digit Activation Code
               </label>
               <PasswordInput
@@ -781,7 +781,7 @@ export default function AuthModal({
               type="submit"
               disabled={loading}
               style={{
-                background: '#C9A227',
+                background: '#FF9500',
                 color: '#16201B',
                 border: 'none',
                 borderRadius: '8px',

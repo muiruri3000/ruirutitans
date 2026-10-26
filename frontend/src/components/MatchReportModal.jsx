@@ -269,7 +269,7 @@ export default function MatchReportModal({
         className="h2h-modal"
         style={{
           background: '#0B241C',
-          border: '1px solid #1E4636',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '16px',
           width: '100%',
           maxWidth: '780px',
@@ -277,7 +277,7 @@ export default function MatchReportModal({
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
-          color: '#F4F2EA',
+          color: '#FFFFFF',
           overflow: 'hidden',
         }}
       >
@@ -285,7 +285,7 @@ export default function MatchReportModal({
         <div
           style={{
             padding: '16px 20px',
-            borderBottom: '1px solid #1E4636',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -295,7 +295,7 @@ export default function MatchReportModal({
           <div>
             <div
               style={{
-                color: '#C9A227',
+                color: '#FF9500',
                 fontSize: '11px',
                 fontWeight: '800',
                 letterSpacing: '0.12em',
@@ -306,7 +306,7 @@ export default function MatchReportModal({
             </div>
             <h2
               className="scoreboard"
-              style={{ margin: '2px 0 0', fontSize: '22px', color: '#F4F2EA' }}
+              style={{ margin: '2px 0 0', fontSize: '22px', color: '#FFFFFF' }}
             >
               FIXTURE {fixture.id} REPORT
             </h2>
@@ -317,7 +317,7 @@ export default function MatchReportModal({
             style={{
               background: 'none',
               border: 'none',
-              color: '#8FA89B',
+              color: '#8E8E93',
               fontSize: '22px',
               cursor: 'pointer',
               padding: '4px 8px',
@@ -335,7 +335,7 @@ export default function MatchReportModal({
           <div
             style={{
               background: '#071C15',
-              border: '1px solid #1E4636',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '12px',
               padding: '16px 20px',
               marginBottom: '18px',
@@ -350,11 +350,11 @@ export default function MatchReportModal({
                     width: '12px',
                     height: '12px',
                     borderRadius: '50%',
-                    background: homeTeam?.color || '#C9A227',
+                    background: homeTeam?.color || '#FF9500',
                     marginBottom: '4px',
                   }}
                 />
-                <div className="scoreboard" style={{ fontSize: '19px', color: '#F4F2EA' }}>
+                <div className="scoreboard" style={{ fontSize: '19px', color: '#FFFFFF' }}>
                   {homeTeam?.name || fixture.home}
                 </div>
               </div>
@@ -365,7 +365,7 @@ export default function MatchReportModal({
                   className="scoreboard"
                   style={{
                     fontSize: '32px',
-                    color: fixture.played || fixture.walkover ? '#FCD34D' : '#8FA89B',
+                    color: fixture.played || fixture.walkover ? '#FF9F0A' : '#8E8E93',
                     letterSpacing: '0.08em',
                   }}
                 >
@@ -375,7 +375,7 @@ export default function MatchReportModal({
                     `${homeScore} - ${awayScore}`
                   )}
                 </div>
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '2px' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px' }}>
                   {fixture.date} · {fixture.venue || 'Thoome Pri.'}
                 </div>
               </div>
@@ -392,7 +392,7 @@ export default function MatchReportModal({
                     marginBottom: '4px',
                   }}
                 />
-                <div className="scoreboard" style={{ fontSize: '19px', color: '#F4F2EA' }}>
+                <div className="scoreboard" style={{ fontSize: '19px', color: '#FFFFFF' }}>
                   {awayTeam?.name || fixture.away}
                 </div>
               </div>
@@ -404,7 +404,7 @@ export default function MatchReportModal({
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  borderTop: '1px dashed #1E4636',
+                  borderTop: '1px dashed rgba(255, 255, 255, 0.1)',
                   marginTop: '12px',
                   paddingTop: '10px',
                   fontSize: '11.5px',
@@ -475,7 +475,7 @@ export default function MatchReportModal({
           {isEditing && isCmsMode ? (
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#C9A227' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#FF9500' }}>
                   ✍️ COMPOSE MATCH REPORT
                 </span>
                 <button
@@ -483,8 +483,8 @@ export default function MatchReportModal({
                   onClick={handleQuickDraft}
                   style={{
                     background: '#133E30',
-                    border: '1px solid #C9A227',
-                    color: '#FCD34D',
+                    border: '1px solid #FF9500',
+                    color: '#FF9F0A',
                     borderRadius: '6px',
                     padding: '4px 10px',
                     fontSize: '11px',
@@ -510,10 +510,10 @@ export default function MatchReportModal({
                   style={{
                     width: '100%',
                     background: '#071C15',
-                    border: '1px solid #1E4636',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     padding: '10px 12px',
-                    color: '#F4F2EA',
+                    color: '#FFFFFF',
                     fontSize: '13px',
                     boxSizing: 'border-box',
                   }}
@@ -535,10 +535,10 @@ export default function MatchReportModal({
                     style={{
                       width: '100%',
                       background: '#071C15',
-                      border: '1px solid #1E4636',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '9px 12px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       fontSize: '12.5px',
                       boxSizing: 'border-box',
                     }}
@@ -562,10 +562,10 @@ export default function MatchReportModal({
                     style={{
                       width: '100%',
                       background: '#071C15',
-                      border: '1px solid #1E4636',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '9px 12px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       fontSize: '12.5px',
                       boxSizing: 'border-box',
                     }}
@@ -591,10 +591,10 @@ export default function MatchReportModal({
                     style={{
                       width: '100%',
                       background: '#071C15',
-                      border: '1px solid #1E4636',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '9px 12px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       fontSize: '12.5px',
                       boxSizing: 'border-box',
                     }}
@@ -613,10 +613,10 @@ export default function MatchReportModal({
                     style={{
                       width: '100%',
                       background: '#071C15',
-                      border: '1px solid #1E4636',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '9px 12px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       fontSize: '12.5px',
                       boxSizing: 'border-box',
                     }}
@@ -637,10 +637,10 @@ export default function MatchReportModal({
                   style={{
                     width: '100%',
                     background: '#071C15',
-                    border: '1px solid #1E4636',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     padding: '10px 12px',
-                    color: '#F4F2EA',
+                    color: '#FFFFFF',
                     fontSize: '12.5px',
                     lineHeight: '1.6',
                     fontFamily: 'inherit',
@@ -663,10 +663,10 @@ export default function MatchReportModal({
                   style={{
                     width: '100%',
                     background: '#071C15',
-                    border: '1px solid #1E4636',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     padding: '10px 12px',
-                    color: '#F4F2EA',
+                    color: '#FFFFFF',
                     fontSize: '12.5px',
                     lineHeight: '1.5',
                     fontFamily: 'inherit',
@@ -699,7 +699,7 @@ export default function MatchReportModal({
                   type="submit"
                   disabled={saving}
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     border: 'none',
                     color: '#16201B',
                     borderRadius: '8px',
@@ -723,7 +723,7 @@ export default function MatchReportModal({
                     style={{
                       fontSize: '20px',
                       fontWeight: 800,
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       marginBottom: '8px',
                       marginTop: 0,
                     }}
@@ -738,10 +738,10 @@ export default function MatchReportModal({
                       flexWrap: 'wrap',
                       gap: '12px',
                       fontSize: '11px',
-                      color: '#8FA89B',
+                      color: '#8E8E93',
                       marginBottom: '16px',
                       paddingBottom: '12px',
-                      borderBottom: '1px solid #1E4636',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                     }}
                   >
                     <span>✍️ By: <strong>{existingReport.author || 'Match Official'}</strong></span>
@@ -760,8 +760,8 @@ export default function MatchReportModal({
                   {existingReport.motm && (
                     <div
                       style={{
-                        background: 'linear-gradient(135deg, rgba(201,162,39,0.18) 0%, rgba(11,36,28,0.4) 100%)',
-                        border: '1px solid #C9A227',
+                        background: 'linear-gradient(135deg, rgba(255, 149, 0,0.18) 0%, rgba(11,36,28,0.4) 100%)',
+                        border: '1px solid #FF9500',
                         borderRadius: '10px',
                         padding: '10px 14px',
                         marginBottom: '16px',
@@ -772,10 +772,10 @@ export default function MatchReportModal({
                     >
                       <span style={{ fontSize: '20px' }}>🌟</span>
                       <div>
-                        <div style={{ fontSize: '10.5px', color: '#FCD34D', textTransform: 'uppercase', fontWeight: 800 }}>
+                        <div style={{ fontSize: '10.5px', color: '#FF9F0A', textTransform: 'uppercase', fontWeight: 800 }}>
                           Official Man of the Match
                         </div>
-                        <div style={{ fontSize: '15px', fontWeight: 800, color: '#F4F2EA' }}>
+                        <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>
                           {existingReport.motm} {existingReport.motm_team && `(${existingReport.motm_team})`}
                         </div>
                       </div>
@@ -800,8 +800,8 @@ export default function MatchReportModal({
                     <div
                       style={{
                         background: '#071C15',
-                        border: '1px solid #1E4636',
-                        borderLeft: '4px solid #C9A227',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderLeft: '4px solid #FF9500',
                         borderRadius: '8px',
                         padding: '12px 14px',
                         marginBottom: '18px',
@@ -811,7 +811,7 @@ export default function MatchReportModal({
                         style={{
                           fontSize: '11px',
                           fontWeight: 800,
-                          color: '#C9A227',
+                          color: '#FF9500',
                           textTransform: 'uppercase',
                           marginBottom: '4px',
                         }}
@@ -831,9 +831,9 @@ export default function MatchReportModal({
                         type="button"
                         onClick={() => setIsEditing(true)}
                         style={{
-                          background: '#16352A',
-                          border: '1px solid #C9A227',
-                          color: '#C9A227',
+                          background: '#1C1C1E',
+                          border: '1px solid #FF9500',
+                          color: '#FF9500',
                           borderRadius: '8px',
                           padding: '7px 16px',
                           fontSize: '12px',
@@ -849,10 +849,10 @@ export default function MatchReportModal({
               ) : (
                 <div style={{ textAlign: 'center', padding: '36px 16px' }}>
                   <div style={{ fontSize: '32px', marginBottom: '8px' }}>📝</div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#F4F2EA', marginBottom: '6px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF', marginBottom: '6px' }}>
                     No Official Match Report Yet
                   </div>
-                  <div style={{ fontSize: '12px', color: '#8FA89B', maxWidth: '420px', margin: '0 auto 16px' }}>
+                  <div style={{ fontSize: '12px', color: '#8E8E93', maxWidth: '420px', margin: '0 auto 16px' }}>
                     This match has finished, but no editorial match report has been written by administrators yet.
                   </div>
                   {isCmsMode ? (
@@ -860,7 +860,7 @@ export default function MatchReportModal({
                       type="button"
                       onClick={() => setIsEditing(true)}
                       style={{
-                        background: '#C9A227',
+                        background: '#FF9500',
                         border: 'none',
                         color: '#16201B',
                         borderRadius: '8px',
@@ -883,7 +883,7 @@ export default function MatchReportModal({
         <div
           style={{
             padding: '12px 20px',
-            borderTop: '1px solid #1E4636',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -895,7 +895,7 @@ export default function MatchReportModal({
             target="_blank"
             rel="noreferrer"
             style={{
-              color: '#8FA89B',
+              color: '#8E8E93',
               fontSize: '11.5px',
               textDecoration: 'none',
               fontWeight: 600,
@@ -907,9 +907,9 @@ export default function MatchReportModal({
             type="button"
             onClick={onClose}
             style={{
-              background: '#16352A',
-              border: '1px solid #2B5746',
-              color: '#F4F2EA',
+              background: '#1C1C1E',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: '#FFFFFF',
               borderRadius: '6px',
               padding: '6px 14px',
               fontSize: '12px',

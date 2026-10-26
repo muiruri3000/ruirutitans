@@ -418,7 +418,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
           ...p,
           teamId: t.id,
           teamName: t.name,
-          teamColor: t.color || '#C9A227',
+          teamColor: t.color || '#FF9500',
         });
       });
     });
@@ -436,8 +436,10 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
   // 4. Current Positions on Pitch (array of nodes with x, y, defaultX, defaultY, and assigned player)
   const [pitchNodes, setPitchNodes] = useState([]);
 
-  // 5. Modal state for Player Picker
+  // 5. Modal state for Player Picker & Position Editor
   const [activeSlotModal, setActiveSlotModal] = useState(null); // slot object or null
+  const [editingPositionRole, setEditingPositionRole] = useState('');
+  const [editingPositionLabel, setEditingPositionLabel] = useState('');
   const [modalFilterTeamId, setModalFilterTeamId] = useState('all');
   const [playerSearchQuery, setPlayerSearchQuery] = useState('');
   const [customPlayerName, setCustomPlayerName] = useState('');
@@ -487,7 +489,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
   // 12. Drawing Tools, Annotations, Ball & Custom Player Colors
   const [activeTool, setActiveTool] = useState('select'); // 'select' | 'curve' | 'line' | 'pass' | 'paint'
-  const [drawColor, setDrawColor] = useState('#FCD34D'); // Active color for drawing and painting
+  const [drawColor, setDrawColor] = useState('#FF9F0A'); // Active color for drawing and painting
   const [drawings, setDrawings] = useState([]); // Array of { id, type, color, points }
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentDrawing, setCurrentDrawing] = useState(null);
@@ -634,13 +636,22 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
     const node = sourceList.find((n) => n.id === slotId);
     if (!node) return;
 
-    // Color Changer Mode: tap player on pitch to instantly update their color!
+    // Color Changer Mode: tap player on pitch to instantly update or remove their color!
     if (activeTool === 'paint') {
-      setPlayerCustomColors((prev) => ({
-        ...prev,
-        [slotId]: drawColor,
-      }));
-      showStatusNotice(`🎨 Updated ${node.player?.name || node.role} color`);
+      if (drawColor === 'reset') {
+        setPlayerCustomColors((prev) => {
+          const next = { ...prev };
+          delete next[slotId];
+          return next;
+        });
+        showStatusNotice(`🔄 Reverted ${node.player?.name || node.role} color to default`);
+      } else {
+        setPlayerCustomColors((prev) => ({
+          ...prev,
+          [slotId]: drawColor,
+        }));
+        showStatusNotice(`🎨 Updated ${node.player?.name || node.role} color`);
+      }
       return;
     }
 
@@ -718,13 +729,24 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
         const slotNode = (isOpp ? opponentNodes : pitchNodes).find((n) => n.id === slotId);
         if (slotNode) {
           if (activeTool === 'paint') {
-            setPlayerCustomColors((prev) => ({
-              ...prev,
-              [slotId]: drawColor,
-            }));
-            showStatusNotice(`🎨 Updated ${slotNode.player?.name || slotNode.role} color`);
+            if (drawColor === 'reset') {
+              setPlayerCustomColors((prev) => {
+                const next = { ...prev };
+                delete next[slotId];
+                return next;
+              });
+              showStatusNotice(`🔄 Reverted ${slotNode.player?.name || slotNode.role} color to default`);
+            } else {
+              setPlayerCustomColors((prev) => ({
+                ...prev,
+                [slotId]: drawColor,
+              }));
+              showStatusNotice(`🎨 Updated ${slotNode.player?.name || slotNode.role} color`);
+            }
           } else {
             setActiveSlotModal(slotNode);
+            setEditingPositionRole(slotNode.role || '');
+            setEditingPositionLabel(slotNode.label || '');
             setModalFilterTeamId(isOpp && selectedOpponentTeamId !== 'auto-red' ? selectedOpponentTeamId : 'all');
             setPlayerSearchQuery('');
             setCustomPlayerName('');
@@ -996,6 +1018,31 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
     showStatusNotice('Removed player from position.');
   };
 
+  // Update / Rename Position Name or Role on Pitch
+  const handleSavePositionName = (newRole, newLabel = null) => {
+    if (!activeSlotModal) return;
+    const cleanRole = (newRole || '').trim().slice(0, 8).toUpperCase() || activeSlotModal.role;
+    const cleanLabel = (newLabel !== null && newLabel !== undefined ? newLabel : '').trim() || cleanRole;
+    const isOpp = activeSlotModal.id.startsWith('opp_');
+
+    if (isOpp) {
+      setOpponentNodes((prev) =>
+        prev.map((n) => (n.id === activeSlotModal.id ? { ...n, role: cleanRole, label: cleanLabel } : n))
+      );
+    } else {
+      setPitchNodes((prev) => {
+        const updated = prev.map((n) =>
+          n.id === activeSlotModal.id ? { ...n, role: cleanRole, label: cleanLabel } : n
+        );
+        saveCurrentLineup(updated);
+        return updated;
+      });
+    }
+
+    setActiveSlotModal((prev) => (prev ? { ...prev, role: cleanRole, label: cleanLabel } : null));
+    showStatusNotice(`🏷️ Updated position on pitch to "${cleanRole}"`);
+  };
+
   // Drop a player dragged from the bench onto the pitch or onto a slot
   const handlePitchDrop = (e, targetSlotId = null) => {
     e.preventDefault();
@@ -1055,7 +1102,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
       isCustom: true,
       teamId: 'custom',
       teamName: 'Custom Trialist',
-      teamColor: '#C9A227',
+      teamColor: '#FF9500',
     };
     assignPlayerToSlot(activeSlotModal.id, custom);
   };
@@ -1094,7 +1141,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
   const removeBtnSize = Math.max(11, Math.round(14 * pitchScale));
 
   return (
-    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '10px 14px 40px', color: '#F4F2EA' }}>
+    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '10px 14px 40px', color: '#FFFFFF' }}>
       {/* Page Title & Subheader */}
       <div
         style={{
@@ -1113,7 +1160,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               className="scoreboard"
               style={{
                 fontSize: '24px',
-                color: '#C9A227',
+                color: '#FF9500',
                 letterSpacing: '0.04em',
                 margin: 0,
               }}
@@ -1121,7 +1168,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               TACTICS &amp; FORMATION BOARD
             </h1>
           </div>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#8FA89B' }}>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#8E8E93' }}>
             Configure game formats (5, 7, 8, 11-aside), drag players directly from the bench onto the pitch, mix players from different teams, toggle goalkeeper on/off, and reposition freely.
           </p>
         </div>
@@ -1132,9 +1179,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
             type="button"
             onClick={handleResetPositions}
             style={{
-              background: '#16352A',
-              color: '#FCD34D',
-              border: '1px solid #C9A227',
+              background: '#1C1C1E',
+              color: '#FF9F0A',
+              border: '1px solid #FF9500',
               borderRadius: '8px',
               padding: '8px 14px',
               fontSize: '12px',
@@ -1195,8 +1242,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
       {/* Top Controls Bar: Game Format, Formations, Goalkeeper Toggle, and Cross-Team Selection */}
       <div
         style={{
-          background: '#0B281F',
-          border: '1px solid #1E4636',
+          background: '#121212',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '14px',
           padding: '12px 14px',
           marginBottom: '18px',
@@ -1208,10 +1255,10 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
       >
         {/* 1. Game Format Selector (5, 7, 8, 11 aside) */}
         <div>
-          <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
+          <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
             ⚽ 1. Format:
           </label>
-          <div style={{ display: 'flex', gap: '4px', background: '#071B15', padding: '3px', borderRadius: '8px', border: '1px solid #1A3E30' }}>
+          <div style={{ display: 'flex', gap: '4px', background: '#000000', padding: '3px', borderRadius: '8px', border: '1px solid #1A3E30' }}>
             {Object.keys(FORMATION_PRESETS).map((fmtKey) => {
               const active = selectedFormat === fmtKey;
               let label = fmtKey.replace('-aside', 's').toUpperCase();
@@ -1227,8 +1274,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                     padding: '5px 3px',
                     borderRadius: '6px',
                     border: 'none',
-                    background: active ? '#C9A227' : 'transparent',
-                    color: active ? '#16201B' : '#9BB5A8',
+                    background: active ? '#FF9500' : 'transparent',
+                    color: active ? '#16201B' : '#8E8E93',
                     fontWeight: 800,
                     fontSize: '11px',
                     cursor: 'pointer',
@@ -1244,7 +1291,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
         {/* 2. Formation Preset Dropdown */}
         <div>
-          <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
+          <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
             📐 2. Formation ({effectiveMaxPlayers} Players):
           </label>
           <select
@@ -1252,9 +1299,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
             onChange={(e) => handleFormationChange(e.target.value)}
             style={{
               width: '100%',
-              background: '#071B15',
-              border: '1px solid #2B5746',
-              color: '#F4F2EA',
+              background: '#000000',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: '#FFFFFF',
               borderRadius: '8px',
               padding: '7px 10px',
               fontSize: '12.5px',
@@ -1273,7 +1320,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
         {/* 3. Goalkeeper Optional Toggle */}
         <div>
-          <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
+          <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
             🧤 3. Goalkeeper (GK):
           </label>
           <button
@@ -1293,7 +1340,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               width: '100%',
               padding: '7px 10px',
               borderRadius: '8px',
-              border: includeGoalkeeper ? '1px solid #2B5746' : '1px solid #732228',
+              border: includeGoalkeeper ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #732228',
               background: includeGoalkeeper ? '#14382B' : '#231518',
               color: includeGoalkeeper ? '#6CE5A0' : '#FF8A8A',
               fontWeight: 800,
@@ -1317,7 +1364,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
         {/* 4. Club Squad Roster (Allows All Clubs / Different Teams) */}
         <div>
-          <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
+          <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
             🛡️ 4. Player Roster Source:
           </label>
           <select
@@ -1325,9 +1372,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
             onChange={(e) => setSelectedTeamId(e.target.value)}
             style={{
               width: '100%',
-              background: '#071B15',
-              border: '1px solid #2B5746',
-              color: '#F4F2EA',
+              background: '#000000',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: '#FFFFFF',
               borderRadius: '8px',
               padding: '7px 10px',
               fontSize: '12.5px',
@@ -1347,7 +1394,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
         {/* 5. Opponents On / Off Toggle */}
         <div>
-          <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
+          <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
             ⚔️ 5. Opponents:
           </label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -1362,7 +1409,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 width: '100%',
                 padding: '7px 10px',
                 borderRadius: '8px',
-                border: showOpponents ? '1px solid #E11D48' : '1px solid #2B5746',
+                border: showOpponents ? '1px solid #E11D48' : '1px solid rgba(255, 255, 255, 0.1)',
                 background: showOpponents ? '#3A0D15' : '#14382B',
                 color: showOpponents ? '#FDA4AF' : '#88D4B0',
                 fontWeight: 800,
@@ -1415,8 +1462,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
            ========================================================================= */}
         <div
           style={{
-            background: '#0A241C',
-            border: '2px solid #1E4636',
+            background: '#121212',
+            border: '2px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '14px',
             padding: '12px',
             boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
@@ -1442,14 +1489,14 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
           >
             {/* Formation & Status Tags */}
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 800, color: '#FCD34D' }}>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#FF9F0A' }}>
                 {activeFormation.name}
               </span>
               <span style={{ fontSize: '11px', color: '#7AA392' }}>
                 ({currentAssignedCount} / {effectiveMaxPlayers} Selected)
               </span>
               {includeGoalkeeper && (selectedFormat === '5-aside' || selectedFormat === '7-aside') && (
-                <span style={{ fontSize: '10px', background: '#14382B', color: '#6CE5A0', border: '1px solid #2B5746', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
+                <span style={{ fontSize: '10px', background: '#14382B', color: '#6CE5A0', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
                   {selectedFormat === '5-aside' ? '5 + 1 (GK)' : '7 + 1 (GK)'}
                 </span>
               )}
@@ -1476,9 +1523,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   showStatusNotice(next ? '🔄 Pitch rotated 90° (Landscape View)' : '📱 Pitch rotated back to Portrait View');
                 }}
                 style={{
-                  background: isLandscape ? '#C9A227' : '#14382B',
-                  color: isLandscape ? '#16201B' : '#FCD34D',
-                  border: '1px solid #2B5746',
+                  background: isLandscape ? '#FF9500' : '#14382B',
+                  color: isLandscape ? '#16201B' : '#FF9F0A',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '6px',
                   padding: '4px 9px',
                   fontSize: '11px',
@@ -1502,13 +1549,13 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
-                  background: '#071B15',
-                  border: '1px solid #1E4636',
+                  background: '#000000',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '6px',
                   padding: '2px 6px',
                 }}
               >
-                <span style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700 }}>🔍</span>
+                <span style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700 }}>🔍</span>
                 <button
                   type="button"
                   onClick={() => setPitchScale((prev) => Math.max(0.5, Math.round((prev - 0.05) * 100) / 100))}
@@ -1516,7 +1563,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: pitchScale <= 0.5 ? '#4B5563' : '#FCD34D',
+                    color: pitchScale <= 0.5 ? '#4B5563' : '#FF9F0A',
                     fontSize: '13px',
                     fontWeight: 900,
                     cursor: pitchScale <= 0.5 ? 'not-allowed' : 'pointer',
@@ -1536,7 +1583,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   onChange={(e) => setPitchScale(parseFloat(e.target.value))}
                   style={{
                     width: '54px',
-                    accentColor: '#C9A227',
+                    accentColor: '#FF9500',
                     cursor: 'pointer',
                   }}
                   title={`Pitch Size: ${Math.round(pitchScale * 100)}%`}
@@ -1548,7 +1595,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: pitchScale >= 2.0 ? '#4B5563' : '#FCD34D',
+                    color: pitchScale >= 2.0 ? '#4B5563' : '#FF9F0A',
                     fontSize: '13px',
                     fontWeight: 900,
                     cursor: pitchScale >= 2.0 ? 'not-allowed' : 'pointer',
@@ -1573,10 +1620,10 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                     }}
                     style={{
                       width: '42px',
-                      background: '#071B15',
-                      border: '1px solid #2B5746',
+                      background: '#000000',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '4px',
-                      color: '#FCD34D',
+                      color: '#FF9F0A',
                       fontSize: '11px',
                       fontWeight: 800,
                       textAlign: 'center',
@@ -1588,7 +1635,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                     onClick={() => setPitchScale(1.0)}
                     style={{
                       fontSize: '10px',
-                      color: '#9BB5A8',
+                      color: '#8E8E93',
                       fontWeight: 800,
                       cursor: 'pointer',
                       marginLeft: '2px',
@@ -1608,8 +1655,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              background: '#071B15',
-              border: '1px solid #1E4636',
+              background: '#000000',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '8px',
               padding: '6px 10px',
               marginBottom: '10px',
@@ -1625,9 +1672,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   showStatusNotice('👆 Move / Select Mode: Drag players or the ball');
                 }}
                 style={{
-                  background: activeTool === 'select' ? '#C9A227' : '#0E291E',
+                  background: activeTool === 'select' ? '#FF9500' : '#0E291E',
                   color: activeTool === 'select' ? '#16201B' : '#E2E8F0',
-                  border: '1px solid #2B5746',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '6px',
                   padding: '4px 8px',
                   fontSize: '11px',
@@ -1646,9 +1693,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   showStatusNotice('✏️ Draw Tool: Drag on pitch to draw freehand tactical runs');
                 }}
                 style={{
-                  background: activeTool === 'curve' ? '#C9A227' : '#0E291E',
+                  background: activeTool === 'curve' ? '#FF9500' : '#0E291E',
                   color: activeTool === 'curve' ? '#16201B' : '#E2E8F0',
-                  border: '1px solid #2B5746',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '6px',
                   padding: '4px 8px',
                   fontSize: '11px',
@@ -1667,9 +1714,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   showStatusNotice('➡️ Arrow Tool: Drag on pitch to draw movement arrow');
                 }}
                 style={{
-                  background: activeTool === 'line' ? '#C9A227' : '#0E291E',
+                  background: activeTool === 'line' ? '#FF9500' : '#0E291E',
                   color: activeTool === 'line' ? '#16201B' : '#E2E8F0',
-                  border: '1px solid #2B5746',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '6px',
                   padding: '4px 8px',
                   fontSize: '11px',
@@ -1688,9 +1735,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   showStatusNotice('↪️ Pass Arrow: Drag on pitch to draw dashed pass line');
                 }}
                 style={{
-                  background: activeTool === 'pass' ? '#C9A227' : '#0E291E',
+                  background: activeTool === 'pass' ? '#FF9500' : '#0E291E',
                   color: activeTool === 'pass' ? '#16201B' : '#E2E8F0',
-                  border: '1px solid #2B5746',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '6px',
                   padding: '4px 8px',
                   fontSize: '11px',
@@ -1710,8 +1757,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 }}
                 style={{
                   background: activeTool === 'paint' ? drawColor : '#0E291E',
-                  color: activeTool === 'paint' ? (['#FFFFFF', '#FCD34D', '#10B981', '#06B6D4'].includes(drawColor) ? '#16201B' : '#FFFFFF') : '#FCD34D',
-                  border: activeTool === 'paint' ? '2px solid #FFFFFF' : '1px solid #2B5746',
+                  color: activeTool === 'paint' ? (['#FFFFFF', '#FF9F0A', '#10B981', '#06B6D4'].includes(drawColor) ? '#16201B' : '#FFFFFF') : '#FF9F0A',
+                  border: activeTool === 'paint' ? '2px solid #FFFFFF' : '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '6px',
                   padding: '4px 8px',
                   fontSize: '11px',
@@ -1734,8 +1781,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 }}
                 style={{
                   background: showBall ? '#14382B' : '#0E291E',
-                  color: showBall ? '#FCD34D' : '#8FA89B',
-                  border: showBall ? '1px solid #C9A227' : '1px solid #2B5746',
+                  color: showBall ? '#FF9F0A' : '#8E8E93',
+                  border: showBall ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '6px',
                   padding: '4px 8px',
                   fontSize: '11px',
@@ -1750,8 +1797,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
             {/* Color Changer Palette & Swatches */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700 }}>Color:</span>
-              {['#FCD34D', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#F97316', '#A855F7', '#06B6D4'].map((c) => (
+              <span style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700 }}>Color:</span>
+              {['#FF9F0A', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#F97316', '#A855F7', '#06B6D4'].map((c) => (
                 <div
                   key={c}
                   onClick={() => {
@@ -1777,7 +1824,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
               <input
                 type="color"
-                value={drawColor}
+                value={drawColor === 'reset' ? '#FF9F0A' : drawColor}
                 onChange={(e) => setDrawColor(e.target.value)}
                 style={{
                   width: '22px',
@@ -1791,6 +1838,54 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 title="Custom color picker"
               />
 
+              {/* Remove Color (Revert player to default team color) */}
+              <button
+                type="button"
+                onClick={() => {
+                  setDrawColor('reset');
+                  setActiveTool('paint');
+                  showStatusNotice('🚫 Eraser active: tap any player on the pitch to remove their custom color and restore their team color!');
+                }}
+                style={{
+                  background: drawColor === 'reset' ? '#7F1D1D' : '#1C1917',
+                  color: drawColor === 'reset' ? '#FCA5A5' : '#D6D3D1',
+                  border: drawColor === 'reset' ? '1.5px solid #EF4444' : '1px solid #44403C',
+                  borderRadius: '5px',
+                  padding: '3px 7px',
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: drawColor === 'reset' ? '0 0 6px rgba(239, 68, 68, 0.7)' : 'none',
+                }}
+                title="Select eraser, then tap any player on pitch to remove custom color"
+              >
+                🚫 Remove Color
+              </button>
+
+              {/* Reset All Colors */}
+              {Object.keys(playerCustomColors).length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlayerCustomColors({});
+                    showStatusNotice('🔄 Reset all custom player colors to default');
+                  }}
+                  style={{
+                    background: '#1F2937',
+                    color: '#9CA3AF',
+                    border: '1px solid #374151',
+                    borderRadius: '5px',
+                    padding: '3px 6px',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                  title="Remove all custom colors from all players"
+                >
+                  ↺ Reset All
+                </button>
+              )}
+
               {/* Drawings Undo & Clear Buttons */}
               {drawings.length > 0 && (
                 <>
@@ -1799,8 +1894,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                     onClick={() => setDrawings((prev) => prev.slice(0, -1))}
                     style={{
                       background: '#16382B',
-                      color: '#F4F2EA',
-                      border: '1px solid #2B5746',
+                      color: '#FFFFFF',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '4px',
                       padding: '2px 7px',
                       fontSize: '10.5px',
@@ -1855,7 +1950,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               background: isLandscape
                 ? 'repeating-linear-gradient(90deg, #114B36, #114B36 32px, #0F4431 32px, #0F4431 64px)'
                 : 'repeating-linear-gradient(180deg, #114B36, #114B36 32px, #0F4431 32px, #0F4431 64px)',
-              border: isPitchDragOver ? '3px dashed #FCD34D' : '2.5px solid #E2E8F0',
+              border: isPitchDragOver ? '3px dashed #FF9F0A' : '2.5px solid #E2E8F0',
               overflow: 'hidden',
               boxShadow: isPitchDragOver
                 ? '0 0 25px rgba(252, 211, 77, 0.5), inset 0 0 40px rgba(0,0,0,0.5)'
@@ -1873,7 +1968,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   top: '12px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: 'rgba(201, 162, 39, 0.95)',
+                  background: 'rgba(255, 149, 0, 0.95)',
                   color: '#16201B',
                   fontWeight: 900,
                   fontSize: '11px',
@@ -2003,7 +2098,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               }}
             >
               <defs>
-                {['#FCD34D', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#F97316', '#A855F7', '#EC4899', '#06B6D4']
+                {['#FF9F0A', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#F97316', '#A855F7', '#EC4899', '#06B6D4']
                   .concat(drawColor)
                   .filter((c, i, arr) => arr.indexOf(c) === i)
                   .map((c) => (
@@ -2148,7 +2243,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
               // Use custom painted color, assigned player's own club color, or fallback to default gold
               const customColor = playerCustomColors[node.id];
-              const playerTeamColor = customColor || playerObj?.teamColor || (playerObj?.teamId && teamsMap[playerObj.teamId]?.color) || '#C9A227';
+              const playerTeamColor = customColor || playerObj?.teamColor || (playerObj?.teamId && teamsMap[playerObj.teamId]?.color) || '#FF9500';
               const isGk = node.role === 'GK';
 
               const nodeLeft = isLandscape ? `${100 - node.y}%` : `${node.x}%`;
@@ -2162,11 +2257,20 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   onClick={(e) => {
                     e.stopPropagation();
                     if (activeTool === 'paint') {
-                      setPlayerCustomColors((prev) => ({
-                        ...prev,
-                        [node.id]: drawColor,
-                      }));
-                      showStatusNotice(`🎨 Updated ${node.player?.name || node.role} color`);
+                      if (drawColor === 'reset') {
+                        setPlayerCustomColors((prev) => {
+                          const next = { ...prev };
+                          delete next[node.id];
+                          return next;
+                        });
+                        showStatusNotice(`🔄 Reverted ${node.player?.name || node.role} color to default`);
+                      } else {
+                        setPlayerCustomColors((prev) => ({
+                          ...prev,
+                          [node.id]: drawColor,
+                        }));
+                        showStatusNotice(`🎨 Updated ${node.player?.name || node.role} color`);
+                      }
                     }
                   }}
                   onDragOver={(e) => {
@@ -2206,7 +2310,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                           : `radial-gradient(circle, ${playerTeamColor} 0%, #0F172A 100%)`
                         : '#0D2B20',
                       border: isDragging
-                        ? '2.5px solid #FCD34D'
+                        ? '2.5px solid #FF9F0A'
                         : isAssigned
                         ? '2px solid #F8FAFC'
                         : '1.5px dashed #48BB78',
@@ -2267,12 +2371,12 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                     style={{
                       marginTop: '2px',
                       background: isAssigned ? '#0B1D16' : 'rgba(11, 29, 22, 0.75)',
-                      border: isAssigned ? `1px solid ${playerTeamColor}` : '1px solid #1E4636',
+                      border: isAssigned ? `1px solid ${playerTeamColor}` : '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '4px',
                       padding: '1px 5px',
                       fontSize: `${pillFontSize}px`,
                       fontWeight: 800,
-                      color: isAssigned ? '#FCD34D' : '#8FA89B',
+                      color: isAssigned ? '#FF9F0A' : '#8E8E93',
                       whiteSpace: 'nowrap',
                       maxWidth: `${pillMaxWidth}px`,
                       overflow: 'hidden',
@@ -2320,11 +2424,20 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                     onClick={(e) => {
                       e.stopPropagation();
                       if (activeTool === 'paint') {
-                        setPlayerCustomColors((prev) => ({
-                          ...prev,
-                          [node.id]: drawColor,
-                        }));
-                        showStatusNotice(`🎨 Updated opponent ${node.player?.name || node.role} color`);
+                        if (drawColor === 'reset') {
+                          setPlayerCustomColors((prev) => {
+                            const next = { ...prev };
+                            delete next[node.id];
+                            return next;
+                          });
+                          showStatusNotice(`🔄 Reverted opponent ${node.player?.name || node.role} color to default`);
+                        } else {
+                          setPlayerCustomColors((prev) => ({
+                            ...prev,
+                            [node.id]: drawColor,
+                          }));
+                          showStatusNotice(`🎨 Updated opponent ${node.player?.name || node.role} color`);
+                        }
                       }
                     }}
                     onDragOver={(e) => {
@@ -2458,7 +2571,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               alignItems: 'center',
               justifyContent: 'space-between',
               fontSize: '11px',
-              color: '#8FA89B',
+              color: '#8E8E93',
             }}
           >
             <span>🏟️ Thoome Pri. Ground · Tactical Blueprint</span>
@@ -2473,8 +2586,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
           {/* Starting Lineup List */}
           <div
             style={{
-              background: '#0B281F',
-              border: '1px solid #1E4636',
+              background: '#121212',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '14px',
               padding: '12px',
             }}
@@ -2489,7 +2602,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 borderBottom: '1px solid #16382B',
               }}
             >
-              <h3 style={{ margin: 0, fontSize: '12.5px', fontWeight: 800, color: '#C9A227', letterSpacing: '0.05em' }}>
+              <h3 style={{ margin: 0, fontSize: '12.5px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.05em' }}>
                 ⭐ STARTING SQUAD ({currentAssignedCount}/{effectiveMaxPlayers})
               </h3>
               <span
@@ -2497,7 +2610,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   fontSize: '10px',
                   padding: '2px 6px',
                   borderRadius: '4px',
-                  background: '#16352A',
+                  background: '#1C1C1E',
                   color: '#6CE5A0',
                   fontWeight: 800,
                 }}
@@ -2510,7 +2623,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               {visiblePitchNodes.map((node) => {
                 const isAssigned = Boolean(node.player);
                 const playerObj = node.player;
-                const playerTeamColor = playerObj?.teamColor || (playerObj?.teamId && teamsMap[playerObj.teamId]?.color) || '#C9A227';
+                const playerTeamColor = playerObj?.teamColor || (playerObj?.teamId && teamsMap[playerObj.teamId]?.color) || '#FF9500';
 
                 return (
                   <div
@@ -2526,8 +2639,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                       justifyContent: 'space-between',
                       padding: '5px 8px',
                       borderRadius: '6px',
-                      background: isAssigned ? '#071B15' : '#0B221B',
-                      border: isAssigned ? `1px solid ${playerTeamColor}` : '1px dashed #1E4636',
+                      background: isAssigned ? '#000000' : '#0B221B',
+                      border: isAssigned ? `1px solid ${playerTeamColor}` : '1px dashed rgba(255, 255, 255, 0.1)',
                       cursor: 'pointer',
                       fontSize: '11.5px',
                     }}
@@ -2538,8 +2651,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                           width: '26px',
                           height: '18px',
                           borderRadius: '4px',
-                          background: '#16352A',
-                          color: '#C9A227',
+                          background: '#1C1C1E',
+                          color: '#FF9500',
                           fontWeight: 800,
                           fontSize: '10px',
                           display: 'inline-flex',
@@ -2549,7 +2662,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                       >
                         {node.role}
                       </span>
-                      <span style={{ fontWeight: 700, color: isAssigned ? '#F4F2EA' : '#6E9080' }}>
+                      <span style={{ fontWeight: 700, color: isAssigned ? '#FFFFFF' : '#8E8E93' }}>
                         {isAssigned ? (
                           <span>
                             {playerObj.name}{' '}
@@ -2569,7 +2682,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                           {playerObj.jerseyNumber || playerObj.jersey_number ? `#${playerObj.jerseyNumber || playerObj.jersey_number}` : '✔'}
                         </span>
                       ) : (
-                        <span style={{ fontSize: '10.5px', color: '#C9A227', fontWeight: 700 }}>
+                        <span style={{ fontSize: '10.5px', color: '#FF9500', fontWeight: 700 }}>
                           + Assign
                         </span>
                       )}
@@ -2583,8 +2696,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
           {/* Draggable Substitutes / Reserves Bench */}
           <div
             style={{
-              background: '#0B281F',
-              border: '1px solid #1E4636',
+              background: '#121212',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '14px',
               padding: '12px',
             }}
@@ -2599,22 +2712,22 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 borderBottom: '1px solid #16382B',
               }}
             >
-              <h3 style={{ margin: 0, fontSize: '12.5px', fontWeight: 800, color: '#8FA89B', letterSpacing: '0.05em' }}>
+              <h3 style={{ margin: 0, fontSize: '12.5px', fontWeight: 800, color: '#8E8E93', letterSpacing: '0.05em' }}>
                 🪑 BENCH / ROSTER ({benchPlayers.length})
               </h3>
-              <span style={{ fontSize: '10px', color: '#6E9080', fontStyle: 'italic' }}>
+              <span style={{ fontSize: '10px', color: '#8E8E93', fontStyle: 'italic' }}>
                 Drag player to pitch ⇲
               </span>
             </div>
 
             {benchPlayers.length === 0 ? (
-              <div style={{ fontSize: '11px', color: '#6E9080', fontStyle: 'italic', padding: '8px 0', textAlign: 'center' }}>
+              <div style={{ fontSize: '11px', color: '#8E8E93', fontStyle: 'italic', padding: '8px 0', textAlign: 'center' }}>
                 All available squad players are on the pitch.
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', maxHeight: '240px', overflowY: 'auto' }}>
                 {benchPlayers.map((player) => {
-                  const pTeamColor = player.teamColor || (player.teamId && teamsMap[player.teamId]?.color) || '#C9A227';
+                  const pTeamColor = player.teamColor || (player.teamId && teamsMap[player.teamId]?.color) || '#FF9500';
                   return (
                     <div
                       key={player.id}
@@ -2640,7 +2753,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                         justifyContent: 'space-between',
                         padding: '7px 8px',
                         borderRadius: '6px',
-                        background: '#071B15',
+                        background: '#000000',
                         border: '1px solid #1A3E30',
                         fontSize: '11px',
                         cursor: 'pointer',
@@ -2650,7 +2763,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                       title="Tap to place on pitch, or drag and drop"
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ color: '#6E9080', cursor: 'grab', fontSize: '11px' }}>⋮⋮</span>
+                        <span style={{ color: '#8E8E93', cursor: 'grab', fontSize: '11px' }}>⋮⋮</span>
                         <span
                           style={{
                             width: '20px',
@@ -2668,7 +2781,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                           {player.jersey_number || player.jerseyNumber ? player.jersey_number || player.jerseyNumber : '•'}
                         </span>
                         <div>
-                          <span style={{ color: '#DDE6DF', fontWeight: 600 }}>{player.name}</span>
+                          <span style={{ color: '#EBEBF5', fontWeight: 600 }}>{player.name}</span>
                           <span style={{ fontSize: '9px', color: pTeamColor, marginLeft: '4px', fontWeight: 700 }}>
                             ({player.teamName ? player.teamName.slice(0, 3).toUpperCase() : 'Club'})
                           </span>
@@ -2688,9 +2801,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                           }
                         }}
                         style={{
-                          background: '#16352A',
+                          background: '#1C1C1E',
                           color: '#6CE5A0',
-                          border: '1px solid #2B5746',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
                           borderRadius: '4px',
                           padding: '3px 8px',
                           fontSize: '10.5px',
@@ -2710,13 +2823,13 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
           {/* Tactical Instructions Note Card */}
           <div
             style={{
-              background: '#0B281F',
-              border: '1px solid #1E4636',
+              background: '#121212',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '14px',
               padding: '12px',
             }}
           >
-            <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
+            <label style={{ display: 'block', fontSize: '10.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.06em' }}>
               📝 Matchday Tactical Notes:
             </label>
             <textarea
@@ -2726,9 +2839,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               placeholder="e.g. Set-piece routines, press triggers, high-line instructions..."
               style={{
                 width: '100%',
-                background: '#071B15',
-                border: '1px solid #2B5746',
-                color: '#F4F2EA',
+                background: '#000000',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#FFFFFF',
                 borderRadius: '8px',
                 padding: '6px 8px',
                 fontSize: '11.5px',
@@ -2763,8 +2876,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
         >
           <div
             style={{
-              background: '#0A241C',
-              border: '2px solid #C9A227',
+              background: '#121212',
+              border: '2px solid #FF9500',
               borderRadius: '16px',
               width: '100%',
               maxWidth: '460px',
@@ -2772,16 +2885,16 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               overflowY: 'auto',
               padding: '18px',
               boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
-              color: '#F4F2EA',
+              color: '#FFFFFF',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', borderBottom: '1px solid #1E4636', paddingBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '8px' }}>
               <div>
                 <span
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     fontSize: '10.5px',
                     fontWeight: 900,
@@ -2802,7 +2915,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#9BB5A8',
+                  color: '#8E8E93',
                   fontSize: '20px',
                   cursor: 'pointer',
                   fontWeight: 800,
@@ -2812,12 +2925,172 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               </button>
             </div>
 
+            {/* Position Name & Tactical Role on Pitch Customizer */}
+            <div
+              style={{
+                background: '#000000',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                marginBottom: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  🏷️ Position Name on Pitch:
+                </span>
+                <span style={{ fontSize: '10px', color: '#8E8E93' }}>
+                  Badge &amp; tactical label
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={editingPositionRole}
+                  onChange={(e) => setEditingPositionRole(e.target.value)}
+                  placeholder="Role (e.g. CF, CAM, 9)"
+                  maxLength={8}
+                  style={{
+                    width: '78px',
+                    background: '#041510',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#FF9F0A',
+                    borderRadius: '6px',
+                    padding: '5px 8px',
+                    fontSize: '12px',
+                    fontWeight: 900,
+                    textAlign: 'center',
+                    outline: 'none',
+                    textTransform: 'uppercase',
+                  }}
+                  title="Short role abbreviation shown on pitch badge"
+                />
+                <input
+                  type="text"
+                  value={editingPositionLabel}
+                  onChange={(e) => setEditingPositionLabel(e.target.value)}
+                  placeholder="Position name (e.g. Center Forward, Pivot)"
+                  style={{
+                    flex: 1,
+                    background: '#041510',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#FFFFFF',
+                    borderRadius: '6px',
+                    padding: '5px 8px',
+                    fontSize: '11.5px',
+                    outline: 'none',
+                  }}
+                  title="Full position name"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleSavePositionName(editingPositionRole, editingPositionLabel)}
+                  style={{
+                    background: '#FF9500',
+                    color: '#16201B',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '5px 12px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+
+              {/* Quick Preset Role Chips */}
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '6px' }}>
+                {['ST', 'CF', 'F9', 'LW', 'RW', 'CAM', 'CM', 'CDM', 'DM', 'LB', 'CB', 'RB', 'LWB', 'RWB', 'GK'].map((presetRole) => (
+                  <button
+                    key={presetRole}
+                    type="button"
+                    onClick={() => {
+                      setEditingPositionRole(presetRole);
+                      handleSavePositionName(presetRole, editingPositionLabel);
+                    }}
+                    style={{
+                      background: editingPositionRole === presetRole ? '#FF9500' : '#0B241C',
+                      color: editingPositionRole === presetRole ? '#16201B' : '#8E8E93',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '4px',
+                      padding: '2px 5px',
+                      fontSize: '9.5px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {presetRole}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Remove Applied Color Option (if player has a custom painted color) */}
+            {playerCustomColors[activeSlotModal.id] && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: '#0F261D',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '7px 12px',
+                  marginBottom: '12px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span
+                    style={{
+                      width: '14px',
+                      height: '14px',
+                      borderRadius: '50%',
+                      background: playerCustomColors[activeSlotModal.id],
+                      border: '1.5px solid #FFFFFF',
+                      boxShadow: '0 0 5px rgba(255,255,255,0.4)',
+                      display: 'inline-block',
+                    }}
+                  />
+                  <span style={{ fontSize: '11px', color: '#8E8E93' }}>
+                    Custom Color Applied
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlayerCustomColors((prev) => {
+                      const next = { ...prev };
+                      delete next[activeSlotModal.id];
+                      return next;
+                    });
+                    showStatusNotice(`🔄 Reverted ${activeSlotModal.role} to default team color`);
+                  }}
+                  style={{
+                    background: '#2B171A',
+                    color: '#FF8A8A',
+                    border: '1px solid #632328',
+                    borderRadius: '5px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✕ Remove Color
+                </button>
+              </div>
+            )}
+
             {/* Currently Assigned Banner */}
             {activeSlotModal.player && (
               <div
                 style={{
-                  background: '#071B15',
-                  border: '1px solid #2B5746',
+                  background: '#000000',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '10px',
                   padding: '8px 12px',
                   marginBottom: '12px',
@@ -2827,8 +3100,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '10px', color: '#8FA89B' }}>Current Player:</div>
-                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#FCD34D' }}>
+                  <div style={{ fontSize: '10px', color: '#8E8E93' }}>Current Player:</div>
+                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#FF9F0A' }}>
                     {activeSlotModal.player.name}{' '}
                     {activeSlotModal.player.jerseyNumber || activeSlotModal.player.jersey_number ? `(#${activeSlotModal.player.jerseyNumber || activeSlotModal.player.jersey_number})` : ''}
                     {activeSlotModal.player.teamName && (
@@ -2864,9 +3137,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 onChange={(e) => setModalFilterTeamId(e.target.value)}
                 style={{
                   flex: 1,
-                  background: '#071B15',
-                  border: '1px solid #2B5746',
-                  color: '#F4F2EA',
+                  background: '#000000',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#FFFFFF',
                   borderRadius: '6px',
                   padding: '6px 8px',
                   fontSize: '11.5px',
@@ -2889,9 +3162,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 placeholder="🔍 Search name..."
                 style={{
                   flex: 1.2,
-                  background: '#071B15',
-                  border: '1px solid #2B5746',
-                  color: '#F4F2EA',
+                  background: '#000000',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#FFFFFF',
                   borderRadius: '6px',
                   padding: '6px 10px',
                   fontSize: '12px',
@@ -2903,7 +3176,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
             {/* Cross-Team Squad Players List */}
             <div style={{ marginBottom: '14px' }}>
-              <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
+              <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
                 Select Squad Player:
               </div>
 
@@ -2922,7 +3195,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   .map((p) => {
                     const isAlreadyAssigned = assignedPlayerIds.has(p.id);
                     const isSelectedForThisSlot = activeSlotModal.player?.id === p.id;
-                    const pTeamColor = p.teamColor || (p.teamId && teamsMap[p.teamId]?.color) || '#C9A227';
+                    const pTeamColor = p.teamColor || (p.teamId && teamsMap[p.teamId]?.color) || '#FF9500';
 
                     return (
                       <div
@@ -2934,8 +3207,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                           justifyContent: 'space-between',
                           padding: '6px 8px',
                           borderRadius: '6px',
-                          background: isSelectedForThisSlot ? 'rgba(201, 162, 39, 0.2)' : '#071B15',
-                          border: isSelectedForThisSlot ? '1px solid #C9A227' : '1px solid #1E4636',
+                          background: isSelectedForThisSlot ? 'rgba(255, 149, 0, 0.2)' : '#000000',
+                          border: isSelectedForThisSlot ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                           cursor: 'pointer',
                           transition: 'all 0.15s ease',
                         }}
@@ -2958,10 +3231,10 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                             {p.jersey_number || p.jerseyNumber || '•'}
                           </span>
                           <div>
-                            <div style={{ fontWeight: 800, fontSize: '12px', color: '#F4F2EA' }}>
+                            <div style={{ fontWeight: 800, fontSize: '12px', color: '#FFFFFF' }}>
                               {p.name}
                             </div>
-                            <div style={{ fontSize: '10px', color: '#8FA89B' }}>
+                            <div style={{ fontSize: '10px', color: '#8E8E93' }}>
                               {p.position || 'Player'} · <strong style={{ color: pTeamColor }}>{p.teamName || 'Squad'}</strong>
                             </div>
                           </div>
@@ -2969,7 +3242,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
                         <div>
                           {isSelectedForThisSlot ? (
-                            <span style={{ fontSize: '10.5px', color: '#FCD34D', fontWeight: 800 }}>
+                            <span style={{ fontSize: '10.5px', color: '#FF9F0A', fontWeight: 800 }}>
                               Selected ✔
                             </span>
                           ) : isAlreadyAssigned ? (
@@ -2989,8 +3262,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
             </div>
 
             {/* Custom Player Option (Guest/Trialist) */}
-            <div style={{ borderTop: '1px solid #1E4636', paddingTop: '10px' }}>
-              <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#8FA89B', textTransform: 'uppercase', marginBottom: '6px' }}>
+            <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '10px' }}>
+              <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#8E8E93', textTransform: 'uppercase', marginBottom: '6px' }}>
                 Or Add Custom / Guest Player:
               </div>
               <form onSubmit={handleAddCustomPlayer} style={{ display: 'flex', gap: '6px' }}>
@@ -3001,9 +3274,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   placeholder="Player name (e.g. Trialist A)"
                   style={{
                     flex: 2,
-                    background: '#071B15',
-                    border: '1px solid #2B5746',
-                    color: '#F4F2EA',
+                    background: '#000000',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#FFFFFF',
                     borderRadius: '6px',
                     padding: '5px 8px',
                     fontSize: '11.5px',
@@ -3017,9 +3290,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   placeholder="No."
                   style={{
                     width: '45px',
-                    background: '#071B15',
-                    border: '1px solid #2B5746',
-                    color: '#F4F2EA',
+                    background: '#000000',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#FFFFFF',
                     borderRadius: '6px',
                     padding: '5px 6px',
                     fontSize: '11.5px',
@@ -3030,7 +3303,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 <button
                   type="submit"
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     border: 'none',
                     borderRadius: '6px',

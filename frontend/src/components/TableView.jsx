@@ -7,7 +7,7 @@ const tdNum = { padding: '10px 8px', textAlign: 'center', fontSize: '13px' };
 export default function TableView({ table, teamCount, activeCategoryKey, isCmsMode = false, onOpenEditCategory, onSelectTeam }) {
   if (teamCount === 0) {
     return (
-      <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8FA89B', background: '#0F2E24', borderRadius: '14px', border: '1px solid #1E4636' }}>
+      <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8E8E93', background: '#121212', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
         No teams yet in this category — sign in to CMS to add teams and fixtures.
       </div>
     );
@@ -23,12 +23,12 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
   );
 
   return (
-    <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '14px', overflow: 'hidden' }}>
+    <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px', overflow: 'hidden' }}>
       {isChampionConfirmed && leader && (
         <div
           style={{
-            background: 'linear-gradient(135deg, rgba(201, 162, 39, 0.22) 0%, rgba(15, 46, 36, 0.95) 100%)',
-            borderBottom: '1px solid #C9A227',
+            background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.22) 0%, rgba(15, 46, 36, 0.95) 100%)',
+            borderBottom: '1px solid #FF9500',
             padding: '14px 18px',
             display: 'flex',
             alignItems: 'center',
@@ -40,10 +40,10 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '28px' }}>🏆</span>
             <div>
-              <div style={{ fontSize: '12px', fontWeight: 900, color: '#C9A227', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '12px', fontWeight: 900, color: '#FF9500', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 Ruiru Titans August Season League Winners
               </div>
-              <div style={{ fontSize: '13px', color: '#F4F2EA', marginTop: '2px' }}>
+              <div style={{ fontSize: '13px', color: '#FFFFFF', marginTop: '2px' }}>
                 🎉 <strong>{leader.name}</strong> confirmed as official League Champions ({leader.Pts} Pts · {leader.W}W {leader.D}D {leader.L}L)!
               </div>
             </div>
@@ -51,9 +51,9 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span
               style={{
-                background: 'rgba(201, 162, 39, 0.18)',
-                color: '#FCD34D',
-                border: '1px solid #C9A227',
+                background: 'rgba(255, 149, 0, 0.18)',
+                color: '#FF9F0A',
+                border: '1px solid #FF9500',
                 fontSize: '11px',
                 fontWeight: 800,
                 padding: '4px 10px',
@@ -65,7 +65,7 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
             </span>
             <span
               style={{
-                background: '#C9A227',
+                background: '#FF9500',
                 color: '#16201B',
                 fontSize: '11px',
                 fontWeight: 900,
@@ -86,15 +86,15 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '14px 16px',
-          borderBottom: '1px solid #1E4636',
-          background: '#0A241C',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          background: '#121212',
           flexWrap: 'wrap',
           gap: '8px',
         }}
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontWeight: 800, color: '#C9A227', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            <span style={{ fontWeight: 800, color: '#FF9500', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               📊 Official League Standings
             </span>
             <span
@@ -113,7 +113,7 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
               6-a-side · No GKs
             </span>
           </div>
-          <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '2px' }}>
+          <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px' }}>
             6-a-side tournament (No Goalkeepers) · 3 pts for Win · 1 pt for Draw · Ranked by Points, Goal Difference, Goals Scored
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
               type="button"
               onClick={onOpenEditCategory}
               style={{
-                background: '#C9A227',
+                background: '#FF9500',
                 color: '#16201B',
                 border: 'none',
                 borderRadius: '8px',
@@ -144,9 +144,9 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
             type="button"
             onClick={() => openCategoryFixturesResultsPDF(activeCategoryKey)}
             style={{
-              background: '#0B3A2E',
-              color: '#F4F2EA',
-              border: '1px solid #2B5746',
+              background: '#000000',
+              color: '#FFFFFF',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '8px',
               padding: '6px 12px',
               fontSize: '11.5px',
@@ -171,9 +171,9 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
       </div>
 
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', color: '#F4F2EA', fontSize: '13px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', color: '#FFFFFF', fontSize: '13px' }}>
           <thead>
-            <tr style={{ color: '#8FA89B', textAlign: 'left', background: 'rgba(10, 36, 28, 0.5)' }}>
+            <tr style={{ color: '#8E8E93', textAlign: 'left', background: 'rgba(10, 36, 28, 0.5)' }}>
               <th style={{ padding: '10px 14px', fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Club</th>
               <th style={thNum}>P</th>
               <th style={thNum}>W</th>
@@ -194,8 +194,8 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
                 <tr
                   key={r.id}
                   style={{
-                    borderTop: '1px solid #16352A',
-                    background: isLeader ? 'rgba(201,162,39,0.08)' : 'transparent',
+                    borderTop: '1px solid #1C1C1E',
+                    background: isLeader ? 'rgba(255, 149, 0,0.08)' : 'transparent',
                   }}
                 >
                   <td style={{ padding: '11px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -203,11 +203,11 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
                       style={{
                         fontSize: '11px',
                         fontWeight: 800,
-                        color: isLeader ? '#C9A227' : '#8FA89B',
+                        color: isLeader ? '#FF9500' : '#8E8E93',
                         width: '20px',
                         height: '20px',
                         borderRadius: '5px',
-                        background: isLeader ? 'rgba(201,162,39,0.2)' : '#16352A',
+                        background: isLeader ? 'rgba(255, 149, 0,0.2)' : '#1C1C1E',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -231,20 +231,20 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
                         type="button"
                         className="team-link-btn"
                         onClick={() => onSelectTeam(r.id, activeCategoryKey)}
-                        style={{ fontWeight: 800, fontSize: '13.5px', color: '#F4F2EA' }}
+                        style={{ fontWeight: 800, fontSize: '13.5px', color: '#FFFFFF' }}
                         title={`Click to view ${r.name} performance analysis, history & tournament odds`}
                       >
                         {r.name}
                       </button>
                     ) : (
-                      <strong style={{ color: '#F4F2EA', fontSize: '13.5px' }}>{r.name}</strong>
+                      <strong style={{ color: '#FFFFFF', fontSize: '13.5px' }}>{r.name}</strong>
                     )}
                     {isLeader && (
                       <span
                         style={{
                           fontSize: '9.5px',
                           fontWeight: 800,
-                          background: '#C9A227',
+                          background: '#FF9500',
                           color: '#16201B',
                           padding: '1px 6px',
                           borderRadius: '4px',
@@ -259,12 +259,12 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
                   <td style={{ ...tdNum, color: '#4ADE80', fontWeight: 600 }}>{r.W}</td>
                   <td style={{ ...tdNum, color: '#FACC15' }}>{r.D}</td>
                   <td style={{ ...tdNum, color: '#F87171' }}>{r.L}</td>
-                  <td style={{ ...tdNum, color: '#9BB5A8' }}>{r.GF}</td>
-                  <td style={{ ...tdNum, color: '#9BB5A8' }}>{r.GA}</td>
-                  <td style={{ ...tdNum, fontWeight: 700, color: r.GD > 0 ? '#4ADE80' : r.GD < 0 ? '#F87171' : '#8FA89B' }}>
+                  <td style={{ ...tdNum, color: '#8E8E93' }}>{r.GF}</td>
+                  <td style={{ ...tdNum, color: '#8E8E93' }}>{r.GA}</td>
+                  <td style={{ ...tdNum, fontWeight: 700, color: r.GD > 0 ? '#4ADE80' : r.GD < 0 ? '#F87171' : '#8E8E93' }}>
                     {r.GD > 0 ? `+${r.GD}` : r.GD}
                   </td>
-                  <td style={{ ...tdNum, fontWeight: 900, fontSize: '15px', color: '#C9A227' }}>{r.Pts}</td>
+                  <td style={{ ...tdNum, fontWeight: 900, fontSize: '15px', color: '#FF9500' }}>{r.Pts}</td>
                   <td style={{ ...tdNum, textAlign: 'right', paddingRight: '14px' }}>
                     <div style={{ display: 'inline-flex', gap: '3px', justifyContent: 'flex-end' }}>
                       {(r.form || []).slice(-5).map((res, idx) => (
@@ -282,7 +282,7 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
       </div>
 
       {anyTied && (
-        <div style={{ padding: '8px 14px', fontSize: '11px', color: '#8FA89B', borderTop: '1px solid #1E4636', background: '#0A241C' }}>
+        <div style={{ padding: '8px 14px', fontSize: '11px', color: '#8E8E93', borderTop: '1px solid rgba(255, 255, 255, 0.1)', background: '#121212' }}>
           &quot;=&quot; marks clubs level on points, goal difference, and goals scored.
         </div>
       )}

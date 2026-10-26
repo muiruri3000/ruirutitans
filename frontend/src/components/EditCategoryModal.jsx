@@ -218,12 +218,12 @@ export default function EditCategoryModal({
           maxWidth: '780px',
           maxHeight: '90vh',
           overflowY: 'auto',
-          background: '#08231B',
-          border: '2px solid #C9A227',
+          background: '#121212',
+          border: '2px solid #FF9500',
           borderRadius: '16px',
           padding: '24px',
           boxShadow: '0 20px 50px rgba(0,0,0,0.85)',
-          color: '#F4F2EA',
+          color: '#FFFFFF',
         }}
       >
         {/* Header */}
@@ -232,7 +232,7 @@ export default function EditCategoryModal({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderBottom: '1px solid #1E4636',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             paddingBottom: '14px',
             marginBottom: '18px',
           }}
@@ -242,11 +242,11 @@ export default function EditCategoryModal({
             <div>
               <h2
                 className="scoreboard"
-                style={{ margin: 0, fontSize: '20px', color: '#C9A227', letterSpacing: '0.04em' }}
+                style={{ margin: 0, fontSize: '20px', color: '#FF9500', letterSpacing: '0.04em' }}
               >
                 EDIT COMPETITION / LEAGUE
               </h2>
-              <div style={{ fontSize: '12px', color: '#8FA89B' }}>
+              <div style={{ fontSize: '12px', color: '#8E8E93' }}>
                 Key: <code style={{ color: '#6CE5A0' }}>{categoryKey}</code> · {category.mode === 'cup' ? 'Knockout Cup' : 'League Competition'}
               </div>
             </div>
@@ -257,7 +257,7 @@ export default function EditCategoryModal({
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#8FA89B',
+              color: '#8E8E93',
               fontSize: '18px',
               cursor: 'pointer',
               padding: '4px 8px',
@@ -287,13 +287,13 @@ export default function EditCategoryModal({
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           {/* Section 1: Basic Information */}
-          <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px' }}>
-            <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>
+          <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px' }}>
+            <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>
               📋 1. League Name &amp; Format
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '4px' }}>
                   League / Tournament Title *
                 </label>
                 <input
@@ -308,7 +308,7 @@ export default function EditCategoryModal({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '4px' }}>
                   Round-Robin Format
                 </label>
                 <select
@@ -325,7 +325,7 @@ export default function EditCategoryModal({
             </div>
 
             <div style={{ marginTop: '12px' }}>
-              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '4px' }}>
+              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '4px' }}>
                 Competition Notes &amp; Announcements (Optional)
               </label>
               <textarea
@@ -340,8 +340,8 @@ export default function EditCategoryModal({
           </div>
 
           {/* Section 2: Kickoff Date & Schedule Rules */}
-          <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px' }}>
-            <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>
+          <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px' }}>
+            <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>
               🗓️ 2. League Start Date &amp; Kickoff Timing
             </div>
 
@@ -361,7 +361,7 @@ export default function EditCategoryModal({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '4px' }}>
                   ⏰ Default Kickoff Time:
                 </label>
                 <input
@@ -374,7 +374,7 @@ export default function EditCategoryModal({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '4px' }}>
                   ⚡ Default Matches Per Day:
                 </label>
                 <input
@@ -389,7 +389,7 @@ export default function EditCategoryModal({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 800, color: '#C9A227', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 800, color: '#FF9500', marginBottom: '4px' }}>
                   🏟️ Match Venue:
                 </label>
                 <input
@@ -410,8 +410,8 @@ export default function EditCategoryModal({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                background: '#08231B',
-                border: '1px dashed #C9A227',
+                background: '#121212',
+                border: '1px dashed #FF9500',
                 borderRadius: '8px',
                 padding: '10px 12px',
                 cursor: 'pointer',
@@ -422,15 +422,15 @@ export default function EditCategoryModal({
                 type="checkbox"
                 checked={rescheduleUnplayed}
                 onChange={(e) => setRescheduleUnplayed(e.target.checked)}
-                style={{ accentColor: '#C9A227', width: '18px', height: '18px', cursor: 'pointer' }}
+                style={{ accentColor: '#FF9500', width: '18px', height: '18px', cursor: 'pointer' }}
               />
-              <span style={{ fontSize: '12px', color: '#F4F2EA' }}>
+              <span style={{ fontSize: '12px', color: '#FFFFFF' }}>
                 <strong>⚡ Apply to unplayed matches:</strong> Re-calculate all unplayed fixture dates starting from this chosen start date (games separated by exactly 1 hour).
               </span>
             </label>
 
             {/* Per-Day Settings Grid */}
-            <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '8px' }}>
+            <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '8px' }}>
               Select Active Match Days of the Week:
             </div>
             <div
@@ -447,8 +447,8 @@ export default function EditCategoryModal({
                   <div
                     key={d.num}
                     style={{
-                      background: isEnabled ? 'rgba(201, 162, 39, 0.12)' : '#08231B',
-                      border: isEnabled ? '1px solid #C9A227' : '1px solid #1E4636',
+                      background: isEnabled ? 'rgba(255, 149, 0, 0.12)' : '#121212',
+                      border: isEnabled ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '8px',
                       display: 'flex',
@@ -461,9 +461,9 @@ export default function EditCategoryModal({
                         type="checkbox"
                         checked={isEnabled}
                         onChange={() => handleToggleDay(d.num)}
-                        style={{ accentColor: '#C9A227' }}
+                        style={{ accentColor: '#FF9500' }}
                       />
-                      <span style={{ fontSize: '11.5px', fontWeight: 800, color: isEnabled ? '#C9A227' : '#8FA89B' }}>
+                      <span style={{ fontSize: '11.5px', fontWeight: 800, color: isEnabled ? '#FF9500' : '#8E8E93' }}>
                         {d.label}
                       </span>
                     </label>
@@ -496,11 +496,11 @@ export default function EditCategoryModal({
           </div>
 
           {/* Section 3: Referees Pool */}
-          <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px' }}>
-            <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>
+          <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px' }}>
+            <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>
               🧑‍⚖️ 3. Competition Referees Pool
             </div>
-            <label style={{ display: 'block', fontSize: '11px', color: '#8FA89B', marginBottom: '4px' }}>
+            <label style={{ display: 'block', fontSize: '11px', color: '#8E8E93', marginBottom: '4px' }}>
               Enter match officials separated by commas (assigned and randomized across matches):
             </label>
             <input
@@ -514,14 +514,14 @@ export default function EditCategoryModal({
           </div>
 
           {/* Section 4: Voting & Tournament Status */}
-          <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px' }}>
-            <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>
+          <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px' }}>
+            <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>
               🏆 4. Voting &amp; Tournament Status
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '4px' }}>
                   TOTW / TOTT Team Size:
                 </label>
                 <input
@@ -536,7 +536,7 @@ export default function EditCategoryModal({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#DDE6DF', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#EBEBF5', marginBottom: '4px' }}>
                   Max Picks Per Position:
                 </label>
                 <input
@@ -551,32 +551,32 @@ export default function EditCategoryModal({
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', paddingTop: '16px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '11.5px', color: '#DDE6DF' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '11.5px', color: '#EBEBF5' }}>
                   <input
                     type="checkbox"
                     checked={votingIncludeGk}
                     onChange={(e) => setVotingIncludeGk(e.target.checked)}
-                    style={{ accentColor: '#C9A227' }}
+                    style={{ accentColor: '#FF9500' }}
                   />
                   <span>Include Goalkeeper (GK) in Voting</span>
                 </label>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', paddingTop: '8px', borderTop: '1px solid #16352A' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: '#F4F2EA' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', paddingTop: '8px', borderTop: '1px solid #1C1C1E' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: '#FFFFFF' }}>
                 <input
                   type="checkbox"
                   checked={isEnded}
                   onChange={(e) => setIsEnded(e.target.checked)}
-                  style={{ accentColor: '#C9A227', width: '16px', height: '16px' }}
+                  style={{ accentColor: '#FF9500', width: '16px', height: '16px' }}
                 />
                 <span>🏆 Mark League as Concluded / Ended</span>
               </label>
 
               {isEnded && (
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', color: '#C9A227', fontWeight: 700, marginBottom: '2px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', color: '#FF9500', fontWeight: 700, marginBottom: '2px' }}>
                     Champion Team
                   </label>
                   <select
@@ -603,7 +603,7 @@ export default function EditCategoryModal({
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              borderTop: '1px solid #1E4636',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
               paddingTop: '16px',
               flexWrap: 'wrap',
               gap: '12px',
@@ -638,9 +638,9 @@ export default function EditCategoryModal({
                 type="button"
                 onClick={onClose}
                 style={{
-                  background: '#16352A',
-                  color: '#DDE6DF',
-                  border: '1px solid #2B5746',
+                  background: '#1C1C1E',
+                  color: '#EBEBF5',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '8px',
                   padding: '9px 18px',
                   fontSize: '12.5px',
@@ -654,7 +654,7 @@ export default function EditCategoryModal({
                 type="submit"
                 disabled={saving}
                 style={{
-                  background: '#C9A227',
+                  background: '#FF9500',
                   color: '#16201B',
                   border: 'none',
                   borderRadius: '8px',
@@ -662,7 +662,7 @@ export default function EditCategoryModal({
                   fontSize: '12.5px',
                   fontWeight: 800,
                   cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(201, 162, 39, 0.3)',
+                  boxShadow: '0 4px 12px rgba(255, 149, 0, 0.3)',
                 }}
               >
                 {saving ? 'Saving Changes…' : '💾 Save League Settings'}

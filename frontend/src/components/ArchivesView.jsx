@@ -279,8 +279,8 @@ export default function ArchivesView({
       {/* Header Banner */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #091F18 0%, #113328 100%)',
-          border: '1px solid #2B5746',
+          background: 'linear-gradient(135deg, #000000 0%, #121212 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '16px',
           padding: '24px',
           boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
@@ -295,9 +295,9 @@ export default function ArchivesView({
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span
               style={{
-                background: 'rgba(201, 162, 39, 0.2)',
-                border: '1px solid #C9A227',
-                color: '#C9A227',
+                background: 'rgba(255, 149, 0, 0.2)',
+                border: '1px solid #FF9500',
+                color: '#FF9500',
                 padding: '2px 8px',
                 borderRadius: '999px',
                 fontSize: '11px',
@@ -307,20 +307,20 @@ export default function ArchivesView({
             >
               🏛️ HISTORICAL TOURNAMENT ARCHIVES
             </span>
-            <span style={{ fontSize: '11px', color: '#8FA89B' }}>Ruiru Titans FC Hall of Fame</span>
+            <span style={{ fontSize: '11px', color: '#8E8E93' }}>Ruiru Titans FC Hall of Fame</span>
           </div>
           <h1
             className="scoreboard"
             style={{
               margin: '0 0 6px',
               fontSize: '28px',
-              color: '#F4F2EA',
+              color: '#FFFFFF',
               letterSpacing: '0.04em',
             }}
           >
             CONCLUDED COMPETITIONS &amp; TOURNAMENT ARCHIVES
           </h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#9BB5A8', maxWidth: '680px' }}>
+          <p style={{ margin: 0, fontSize: '13px', color: '#8E8E93', maxWidth: '680px' }}>
             Explore full historical records of past Ruiru Titans leagues and tournaments. Click any competition
             to inspect its final table, full results, player goals, assists, discipline, and honoured champions.
           </p>
@@ -330,16 +330,16 @@ export default function ArchivesView({
         <div
           style={{
             background: '#071A14',
-            border: '1px solid #1E4636',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '12px',
             padding: '12px 20px',
             textAlign: 'center',
           }}
         >
-          <div className="scoreboard" style={{ fontSize: '26px', color: '#C9A227', margin: 0 }}>
+          <div className="scoreboard" style={{ fontSize: '26px', color: '#FF9500', margin: 0 }}>
             {endedTournaments.length}
           </div>
-          <div style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700, textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase' }}>
             Archived Editions
           </div>
         </div>
@@ -351,24 +351,24 @@ export default function ArchivesView({
           {endedTournaments.length === 0 ? (
             <div
               style={{
-                background: '#0F2E24',
-                border: '1px dashed #2B5746',
+                background: '#121212',
+                border: '1px dashed rgba(255, 255, 255, 0.1)',
                 borderRadius: '14px',
                 padding: '48px 20px',
                 textAlign: 'center',
               }}
             >
               <div style={{ fontSize: '36px', marginBottom: '8px' }}>🏛️</div>
-              <h3 style={{ margin: '0 0 6px', color: '#F4F2EA', fontSize: '18px' }}>
+              <h3 style={{ margin: '0 0 6px', color: '#FFFFFF', fontSize: '18px' }}>
                 No Concluded Tournaments in Archive
               </h3>
-              <p style={{ margin: '0 auto 16px', color: '#8FA89B', fontSize: '13px', maxWidth: '480px' }}>
+              <p style={{ margin: '0 auto 16px', color: '#8E8E93', fontSize: '13px', maxWidth: '480px' }}>
                 Competitions appear here automatically when marked ended by management or when all fixtures in the season are completed.
               </p>
 
               {isCmsMode && cmsUser && Object.keys(categories).length > 0 && (
                 <div style={{ marginTop: '16px' }}>
-                  <span style={{ fontSize: '12px', color: '#C9A227', display: 'block', marginBottom: '8px', fontWeight: 700 }}>
+                  <span style={{ fontSize: '12px', color: '#FF9500', display: 'block', marginBottom: '8px', fontWeight: 700 }}>
                     Manager Shortcut: Mark Active Tournament as Ended
                   </span>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -378,7 +378,7 @@ export default function ArchivesView({
                         type="button"
                         onClick={() => handleToggleArchive(k, false)}
                         style={{
-                          background: '#C9A227',
+                          background: '#FF9500',
                           color: '#16201B',
                           border: 'none',
                           padding: '8px 14px',
@@ -408,7 +408,7 @@ export default function ArchivesView({
                   key={tourn.key}
                   style={{
                     background: '#0B261D',
-                    border: '1px solid #2B5746',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '14px',
                     overflow: 'hidden',
                     display: 'flex',
@@ -420,17 +420,17 @@ export default function ArchivesView({
                   {/* Card Header with Champion Banner */}
                   <div
                     style={{
-                      background: 'radial-gradient(circle at 80% 20%, rgba(201, 162, 39, 0.25) 0%, #0F382B 100%)',
-                      borderBottom: '1px solid #1E4636',
+                      background: 'radial-gradient(circle at 80% 20%, rgba(255, 149, 0, 0.25) 0%, #0F382B 100%)',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                       padding: '16px 18px',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <span
                         style={{
-                          background: '#113328',
-                          color: '#8FA89B',
-                          border: '1px solid #1E4636',
+                          background: '#121212',
+                          color: '#8E8E93',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
                           borderRadius: '6px',
                           fontSize: '10.5px',
                           fontWeight: 800,
@@ -459,7 +459,7 @@ export default function ArchivesView({
                       style={{
                         margin: '0 0 6px',
                         fontSize: '18px',
-                        color: '#F4F2EA',
+                        color: '#FFFFFF',
                         fontWeight: 800,
                       }}
                     >
@@ -469,8 +469,8 @@ export default function ArchivesView({
                     {/* Official Champion Highlight */}
                     <div
                       style={{
-                        background: 'rgba(201, 162, 39, 0.15)',
-                        border: '1px solid #C9A227',
+                        background: 'rgba(255, 149, 0, 0.15)',
+                        border: '1px solid #FF9500',
                         borderRadius: '8px',
                         padding: '8px 12px',
                         display: 'flex',
@@ -482,18 +482,18 @@ export default function ArchivesView({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontSize: '20px' }}>🏆</span>
                         <div>
-                          <div style={{ fontSize: '10px', color: '#C9A227', fontWeight: 800, textTransform: 'uppercase' }}>
+                          <div style={{ fontSize: '10px', color: '#FF9500', fontWeight: 800, textTransform: 'uppercase' }}>
                             Official Champion
                           </div>
-                          <div style={{ fontSize: '14px', color: '#F4F2EA', fontWeight: 800 }}>
+                          <div style={{ fontSize: '14px', color: '#FFFFFF', fontWeight: 800 }}>
                             {tourn.champion}
                           </div>
                         </div>
                       </div>
                       {tourn.runnerUp && tourn.runnerUp !== 'TBD' && (
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '9.5px', color: '#8FA89B', fontWeight: 700 }}>Runner-Up</div>
-                          <div style={{ fontSize: '12px', color: '#DDE6DF', fontWeight: 700 }}>🥈 {tourn.runnerUp}</div>
+                          <div style={{ fontSize: '9.5px', color: '#8E8E93', fontWeight: 700 }}>Runner-Up</div>
+                          <div style={{ fontSize: '12px', color: '#EBEBF5', fontWeight: 700 }}>🥈 {tourn.runnerUp}</div>
                         </div>
                       )}
                     </div>
@@ -502,25 +502,25 @@ export default function ArchivesView({
                   {/* Summary Metrics */}
                   <div style={{ padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center' }}>
-                      <div style={{ background: '#0F2E24', borderRadius: '8px', padding: '8px 4px', border: '1px solid #1E4636' }}>
-                        <div style={{ fontSize: '15px', color: '#F4F2EA', fontWeight: 800 }}>{tourn.teamsCount}</div>
-                        <div style={{ fontSize: '10px', color: '#8FA89B', fontWeight: 600 }}>Teams</div>
+                      <div style={{ background: '#121212', borderRadius: '8px', padding: '8px 4px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                        <div style={{ fontSize: '15px', color: '#FFFFFF', fontWeight: 800 }}>{tourn.teamsCount}</div>
+                        <div style={{ fontSize: '10px', color: '#8E8E93', fontWeight: 600 }}>Teams</div>
                       </div>
-                      <div style={{ background: '#0F2E24', borderRadius: '8px', padding: '8px 4px', border: '1px solid #1E4636' }}>
-                        <div style={{ fontSize: '15px', color: '#F4F2EA', fontWeight: 800 }}>{tourn.fixturesCount}</div>
-                        <div style={{ fontSize: '10px', color: '#8FA89B', fontWeight: 600 }}>Matches</div>
+                      <div style={{ background: '#121212', borderRadius: '8px', padding: '8px 4px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                        <div style={{ fontSize: '15px', color: '#FFFFFF', fontWeight: 800 }}>{tourn.fixturesCount}</div>
+                        <div style={{ fontSize: '10px', color: '#8E8E93', fontWeight: 600 }}>Matches</div>
                       </div>
-                      <div style={{ background: '#0F2E24', borderRadius: '8px', padding: '8px 4px', border: '1px solid #1E4636' }}>
+                      <div style={{ background: '#121212', borderRadius: '8px', padding: '8px 4px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                         <div style={{ fontSize: '15px', color: '#4ADE80', fontWeight: 800 }}>{tourn.totalGoals}</div>
-                        <div style={{ fontSize: '10px', color: '#8FA89B', fontWeight: 600 }}>Goals</div>
+                        <div style={{ fontSize: '10px', color: '#8E8E93', fontWeight: 600 }}>Goals</div>
                       </div>
                     </div>
 
                     {tourn.topScorer && (
                       <div
                         style={{
-                          background: '#0A241C',
-                          border: '1px dashed #2B5746',
+                          background: '#121212',
+                          border: '1px dashed rgba(255, 255, 255, 0.1)',
                           borderRadius: '8px',
                           padding: '8px 12px',
                           display: 'flex',
@@ -529,17 +529,17 @@ export default function ArchivesView({
                           fontSize: '12px',
                         }}
                       >
-                        <span style={{ color: '#C9A227', fontWeight: 700 }}>
+                        <span style={{ color: '#FF9500', fontWeight: 700 }}>
                           ⚽ Golden Boot: <strong>{tourn.topScorer.name}</strong> ({tourn.topScorer.teamName})
                         </span>
-                        <span style={{ color: '#F4F2EA', fontWeight: 800 }}>
+                        <span style={{ color: '#FFFFFF', fontWeight: 800 }}>
                           {tourn.topScorer.goals} {tourn.topScorer.goals === 1 ? 'goal' : 'goals'}
                         </span>
                       </div>
                     )}
 
                     {tourn.note && (
-                      <p style={{ margin: 0, fontSize: '12px', color: '#8FA89B', lineHeight: 1.4 }}>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#8E8E93', lineHeight: 1.4 }}>
                         {tourn.note}
                       </p>
                     )}
@@ -553,7 +553,7 @@ export default function ArchivesView({
                           setActiveTab('table');
                         }}
                         style={{
-                          background: '#C9A227',
+                          background: '#FF9500',
                           color: '#16201B',
                           border: 'none',
                           padding: '9px 16px',
@@ -575,8 +575,8 @@ export default function ArchivesView({
                           onClick={() => handleToggleArchive(tourn.key, true)}
                           style={{
                             background: 'none',
-                            border: '1px solid #2B5746',
-                            color: '#8FA89B',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            color: '#8E8E93',
                             borderRadius: '6px',
                             padding: '4px 8px',
                             fontSize: '11px',
@@ -613,9 +613,9 @@ export default function ArchivesView({
               type="button"
               onClick={() => setSelectedArchiveKey(null)}
               style={{
-                background: '#113328',
-                color: '#C9A227',
-                border: '1px solid #2B5746',
+                background: '#121212',
+                color: '#FF9500',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '8px',
                 padding: '8px 14px',
                 fontSize: '12.5px',
@@ -652,8 +652,8 @@ export default function ArchivesView({
           {/* Dossier Champion Hero Card */}
           <div
             style={{
-              background: 'radial-gradient(circle at 90% 10%, rgba(201, 162, 39, 0.28) 0%, #0F382B 60%, #08261E 100%)',
-              border: '1px solid #C9A227',
+              background: 'radial-gradient(circle at 90% 10%, rgba(255, 149, 0, 0.28) 0%, #0F382B 60%, #000000 100%)',
+              border: '1px solid #FF9500',
               borderRadius: '16px',
               padding: '24px',
               display: 'flex',
@@ -667,7 +667,7 @@ export default function ArchivesView({
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                 <span
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     padding: '2px 8px',
                     borderRadius: '6px',
@@ -678,28 +678,28 @@ export default function ArchivesView({
                 >
                   🏆 CONCLUDED EDITION
                 </span>
-                <span style={{ fontSize: '12px', color: '#F4F2EA', fontWeight: 700 }}>
+                <span style={{ fontSize: '12px', color: '#FFFFFF', fontWeight: 700 }}>
                   {activeArchive.format === 'single' ? 'Single Round-Robin' : 'Double Round-Robin'}
                 </span>
               </div>
 
-              <h1 className="scoreboard" style={{ margin: '0 0 6px', fontSize: '32px', color: '#F4F2EA' }}>
+              <h1 className="scoreboard" style={{ margin: '0 0 6px', fontSize: '32px', color: '#FFFFFF' }}>
                 {activeArchive.label}
               </h1>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginTop: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '18px' }}>🥇</span>
-                  <span style={{ fontSize: '13px', color: '#8FA89B' }}>Champion:</span>
-                  <span style={{ fontSize: '15px', color: '#C9A227', fontWeight: 900 }}>
+                  <span style={{ fontSize: '13px', color: '#8E8E93' }}>Champion:</span>
+                  <span style={{ fontSize: '15px', color: '#FF9500', fontWeight: 900 }}>
                     {activeArchive.champion}
                   </span>
                 </div>
                 {activeArchive.runnerUp && activeArchive.runnerUp !== 'TBD' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ fontSize: '18px' }}>🥈</span>
-                    <span style={{ fontSize: '13px', color: '#8FA89B' }}>Runner-Up:</span>
-                    <span style={{ fontSize: '14px', color: '#F4F2EA', fontWeight: 700 }}>
+                    <span style={{ fontSize: '13px', color: '#8E8E93' }}>Runner-Up:</span>
+                    <span style={{ fontSize: '14px', color: '#FFFFFF', fontWeight: 700 }}>
                       {activeArchive.runnerUp}
                     </span>
                   </div>
@@ -709,23 +709,23 @@ export default function ArchivesView({
 
             {/* Quick Summary Pill Stats */}
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <div style={{ background: '#0B261D', border: '1px solid #1E4636', borderRadius: '10px', padding: '10px 16px', textAlign: 'center' }}>
-                <div className="scoreboard" style={{ fontSize: '20px', color: '#F4F2EA', margin: 0 }}>
+              <div style={{ background: '#0B261D', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '10px 16px', textAlign: 'center' }}>
+                <div className="scoreboard" style={{ fontSize: '20px', color: '#FFFFFF', margin: 0 }}>
                   {activeArchive.teamsCount}
                 </div>
-                <div style={{ fontSize: '10px', color: '#8FA89B', fontWeight: 700 }}>TEAMS</div>
+                <div style={{ fontSize: '10px', color: '#8E8E93', fontWeight: 700 }}>TEAMS</div>
               </div>
-              <div style={{ background: '#0B261D', border: '1px solid #1E4636', borderRadius: '10px', padding: '10px 16px', textAlign: 'center' }}>
-                <div className="scoreboard" style={{ fontSize: '20px', color: '#F4F2EA', margin: 0 }}>
+              <div style={{ background: '#0B261D', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '10px 16px', textAlign: 'center' }}>
+                <div className="scoreboard" style={{ fontSize: '20px', color: '#FFFFFF', margin: 0 }}>
                   {activeArchive.fixturesCount}
                 </div>
-                <div style={{ fontSize: '10px', color: '#8FA89B', fontWeight: 700 }}>MATCHES</div>
+                <div style={{ fontSize: '10px', color: '#8E8E93', fontWeight: 700 }}>MATCHES</div>
               </div>
-              <div style={{ background: '#0B261D', border: '1px solid #1E4636', borderRadius: '10px', padding: '10px 16px', textAlign: 'center' }}>
+              <div style={{ background: '#0B261D', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '10px 16px', textAlign: 'center' }}>
                 <div className="scoreboard" style={{ fontSize: '20px', color: '#4ADE80', margin: 0 }}>
                   {activeArchive.totalGoals}
                 </div>
-                <div style={{ fontSize: '10px', color: '#8FA89B', fontWeight: 700 }}>GOALS</div>
+                <div style={{ fontSize: '10px', color: '#8E8E93', fontWeight: 700 }}>GOALS</div>
               </div>
             </div>
           </div>
@@ -735,10 +735,10 @@ export default function ArchivesView({
             style={{
               display: 'flex',
               gap: '6px',
-              background: '#0F2E24',
+              background: '#121212',
               padding: '6px',
               borderRadius: '12px',
-              border: '1px solid #1E4636',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               overflowX: 'auto',
             }}
           >
@@ -751,8 +751,8 @@ export default function ArchivesView({
                 borderRadius: '8px',
                 border: 'none',
                 cursor: 'pointer',
-                background: activeTab === 'table' ? '#C9A227' : 'transparent',
-                color: activeTab === 'table' ? '#16201B' : '#9BB5A8',
+                background: activeTab === 'table' ? '#FF9500' : 'transparent',
+                color: activeTab === 'table' ? '#16201B' : '#8E8E93',
                 fontWeight: 800,
                 fontSize: '12.5px',
                 whiteSpace: 'nowrap',
@@ -769,8 +769,8 @@ export default function ArchivesView({
                 borderRadius: '8px',
                 border: 'none',
                 cursor: 'pointer',
-                background: activeTab === 'results' ? '#C9A227' : 'transparent',
-                color: activeTab === 'results' ? '#16201B' : '#9BB5A8',
+                background: activeTab === 'results' ? '#FF9500' : 'transparent',
+                color: activeTab === 'results' ? '#16201B' : '#8E8E93',
                 fontWeight: 800,
                 fontSize: '12.5px',
                 whiteSpace: 'nowrap',
@@ -787,8 +787,8 @@ export default function ArchivesView({
                 borderRadius: '8px',
                 border: 'none',
                 cursor: 'pointer',
-                background: activeTab === 'stats' ? '#C9A227' : 'transparent',
-                color: activeTab === 'stats' ? '#16201B' : '#9BB5A8',
+                background: activeTab === 'stats' ? '#FF9500' : 'transparent',
+                color: activeTab === 'stats' ? '#16201B' : '#8E8E93',
                 fontWeight: 800,
                 fontSize: '12.5px',
                 whiteSpace: 'nowrap',
@@ -806,8 +806,8 @@ export default function ArchivesView({
                   borderRadius: '8px',
                   border: 'none',
                   cursor: 'pointer',
-                  background: activeTab === 'bracket' ? '#C9A227' : 'transparent',
-                  color: activeTab === 'bracket' ? '#16201B' : '#9BB5A8',
+                  background: activeTab === 'bracket' ? '#FF9500' : 'transparent',
+                  color: activeTab === 'bracket' ? '#16201B' : '#8E8E93',
                   fontWeight: 800,
                   fontSize: '12.5px',
                   whiteSpace: 'nowrap',
@@ -822,10 +822,10 @@ export default function ArchivesView({
           {activeTab === 'table' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 className="scoreboard" style={{ margin: 0, fontSize: '20px', color: '#F4F2EA' }}>
+                <h3 className="scoreboard" style={{ margin: 0, fontSize: '20px', color: '#FFFFFF' }}>
                   📊 OFFICIAL FINAL STANDINGS TABLE
                 </h3>
-                <span style={{ fontSize: '12px', color: '#C9A227', fontWeight: 700 }}>
+                <span style={{ fontSize: '12px', color: '#FF9500', fontWeight: 700 }}>
                   🏆 Champion: {activeArchive.champion}
                 </span>
               </div>
@@ -843,10 +843,10 @@ export default function ArchivesView({
           {activeTab === 'results' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 className="scoreboard" style={{ margin: 0, fontSize: '20px', color: '#F4F2EA' }}>
+                <h3 className="scoreboard" style={{ margin: 0, fontSize: '20px', color: '#FFFFFF' }}>
                   ⚽ COMPLETE SEASON MATCH RESULTS &amp; EVENTS
                 </h3>
-                <span style={{ fontSize: '12px', color: '#8FA89B' }}>
+                <span style={{ fontSize: '12px', color: '#8E8E93' }}>
                   {activeArchive.fixturesCount} Played Fixtures
                 </span>
               </div>
@@ -864,7 +864,7 @@ export default function ArchivesView({
                       key={f.id}
                       style={{
                         background: '#0B261D',
-                        border: '1px solid #1E4636',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '12px',
                         padding: '14px 16px',
                         display: 'flex',
@@ -887,7 +887,7 @@ export default function ArchivesView({
                               width: '10px',
                               height: '10px',
                               borderRadius: '50%',
-                              background: home?.color || '#C9A227',
+                              background: home?.color || '#FF9500',
                             }}
                           />
                           <button
@@ -897,7 +897,7 @@ export default function ArchivesView({
                             style={{
                               fontWeight: isHomeWinner ? 800 : 600,
                               fontSize: '14px',
-                              color: isHomeWinner ? '#C9A227' : '#F4F2EA',
+                              color: isHomeWinner ? '#FF9500' : '#FFFFFF',
                               background: 'none',
                               border: 'none',
                               cursor: 'pointer',
@@ -914,17 +914,17 @@ export default function ArchivesView({
                             className="scoreboard"
                             style={{
                               fontSize: '20px',
-                              color: '#F4F2EA',
+                              color: '#FFFFFF',
                               background: '#071A14',
                               padding: '4px 14px',
                               borderRadius: '8px',
-                              border: '1px solid #1E4636',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
                               letterSpacing: '0.06em',
                             }}
                           >
                             {hs} - {as}
                           </span>
-                          <div style={{ fontSize: '10px', color: '#8FA89B', marginTop: '4px' }}>
+                          <div style={{ fontSize: '10px', color: '#8E8E93', marginTop: '4px' }}>
                             {f.date} {f.referee ? `· Ref: ${f.referee}` : ''}
                           </div>
                         </div>
@@ -947,7 +947,7 @@ export default function ArchivesView({
                             style={{
                               fontWeight: isAwayWinner ? 800 : 600,
                               fontSize: '14px',
-                              color: isAwayWinner ? '#C9A227' : '#F4F2EA',
+                              color: isAwayWinner ? '#FF9500' : '#FFFFFF',
                               background: 'none',
                               border: 'none',
                               cursor: 'pointer',
@@ -971,7 +971,7 @@ export default function ArchivesView({
                       {f.events && f.events.length > 0 && (
                         <div
                           style={{
-                            borderTop: '1px dashed #1E4636',
+                            borderTop: '1px dashed rgba(255, 255, 255, 0.1)',
                             paddingTop: '6px',
                             display: 'flex',
                             flexWrap: 'wrap',
@@ -987,10 +987,10 @@ export default function ArchivesView({
                               <span
                                 key={idx}
                                 style={{
-                                  background: '#0A241C',
+                                  background: '#121212',
                                   padding: '2px 8px',
                                   borderRadius: '4px',
-                                  color: '#DDE6DF',
+                                  color: '#EBEBF5',
                                   display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: '4px',
@@ -1001,7 +1001,7 @@ export default function ArchivesView({
                                 {e.type === 'red' && '🟥'}
                                 {e.type === 'owngoal' && '💥 OG'}
                                 <span>{pName}</span>
-                                <span style={{ color: '#8FA89B', fontSize: '9.5px' }}>
+                                <span style={{ color: '#8E8E93', fontSize: '9.5px' }}>
                                   ({tObj?.name || e.teamId})
                                 </span>
                               </span>
@@ -1023,28 +1023,28 @@ export default function ArchivesView({
               <div
                 style={{
                   background: '#0B261D',
-                  border: '1px solid #1E4636',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '14px',
                   padding: '18px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
                   <span style={{ fontSize: '20px' }}>⚽</span>
-                  <h3 className="scoreboard" style={{ margin: 0, fontSize: '18px', color: '#F4F2EA' }}>
+                  <h3 className="scoreboard" style={{ margin: 0, fontSize: '18px', color: '#FFFFFF' }}>
                     GOLDEN BOOT (TOP SCORERS)
                   </h3>
                 </div>
 
                 {activeStats.scorers.length === 0 ? (
-                  <div style={{ color: '#8FA89B', fontSize: '12px' }}>No goals recorded.</div>
+                  <div style={{ color: '#8E8E93', fontSize: '12px' }}>No goals recorded.</div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {activeStats.scorers.slice(0, 10).map((p, idx) => (
                       <div
                         key={p.id}
                         style={{
-                          background: idx === 0 ? 'rgba(201, 162, 39, 0.15)' : '#0F2E24',
-                          border: idx === 0 ? '1px solid #C9A227' : '1px solid #163E31',
+                          background: idx === 0 ? 'rgba(255, 149, 0, 0.15)' : '#121212',
+                          border: idx === 0 ? '1px solid #FF9500' : '1px solid #1C1C1E',
                           borderRadius: '8px',
                           padding: '8px 12px',
                           display: 'flex',
@@ -1058,8 +1058,8 @@ export default function ArchivesView({
                               width: '20px',
                               height: '20px',
                               borderRadius: '50%',
-                              background: idx === 0 ? '#C9A227' : '#113328',
-                              color: idx === 0 ? '#16201B' : '#8FA89B',
+                              background: idx === 0 ? '#FF9500' : '#121212',
+                              color: idx === 0 ? '#16201B' : '#8E8E93',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -1069,12 +1069,12 @@ export default function ArchivesView({
                           >
                             {idx + 1}
                           </span>
-                          <span style={{ fontWeight: 800, fontSize: '13px', color: '#F4F2EA' }}>
+                          <span style={{ fontWeight: 800, fontSize: '13px', color: '#FFFFFF' }}>
                             {p.name}
                           </span>
-                          <span style={{ fontSize: '11px', color: '#8FA89B' }}>({p.teamName})</span>
+                          <span style={{ fontSize: '11px', color: '#8E8E93' }}>({p.teamName})</span>
                         </div>
-                        <span style={{ fontWeight: 900, fontSize: '14px', color: idx === 0 ? '#C9A227' : '#4ADE80' }}>
+                        <span style={{ fontWeight: 900, fontSize: '14px', color: idx === 0 ? '#FF9500' : '#4ADE80' }}>
                           {p.goals} {p.goals === 1 ? 'goal' : 'goals'}
                         </span>
                       </div>
@@ -1087,28 +1087,28 @@ export default function ArchivesView({
               <div
                 style={{
                   background: '#0B261D',
-                  border: '1px solid #1E4636',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '14px',
                   padding: '18px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
                   <span style={{ fontSize: '20px' }}>🎯</span>
-                  <h3 className="scoreboard" style={{ margin: 0, fontSize: '18px', color: '#F4F2EA' }}>
+                  <h3 className="scoreboard" style={{ margin: 0, fontSize: '18px', color: '#FFFFFF' }}>
                     MOST ASSISTS (PLAYMAKERS)
                   </h3>
                 </div>
 
                 {activeStats.assists.length === 0 ? (
-                  <div style={{ color: '#8FA89B', fontSize: '12px' }}>No assists recorded.</div>
+                  <div style={{ color: '#8E8E93', fontSize: '12px' }}>No assists recorded.</div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {activeStats.assists.slice(0, 10).map((p, idx) => (
                       <div
                         key={p.id}
                         style={{
-                          background: '#0F2E24',
-                          border: '1px solid #163E31',
+                          background: '#121212',
+                          border: '1px solid #1C1C1E',
                           borderRadius: '8px',
                           padding: '8px 12px',
                           display: 'flex',
@@ -1122,8 +1122,8 @@ export default function ArchivesView({
                               width: '20px',
                               height: '20px',
                               borderRadius: '50%',
-                              background: '#113328',
-                              color: '#8FA89B',
+                              background: '#121212',
+                              color: '#8E8E93',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -1133,12 +1133,12 @@ export default function ArchivesView({
                           >
                             {idx + 1}
                           </span>
-                          <span style={{ fontWeight: 800, fontSize: '13px', color: '#F4F2EA' }}>
+                          <span style={{ fontWeight: 800, fontSize: '13px', color: '#FFFFFF' }}>
                             {p.name}
                           </span>
-                          <span style={{ fontSize: '11px', color: '#8FA89B' }}>({p.teamName})</span>
+                          <span style={{ fontSize: '11px', color: '#8E8E93' }}>({p.teamName})</span>
                         </div>
-                        <span style={{ fontWeight: 800, fontSize: '13px', color: '#C9A227' }}>
+                        <span style={{ fontWeight: 800, fontSize: '13px', color: '#FF9500' }}>
                           {p.assists} {p.assists === 1 ? 'assist' : 'assists'}
                         </span>
                       </div>
@@ -1151,28 +1151,28 @@ export default function ArchivesView({
               <div
                 style={{
                   background: '#0B261D',
-                  border: '1px solid #1E4636',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '14px',
                   padding: '18px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
                   <span style={{ fontSize: '20px' }}>🟨</span>
-                  <h3 className="scoreboard" style={{ margin: 0, fontSize: '18px', color: '#F4F2EA' }}>
+                  <h3 className="scoreboard" style={{ margin: 0, fontSize: '18px', color: '#FFFFFF' }}>
                     DISCIPLINE &amp; CARDS
                   </h3>
                 </div>
 
                 {activeStats.cards.length === 0 ? (
-                  <div style={{ color: '#8FA89B', fontSize: '12px' }}>No disciplinary bookings recorded.</div>
+                  <div style={{ color: '#8E8E93', fontSize: '12px' }}>No disciplinary bookings recorded.</div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {activeStats.cards.slice(0, 10).map((p) => (
                       <div
                         key={p.id}
                         style={{
-                          background: '#0F2E24',
-                          border: '1px solid #163E31',
+                          background: '#121212',
+                          border: '1px solid #1C1C1E',
                           borderRadius: '8px',
                           padding: '8px 12px',
                           display: 'flex',
@@ -1181,10 +1181,10 @@ export default function ArchivesView({
                         }}
                       >
                         <div>
-                          <span style={{ fontWeight: 800, fontSize: '13px', color: '#F4F2EA' }}>
+                          <span style={{ fontWeight: 800, fontSize: '13px', color: '#FFFFFF' }}>
                             {p.name}
                           </span>
-                          <span style={{ fontSize: '11px', color: '#8FA89B', marginLeft: '6px' }}>
+                          <span style={{ fontSize: '11px', color: '#8E8E93', marginLeft: '6px' }}>
                             ({p.teamName})
                           </span>
                         </div>

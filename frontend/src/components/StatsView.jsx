@@ -4,8 +4,8 @@ function LeaderboardCard({ title, list, countKey }) {
   return (
     <div
       style={{
-        background: '#0A241C',
-        border: '1px solid #1E4636',
+        background: '#121212',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
         borderRadius: '12px',
         padding: '14px',
       }}
@@ -13,7 +13,7 @@ function LeaderboardCard({ title, list, countKey }) {
       <div
         className="scoreboard"
         style={{
-          color: '#C9A227',
+          color: '#FF9500',
           fontSize: '18px',
           letterSpacing: '0.06em',
           marginBottom: '10px',
@@ -32,12 +32,12 @@ function LeaderboardCard({ title, list, countKey }) {
               justifyContent: 'space-between',
               padding: '6px 8px',
               borderRadius: '6px',
-              background: i === 0 ? 'rgba(201,162,39,0.1)' : '#071B15',
+              background: i === 0 ? 'rgba(255, 149, 0,0.1)' : '#000000',
               fontSize: '12.5px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '11px', color: '#6E9080', width: '14px', textAlign: 'right' }}>
+              <span style={{ fontSize: '11px', color: '#8E8E93', width: '14px', textAlign: 'right' }}>
                 {i + 1}
               </span>
               <span
@@ -49,14 +49,14 @@ function LeaderboardCard({ title, list, countKey }) {
                   display: 'inline-block',
                 }}
               />
-              <span style={{ fontWeight: 700, color: '#F4F2EA' }}>{p.name}</span>
+              <span style={{ fontWeight: 700, color: '#FFFFFF' }}>{p.name}</span>
               {p.position && (
                 <span
                   style={{
                     fontSize: '9.5px',
                     fontWeight: 800,
                     background: '#13382B',
-                    color: '#C9A227',
+                    color: '#FF9500',
                     padding: '1px 5px',
                     borderRadius: '4px',
                   }}
@@ -64,11 +64,11 @@ function LeaderboardCard({ title, list, countKey }) {
                   {p.position}
                 </span>
               )}
-              <span style={{ fontSize: '11px', color: '#8FA89B' }}>({p.teamName})</span>
+              <span style={{ fontSize: '11px', color: '#8E8E93' }}>({p.teamName})</span>
             </div>
             <div
               className="scoreboard"
-              style={{ fontSize: '18px', color: '#C9A227', fontWeight: 700 }}
+              style={{ fontSize: '18px', color: '#FF9500', fontWeight: 700 }}
             >
               {p[countKey]}
             </div>
@@ -76,7 +76,7 @@ function LeaderboardCard({ title, list, countKey }) {
         ))}
 
         {(!list || list.length === 0) && (
-          <div style={{ fontSize: '11.5px', color: '#6E9080', textAlign: 'center', padding: '12px 0' }}>
+          <div style={{ fontSize: '11.5px', color: '#8E8E93', textAlign: 'center', padding: '12px 0' }}>
             No records logged in this category yet.
           </div>
         )}
@@ -132,8 +132,8 @@ export default function StatsView({
       {/* Top Filter Bar for Category-Grouped Player Stats */}
       <div
         style={{
-          background: '#0F2E24',
-          border: '1px solid #1E4636',
+          background: '#121212',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '14px',
           padding: '16px 18px',
           display: 'flex',
@@ -144,10 +144,10 @@ export default function StatsView({
         }}
       >
         <div>
-          <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#C9A227', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             📊 OFFICIAL PLAYER STATISTICS BY CATEGORY
           </div>
-          <h2 className="scoreboard" style={{ margin: '2px 0 0', fontSize: '26px', color: '#F4F2EA', letterSpacing: '0.04em' }}>
+          <h2 className="scoreboard" style={{ margin: '2px 0 0', fontSize: '26px', color: '#FFFFFF', letterSpacing: '0.04em' }}>
             PLAYER STATS GROUPED BY COMPETITION CATEGORY
           </h2>
         </div>
@@ -157,9 +157,9 @@ export default function StatsView({
             type="button"
             onClick={() => setSelectedCategoryFilter('all')}
             style={{
-              background: selectedCategoryFilter === 'all' ? '#C9A227' : '#0A241C',
-              color: selectedCategoryFilter === 'all' ? '#16201B' : '#DDE6DF',
-              border: '1px solid #2B5746',
+              background: selectedCategoryFilter === 'all' ? '#FF9500' : '#121212',
+              color: selectedCategoryFilter === 'all' ? '#16201B' : '#EBEBF5',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '999px',
               padding: '6px 14px',
               fontSize: '12px',
@@ -175,9 +175,9 @@ export default function StatsView({
               type="button"
               onClick={() => setSelectedCategoryFilter(catKey)}
               style={{
-                background: selectedCategoryFilter === catKey ? '#C9A227' : '#0A241C',
-                color: selectedCategoryFilter === catKey ? '#16201B' : '#DDE6DF',
-                border: '1px solid #2B5746',
+                background: selectedCategoryFilter === catKey ? '#FF9500' : '#121212',
+                color: selectedCategoryFilter === catKey ? '#16201B' : '#EBEBF5',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '999px',
                 padding: '6px 14px',
                 fontSize: '12px',
@@ -210,7 +210,7 @@ export default function StatsView({
           <section
             key={catKey}
             style={{
-              background: '#0F2E24',
+              background: '#121212',
               border: '1px solid #23503F',
               borderRadius: '16px',
               padding: '18px',
@@ -227,15 +227,15 @@ export default function StatsView({
                 gap: '12px',
                 paddingBottom: '14px',
                 marginBottom: '16px',
-                borderBottom: '1px solid #1E4636',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <span
                   style={{
-                    background: catObj.mode === 'cup' ? 'rgba(201, 162, 39, 0.2)' : 'rgba(92, 214, 133, 0.16)',
-                    border: `1px solid ${catObj.mode === 'cup' ? '#C9A227' : '#5CD685'}`,
-                    color: catObj.mode === 'cup' ? '#C9A227' : '#5CD685',
+                    background: catObj.mode === 'cup' ? 'rgba(255, 149, 0, 0.2)' : 'rgba(92, 214, 133, 0.16)',
+                    border: `1px solid ${catObj.mode === 'cup' ? '#FF9500' : '#5CD685'}`,
+                    color: catObj.mode === 'cup' ? '#FF9500' : '#5CD685',
                     fontSize: '10.5px',
                     fontWeight: 800,
                     padding: '3px 10px',
@@ -246,10 +246,10 @@ export default function StatsView({
                 >
                   {catObj.mode === 'cup' ? '🏆 Cup Category' : '📊 League Category'}
                 </span>
-                <h3 className="scoreboard" style={{ margin: 0, fontSize: '24px', color: '#F4F2EA', letterSpacing: '0.04em' }}>
+                <h3 className="scoreboard" style={{ margin: 0, fontSize: '24px', color: '#FFFFFF', letterSpacing: '0.04em' }}>
                   {catObj.label}
                 </h3>
-                <span style={{ fontSize: '12px', color: '#8FA89B' }}>
+                <span style={{ fontSize: '12px', color: '#8E8E93' }}>
                   • {teamCount} Teams · {playerCount} Registered Players · {catStats.totals?.goals || 0} Goals Logged
                 </span>
               </div>

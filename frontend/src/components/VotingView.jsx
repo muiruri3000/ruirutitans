@@ -399,8 +399,8 @@ export default function VotingView({
       {categoryEntries.length > 0 && (
         <div
           style={{
-            background: '#08231B',
-            border: '1px solid #2B5746',
+            background: '#121212',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '12px',
             padding: '12px 16px',
             display: 'flex',
@@ -413,10 +413,10 @@ export default function VotingView({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '16px' }}>🏆</span>
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 800, color: '#C9A227', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Select Competition for TOTW, TOTT &amp; Player Voting
               </div>
-              <div style={{ fontSize: '11.5px', color: '#8FA89B' }}>
+              <div style={{ fontSize: '11.5px', color: '#8E8E93' }}>
                 Players vote under the specific League or Cup competition they are playing in.
               </div>
             </div>
@@ -432,9 +432,9 @@ export default function VotingView({
                   type="button"
                   onClick={() => onSelectCategory && onSelectCategory(cKey)}
                   style={{
-                    background: isSelected ? '#C9A227' : '#113328',
-                    color: isSelected ? '#16201B' : '#DDE6DF',
-                    border: isPlayerComp ? '2px solid #6CE5A0' : '1px solid #2B5746',
+                    background: isSelected ? '#FF9500' : '#121212',
+                    color: isSelected ? '#16201B' : '#EBEBF5',
+                    border: isPlayerComp ? '2px solid #6CE5A0' : '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '999px',
                     padding: '6px 14px',
                     fontSize: '12px',
@@ -449,7 +449,7 @@ export default function VotingView({
                   {isPlayerComp && (
                     <span
                       style={{
-                        background: isSelected ? '#16201B' : '#1E4636',
+                        background: isSelected ? '#16201B' : 'rgba(255, 255, 255, 0.1)',
                         color: '#6CE5A0',
                         fontSize: '9.5px',
                         padding: '1px 6px',
@@ -469,8 +469,8 @@ export default function VotingView({
       {/* Top Header Section */}
       <div
         style={{
-          background: '#0F2E24',
-          border: '1px solid #1E4636',
+          background: '#121212',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '14px',
           padding: '18px 22px',
           display: 'flex',
@@ -489,7 +489,7 @@ export default function VotingView({
                 fontSize: '26px',
                 letterSpacing: '0.04em',
                 margin: 0,
-                color: '#F4F2EA',
+                color: '#FFFFFF',
               }}
             >
               {activeCategoryLabel.toUpperCase()} — TOTW, TOTT &amp; PLAYER VOTING
@@ -500,15 +500,15 @@ export default function VotingView({
                 fontWeight: 800,
                 padding: '3px 9px',
                 borderRadius: '999px',
-                background: 'rgba(201, 162, 39, 0.16)',
-                color: '#C9A227',
-                border: '1px solid rgba(201, 162, 39, 0.4)',
+                background: 'rgba(255, 149, 0, 0.16)',
+                color: '#FF9500',
+                border: '1px solid rgba(255, 149, 0, 0.4)',
               }}
             >
               {teamSize}-PLAYER LINEUP · {includeGk ? 'GK INCLUDED' : 'OUTFIELD ONLY (NO GK)'}
             </span>
           </div>
-          <div style={{ fontSize: '12px', color: '#8FA89B', marginTop: '4px' }}>
+          <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '4px' }}>
             Official voting and honours for <strong>{activeCategoryLabel}</strong> ({teamSize} players, {includeGk ? 'including GK' : 'GK excluded'}). Only logged-in players registered in this competition can vote.
           </div>
         </div>
@@ -524,9 +524,9 @@ export default function VotingView({
                 loadVotingData(rid);
               }}
               style={{
-                background: '#16352A',
-                color: '#F4F2EA',
-                border: '1px solid #2B4E40',
+                background: '#1C1C1E',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 padding: '6px 12px',
                 borderRadius: '8px',
                 fontSize: '12px',
@@ -560,7 +560,7 @@ export default function VotingView({
                 }}
               >
                 <span>{currentRound.is_open ? '● VOTING OPEN' : '🔒 VOTING CLOSED'}</span>
-                <span style={{ color: '#8FA89B', fontWeight: 500 }}>
+                <span style={{ color: '#8E8E93', fontWeight: 500 }}>
                   • {currentRound.total_votes || 0} votes cast
                 </span>
               </div>
@@ -599,10 +599,10 @@ export default function VotingView({
         style={{
           display: 'flex',
           gap: '8px',
-          background: '#0F2E24',
+          background: '#121212',
           padding: '6px',
           borderRadius: '10px',
-          border: '1px solid #1E4636',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           overflowX: 'auto',
         }}
       >
@@ -615,8 +615,8 @@ export default function VotingView({
             padding: '9px 14px',
             borderRadius: '6px',
             border: 'none',
-            background: subTab === 'totw' ? '#C9A227' : 'transparent',
-            color: subTab === 'totw' ? '#16201B' : '#8FA89B',
+            background: subTab === 'totw' ? '#FF9500' : 'transparent',
+            color: subTab === 'totw' ? '#16201B' : '#8E8E93',
             fontWeight: 800,
             fontSize: '12px',
             cursor: 'pointer',
@@ -635,8 +635,8 @@ export default function VotingView({
             padding: '9px 14px',
             borderRadius: '6px',
             border: 'none',
-            background: subTab === 'tott' ? '#C9A227' : 'transparent',
-            color: subTab === 'tott' ? '#16201B' : '#8FA89B',
+            background: subTab === 'tott' ? '#FF9500' : 'transparent',
+            color: subTab === 'tott' ? '#16201B' : '#8E8E93',
             fontWeight: 800,
             fontSize: '12px',
             cursor: 'pointer',
@@ -655,8 +655,8 @@ export default function VotingView({
             padding: '9px 14px',
             borderRadius: '6px',
             border: 'none',
-            background: subTab === 'ballot' ? '#C9A227' : 'transparent',
-            color: subTab === 'ballot' ? '#16201B' : '#8FA89B',
+            background: subTab === 'ballot' ? '#FF9500' : 'transparent',
+            color: subTab === 'ballot' ? '#16201B' : '#8E8E93',
             fontWeight: 800,
             fontSize: '12px',
             cursor: 'pointer',
@@ -677,8 +677,8 @@ export default function VotingView({
               padding: '9px 14px',
               borderRadius: '6px',
               border: 'none',
-              background: subTab === 'admin' ? '#C9A227' : 'transparent',
-              color: subTab === 'admin' ? '#16201B' : '#8FA89B',
+              background: subTab === 'admin' ? '#FF9500' : 'transparent',
+              color: subTab === 'admin' ? '#16201B' : '#8E8E93',
               fontWeight: 800,
               fontSize: '12px',
               cursor: 'pointer',
@@ -728,8 +728,8 @@ export default function VotingView({
           {!playerUser ? (
             <div
               style={{
-                background: 'linear-gradient(145deg, #0F2E24 0%, #091F18 100%)',
-                border: '1px solid #C9A227',
+                background: 'linear-gradient(145deg, #121212 0%, #000000 100%)',
+                border: '1px solid #FF9500',
                 borderRadius: '14px',
                 padding: '32px 24px',
                 textAlign: 'center',
@@ -745,8 +745,8 @@ export default function VotingView({
                   width: '56px',
                   height: '56px',
                   borderRadius: '50%',
-                  background: 'rgba(201, 162, 39, 0.16)',
-                  border: '1px solid rgba(201, 162, 39, 0.45)',
+                  background: 'rgba(255, 149, 0, 0.16)',
+                  border: '1px solid rgba(255, 149, 0, 0.45)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -755,13 +755,13 @@ export default function VotingView({
               >
                 🔒
               </div>
-              <div style={{ fontSize: '11px', fontWeight: 800, color: '#C9A227', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                 VERIFIED RUIRU TITANS SQUAD BALLOT
               </div>
-              <h3 className="scoreboard" style={{ fontSize: '30px', color: '#F4F2EA', margin: 0, letterSpacing: '0.04em' }}>
+              <h3 className="scoreboard" style={{ fontSize: '30px', color: '#FFFFFF', margin: 0, letterSpacing: '0.04em' }}>
                 ONLY LOGGED-IN PLAYERS CAN VOTE
               </h3>
-              <p style={{ fontSize: '13px', color: '#8FA89B', maxWidth: '520px', margin: 0, lineHeight: 1.6 }}>
+              <p style={{ fontSize: '13px', color: '#8E8E93', maxWidth: '520px', margin: 0, lineHeight: 1.6 }}>
                 Team of the Week (TOTW) and Team of the Tournament (TOTT) honours are publicly accessible to everyone, but casting official weekly ballots is restricted to registered Ruiru Titans players.
               </p>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '6px' }}>
@@ -769,7 +769,7 @@ export default function VotingView({
                   type="button"
                   onClick={onRequestPlayerLogin}
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     border: 'none',
                     borderRadius: '8px',
@@ -777,7 +777,7 @@ export default function VotingView({
                     fontSize: '13.5px',
                     fontWeight: 800,
                     cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(201, 162, 39, 0.3)',
+                    boxShadow: '0 4px 14px rgba(255, 149, 0, 0.3)',
                   }}
                 >
                   🗳️ Sign In as a Player to Vote
@@ -786,9 +786,9 @@ export default function VotingView({
                   type="button"
                   onClick={() => setSubTab('totw')}
                   style={{
-                    background: '#16352A',
-                    color: '#DDE6DF',
-                    border: '1px solid #2B4E40',
+                    background: '#1C1C1E',
+                    color: '#EBEBF5',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     padding: '12px 20px',
                     fontSize: '13px',
@@ -805,7 +805,7 @@ export default function VotingView({
               {/* Authenticated Player Voter Profile Bar */}
               <div
                 style={{
-                  background: '#0F2E24',
+                  background: '#121212',
                   border: '1px solid #3F7A4E',
                   borderRadius: '12px',
                   padding: '14px 18px',
@@ -837,25 +837,25 @@ export default function VotingView({
                     <div style={{ fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6CE5A0', fontWeight: 800 }}>
                       ✓ Verified Player Ballot Active • Competition: {activeCategoryLabel} • {teamSize}-Player TOTW
                     </div>
-                    <div style={{ fontSize: '14px', color: '#F4F2EA', fontWeight: 800 }}>
-                      {playerUser.name} <span style={{ color: '#8FA89B', fontWeight: 600 }}>• {playerUser.team_name}</span>
+                    <div style={{ fontSize: '14px', color: '#FFFFFF', fontWeight: 800 }}>
+                      {playerUser.name} <span style={{ color: '#8E8E93', fontWeight: 600 }}>• {playerUser.team_name}</span>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ fontSize: '11.5px', color: '#8FA89B' }}>
-                  Permanent Player ID: <code style={{ color: '#C9A227', fontWeight: 700 }}>{playerUser.player_id}</code>
+                <div style={{ fontSize: '11.5px', color: '#8E8E93' }}>
+                  Permanent Player ID: <code style={{ color: '#FF9500', fontWeight: 700 }}>{playerUser.player_id}</code>
                 </div>
               </div>
 
               {!isPlayerInActiveCompetition && (
                 <div
                   style={{
-                    background: 'rgba(201, 162, 39, 0.16)',
-                    border: '1px solid #C9A227',
+                    background: 'rgba(255, 149, 0, 0.16)',
+                    border: '1px solid #FF9500',
                     borderRadius: '10px',
                     padding: '14px 18px',
-                    color: '#F4F2EA',
+                    color: '#FFFFFF',
                     fontSize: '13px',
                     display: 'flex',
                     flexWrap: 'wrap',
@@ -872,7 +872,7 @@ export default function VotingView({
                       type="button"
                       onClick={() => onSelectCategory(playerPrimaryCategoryKey)}
                       style={{
-                        background: '#C9A227',
+                        background: '#FF9500',
                         color: '#16201B',
                         border: 'none',
                         borderRadius: '8px',
@@ -913,7 +913,7 @@ export default function VotingView({
               {hasVotedThisWeek ? (
                 <div
                   style={{
-                    background: 'linear-gradient(145deg, #0F2E24 0%, #091F18 100%)',
+                    background: 'linear-gradient(145deg, #121212 0%, #000000 100%)',
                     border: '1px solid #3F7A4E',
                     borderRadius: '16px',
                     padding: '32px 24px',
@@ -945,21 +945,21 @@ export default function VotingView({
                     <div style={{ fontSize: '11px', fontWeight: 800, color: '#6CE5A0', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>
                       BALLOT RECORDED • NO FURTHER VOTES ALLOWED FOR THIS ROUND
                     </div>
-                    <h3 className="scoreboard" style={{ fontSize: '32px', color: '#F4F2EA', margin: '0 0 8px', letterSpacing: '0.03em' }}>
+                    <h3 className="scoreboard" style={{ fontSize: '32px', color: '#FFFFFF', margin: '0 0 8px', letterSpacing: '0.03em' }}>
                       OFFICIAL VOTE FOR {currentRound?.title?.toUpperCase() || 'THIS WEEK'} COMPLETED
                     </h3>
-                    <p style={{ fontSize: '13.5px', color: '#9BB5A8', maxWidth: '580px', margin: '0 auto', lineHeight: 1.6 }}>
+                    <p style={{ fontSize: '13.5px', color: '#8E8E93', maxWidth: '580px', margin: '0 auto', lineHeight: 1.6 }}>
                       Thank you, <strong>{playerUser.name}</strong> ({playerUser.team_name}). Your official player ballot for <strong>{currentRound?.title || 'this week'}</strong> has been securely logged and counted toward the official <strong>{teamSize}-player Team of the Week (TOTW)</strong>.
                     </p>
                   </div>
 
                   <div
                     style={{
-                      background: 'rgba(201, 162, 39, 0.1)',
-                      border: '1px solid rgba(201, 162, 39, 0.35)',
+                      background: 'rgba(255, 149, 0, 0.1)',
+                      border: '1px solid rgba(255, 149, 0, 0.35)',
                       borderRadius: '10px',
                       padding: '12px 20px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       fontSize: '12.5px',
                       maxWidth: '560px',
                       lineHeight: 1.5,
@@ -970,7 +970,7 @@ export default function VotingView({
 
                   {myVotesList.length > 0 && (
                     <div style={{ width: '100%', maxWidth: '640px', marginTop: '12px', textAlign: 'left' }}>
-                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>
                         📋 Your Submitted Ballot Selections:
                       </div>
                       <div
@@ -986,8 +986,8 @@ export default function VotingView({
                             <div
                               key={vIdx}
                               style={{
-                                background: '#16352A',
-                                border: '1px solid #2B5746',
+                                background: '#1C1C1E',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
                                 borderRadius: '8px',
                                 padding: '10px 12px',
                                 display: 'flex',
@@ -997,13 +997,13 @@ export default function VotingView({
                             >
                               <span style={{ fontSize: '20px' }}>{posObj.icon}</span>
                               <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                                <div style={{ fontSize: '10px', fontWeight: 800, color: '#C9A227' }}>
+                                <div style={{ fontSize: '10px', fontWeight: 800, color: '#FF9500' }}>
                                   {vote.posKey}
                                 </div>
-                                <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#F4F2EA', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                   {vote.player_name || vote.name}
                                 </div>
-                                <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>
+                                <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>
                                   {vote.team_name}
                                 </div>
                               </div>
@@ -1019,7 +1019,7 @@ export default function VotingView({
                       type="button"
                       onClick={() => setSubTab('totw')}
                       style={{
-                        background: '#C9A227',
+                        background: '#FF9500',
                         color: '#16201B',
                         border: 'none',
                         borderRadius: '8px',
@@ -1027,7 +1027,7 @@ export default function VotingView({
                         fontSize: '13px',
                         fontWeight: 800,
                         cursor: 'pointer',
-                        boxShadow: '0 4px 14px rgba(201, 162, 39, 0.3)',
+                        boxShadow: '0 4px 14px rgba(255, 149, 0, 0.3)',
                       }}
                     >
                       🏆 View Official Team of the Week (TOTW) Lineup →
@@ -1036,9 +1036,9 @@ export default function VotingView({
                       type="button"
                       onClick={() => setSubTab('tott')}
                       style={{
-                        background: '#16352A',
-                        color: '#DDE6DF',
-                        border: '1px solid #2B4E40',
+                        background: '#1C1C1E',
+                        color: '#EBEBF5',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '8px',
                         padding: '11px 20px',
                         fontSize: '13px',
@@ -1053,7 +1053,7 @@ export default function VotingView({
               ) : !currentRound?.is_open ? (
                 <div
                   style={{
-                    background: 'linear-gradient(145deg, #0F2E24 0%, #081B15 100%)',
+                    background: 'linear-gradient(145deg, #121212 0%, #081B15 100%)',
                     border: '2px solid #B23A2E',
                     borderRadius: '16px',
                     padding: '36px 24px',
@@ -1085,10 +1085,10 @@ export default function VotingView({
                     <div style={{ fontSize: '11px', fontWeight: 800, color: '#FF7A70', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>
                       VOTING WINDOW CLOSED BY TOURNAMENT ADMINISTRATOR
                     </div>
-                    <h3 className="scoreboard" style={{ fontSize: '30px', color: '#F4F2EA', margin: '0 0 8px', letterSpacing: '0.03em' }}>
+                    <h3 className="scoreboard" style={{ fontSize: '30px', color: '#FFFFFF', margin: '0 0 8px', letterSpacing: '0.03em' }}>
                       OFFICIAL VOTING IS TURNED OFF FOR {currentRound?.title?.toUpperCase() || 'THIS WEEK'}
                     </h3>
-                    <p style={{ fontSize: '13.5px', color: '#9BB5A8', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
+                    <p style={{ fontSize: '13.5px', color: '#8E8E93', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
                       The tournament manager has turned voting <strong>OFF</strong> for {currentRound?.title || 'this round'}.
                       Registered players cannot vote or submit ballots while voting is disabled.
                       You can view the locked <strong>Team of the Week (TOTW)</strong> or the overall <strong>Season Team of the Tournament (TOTT)</strong> below.
@@ -1098,8 +1098,8 @@ export default function VotingView({
                   {(isCmsMode || cmsUser) && (
                     <div
                       style={{
-                        background: 'rgba(201, 162, 39, 0.1)',
-                        border: '1px solid rgba(201, 162, 39, 0.35)',
+                        background: 'rgba(255, 149, 0, 0.1)',
+                        border: '1px solid rgba(255, 149, 0, 0.35)',
                         borderRadius: '10px',
                         padding: '12px 20px',
                         display: 'flex',
@@ -1110,7 +1110,7 @@ export default function VotingView({
                         maxWidth: '560px',
                       }}
                     >
-                      <span style={{ fontSize: '12.5px', color: '#F4F2EA' }}>
+                      <span style={{ fontSize: '12.5px', color: '#FFFFFF' }}>
                         👑 <strong>Admin Quick Action:</strong> Reopen voting to allow players to cast ballots.
                       </span>
                       <button
@@ -1138,7 +1138,7 @@ export default function VotingView({
                       type="button"
                       onClick={() => setSubTab('totw')}
                       style={{
-                        background: '#C9A227',
+                        background: '#FF9500',
                         color: '#16201B',
                         border: 'none',
                         borderRadius: '8px',
@@ -1146,7 +1146,7 @@ export default function VotingView({
                         fontSize: '13px',
                         fontWeight: 800,
                         cursor: 'pointer',
-                        boxShadow: '0 4px 14px rgba(201, 162, 39, 0.3)',
+                        boxShadow: '0 4px 14px rgba(255, 149, 0, 0.3)',
                       }}
                     >
                       🏆 View Official Team of the Week (TOTW) Lineup →
@@ -1155,9 +1155,9 @@ export default function VotingView({
                       type="button"
                       onClick={() => setSubTab('tott')}
                       style={{
-                        background: '#16352A',
-                        color: '#DDE6DF',
-                        border: '1px solid #2B4E40',
+                        background: '#1C1C1E',
+                        color: '#EBEBF5',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '8px',
                         padding: '11px 20px',
                         fontSize: '13px',
@@ -1190,8 +1190,8 @@ export default function VotingView({
                         <div
                           key={pos.key}
                           style={{
-                            background: '#0F2E24',
-                            border: selectedGkId ? '1px solid #C9A227' : '1px solid #1E4636',
+                            background: '#121212',
+                            border: selectedGkId ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                             borderRadius: '12px',
                             padding: '16px',
                             display: 'flex',
@@ -1203,10 +1203,10 @@ export default function VotingView({
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span style={{ fontSize: '20px' }}>{pos.icon}</span>
                               <div>
-                                <div style={{ fontSize: '13px', fontWeight: 800, color: '#F4F2EA' }}>
+                                <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF' }}>
                                   {pos.name.toUpperCase()}
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 600 }}>
+                                <div style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 600 }}>
                                   Optional (0 or 1 pick)
                                 </div>
                               </div>
@@ -1214,9 +1214,9 @@ export default function VotingView({
 
                             <span
                               style={{
-                                background: selectedGkId ? '#C9A227' : 'transparent',
-                                color: selectedGkId ? '#16201B' : '#8FA89B',
-                                border: selectedGkId ? 'none' : '1px dashed #2B4E40',
+                                background: selectedGkId ? '#FF9500' : 'transparent',
+                                color: selectedGkId ? '#16201B' : '#8E8E93',
+                                border: selectedGkId ? 'none' : '1px dashed rgba(255, 255, 255, 0.1)',
                                 fontSize: '10px',
                                 fontWeight: 800,
                                 padding: '2px 8px',
@@ -1230,8 +1230,8 @@ export default function VotingView({
                           {selectedGk ? (
                             <div
                               style={{
-                                background: '#16352A',
-                                border: '1px solid #2B4E40',
+                                background: '#1C1C1E',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
                                 borderRadius: '8px',
                                 padding: '8px 12px',
                                 display: 'flex',
@@ -1240,10 +1240,10 @@ export default function VotingView({
                               }}
                             >
                               <div>
-                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#F4F2EA' }}>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>
                                   {selectedGk.name}
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#8FA89B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <div style={{ fontSize: '11px', color: '#8E8E93', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: selectedGk.team_color || '#2E5A8F' }} />
                                   {selectedGk.team_name}
                                 </div>
@@ -1259,21 +1259,21 @@ export default function VotingView({
                               )}
                             </div>
                           ) : (
-                            <div style={{ border: '1px dashed #2B4E40', borderRadius: '8px', padding: '8px', textAlign: 'center', fontSize: '11.5px', color: '#8FA89B' }}>
+                            <div style={{ border: '1px dashed rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '8px', textAlign: 'center', fontSize: '11.5px', color: '#8E8E93' }}>
                               No Goalkeeper selected (optional)
                             </div>
                           )}
 
                           {currentRound?.is_open && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <label style={{ fontSize: '11px', color: '#8FA89B' }}>Select Goalkeeper ({posCandidates.length} eligible):</label>
+                              <label style={{ fontSize: '11px', color: '#8E8E93' }}>Select Goalkeeper ({posCandidates.length} eligible):</label>
                               <select
                                 value={selectedGkId || ''}
                                 onChange={(e) => handleVoteSelect('GK', 0, e.target.value)}
                                 style={{
-                                  background: '#16352A',
-                                  color: '#F4F2EA',
-                                  border: '1px solid #2B4E40',
+                                  background: '#1C1C1E',
+                                  color: '#FFFFFF',
+                                  border: '1px solid rgba(255, 255, 255, 0.1)',
                                   padding: '8px 10px',
                                   borderRadius: '6px',
                                   fontSize: '12px',
@@ -1300,8 +1300,8 @@ export default function VotingView({
                       <div
                         key={pos.key}
                         style={{
-                          background: '#0F2E24',
-                          border: votedCount > 0 ? '1px solid #C9A227' : '1px solid #1E4636',
+                          background: '#121212',
+                          border: votedCount > 0 ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                           borderRadius: '12px',
                           padding: '16px',
                           display: 'flex',
@@ -1313,10 +1313,10 @@ export default function VotingView({
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ fontSize: '20px' }}>{pos.icon}</span>
                             <div>
-                              <div style={{ fontSize: '13px', fontWeight: 800, color: '#F4F2EA' }}>
+                              <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF' }}>
                                 {pos.name.toUpperCase()}
                               </div>
-                              <div style={{ fontSize: '11px', color: '#C9A227', fontWeight: 600 }}>
+                              <div style={{ fontSize: '11px', color: '#FF9500', fontWeight: 600 }}>
                                 Pick up to {maxPicksPerPos} {pos.name}
                                 {maxPicksPerPos > 1 ? 's' : ''}
                               </div>
@@ -1327,17 +1327,17 @@ export default function VotingView({
                             style={{
                               background:
                                 votedCount === maxPicksPerPos
-                                  ? '#C9A227'
+                                  ? '#FF9500'
                                   : votedCount > 0
-                                  ? 'rgba(201, 162, 39, 0.2)'
+                                  ? 'rgba(255, 149, 0, 0.2)'
                                   : 'transparent',
                               color:
                                 votedCount === maxPicksPerPos
                                   ? '#16201B'
                                   : votedCount > 0
-                                  ? '#C9A227'
-                                  : '#8FA89B',
-                              border: votedCount === 0 ? '1px dashed #2B4E40' : 'none',
+                                  ? '#FF9500'
+                                  : '#8E8E93',
+                              border: votedCount === 0 ? '1px dashed rgba(255, 255, 255, 0.1)' : 'none',
                               fontSize: '10px',
                               fontWeight: 800,
                               padding: '2px 8px',
@@ -1354,14 +1354,14 @@ export default function VotingView({
                           return (
                             <div
                               key={`${pos.key}_slot_${slotIdx}`}
-                              style={{ background: '#08231B', padding: '10px', borderRadius: '8px', border: '1px solid #16352A' }}
+                              style={{ background: '#121212', padding: '10px', borderRadius: '8px', border: '1px solid #1C1C1E' }}
                             >
-                              <div style={{ fontSize: '11px', fontWeight: 700, color: '#8FA89B', marginBottom: '4px' }}>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: '#8E8E93', marginBottom: '4px' }}>
                                 Choice #{slotIdx + 1} {slotIdx > 0 ? '(Optional)' : ''}:
                               </div>
                               {pickedPlayer ? (
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                  <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#F4F2EA' }}>
+                                  <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#FFFFFF' }}>
                                     {pickedPlayer.name} ({pickedPlayer.team_name})
                                   </span>
                                   {currentRound?.is_open && (
@@ -1382,9 +1382,9 @@ export default function VotingView({
                                   onChange={(e) => handleVoteSelect(pos.key, slotIdx, e.target.value)}
                                   style={{
                                     width: '100%',
-                                    background: '#16352A',
-                                    color: '#F4F2EA',
-                                    border: '1px solid #2B4E40',
+                                    background: '#1C1C1E',
+                                    color: '#FFFFFF',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
                                     padding: '6px 8px',
                                     borderRadius: '6px',
                                     fontSize: '11.5px',
@@ -1415,7 +1415,7 @@ export default function VotingView({
                       type="submit"
                       disabled={loading}
                       style={{
-                        background: '#C9A227',
+                        background: '#FF9500',
                         color: '#16201B',
                         border: 'none',
                         padding: '12px 36px',
@@ -1424,7 +1424,7 @@ export default function VotingView({
                         fontWeight: 800,
                         letterSpacing: '0.04em',
                         cursor: 'pointer',
-                        boxShadow: '0 4px 12px rgba(201, 162, 39, 0.3)',
+                        boxShadow: '0 4px 12px rgba(255, 149, 0, 0.3)',
                       }}
                     >
                       {loading ? 'Submitting Ballot…' : `🗳️ SUBMIT OFFICIAL BALLOT AS ${playerUser.name.toUpperCase()}`}
@@ -1444,8 +1444,8 @@ export default function VotingView({
           <div
             style={{
               textAlign: 'center',
-              background: '#0F2E24',
-              border: '1px solid #1E4636',
+              background: '#121212',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '12px',
               padding: '16px',
               display: 'flex',
@@ -1454,13 +1454,13 @@ export default function VotingView({
               gap: '6px',
             }}
           >
-            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#C9A227', fontWeight: 800 }}>
+            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#FF9500', fontWeight: 800 }}>
               PUBLIC OFFICIAL {teamSize}-PLAYER LINEUP • {includeGk ? 'GOALKEEPER INCLUDED' : 'OUTFIELD ONLY (GK EXCLUDED)'}
             </div>
-            <div className="scoreboard" style={{ fontSize: '28px', color: '#F4F2EA', margin: '2px 0' }}>
+            <div className="scoreboard" style={{ fontSize: '28px', color: '#FFFFFF', margin: '2px 0' }}>
               ⭐ {currentRound?.title?.toUpperCase() || 'WEEK 1'} TEAM OF THE WEEK (TOTW) ⭐
             </div>
-            <div style={{ fontSize: '12px', color: '#8FA89B' }}>
+            <div style={{ fontSize: '12px', color: '#8E8E93' }}>
               Features the top {teamSize} players selected by official player ballots in this round.
             </div>
             {!playerUser && (
@@ -1469,9 +1469,9 @@ export default function VotingView({
                 onClick={onRequestPlayerLogin}
                 style={{
                   marginTop: '6px',
-                  background: 'rgba(201, 162, 39, 0.16)',
-                  color: '#C9A227',
-                  border: '1px solid #C9A227',
+                  background: 'rgba(255, 149, 0, 0.16)',
+                  color: '#FF9500',
+                  border: '1px solid #FF9500',
                   borderRadius: '999px',
                   padding: '5px 14px',
                   fontSize: '11.5px',
@@ -1488,7 +1488,7 @@ export default function VotingView({
           <div
             style={{
               background: 'linear-gradient(180deg, #0D3328 0%, #082119 100%)',
-              border: '2px solid #2B4E40',
+              border: '2px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '16px',
               padding: '28px 18px',
               position: 'relative',
@@ -1555,19 +1555,19 @@ export default function VotingView({
           <div
             style={{
               textAlign: 'center',
-              background: '#0F2E24',
-              border: '1px solid #1E4636',
+              background: '#121212',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '12px',
               padding: '16px',
             }}
           >
-            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#C9A227', fontWeight: 800 }}>
+            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#FF9500', fontWeight: 800 }}>
               PUBLIC CUMULATIVE SEASON HONOURS • {includeGk ? 'GK INCLUDED' : 'OUTFIELD ONLY (GK EXCLUDED)'}
             </div>
-            <div className="scoreboard" style={{ fontSize: '28px', color: '#F4F2EA', margin: '4px 0' }}>
+            <div className="scoreboard" style={{ fontSize: '28px', color: '#FFFFFF', margin: '4px 0' }}>
               👑 {teamSize}-PLAYER TEAM OF THE TOURNAMENT / SEASON (TOTT) 👑
             </div>
-            <div style={{ fontSize: '12px', color: '#8FA89B' }}>
+            <div style={{ fontSize: '12px', color: '#8E8E93' }}>
               Features the top {teamSize} players with the <strong>highest average votes per round</strong> across all {tott.total_rounds} tournament rounds.
             </div>
           </div>
@@ -1600,8 +1600,8 @@ export default function VotingView({
                 <div
                   key={tottPlayer.player_id || idx}
                   style={{
-                    background: '#0F2E24',
-                    border: '1px solid #1E4636',
+                    background: '#121212',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '12px',
                     padding: '18px',
                     display: 'flex',
@@ -1613,17 +1613,17 @@ export default function VotingView({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '22px' }}>{icon}</span>
                       <div>
-                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#F4F2EA' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF' }}>
                           {(tottPlayer.slot_label || tottPlayer.position_name).toUpperCase()}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#C9A227', fontWeight: 600 }}>
+                        <div style={{ fontSize: '11px', color: '#FF9500', fontWeight: 600 }}>
                           Season Average Honours
                         </div>
                       </div>
                     </div>
                     <span
                       style={{
-                        background: '#C9A227',
+                        background: '#FF9500',
                         color: '#16201B',
                         fontSize: '11px',
                         fontWeight: 800,
@@ -1638,8 +1638,8 @@ export default function VotingView({
                   {tottPlayer.player_id ? (
                     <div
                       style={{
-                        background: '#16352A',
-                        border: '1px solid #C9A227',
+                        background: '#1C1C1E',
+                        border: '1px solid #FF9500',
                         borderRadius: '10px',
                         padding: '14px',
                         display: 'flex',
@@ -1648,33 +1648,33 @@ export default function VotingView({
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: '16px', fontWeight: 800, color: '#F4F2EA' }}>
+                        <div style={{ fontSize: '16px', fontWeight: 800, color: '#FFFFFF' }}>
                           {tottPlayer.player_name}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#8FA89B', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                        <div style={{ fontSize: '12px', color: '#8E8E93', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: tottPlayer.team_color || '#2E5A8F' }} />
                           {tottPlayer.team_name}
                         </div>
                       </div>
 
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '16px', fontWeight: 800, color: '#C9A227' }}>
+                        <div style={{ fontSize: '16px', fontWeight: 800, color: '#FF9500' }}>
                           ⭐ {tottPlayer.average_votes}
                         </div>
-                        <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>
+                        <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>
                           avg / round ({tottPlayer.total_votes} total)
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div style={{ border: '1px dashed #2B4E40', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#8FA89B', fontSize: '12px' }}>
+                    <div style={{ border: '1px dashed rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#8E8E93', fontSize: '12px' }}>
                       Pending votes in this position
                     </div>
                   )}
 
                   {tottPlayer.rankings && tottPlayer.rankings.length > 0 && (
                     <div style={{ marginTop: '4px' }}>
-                      <div style={{ fontSize: '11px', color: '#8FA89B', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>
+                      <div style={{ fontSize: '11px', color: '#8E8E93', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>
                         Top Contenders:
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1688,13 +1688,13 @@ export default function VotingView({
                               fontSize: '11.5px',
                               padding: '4px 6px',
                               borderRadius: '4px',
-                              background: rIdx === 0 ? 'rgba(201, 162, 39, 0.1)' : 'transparent',
+                              background: rIdx === 0 ? 'rgba(255, 149, 0, 0.1)' : 'transparent',
                             }}
                           >
-                            <span style={{ color: rIdx === 0 ? '#C9A227' : '#DDE6DF' }}>
+                            <span style={{ color: rIdx === 0 ? '#FF9500' : '#EBEBF5' }}>
                               #{rIdx + 1} {r.player_name} ({r.team_name})
                             </span>
-                            <span style={{ fontWeight: 700, color: '#8FA89B' }}>
+                            <span style={{ fontWeight: 700, color: '#8E8E93' }}>
                               {r.average_votes} avg ({r.total_votes} v)
                             </span>
                           </div>
@@ -1715,8 +1715,8 @@ export default function VotingView({
           {/* Admin Voting Configuration Card */}
           <div
             style={{
-              background: '#0F2E24',
-              border: '1px solid #C9A227',
+              background: '#121212',
+              border: '1px solid #FF9500',
               borderRadius: '12px',
               padding: '20px',
               display: 'flex',
@@ -1725,13 +1725,13 @@ export default function VotingView({
             }}
           >
             <div>
-              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#C9A227', fontWeight: 800 }}>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#FF9500', fontWeight: 800 }}>
                 ADMIN VOTING CONFIGURATION (TOTW &amp; TOTT / SEASON)
               </div>
-              <h3 style={{ fontSize: '18px', color: '#F4F2EA', margin: '4px 0 6px 0' }}>
+              <h3 style={{ fontSize: '18px', color: '#FFFFFF', margin: '4px 0 6px 0' }}>
                 Adjust Number of Players Voted For &amp; Goalkeeper (GK) Inclusion
               </h3>
-              <p style={{ fontSize: '12px', color: '#8FA89B', margin: 0 }}>
+              <p style={{ fontSize: '12px', color: '#8E8E93', margin: 0 }}>
                 Changes here immediately update the Player Ballot, Team of the Week (TOTW), and Team of the Tournament/Season (TOTT). If Goalkeeper (GK) is toggled OFF, GK will not appear on the ballot or in TOTW/TOTT.
               </p>
             </div>
@@ -1748,8 +1748,8 @@ export default function VotingView({
               {/* Number of Players in TOTW / TOTT */}
               <div
                 style={{
-                  background: '#16352A',
-                  border: '1px solid #2B4E40',
+                  background: '#1C1C1E',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '10px',
                   padding: '14px',
                   display: 'flex',
@@ -1757,10 +1757,10 @@ export default function VotingView({
                   gap: '6px',
                 }}
               >
-                <label style={{ fontSize: '12px', fontWeight: 800, color: '#F4F2EA' }}>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: '#FFFFFF' }}>
                   🏆 Number of Players in TOTW &amp; Season (TOTT)
                 </label>
-                <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                   Total lineup size displayed in Team of the Week &amp; Season (e.g. 5, 6, 7, 11)
                 </div>
                 <input
@@ -1771,9 +1771,9 @@ export default function VotingView({
                   onChange={(e) => setAdminTeamSize(e.target.value)}
                   style={{
                     marginTop: '4px',
-                    background: '#0F2E24',
-                    border: '1px solid #C9A227',
-                    color: '#F4F2EA',
+                    background: '#121212',
+                    border: '1px solid #FF9500',
+                    color: '#FFFFFF',
                     padding: '8px 12px',
                     borderRadius: '6px',
                     fontSize: '14px',
@@ -1785,8 +1785,8 @@ export default function VotingView({
               {/* Max Votes per Position on Ballot */}
               <div
                 style={{
-                  background: '#16352A',
-                  border: '1px solid #2B4E40',
+                  background: '#1C1C1E',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '10px',
                   padding: '14px',
                   display: 'flex',
@@ -1794,10 +1794,10 @@ export default function VotingView({
                   gap: '6px',
                 }}
               >
-                <label style={{ fontSize: '12px', fontWeight: 800, color: '#F4F2EA' }}>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: '#FFFFFF' }}>
                   🗳️ Max Players Voted Per Position
                 </label>
-                <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                   Number of players a voter can pick in each outfield position
                 </div>
                 <input
@@ -1808,9 +1808,9 @@ export default function VotingView({
                   onChange={(e) => setAdminMaxPicks(e.target.value)}
                   style={{
                     marginTop: '4px',
-                    background: '#0F2E24',
-                    border: '1px solid #C9A227',
-                    color: '#F4F2EA',
+                    background: '#121212',
+                    border: '1px solid #FF9500',
+                    color: '#FFFFFF',
                     padding: '8px 12px',
                     borderRadius: '6px',
                     fontSize: '14px',
@@ -1822,7 +1822,7 @@ export default function VotingView({
               {/* Goalkeeper Inclusion Toggle */}
               <div
                 style={{
-                  background: '#16352A',
+                  background: '#1C1C1E',
                   border: adminIncludeGk ? '1px solid #3F7A4E' : '1px solid #B23A2E',
                   borderRadius: '10px',
                   padding: '14px',
@@ -1832,7 +1832,7 @@ export default function VotingView({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#F4F2EA' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#FFFFFF' }}>
                     🧤 Include Goalkeeper (GK) Position
                   </span>
                   <span
@@ -1848,7 +1848,7 @@ export default function VotingView({
                     {adminIncludeGk ? 'ON (INCLUDED)' : 'OFF (EXCLUDED)'}
                   </span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                   {adminIncludeGk
                     ? 'GK is included in ballot voting, TOTW, and TOTT.'
                     : 'GK is hidden from ballot voting and excluded from TOTW & TOTT.'}
@@ -1878,7 +1878,7 @@ export default function VotingView({
                   disabled={loading}
                   style={{
                     width: '100%',
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     border: 'none',
                     padding: '12px 20px',
@@ -1886,7 +1886,7 @@ export default function VotingView({
                     fontSize: '13px',
                     fontWeight: 800,
                     cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(201,162,39,0.25)',
+                    boxShadow: '0 4px 12px rgba(255, 149, 0,0.25)',
                   }}
                 >
                   💾 Save Voting Settings
@@ -1898,8 +1898,8 @@ export default function VotingView({
           {/* Round Window Controls Card */}
           <div
             style={{
-              background: '#0F2E24',
-              border: '1px solid #1E4636',
+              background: '#121212',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '12px',
               padding: '20px',
               display: 'flex',
@@ -1908,13 +1908,13 @@ export default function VotingView({
             }}
           >
             <div>
-              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#C9A227', fontWeight: 800 }}>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#FF9500', fontWeight: 800 }}>
                 CMS VOTING WINDOW CONTROLS
               </div>
-              <h3 style={{ fontSize: '18px', color: '#F4F2EA', margin: '4px 0 6px 0' }}>
+              <h3 style={{ fontSize: '18px', color: '#FFFFFF', margin: '4px 0 6px 0' }}>
                 Manage Round Windows &amp; {teamSize}-Player Cutoffs
               </h3>
-              <p style={{ fontSize: '12px', color: '#8FA89B', margin: 0 }}>
+              <p style={{ fontSize: '12px', color: '#8E8E93', margin: 0 }}>
                 Opening the window enables logged-in players to cast votes. Closing the window locks the {teamSize}-player Team of the Week and updates tournament averages.
               </p>
             </div>
@@ -1922,8 +1922,8 @@ export default function VotingView({
             {currentRound && (
               <div
                 style={{
-                  background: '#16352A',
-                  border: '1px solid #2B4E40',
+                  background: '#1C1C1E',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '10px',
                   padding: '16px',
                   display: 'flex',
@@ -1934,10 +1934,10 @@ export default function VotingView({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#F4F2EA' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>
                     Current Selected Round: {currentRound.title}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#8FA89B', marginTop: '2px' }}>
+                  <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '2px' }}>
                     Status:{' '}
                     <strong style={{ color: currentRound.is_open ? '#5CD685' : '#FF7A70' }}>
                       {currentRound.is_open ? 'OPEN FOR VOTING' : 'CLOSED / LOCKED'}
@@ -1988,8 +1988,8 @@ export default function VotingView({
               </div>
             )}
 
-            <div style={{ background: '#16352A', border: '1px solid #2B4E40', borderRadius: '10px', padding: '16px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#F4F2EA', marginBottom: '8px' }}>
+            <div style={{ background: '#1C1C1E', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px' }}>
                 Initiate New Week Round (e.g. Week 3, Quarter-Finals)
               </div>
               <form onSubmit={handleAdminCreateRound} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -2001,9 +2001,9 @@ export default function VotingView({
                   style={{
                     flex: 1,
                     minWidth: '200px',
-                    background: '#0F2E24',
-                    border: '1px solid #2B4E40',
-                    color: '#F4F2EA',
+                    background: '#121212',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#FFFFFF',
                     padding: '8px 12px',
                     borderRadius: '6px',
                     fontSize: '12px',
@@ -2013,7 +2013,7 @@ export default function VotingView({
                   type="submit"
                   disabled={loading}
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     border: 'none',
                     padding: '8px 20px',
@@ -2040,8 +2040,8 @@ function PlayerCard({ player, posIcon }) {
   return (
     <div
       style={{
-        background: '#0F2E24',
-        border: hasPlayer ? '2px solid #C9A227' : '1px dashed #2B4E40',
+        background: '#121212',
+        border: hasPlayer ? '2px solid #FF9500' : '1px dashed rgba(255, 255, 255, 0.1)',
         borderRadius: '12px',
         padding: '12px 16px',
         minWidth: '170px',
@@ -2052,7 +2052,7 @@ function PlayerCard({ player, posIcon }) {
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '6px' }}>
         <span style={{ fontSize: '14px' }}>{posIcon}</span>
-        <span style={{ fontSize: '11px', fontWeight: 800, color: '#C9A227', letterSpacing: '0.06em' }}>
+        <span style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.06em' }}>
           {player.slot_label || player.position}
         </span>
       </div>
@@ -2061,7 +2061,7 @@ function PlayerCard({ player, posIcon }) {
         className="scoreboard"
         style={{
           fontSize: '16px',
-          color: hasPlayer ? '#F4F2EA' : '#8FA89B',
+          color: hasPlayer ? '#FFFFFF' : '#8E8E93',
           letterSpacing: '0.02em',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
@@ -2076,7 +2076,7 @@ function PlayerCard({ player, posIcon }) {
           <div
             style={{
               fontSize: '11px',
-              color: '#8FA89B',
+              color: '#8E8E93',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -2097,12 +2097,12 @@ function PlayerCard({ player, posIcon }) {
           <div
             style={{
               marginTop: '6px',
-              background: '#16352A',
+              background: '#1C1C1E',
               padding: '2px 8px',
               borderRadius: '999px',
               fontSize: '10.5px',
               fontWeight: 700,
-              color: '#C9A227',
+              color: '#FF9500',
               display: 'inline-block',
             }}
           >
@@ -2110,7 +2110,7 @@ function PlayerCard({ player, posIcon }) {
           </div>
         </div>
       ) : (
-        <div style={{ fontSize: '11px', color: '#5E7A6C', marginTop: '4px' }}>
+        <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '4px' }}>
           Pending votes
         </div>
       )}

@@ -15,14 +15,14 @@ export default function TopNav({
 }) {
   const statusText =
     syncStatus === 'synced'
-      ? 'Live Database Synced'
+      ? 'Live Synced'
       : syncStatus === 'saving'
-      ? 'Syncing Changes…'
-      : '⚠️ Unsaved (Sign in to Save)';
+      ? 'Syncing…'
+      : '⚠️ Unsaved';
 
   return (
-    <nav className="top-nav-bar" aria-label="Club Portal & Authentication Bar">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+    <nav className="top-nav-bar" aria-label="Club Portal Header">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
         <a
           href="#home"
           onClick={(e) => {
@@ -32,123 +32,78 @@ export default function TopNav({
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '10px',
             textDecoration: 'none',
-            color: '#F4F2EA',
+            color: '#FFFFFF',
             fontWeight: 800,
-            fontSize: '13px',
-            letterSpacing: '0.05em',
+            fontSize: '13.5px',
+            letterSpacing: '0.04em',
+            minHeight: '44px',
           }}
         >
           <img
             src={(typeof window !== 'undefined' && window.CLUB_LOGO_URL) || '/club-logo.jpg'}
             alt="Ruiru Titans FC"
-            style={{ width: '26px', height: '26px', borderRadius: '50%', objectFit: 'contain' }}
+            style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'contain', border: '1px solid rgba(255, 149, 0, 0.5)' }}
           />
-          <span>RUIRU TITANS FC</span>
+          <span style={{ fontWeight: 800 }}>RUIRU TITANS FC</span>
         </a>
 
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          <a
-            href="#home"
-            onClick={(e) => {
-              e.preventDefault();
-              if (onNavigate) onNavigate('home');
-            }}
-            style={{
-              textDecoration: 'none',
-              fontSize: '11.5px',
-              fontWeight: 800,
-              padding: '4px 10px',
-              borderRadius: '999px',
-              background: currentView === 'home' ? '#C9A227' : '#113328',
-              color: currentView === 'home' ? '#16201B' : '#DDE6DF',
-              border: '1px solid #2B5746',
-            }}
-          >
-            🏠 Home
-          </a>
-          <a
-            href="#championship"
-            onClick={(e) => {
-              e.preventDefault();
-              if (onNavigate) onNavigate('championship');
-            }}
-            style={{
-              textDecoration: 'none',
-              fontSize: '11.5px',
-              fontWeight: 800,
-              padding: '4px 10px',
-              borderRadius: '999px',
-              background: currentView === 'championship' ? '#C9A227' : '#113328',
-              color: currentView === 'championship' ? '#16201B' : '#DDE6DF',
-              border: '1px solid #2B5746',
-            }}
-          >
-            🏆 Championship
-          </a>
-          <a
-            href="#highlights"
-            onClick={(e) => {
-              e.preventDefault();
-              if (onNavigate) onNavigate('highlights');
-            }}
-            style={{
-              textDecoration: 'none',
-              fontSize: '11.5px',
-              fontWeight: 800,
-              padding: '4px 10px',
-              borderRadius: '999px',
-              background: currentView === 'highlights' ? '#C9A227' : '#113328',
-              color: currentView === 'highlights' ? '#16201B' : '#DDE6DF',
-              border: '1px solid #2B5746',
-            }}
-          >
-            🎥 Highlights
-          </a>
-          <a
-            href="#archives"
-            onClick={(e) => {
-              e.preventDefault();
-              if (onNavigate) onNavigate('archives');
-            }}
-            style={{
-              textDecoration: 'none',
-              fontSize: '11.5px',
-              fontWeight: 800,
-              padding: '4px 10px',
-              borderRadius: '999px',
-              background: currentView === 'archives' ? '#C9A227' : '#113328',
-              color: currentView === 'archives' ? '#16201B' : '#DDE6DF',
-              border: '1px solid #2B5746',
-            }}
-          >
-            🏛️ Archives
-          </a>
-          <a
-            href="#tactics"
-            onClick={(e) => {
-              e.preventDefault();
-              if (onNavigate) onNavigate('tactics');
-            }}
-            style={{
-              textDecoration: 'none',
-              fontSize: '11.5px',
-              fontWeight: 800,
-              padding: '4px 10px',
-              borderRadius: '999px',
-              background: currentView === 'tactics' ? '#C9A227' : '#113328',
-              color: currentView === 'tactics' ? '#16201B' : '#DDE6DF',
-              border: '1px solid #2B5746',
-            }}
-          >
-            📋 Tactics
-          </a>
+        {/* Desktop / Tablet Segmented Navigation */}
+        <div
+          className="desktop-nav-segments"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            background: 'var(--bg-surface-elevated)',
+            padding: '3px',
+            borderRadius: '999px',
+            border: 'var(--hairline-border)',
+            gap: '2px',
+          }}
+        >
+          {[
+            { key: 'home', label: '🏠 Home' },
+            { key: 'championship', label: '🏆 Championship' },
+            { key: 'table', label: '📊 Table' },
+            { key: 'fixtures', label: '⚽ Fixtures' },
+            { key: 'cup', label: '🏆 Cup' },
+            { key: 'tactics', label: '📋 Tactics' },
+            { key: 'highlights', label: '🎥 Highlights' },
+            { key: 'archives', label: '🏛️ Archives' },
+          ].map((item) => {
+            const isActive = currentView === item.key;
+            return (
+              <a
+                key={item.key}
+                href={`#${item.key}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (onNavigate) onNavigate(item.key);
+                }}
+                style={{
+                  textDecoration: 'none',
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  padding: '6px 12px',
+                  borderRadius: '999px',
+                  background: isActive ? 'var(--accent-orange)' : 'transparent',
+                  color: isActive ? '#000000' : 'var(--text-secondary)',
+                  transition: 'all 0.15s ease',
+                  minHeight: '32px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
+                {item.label}
+              </a>
+            );
+          })}
         </div>
 
         <div
           className="sync-badge"
-          style={syncStatus === 'error' ? { cursor: 'pointer', border: '1px solid #FF6B6B' } : {}}
+          style={syncStatus === 'error' ? { cursor: 'pointer', borderColor: 'var(--status-danger)' } : {}}
           onClick={() => {
             if (syncStatus === 'error' && onOpenAuthModal) {
               onOpenAuthModal('cms');
@@ -163,12 +118,12 @@ export default function TopNav({
         {isCmsMode && (
           <span
             style={{
-              background: 'rgba(201, 162, 39, 0.2)',
-              border: '1px solid #C9A227',
-              color: '#C9A227',
-              fontSize: '10.5px',
+              background: 'var(--accent-orange-soft)',
+              border: '1px solid var(--accent-orange-border)',
+              color: 'var(--accent-orange-vibrant)',
+              fontSize: '11px',
               fontWeight: 800,
-              padding: '2px 8px',
+              padding: '3px 10px',
               borderRadius: '999px',
               letterSpacing: '0.06em',
             }}
@@ -185,13 +140,13 @@ export default function TopNav({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
-              background: '#113328',
-              border: '1px solid #2F7D5C',
+              gap: '8px',
+              background: 'var(--bg-surface-elevated)',
+              border: 'var(--hairline-border)',
               borderRadius: '999px',
-              padding: '3px 10px',
-              fontSize: '11.5px',
-              color: '#DDE6DF',
+              padding: '4px 12px',
+              fontSize: '12px',
+              color: 'var(--text-primary)',
             }}
           >
             <span
@@ -199,7 +154,7 @@ export default function TopNav({
                 width: '8px',
                 height: '8px',
                 borderRadius: '50%',
-                background: playerUser.team_color || '#22C55E',
+                background: playerUser.team_color || 'var(--status-success)',
               }}
             />
             <button
@@ -208,24 +163,24 @@ export default function TopNav({
               style={{
                 background: 'none',
                 border: 'none',
-                color: currentView === 'player-dashboard' ? '#C9A227' : '#F4F2EA',
-                fontWeight: 800,
+                color: currentView === 'player-dashboard' ? 'var(--accent-orange-vibrant)' : '#FFFFFF',
+                fontWeight: 700,
                 cursor: 'pointer',
                 padding: 0,
-                fontSize: '11.5px',
+                fontSize: '12px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '6px',
               }}
               title="Open your Player Dashboard"
             >
               ⚽ <strong>{playerUser.name}</strong> ({playerUser.team_name})
               <span
                 style={{
-                  fontSize: '9.5px',
-                  color: currentView === 'player-dashboard' ? '#16201B' : '#6CE5A0',
-                  background: currentView === 'player-dashboard' ? '#C9A227' : 'rgba(108,229,160,0.18)',
-                  padding: '1px 5px',
+                  fontSize: '10px',
+                  color: currentView === 'player-dashboard' ? '#000000' : 'var(--accent-orange-vibrant)',
+                  background: currentView === 'player-dashboard' ? 'var(--accent-orange)' : 'var(--accent-orange-soft)',
+                  padding: '2px 6px',
                   borderRadius: '6px',
                   fontWeight: 800,
                 }}
@@ -239,12 +194,12 @@ export default function TopNav({
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#FF9990',
+                color: 'var(--status-danger)',
                 fontSize: '11px',
                 fontWeight: 700,
                 cursor: 'pointer',
-                marginLeft: '4px',
-                padding: '0 2px',
+                marginLeft: '6px',
+                padding: '2px 4px',
               }}
               title="Sign out of Player account"
             >
@@ -258,9 +213,9 @@ export default function TopNav({
               onClick={() => onOpenAuthModal && onOpenAuthModal('player')}
               className="admin-link"
               style={{
-                background: '#113328',
-                color: '#DDE6DF',
-                borderColor: '#2B5746',
+                background: 'var(--bg-surface-elevated)',
+                color: 'var(--text-primary)',
+                borderColor: 'rgba(255, 255, 255, 0.15)',
                 cursor: 'pointer',
               }}
             >
@@ -271,9 +226,9 @@ export default function TopNav({
               onClick={() => onOpenAuthModal && onOpenAuthModal('lookup')}
               className="admin-link"
               style={{
-                background: '#0B2920',
-                color: '#C9A227',
-                borderColor: '#2B5746',
+                background: 'var(--bg-surface-elevated)',
+                color: 'var(--accent-orange-vibrant)',
+                borderColor: 'var(--accent-orange-border)',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -286,7 +241,7 @@ export default function TopNav({
           </div>
         )}
 
-        {/* Manager Dashboard Sign-In / Mode Switcher (Hidden when player is signed in) */}
+        {/* Manager Dashboard Sign-In / Mode Switcher */}
         {!playerUser && (
           cmsUser && isCmsMode ? (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -297,14 +252,14 @@ export default function TopNav({
                 }}
                 className="admin-link"
                 style={{
-                  background: currentView === 'manage' ? '#C9A227' : '#163E31',
-                  color: currentView === 'manage' ? '#16201B' : '#F4F2EA',
-                  borderColor: currentView === 'manage' ? '#C9A227' : '#2F7D5C',
+                  background: currentView === 'manage' ? 'var(--accent-orange)' : 'var(--bg-surface-elevated)',
+                  color: currentView === 'manage' ? '#000000' : 'var(--text-primary)',
+                  borderColor: currentView === 'manage' ? 'var(--accent-orange)' : 'rgba(255, 255, 255, 0.15)',
                   cursor: 'pointer',
                   fontWeight: 800,
                 }}
               >
-                🛠️ Manager Dashboard
+                🛠️ Manager
               </button>
               <button
                 type="button"
@@ -314,11 +269,11 @@ export default function TopNav({
                 }}
                 className="admin-link"
                 style={{
-                  background: '#F4F2EA',
-                  color: '#16201B',
-                  borderColor: '#F4F2EA',
+                  background: 'var(--bg-surface-elevated)',
+                  color: 'var(--text-secondary)',
+                  borderColor: 'rgba(255, 255, 255, 0.15)',
                   cursor: 'pointer',
-                  fontWeight: 800,
+                  fontWeight: 700,
                 }}
               >
                 🏠 Home
@@ -328,9 +283,9 @@ export default function TopNav({
                 onClick={() => (onLogoutCms ? onLogoutCms() : onLogout && onLogout('cms'))}
                 className="admin-link"
                 style={{
-                  background: 'rgba(178, 58, 46, 0.2)',
-                  color: '#FF9990',
-                  borderColor: '#B23A2E',
+                  background: 'rgba(255, 69, 58, 0.15)',
+                  color: 'var(--status-danger)',
+                  borderColor: 'rgba(255, 69, 58, 0.3)',
                   cursor: 'pointer',
                 }}
                 title="Sign out of Manager Dashboard"
@@ -347,14 +302,14 @@ export default function TopNav({
               }}
               className="admin-link"
               style={{
-                background: '#C9A227',
-                color: '#16201B',
-                borderColor: '#C9A227',
+                background: 'var(--accent-orange)',
+                color: '#000000',
+                borderColor: 'var(--accent-orange)',
                 fontWeight: 800,
-                padding: '4px 12px',
+                padding: '6px 14px',
               }}
             >
-              🔐 Open Manager Dashboard
+              🔐 Manager Sign In
             </a>
           )
         )}

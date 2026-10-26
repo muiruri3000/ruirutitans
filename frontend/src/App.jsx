@@ -23,7 +23,7 @@ import { api } from './api/client';
 import { DEFAULT_TITANS_STATE, CORE_FIVE_TEAMS } from './data/defaultState';
 
 const PALETTE = [
-  '#B23A2E', '#C9A227', '#2E5A8F', '#3F7A4E', '#7A3F8F', '#D97B29',
+  '#B23A2E', '#FF9500', '#2E5A8F', '#3F7A4E', '#7A3F8F', '#FF9500',
   '#1F6E5C', '#8F2E5A', '#4E4E4E', '#2E7A7A', '#A2451F', '#3F5A2E',
 ];
 
@@ -242,6 +242,7 @@ export default function App() {
   };
   const [fixturesInitialFilter, setFixturesInitialFilter] = useState('all');
   const [votingInitialTab, setVotingInitialTab] = useState('totw');
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
 
   // Authentication & CMS Mode State
   const [cmsUser, setCmsUser] = useState(null);
@@ -2201,10 +2202,10 @@ export default function App() {
   const buildTournamentTeamsFromBalanced = (balancedTeams, existingTeams = []) => {
     const usedCodes = new Set(existingTeams.map((t) => t.id));
     const CORE_CLUBS = [
-      { id: 'MAN', name: 'Mancheli', color: '#C9A227' },
+      { id: 'MAN', name: 'Mancheli', color: '#FF9500' },
       { id: 'SS', name: 'Super Strikers', color: '#B23A2E' },
       { id: 'RAN', name: 'Rangers', color: '#3F7A4E' },
-      { id: 'MAS', name: 'Masters', color: '#D97B29' },
+      { id: 'MAS', name: 'Masters', color: '#FF9500' },
       { id: 'OXF', name: 'Oxford', color: '#2E5A8F' },
     ];
     return balancedTeams.map((bTeam, idx) => {
@@ -2833,10 +2834,10 @@ export default function App() {
 
   if (!data || !cat) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0B3A2E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', color: '#8FA89B' }}>
+      <div style={{ minHeight: '100vh', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', color: '#8E8E93' }}>
           <img src={(typeof window !== 'undefined' && window.CLUB_LOGO_URL) || '/club-logo.jpg'} alt="Ruiru Titans" style={{ width: '64px', height: '64px', marginBottom: '16px', objectFit: 'contain' }} />
-          <div style={{ color: '#F4F2EA', fontWeight: 600 }}>Loading Ruiru Titans Official Club Homepage…</div>
+          <div style={{ color: '#FFFFFF', fontWeight: 600 }}>Loading Ruiru Titans Official Club Homepage…</div>
         </div>
       </div>
     );
@@ -2898,7 +2899,7 @@ export default function App() {
   const isDedicatedTacticsMode = isStandaloneTactics && currentView === 'tactics';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#08261E', fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#000000', fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column' }}>
       {/* Top Bar with Sign In to Manager Dashboard Link & Player Auth OR Dedicated Tactics Header */}
       {!isDedicatedTacticsMode ? (
         <TopNav
@@ -2926,8 +2927,8 @@ export default function App() {
       ) : (
         <header
           style={{
-            background: '#0B281F',
-            borderBottom: '1px solid #1E4636',
+            background: '#121212',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             padding: '10px 18px',
             display: 'flex',
             alignItems: 'center',
@@ -2942,9 +2943,9 @@ export default function App() {
               type="button"
               onClick={() => handleToggleStandaloneTactics(false)}
               style={{
-                background: '#16352A',
-                color: '#F4F2EA',
-                border: '1px solid #2B5746',
+                background: '#1C1C1E',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '8px',
                 padding: '6px 14px',
                 fontSize: '12px',
@@ -2962,7 +2963,7 @@ export default function App() {
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '18px' }}>📋</span>
-              <span className="scoreboard" style={{ fontSize: '18px', color: '#FCD34D', letterSpacing: '0.04em' }}>
+              <span className="scoreboard" style={{ fontSize: '18px', color: '#FF9F0A', letterSpacing: '0.04em' }}>
                 RUIRU TITANS · DEDICATED TACTICS BOARD
               </span>
             </div>
@@ -2973,9 +2974,9 @@ export default function App() {
               type="button"
               onClick={() => window.open(window.location.pathname + '?tactics_standalone=true', '_blank')}
               style={{
-                background: '#071B15',
-                color: '#8FA89B',
-                border: '1px solid #1E4636',
+                background: '#000000',
+                color: '#8E8E93',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '8px',
                 padding: '6px 12px',
                 fontSize: '11.5px',
@@ -3025,8 +3026,8 @@ export default function App() {
           <section
             className="hero-banner"
             style={{
-              background: 'radial-gradient(circle at 85% 20%, rgba(201, 162, 39, 0.22) 0%, rgba(15, 46, 36, 0.96) 55%, #091F18 100%)',
-              border: '1px solid #2B5746',
+              background: 'radial-gradient(circle at 85% 20%, rgba(255, 149, 0, 0.22) 0%, rgba(15, 46, 36, 0.96) 55%, #000000 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '18px',
               padding: '28px 28px 22px',
               marginBottom: '20px',
@@ -3043,13 +3044,13 @@ export default function App() {
                   width: '84px',
                   height: '84px',
                   borderRadius: '18px',
-                  background: '#082018',
-                  border: '2px solid #C9A227',
+                  background: '#000000',
+                  border: '2px solid #FF9500',
                   padding: '6px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 8px 24px rgba(201, 162, 39, 0.25)',
+                  boxShadow: '0 8px 24px rgba(255, 149, 0, 0.25)',
                   flexShrink: 0,
                 }}
               >
@@ -3064,9 +3065,9 @@ export default function App() {
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                   <span
                     style={{
-                      background: 'rgba(201, 162, 39, 0.18)',
-                      border: '1px solid rgba(201, 162, 39, 0.45)',
-                      color: '#C9A227',
+                      background: 'rgba(255, 149, 0, 0.18)',
+                      border: '1px solid rgba(255, 149, 0, 0.45)',
+                      color: '#FF9500',
                       fontSize: '10.5px',
                       fontWeight: 800,
                       padding: '2px 10px',
@@ -3087,7 +3088,7 @@ export default function App() {
                 <h1
                   className="scoreboard"
                   style={{
-                    color: '#F4F2EA',
+                    color: '#FFFFFF',
                     fontSize: 'clamp(32px, 5vw, 48px)',
                     margin: '2px 0 4px',
                     lineHeight: 0.98,
@@ -3097,7 +3098,7 @@ export default function App() {
                   RUIRU TITANS FOOTBALL CLUB
                 </h1>
 
-                <p style={{ color: '#9BB5A8', fontSize: '13px', margin: 0, maxWidth: '580px', lineHeight: 1.5 }}>
+                <p style={{ color: '#8E8E93', fontSize: '13px', margin: 0, maxWidth: '580px', lineHeight: 1.5 }}>
                   Official home of the Ruiru Titans League Table, Live Match Results, Upcoming Fixtures, Knockout Cup Progression Levels, and Public TOTW &amp; TOTT Honours.
                 </p>
               </div>
@@ -3115,7 +3116,7 @@ export default function App() {
                           setCurrentView('manage');
                         }}
                         style={{
-                          background: '#C9A227',
+                          background: '#FF9500',
                           color: '#16201B',
                           border: 'none',
                           borderRadius: '10px',
@@ -3127,7 +3128,7 @@ export default function App() {
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '8px',
-                          boxShadow: '0 4px 16px rgba(201, 162, 39, 0.3)',
+                          boxShadow: '0 4px 16px rgba(255, 149, 0, 0.3)',
                         }}
                       >
                         🛠️ Open Manager Dashboard
@@ -3140,9 +3141,9 @@ export default function App() {
                           setCurrentView('manage');
                         }}
                         style={{
-                          background: 'rgba(201, 162, 39, 0.16)',
-                          border: '1px solid #C9A227',
-                          color: '#F4F2EA',
+                          background: 'rgba(255, 149, 0, 0.16)',
+                          border: '1px solid #FF9500',
+                          color: '#FFFFFF',
                           borderRadius: '10px',
                           padding: '10px 16px',
                           fontSize: '12px',
@@ -3162,7 +3163,7 @@ export default function App() {
                       type="button"
                       onClick={() => setAuthModal({ open: true, tab: 'cms' })}
                       style={{
-                        background: '#C9A227',
+                        background: '#FF9500',
                         color: '#16201B',
                         border: 'none',
                         borderRadius: '10px',
@@ -3174,7 +3175,7 @@ export default function App() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '8px',
-                        boxShadow: '0 4px 16px rgba(201, 162, 39, 0.3)',
+                        boxShadow: '0 4px 16px rgba(255, 149, 0, 0.3)',
                       }}
                     >
                       🔐 Open Manager Dashboard
@@ -3189,7 +3190,7 @@ export default function App() {
                     type="button"
                     onClick={() => setCurrentView('player-dashboard')}
                     style={{
-                      background: currentView === 'player-dashboard' ? '#C9A227' : '#16352A',
+                      background: currentView === 'player-dashboard' ? '#FF9500' : '#1C1C1E',
                       color: currentView === 'player-dashboard' ? '#16201B' : '#6CE5A0',
                       border: '1px solid #3F7A4E',
                       borderRadius: '10px',
@@ -3212,9 +3213,9 @@ export default function App() {
                       setCurrentView('voting');
                     }}
                     style={{
-                      background: 'rgba(201, 162, 39, 0.15)',
-                      color: '#C9A227',
-                      border: '1px solid #C9A227',
+                      background: 'rgba(255, 149, 0, 0.15)',
+                      color: '#FF9500',
+                      border: '1px solid #FF9500',
                       borderRadius: '10px',
                       padding: '8px 14px',
                       fontSize: '12px',
@@ -3234,9 +3235,9 @@ export default function App() {
                   type="button"
                   onClick={() => setAuthModal({ open: true, tab: 'player' })}
                   style={{
-                    background: '#16352A',
-                    color: '#F4F2EA',
-                    border: '1px solid #2B5746',
+                    background: '#1C1C1E',
+                    color: '#FFFFFF',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '10px',
                     padding: '10px 16px',
                     fontSize: '12.5px',
@@ -3276,7 +3277,7 @@ export default function App() {
                 key={idx}
                 style={{
                   background: 'rgba(10, 36, 28, 0.75)',
-                  border: '1px solid #1E4636',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '10px',
                   padding: '10px 12px',
                   display: 'flex',
@@ -3286,13 +3287,13 @@ export default function App() {
               >
                 <span style={{ fontSize: '20px' }}>{stat.icon}</span>
                 <div>
-                  <div style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     {stat.label}
                   </div>
-                  <div className="scoreboard" style={{ fontSize: '21px', color: '#F4F2EA', lineHeight: 1.1 }}>
+                  <div className="scoreboard" style={{ fontSize: '21px', color: '#FFFFFF', lineHeight: 1.1 }}>
                     {stat.value}
                   </div>
-                  <div style={{ fontSize: '10px', color: '#6E9080' }}>{stat.sub}</div>
+                  <div style={{ fontSize: '10px', color: '#8E8E93' }}>{stat.sub}</div>
                 </div>
               </div>
             ))}
@@ -3304,8 +3305,8 @@ export default function App() {
         {!isDedicatedTacticsMode && isCmsMode && (
           <div
             style={{
-              background: 'rgba(201, 162, 39, 0.14)',
-              border: '1px solid #C9A227',
+              background: 'rgba(255, 149, 0, 0.14)',
+              border: '1px solid #FF9500',
               borderRadius: '12px',
               padding: '12px 18px',
               marginBottom: '16px',
@@ -3319,10 +3320,10 @@ export default function App() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '18px' }}>🛠️</span>
               <div>
-                <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   Manager Dashboard Active ({cmsUser?.username || 'Manager'})
                 </div>
-                <div style={{ fontSize: '11.5px', color: '#DDE6DF' }}>
+                <div style={{ fontSize: '11.5px', color: '#EBEBF5' }}>
                   You can now edit match events, mark fixtures final, assign referees, manage teams/players, and control voting windows across all categories.
                 </div>
               </div>
@@ -3335,8 +3336,8 @@ export default function App() {
                   type="button"
                   onClick={() => handleSelectActiveCategory(k)}
                   style={{
-                    background: k === activeCategoryKey ? '#C9A227' : '#16352A',
-                    color: k === activeCategoryKey ? '#16201B' : '#DDE6DF',
+                    background: k === activeCategoryKey ? '#FF9500' : '#1C1C1E',
+                    color: k === activeCategoryKey ? '#16201B' : '#EBEBF5',
                     fontWeight: 700,
                     fontSize: '11.5px',
                     padding: '5px 12px',
@@ -3353,8 +3354,8 @@ export default function App() {
                 onClick={() => setEditingCategoryKey(activeCategoryKey)}
                 title={`Edit "${cat?.label}" name, start date, referees & rules`}
                 style={{
-                  background: '#0B3A2E',
-                  border: '1px solid #2B5746',
+                  background: '#000000',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   color: '#6CE5A0',
                   fontSize: '11px',
                   fontWeight: 800,
@@ -3373,8 +3374,8 @@ export default function App() {
                 onClick={() => setAddingCategory(!addingCategory)}
                 style={{
                   background: 'transparent',
-                  border: '1px dashed #C9A227',
-                  color: '#C9A227',
+                  border: '1px dashed #FF9500',
+                  color: '#FF9500',
                   fontSize: '11.5px',
                   padding: '4px 10px',
                   borderRadius: '999px',
@@ -3441,10 +3442,10 @@ export default function App() {
               display: 'flex',
               gap: '8px',
               marginBottom: '16px',
-              background: '#0F2E24',
+              background: '#121212',
               padding: '12px',
               borderRadius: '10px',
-              border: '1px solid #2B5746',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               flexWrap: 'wrap',
             }}
           >
@@ -3479,7 +3480,7 @@ export default function App() {
               onChange={(e) => setNewCatStartDate(e.target.value)}
               title="Tournament Kickoff / Start Date (optional)"
             />
-            <button type="submit" className="stat-btn" style={{ background: '#C9A227', color: '#16201B', fontWeight: 800, padding: '8px 18px' }}>
+            <button type="submit" className="stat-btn" style={{ background: '#FF9500', color: '#16201B', fontWeight: 800, padding: '8px 18px' }}>
               Create Category
             </button>
           </form>
@@ -3493,10 +3494,10 @@ export default function App() {
               display: 'flex',
               gap: '6px',
               marginBottom: '14px',
-              background: '#0F2E24',
+              background: '#121212',
               padding: '6px',
               borderRadius: '12px',
-              border: '1px solid #1E4636',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               overflowX: 'auto',
             }}
           >
@@ -3541,8 +3542,8 @@ export default function App() {
                   borderRadius: '8px',
                   border: 'none',
                   cursor: 'pointer',
-                  background: currentView === t.key ? '#C9A227' : 'transparent',
-                  color: currentView === t.key ? '#16201B' : '#9BB5A8',
+                  background: currentView === t.key ? '#FF9500' : 'transparent',
+                  color: currentView === t.key ? '#16201B' : '#8E8E93',
                   fontWeight: 800,
                   fontSize: '12.5px',
                   whiteSpace: 'nowrap',
@@ -3558,8 +3559,8 @@ export default function App() {
         {!isDedicatedTacticsMode && currentView !== 'home' && currentView !== 'tactics' && activeCompetitionsList.length > 0 && (
           <div
             style={{
-              background: '#0B281F',
-              border: '1px solid #1E4636',
+              background: '#121212',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '10px',
               padding: '9px 14px',
               marginBottom: '18px',
@@ -3575,7 +3576,7 @@ export default function App() {
                 style={{
                   fontSize: '11px',
                   fontWeight: 800,
-                  color: '#8FA89B',
+                  color: '#8E8E93',
                   textTransform: 'uppercase',
                   letterSpacing: '0.07em',
                 }}
@@ -3591,9 +3592,9 @@ export default function App() {
                     type="button"
                     onClick={() => handleSelectActiveCategory(k)}
                     style={{
-                      background: isActive ? '#C9A227' : '#13362B',
-                      color: isActive ? '#16201B' : '#DDE6DF',
-                      border: isActive ? '1px solid #C9A227' : '1px solid #245040',
+                      background: isActive ? '#FF9500' : '#1C1C1E',
+                      color: isActive ? '#16201B' : '#EBEBF5',
+                      border: isActive ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '999px',
                       padding: '5px 12px',
                       fontSize: '11.5px',
@@ -3627,9 +3628,9 @@ export default function App() {
                 type="button"
                 onClick={() => openCategoryFixturesResultsPDF(activeCategoryKey)}
                 style={{
-                  background: '#0B3A2E',
-                  color: '#F4F2EA',
-                  border: '1px solid #2B5746',
+                  background: '#000000',
+                  color: '#FFFFFF',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '999px',
                   padding: '4px 12px',
                   fontSize: '11px',
@@ -3689,7 +3690,7 @@ export default function App() {
               {/* Left Column: Official League Table */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h2 className="scoreboard" style={{ margin: 0, fontSize: '24px', color: '#F4F2EA', letterSpacing: '0.04em' }}>
+                  <h2 className="scoreboard" style={{ margin: 0, fontSize: '24px', color: '#FFFFFF', letterSpacing: '0.04em' }}>
                     📊 RUIRU TITANS LEAGUE TABLE
                   </h2>
                   <button
@@ -3711,13 +3712,13 @@ export default function App() {
               {/* Right Column: Latest Match Results & Upcoming Fixtures */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {/* Latest Match Results Card */}
-                <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '14px', padding: '16px' }}>
+                <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px', padding: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
                     <div>
                       <span style={{ fontSize: '12px', fontWeight: 800, color: '#4ADE80', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                         ✅ Latest Match Results
                       </span>
-                      <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+                      <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                         Completed Ruiru Titans League matches
                       </div>
                     </div>
@@ -3760,8 +3761,8 @@ export default function App() {
                         <div
                           key={f.id}
                           style={{
-                            background: '#0A241C',
-                            border: '1px solid #163E31',
+                            background: '#121212',
+                            border: '1px solid #1C1C1E',
                             borderRadius: '10px',
                             padding: '10px 12px',
                             display: 'flex',
@@ -3771,19 +3772,19 @@ export default function App() {
                           }}
                         >
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: home?.color || '#C9A227' }} />
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: home?.color || '#FF9500' }} />
                             {f.home ? (
                               <button
                                 type="button"
                                 className="team-link-btn"
                                 onClick={() => handleOpenTeamDetails(f.home, leagueCategoryKey)}
-                                style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}
+                                style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
                                 title={`Click to view ${home?.name || f.home} profile & odds`}
                               >
                                 {home?.name || f.home}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}>{home?.name || f.home}</span>
+                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{home?.name || f.home}</span>
                             )}
                           </div>
                           <div style={{ textAlign: 'center' }}>
@@ -3791,16 +3792,16 @@ export default function App() {
                               className="scoreboard"
                               style={{
                                 fontSize: '20px',
-                                color: '#C9A227',
-                                background: '#0F2E24',
+                                color: '#FF9500',
+                                background: '#121212',
                                 padding: '2px 10px',
                                 borderRadius: '6px',
-                                border: '1px solid #1E4636',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
                               }}
                             >
                               {hs} - {as}
                             </span>
-                            <div style={{ fontSize: '9.5px', color: '#6E9080', marginTop: '2px' }}>{f.date}</div>
+                            <div style={{ fontSize: '9.5px', color: '#8E8E93', marginTop: '2px' }}>{f.date}</div>
                           </div>
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', textAlign: 'right' }}>
                             {f.away ? (
@@ -3808,13 +3809,13 @@ export default function App() {
                                 type="button"
                                 className="team-link-btn"
                                 onClick={() => handleOpenTeamDetails(f.away, leagueCategoryKey)}
-                                style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}
+                                style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
                                 title={`Click to view ${away?.name || f.away} profile & odds`}
                               >
                                 {away?.name || f.away}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}>{away?.name || f.away}</span>
+                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{away?.name || f.away}</span>
                             )}
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: away?.color || '#2E5A8F' }} />
                           </div>
@@ -3824,7 +3825,7 @@ export default function App() {
                             style={{
                               background: hasReport ? 'rgba(46, 229, 157, 0.15)' : 'rgba(255, 255, 255, 0.05)',
                               border: hasReport ? '1px solid #2EE59D' : '1px solid #335544',
-                              color: hasReport ? '#A7F3D0' : '#8FA89B',
+                              color: hasReport ? '#A7F3D0' : '#8E8E93',
                               padding: '5px 9px',
                               borderRadius: '6px',
                               fontSize: '11px',
@@ -3847,13 +3848,13 @@ export default function App() {
                 </div>
 
                 {/* Upcoming Fixtures Card */}
-                <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '14px', padding: '16px' }}>
+                <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px', padding: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                     <div>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                         📅 Upcoming League Fixtures
                       </span>
-                      <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+                      <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                         Next scheduled matchdays at Thoome Pri.
                       </div>
                     </div>
@@ -3877,8 +3878,8 @@ export default function App() {
                         <div
                           key={f.id}
                           style={{
-                            background: '#0A241C',
-                            border: '1px dashed #2B5746',
+                            background: '#121212',
+                            border: '1px dashed rgba(255, 255, 255, 0.1)',
                             borderRadius: '10px',
                             padding: '10px 12px',
                             display: 'flex',
@@ -3888,19 +3889,19 @@ export default function App() {
                           }}
                         >
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: home?.color || '#C9A227' }} />
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: home?.color || '#FF9500' }} />
                             {f.home ? (
                               <button
                                 type="button"
                                 className="team-link-btn"
                                 onClick={() => handleOpenTeamDetails(f.home, leagueCategoryKey)}
-                                style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}
+                                style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
                                 title={`Click to view ${home?.name || f.home} profile & odds`}
                               >
                                 {home?.name || f.home}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}>{home?.name || f.home}</span>
+                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{home?.name || f.home}</span>
                             )}
                           </div>
                           <div style={{ textAlign: 'center' }}>
@@ -3908,16 +3909,16 @@ export default function App() {
                               className="scoreboard"
                               style={{
                                 fontSize: '16px',
-                                color: '#8FA89B',
-                                background: '#0F2E24',
+                                color: '#8E8E93',
+                                background: '#121212',
                                 padding: '2px 10px',
                                 borderRadius: '6px',
-                                border: '1px solid #1E4636',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
                               }}
                             >
                               VS
                             </span>
-                            <div style={{ fontSize: '9.5px', color: '#C9A227', marginTop: '2px', fontWeight: 600 }}>{f.date}</div>
+                            <div style={{ fontSize: '9.5px', color: '#FF9500', marginTop: '2px', fontWeight: 600 }}>{f.date}</div>
                           </div>
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', textAlign: 'right' }}>
                             {f.away ? (
@@ -3925,13 +3926,13 @@ export default function App() {
                                 type="button"
                                 className="team-link-btn"
                                 onClick={() => handleOpenTeamDetails(f.away, leagueCategoryKey)}
-                                style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}
+                                style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
                                 title={`Click to view ${away?.name || f.away} profile & odds`}
                               >
                                 {away?.name || f.away}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}>{away?.name || f.away}</span>
+                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{away?.name || f.away}</span>
                             )}
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: away?.color || '#2E5A8F' }} />
                           </div>
@@ -3947,7 +3948,7 @@ export default function App() {
             {cupCat && (
               <section>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-                  <h2 className="scoreboard" style={{ margin: 0, fontSize: '26px', color: '#F4F2EA', letterSpacing: '0.04em' }}>
+                  <h2 className="scoreboard" style={{ margin: 0, fontSize: '26px', color: '#FFFFFF', letterSpacing: '0.04em' }}>
                     🏆 CUP PROGRESSION LEVELS &amp; RESPECTIVE FIXTURES
                   </h2>
                   <button
@@ -3976,7 +3977,7 @@ export default function App() {
             {/* Section 3: Public TOTW & TOTT Honours + Logged-In Player Voting */}
             <section>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-                <h2 className="scoreboard" style={{ margin: 0, fontSize: '26px', color: '#F4F2EA', letterSpacing: '0.04em' }}>
+                <h2 className="scoreboard" style={{ margin: 0, fontSize: '26px', color: '#FFFFFF', letterSpacing: '0.04em' }}>
                   ⭐ PUBLIC TEAM OF THE WEEK (TOTW) &amp; TEAM OF THE TOURNAMENT (TOTT)
                 </h2>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -3993,7 +3994,7 @@ export default function App() {
                   <button
                     type="button"
                     className="btn-pill-action"
-                    style={{ background: '#C9A227', color: '#16201B', borderColor: '#C9A227', fontWeight: 800 }}
+                    style={{ background: '#FF9500', color: '#16201B', borderColor: '#FF9500', fontWeight: 800 }}
                     onClick={() => {
                       if (!playerUser) {
                         setAuthModal({ open: true, tab: 'player' });
@@ -4194,17 +4195,17 @@ export default function App() {
           ) : (
             <div
               style={{
-                background: '#0F2E24',
+                background: '#121212',
                 border: '1px solid #3F7A4E',
                 borderRadius: '14px',
                 padding: '36px 24px',
                 textAlign: 'center',
               }}
             >
-              <h3 className="scoreboard" style={{ fontSize: '28px', color: '#F4F2EA', margin: '0 0 8px' }}>
+              <h3 className="scoreboard" style={{ fontSize: '28px', color: '#FFFFFF', margin: '0 0 8px' }}>
                 👤 PLAYER DASHBOARD SIGN-IN REQUIRED
               </h3>
-              <p style={{ fontSize: '13px', color: '#8FA89B', maxWidth: '460px', margin: '0 auto 16px' }}>
+              <p style={{ fontSize: '13px', color: '#8E8E93', maxWidth: '460px', margin: '0 auto 16px' }}>
                 Please sign in with your player username and password (or activation code) to view your season statistics, upcoming matchdays, official discipline status, and voting ballot.
               </p>
               <button
@@ -4212,7 +4213,7 @@ export default function App() {
                 onClick={() => setAuthModal({ open: true, tab: 'player' })}
                 style={{
                   background: '#6CE5A0',
-                  color: '#08261E',
+                  color: '#000000',
                   border: 'none',
                   borderRadius: '8px',
                   padding: '10px 22px',
@@ -4234,17 +4235,17 @@ export default function App() {
           playerUser ? (
             <div
               style={{
-                background: '#0F2E24',
-                border: '1px solid #1E4636',
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '14px',
                 padding: '36px 24px',
                 textAlign: 'center',
               }}
             >
-              <h3 className="scoreboard" style={{ fontSize: '24px', color: '#F4F2EA', margin: '0 0 8px' }}>
+              <h3 className="scoreboard" style={{ fontSize: '24px', color: '#FFFFFF', margin: '0 0 8px' }}>
                 👤 SIGNED IN AS PLAYER ({playerUser.name})
               </h3>
-              <p style={{ fontSize: '13px', color: '#8FA89B', maxWidth: '520px', margin: '0 auto 16px' }}>
+              <p style={{ fontSize: '13px', color: '#8E8E93', maxWidth: '520px', margin: '0 auto 16px' }}>
                 Manager Dashboard is reserved for tournament managers and staff. As a signed-in player, you have access to your personalized Player Dashboard, match results, and TOTW/TOTT ballots.
               </p>
               <button
@@ -4252,7 +4253,7 @@ export default function App() {
                 onClick={() => setCurrentView('player-dashboard')}
                 style={{
                   background: '#6CE5A0',
-                  color: '#08261E',
+                  color: '#000000',
                   border: 'none',
                   borderRadius: '8px',
                   padding: '10px 22px',
@@ -4303,24 +4304,24 @@ export default function App() {
           ) : (
             <div
               style={{
-                background: '#0F2E24',
-                border: '1px solid #C9A227',
+                background: '#121212',
+                border: '1px solid #FF9500',
                 borderRadius: '14px',
                 padding: '36px 24px',
                 textAlign: 'center',
               }}
             >
-              <h3 className="scoreboard" style={{ fontSize: '28px', color: '#F4F2EA', margin: '0 0 8px' }}>
+              <h3 className="scoreboard" style={{ fontSize: '28px', color: '#FFFFFF', margin: '0 0 8px' }}>
                 🔐 MANAGER DASHBOARD SIGN-IN REQUIRED
               </h3>
-              <p style={{ fontSize: '13px', color: '#8FA89B', maxWidth: '520px', margin: '0 auto 16px' }}>
+              <p style={{ fontSize: '13px', color: '#8E8E93', maxWidth: '520px', margin: '0 auto 16px' }}>
                 Please sign in with your Ruiru Titans manager credentials to access the <strong>📝 Player Registration Form</strong> (with 4-digit code generation), reset player passwords by username, and manage teams and tournament fixtures.
               </p>
               <button
                 type="button"
                 onClick={() => setAuthModal({ open: true, tab: 'cms' })}
                 style={{
-                  background: '#C9A227',
+                  background: '#FF9500',
                   color: '#16201B',
                   border: 'none',
                   borderRadius: '8px',
@@ -4340,10 +4341,10 @@ export default function App() {
       {/* Club Footer with Manager Dashboard Sign-In Link */}
       <footer
         style={{
-          background: '#061C15',
-          borderTop: '1px solid #163E31',
+          background: '#000000',
+          borderTop: '1px solid #1C1C1E',
           padding: '24px 20px',
-          color: '#8FA89B',
+          color: '#8E8E93',
           fontSize: '12px',
         }}
       >
@@ -4365,8 +4366,8 @@ export default function App() {
               style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'contain' }}
             />
             <div>
-              <strong style={{ color: '#F4F2EA' }}>Ruiru Titans Football Club</strong> · 2026 Season Official Portal
-              <div style={{ fontSize: '11px', color: '#5E7A6C' }}>
+              <strong style={{ color: '#FFFFFF' }}>Ruiru Titans Football Club</strong> · 2026 Season Official Portal
+              <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                 League Standings · Match Results &amp; Fixtures · Cup Progression · Public TOTW &amp; TOTT
               </div>
             </div>
@@ -4402,7 +4403,7 @@ export default function App() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#C9A227',
+                  color: '#FF9500',
                   fontWeight: 700,
                   fontSize: '12px',
                   cursor: 'pointer',
@@ -4505,6 +4506,195 @@ export default function App() {
           teamsById={leagueTeamsById}
           onClose={() => setAppShowAIReport(false)}
         />
+      )}
+
+      {/* Apple Mobile Bottom Tab Bar (HIG tab-bars.md) */}
+      {!isDedicatedTacticsMode && (
+        <nav className="mobile-tab-bar" aria-label="Mobile Bottom Navigation">
+          <button
+            type="button"
+            className={`mobile-tab-item ${currentView === 'home' && !mobileMoreOpen ? 'active' : ''}`}
+            onClick={() => {
+              setMobileMoreOpen(false);
+              setCurrentView('home');
+            }}
+          >
+            <span className="tab-icon">🏠</span>
+            <span className="tab-label">Home</span>
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-tab-item ${currentView === 'fixtures' && !mobileMoreOpen ? 'active' : ''}`}
+            onClick={() => {
+              setMobileMoreOpen(false);
+              setCurrentView('fixtures');
+            }}
+          >
+            <span className="tab-icon">⚽</span>
+            <span className="tab-label">Matches</span>
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-tab-item ${(currentView === 'table' || currentView === 'cup') && !mobileMoreOpen ? 'active' : ''}`}
+            onClick={() => {
+              setMobileMoreOpen(false);
+              setCurrentView(cat?.mode === 'cup' ? 'cup' : 'table');
+            }}
+          >
+            <span className="tab-icon">{cat?.mode === 'cup' ? '🏆' : '📊'}</span>
+            <span className="tab-label">{cat?.mode === 'cup' ? 'Cup' : 'Standings'}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-tab-item ${currentView === 'tactics' && !mobileMoreOpen ? 'active' : ''}`}
+            onClick={() => {
+              setMobileMoreOpen(false);
+              setCurrentView('tactics');
+            }}
+          >
+            <span className="tab-icon">📋</span>
+            <span className="tab-label">Tactics</span>
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-tab-item ${mobileMoreOpen ? 'active' : ''}`}
+            onClick={() => setMobileMoreOpen(!mobileMoreOpen)}
+          >
+            <span className="tab-icon">⋯</span>
+            <span className="tab-label">More</span>
+          </button>
+        </nav>
+      )}
+
+      {/* Cupertino Bottom Sheet Modal for Mobile "More" Tab (HIG sheets.md) */}
+      {mobileMoreOpen && (
+        <div
+          className="modal-overlay"
+          onClick={() => setMobileMoreOpen(false)}
+          style={{ zIndex: 999 }}
+        >
+          <div
+            className="apple-modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column',
+              background: '#121212',
+            }}
+          >
+            {/* Grabber handle per Apple HIG */}
+            <div className="sheet-grabber" />
+
+            {/* Sheet Header */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingBottom: '14px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                marginBottom: '16px',
+              }}
+            >
+              <div style={{ fontWeight: 800, fontSize: '17px', color: '#FFFFFF' }}>
+                All Club Sections
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMoreOpen(false)}
+                style={{
+                  background: 'rgba(255, 149, 0, 0.15)',
+                  border: 'none',
+                  color: 'var(--accent-orange-vibrant)',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  minHeight: '36px',
+                }}
+              >
+                Done
+              </button>
+            </div>
+
+            {/* Grid of Sections */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                gap: '12px',
+                overflowY: 'auto',
+                paddingBottom: '12px',
+              }}
+            >
+              {[
+                { key: 'championship', icon: '🏆', label: 'Championship', sub: 'Hub & Scores' },
+                { key: 'cup', icon: '🏆', label: 'Cup Progression', sub: 'Knockout Tree' },
+                { key: 'voting', icon: '⭐', label: 'TOTW Voting', sub: 'Team of the Week' },
+                { key: 'highlights', icon: '🎥', label: 'Highlights', sub: 'Match Replays' },
+                { key: 'archives', icon: '🏛️', label: 'Club Archives', sub: 'History & Honours' },
+                { key: 'stats', icon: '📈', label: 'Player Stats', sub: 'Goals & Assists' },
+                { key: 'balancer', icon: '⚖️', label: 'Team Balancer', sub: 'Squad Creator' },
+                {
+                  key: playerUser ? 'player-dashboard' : 'player-auth',
+                  icon: '👤',
+                  label: playerUser ? 'Player Profile' : 'Player Sign In',
+                  sub: playerUser ? playerUser.name : 'Vote & Dashboard',
+                },
+                {
+                  key: 'manage',
+                  icon: '🛠️',
+                  label: 'Manager CMS',
+                  sub: cmsUser && isCmsMode ? 'Dashboard Open' : 'Manager Sign In',
+                },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    setMobileMoreOpen(false);
+                    if (item.key === 'player-auth') {
+                      setAuthModal({ open: true, tab: 'player' });
+                    } else if (item.key === 'manage' && (!cmsUser || !isCmsMode)) {
+                      setAuthModal({ open: true, tab: 'cms' });
+                    } else {
+                      setCurrentView(item.key);
+                    }
+                  }}
+                  style={{
+                    background: currentView === item.key ? 'rgba(255, 149, 0, 0.15)' : '#1C1C1E',
+                    border: currentView === item.key ? '1px solid var(--accent-orange)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '16px',
+                    padding: '14px 10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    minHeight: '74px',
+                    gap: '4px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '24px', lineHeight: 1 }}>{item.icon}</span>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginTop: '4px' }}>
+                    {item.label}
+                  </div>
+                  <div style={{ fontSize: '10.5px', color: 'var(--text-tertiary)' }}>
+                    {item.sub}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

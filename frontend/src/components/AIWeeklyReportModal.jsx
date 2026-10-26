@@ -128,7 +128,7 @@ export default function AIWeeklyReportModal({
         className="h2h-modal"
         style={{
           background: '#092119',
-          border: '1px solid #1E4636',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '16px',
           width: '100%',
           maxWidth: '860px',
@@ -136,7 +136,7 @@ export default function AIWeeklyReportModal({
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 24px 48px rgba(0,0,0,0.7)',
-          color: '#F4F2EA',
+          color: '#FFFFFF',
           overflow: 'hidden',
         }}
       >
@@ -144,7 +144,7 @@ export default function AIWeeklyReportModal({
         <div
           style={{
             padding: '16px 22px',
-            borderBottom: '1px solid #1E4636',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             background: 'linear-gradient(180deg, #10382B 0%, #092119 100%)',
             display: 'flex',
             justifyContent: 'space-between',
@@ -156,7 +156,7 @@ export default function AIWeeklyReportModal({
             <div>
               <div
                 style={{
-                  color: '#C9A227',
+                  color: '#FF9500',
                   fontSize: '11px',
                   fontWeight: 800,
                   letterSpacing: '0.12em',
@@ -167,7 +167,7 @@ export default function AIWeeklyReportModal({
               </div>
               <h2
                 className="scoreboard"
-                style={{ margin: '2px 0 0', fontSize: '22px', color: '#F4F2EA' }}
+                style={{ margin: '2px 0 0', fontSize: '22px', color: '#FFFFFF' }}
               >
                 AI MATCHWEEK REPORT GENERATOR
               </h2>
@@ -180,7 +180,7 @@ export default function AIWeeklyReportModal({
             style={{
               background: 'none',
               border: 'none',
-              color: '#8FA89B',
+              color: '#8E8E93',
               fontSize: '22px',
               cursor: 'pointer',
               padding: '4px 8px',
@@ -197,7 +197,7 @@ export default function AIWeeklyReportModal({
           style={{
             padding: '12px 22px',
             background: '#061913',
-            borderBottom: '1px solid #1E4636',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -206,7 +206,7 @@ export default function AIWeeklyReportModal({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: '#C9A227' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: '#FF9500' }}>
               Select Matchweek:
             </label>
             <select
@@ -217,8 +217,8 @@ export default function AIWeeklyReportModal({
               }}
               style={{
                 background: '#133A2D',
-                border: '1px solid #C9A227',
-                color: '#F4F2EA',
+                border: '1px solid #FF9500',
+                color: '#FFFFFF',
                 borderRadius: '8px',
                 padding: '6px 12px',
                 fontSize: '12.5px',
@@ -238,7 +238,7 @@ export default function AIWeeklyReportModal({
               onClick={() => generateReport(week)}
               disabled={loading}
               style={{
-                background: 'linear-gradient(135deg, #C9A227 0%, #A68218 100%)',
+                background: 'linear-gradient(135deg, #FF9500 0%, #A68218 100%)',
                 border: 'none',
                 color: '#16201B',
                 borderRadius: '8px',
@@ -249,7 +249,7 @@ export default function AIWeeklyReportModal({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: '0 2px 8px rgba(201, 162, 39, 0.3)',
+                boxShadow: '0 2px 8px rgba(255, 149, 0, 0.3)',
               }}
             >
               {loading ? '⚡ Analyzing Match Data...' : '✨ Re-Generate AI Report'}
@@ -269,9 +269,9 @@ export default function AIWeeklyReportModal({
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
                 style={{
-                  background: activeTab === tab.key ? '#1E4636' : 'transparent',
-                  border: activeTab === tab.key ? '1px solid #C9A227' : '1px solid transparent',
-                  color: activeTab === tab.key ? '#FCD34D' : '#8FA89B',
+                  background: activeTab === tab.key ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                  border: activeTab === tab.key ? '1px solid #FF9500' : '1px solid transparent',
+                  color: activeTab === tab.key ? '#FF9F0A' : '#8E8E93',
                   borderRadius: '6px',
                   padding: '4px 10px',
                   fontSize: '11px',
@@ -288,14 +288,14 @@ export default function AIWeeklyReportModal({
         {/* Modal Scrollable Body */}
         <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '50px 20px', color: '#C9A227' }}>
+            <div style={{ textAlign: 'center', padding: '50px 20px', color: '#FF9500' }}>
               <div style={{ fontSize: '36px', marginBottom: '14px', animation: 'spin 2s linear infinite' }}>
                 🤖
               </div>
-              <div style={{ fontSize: '16px', fontWeight: 800, color: '#F4F2EA', marginBottom: '6px' }}>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#FFFFFF', marginBottom: '6px' }}>
                 Synthesizing Tournament Analytics with AI
               </div>
-              <div style={{ fontSize: '12px', color: '#8FA89B', maxWidth: '460px', margin: '0 auto' }}>
+              <div style={{ fontSize: '12px', color: '#8E8E93', maxWidth: '460px', margin: '0 auto' }}>
                 Analyzing goals, assists, referee disciplinary decisions, admin game reports, and table standings to construct the weekly dossier…
               </div>
             </div>
@@ -341,29 +341,29 @@ export default function AIWeeklyReportModal({
                   marginBottom: '20px',
                 }}
               >
-                <div style={{ background: '#061C14', border: '1px solid #1E4636', borderRadius: '10px', padding: '10px 14px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '10px', color: '#8FA89B', textTransform: 'uppercase', fontWeight: 800 }}>Total Matches</div>
-                  <div className="scoreboard" style={{ fontSize: '24px', color: '#F4F2EA' }}>{reportData.total_fixtures || 0}</div>
+                <div style={{ background: '#061C14', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '10px', color: '#8E8E93', textTransform: 'uppercase', fontWeight: 800 }}>Total Matches</div>
+                  <div className="scoreboard" style={{ fontSize: '24px', color: '#FFFFFF' }}>{reportData.total_fixtures || 0}</div>
                 </div>
 
-                <div style={{ background: '#061C14', border: '1px solid #1E4636', borderRadius: '10px', padding: '10px 14px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '10px', color: '#8FA89B', textTransform: 'uppercase', fontWeight: 800 }}>Completed</div>
+                <div style={{ background: '#061C14', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '10px', color: '#8E8E93', textTransform: 'uppercase', fontWeight: 800 }}>Completed</div>
                   <div className="scoreboard" style={{ fontSize: '24px', color: '#4ADE80' }}>{reportData.completed_fixtures || 0}</div>
                 </div>
 
-                <div style={{ background: '#061C14', border: '1px solid #1E4636', borderRadius: '10px', padding: '10px 14px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '10px', color: '#8FA89B', textTransform: 'uppercase', fontWeight: 800 }}>Goals Scored</div>
-                  <div className="scoreboard" style={{ fontSize: '24px', color: '#FCD34D' }}>{reportData.total_goals || 0}</div>
+                <div style={{ background: '#061C14', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '10px', color: '#8E8E93', textTransform: 'uppercase', fontWeight: 800 }}>Goals Scored</div>
+                  <div className="scoreboard" style={{ fontSize: '24px', color: '#FF9F0A' }}>{reportData.total_goals || 0}</div>
                 </div>
 
-                <div style={{ background: '#061C14', border: '1px solid #1E4636', borderRadius: '10px', padding: '10px 14px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '10px', color: '#8FA89B', textTransform: 'uppercase', fontWeight: 800 }}>Goals / Game</div>
-                  <div className="scoreboard" style={{ fontSize: '24px', color: '#C9A227' }}>{reportData.goals_per_game || '0.0'}</div>
+                <div style={{ background: '#061C14', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '10px', color: '#8E8E93', textTransform: 'uppercase', fontWeight: 800 }}>Goals / Game</div>
+                  <div className="scoreboard" style={{ fontSize: '24px', color: '#FF9500' }}>{reportData.goals_per_game || '0.0'}</div>
                 </div>
 
-                <div style={{ background: '#061C14', border: '1px solid #C9A227', borderRadius: '10px', padding: '10px 14px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '10px', color: '#C9A227', textTransform: 'uppercase', fontWeight: 800 }}>Matchweek MVP</div>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#F4F2EA', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ background: '#061C14', border: '1px solid #FF9500', borderRadius: '10px', padding: '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '10px', color: '#FF9500', textTransform: 'uppercase', fontWeight: 800 }}>Matchweek MVP</div>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {mvpDisplayName}
                   </div>
                 </div>
@@ -375,16 +375,16 @@ export default function AIWeeklyReportModal({
                   {/* Headline Banner */}
                   <div
                     style={{
-                      background: 'linear-gradient(135deg, rgba(201,162,39,0.15) 0%, rgba(11,36,28,0.4) 100%)',
-                      border: '1px solid #C9A227',
+                      background: 'linear-gradient(135deg, rgba(255, 149, 0,0.15) 0%, rgba(11,36,28,0.4) 100%)',
+                      border: '1px solid #FF9500',
                       borderRadius: '12px',
                       padding: '16px 20px',
                     }}
                   >
-                    <div style={{ fontSize: '10.5px', color: '#FCD34D', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em' }}>
+                    <div style={{ fontSize: '10.5px', color: '#FF9F0A', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em' }}>
                       ⚡ AI EXECUTIVE HEADLINE
                     </div>
-                    <h3 style={{ margin: '4px 0 8px', fontSize: '19px', fontWeight: 900, color: '#F4F2EA' }}>
+                    <h3 style={{ margin: '4px 0 8px', fontSize: '19px', fontWeight: 900, color: '#FFFFFF' }}>
                       {analysis.weekly_headline || `Matchweek ${reportData.week_number} Review`}
                     </h3>
                     <p style={{ margin: 0, fontSize: '13.5px', lineHeight: '1.7', color: '#E2E8F0', whiteSpace: 'pre-line' }}>
@@ -397,8 +397,8 @@ export default function AIWeeklyReportModal({
                     <div
                       style={{
                         background: '#061C14',
-                        border: '1px solid #1E4636',
-                        borderLeft: '4px solid #C9A227',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderLeft: '4px solid #FF9500',
                         borderRadius: '10px',
                         padding: '14px 18px',
                         display: 'flex',
@@ -408,19 +408,19 @@ export default function AIWeeklyReportModal({
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: '10.5px', color: '#C9A227', textTransform: 'uppercase', fontWeight: 800 }}>
+                        <div style={{ fontSize: '10.5px', color: '#FF9500', textTransform: 'uppercase', fontWeight: 800 }}>
                           🌟 OFFICIAL STAR PERFORMER &amp; MVP
                         </div>
-                        <div style={{ fontSize: '16px', fontWeight: 900, color: '#F4F2EA', margin: '2px 0 4px' }}>
+                        <div style={{ fontSize: '16px', fontWeight: 900, color: '#FFFFFF', margin: '2px 0 4px' }}>
                           {mvpDisplayName}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#8FA89B' }}>
+                        <div style={{ fontSize: '12px', color: '#8E8E93' }}>
                           {mvpRationale || 'Delivered standout attacking leadership and game-winning influence.'}
                         </div>
                       </div>
                       <span
                         style={{
-                          background: '#C9A227',
+                          background: '#FF9500',
                           color: '#16201B',
                           padding: '6px 12px',
                           borderRadius: '6px',
@@ -436,7 +436,7 @@ export default function AIWeeklyReportModal({
 
                   {/* Title Race & Standings Movement */}
                   {titleRaceText && (
-                    <div style={{ background: '#061C14', border: '1px solid #1E4636', borderRadius: '10px', padding: '14px 18px' }}>
+                    <div style={{ background: '#061C14', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '14px 18px' }}>
                       <div style={{ fontSize: '11px', color: '#4ADE80', textTransform: 'uppercase', fontWeight: 800, marginBottom: '4px' }}>
                         📊 Title Race &amp; Table Trajectory
                       </div>
@@ -456,7 +456,7 @@ export default function AIWeeklyReportModal({
                       key={idx}
                       style={{
                         background: '#061C14',
-                        border: '1px solid #1E4636',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '10px',
                         padding: '14px 18px',
                       }}
@@ -475,12 +475,12 @@ export default function AIWeeklyReportModal({
                         >
                           📅 {dayGroup.day_label || dayGroup.date}
                         </span>
-                        <span style={{ fontSize: '11px', color: '#8FA89B' }}>
+                        <span style={{ fontSize: '11px', color: '#8E8E93' }}>
                           {dayGroup.match_count} match{dayGroup.match_count > 1 ? 'es' : ''} · {dayGroup.goals_count} goals
                         </span>
                       </div>
 
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#F4F2EA', marginBottom: '8px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px' }}>
                         {dayGroup.daily_headline}
                       </div>
 
@@ -494,7 +494,7 @@ export default function AIWeeklyReportModal({
                           <div
                             key={mIdx}
                             style={{
-                              background: '#0B281F',
+                              background: '#121212',
                               border: '1px solid #1B4536',
                               borderRadius: '8px',
                               padding: '8px 12px',
@@ -510,11 +510,11 @@ export default function AIWeeklyReportModal({
                               className="scoreboard"
                               style={{
                                 fontSize: '16px',
-                                color: m.played ? '#FCD34D' : '#8FA89B',
+                                color: m.played ? '#FF9F0A' : '#8E8E93',
                                 background: '#051811',
                                 padding: '2px 10px',
                                 borderRadius: '4px',
-                                border: '1px solid #1E4636',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
                               }}
                             >
                               {m.played ? `${m.home_score} - ${m.away_score}` : 'VS'}
@@ -528,7 +528,7 @@ export default function AIWeeklyReportModal({
 
                       {/* Admin Report snippet if available */}
                       {dayGroup.matches?.some((m) => m.report && m.report.content) && (
-                        <div style={{ marginTop: '10px', padding: '8px 10px', background: 'rgba(201, 162, 39, 0.1)', border: '1px solid rgba(201, 162, 39, 0.3)', borderRadius: '6px', fontSize: '11px', color: '#FCD34D' }}>
+                        <div style={{ marginTop: '10px', padding: '8px 10px', background: 'rgba(255, 149, 0, 0.1)', border: '1px solid rgba(255, 149, 0, 0.3)', borderRadius: '6px', fontSize: '11px', color: '#FF9F0A' }}>
                           📝 <strong>Included Admin Game Reports:</strong>{' '}
                           {dayGroup.matches
                             .filter((m) => m.report && m.report.content)
@@ -545,8 +545,8 @@ export default function AIWeeklyReportModal({
               {activeTab === 'tactical' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   {/* Tactical Points */}
-                  <div style={{ background: '#061C14', border: '1px solid #1E4636', borderRadius: '10px', padding: '14px 18px' }}>
-                    <div style={{ fontSize: '11.5px', color: '#C9A227', textTransform: 'uppercase', fontWeight: 800, marginBottom: '8px' }}>
+                  <div style={{ background: '#061C14', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '14px 18px' }}>
+                    <div style={{ fontSize: '11.5px', color: '#FF9500', textTransform: 'uppercase', fontWeight: 800, marginBottom: '8px' }}>
                       🔍 Tactical Trends &amp; Pitch Dynamics
                     </div>
                     <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12.5px', color: '#D1D5DB', lineHeight: '1.7' }}>
@@ -557,7 +557,7 @@ export default function AIWeeklyReportModal({
                   </div>
 
                   {/* Disciplinary Summary */}
-                  <div style={{ background: '#061C14', border: '1px solid #1E4636', borderRadius: '10px', padding: '14px 18px' }}>
+                  <div style={{ background: '#061C14', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '14px 18px' }}>
                     <div style={{ fontSize: '11.5px', color: '#F87171', textTransform: 'uppercase', fontWeight: 800, marginBottom: '4px' }}>
                       ⚖️ Disciplinary &amp; Fair Play Analysis
                     </div>
@@ -568,7 +568,7 @@ export default function AIWeeklyReportModal({
 
                   {/* Upcoming Week Outlook */}
                   {analysis.next_week_preview && (
-                    <div style={{ background: '#061C14', border: '1px solid #1E4636', borderLeft: '4px solid #4ADE80', borderRadius: '10px', padding: '14px 18px' }}>
+                    <div style={{ background: '#061C14', border: '1px solid rgba(255, 255, 255, 0.1)', borderLeft: '4px solid #4ADE80', borderRadius: '10px', padding: '14px 18px' }}>
                       <div style={{ fontSize: '11.5px', color: '#4ADE80', textTransform: 'uppercase', fontWeight: 800, marginBottom: '4px' }}>
                         🔮 Matchweek Forward Outlook
                       </div>
@@ -585,7 +585,7 @@ export default function AIWeeklyReportModal({
                 <pre
                   style={{
                     background: '#04120D',
-                    border: '1px solid #1E4636',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     padding: '14px',
                     fontSize: '11px',
@@ -605,7 +605,7 @@ export default function AIWeeklyReportModal({
         <div
           style={{
             padding: '14px 22px',
-            borderTop: '1px solid #1E4636',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
             background: '#061913',
             display: 'flex',
             justifyContent: 'space-between',
@@ -621,7 +621,7 @@ export default function AIWeeklyReportModal({
               style={{
                 background: '#133A2D',
                 border: '1px solid #2B6B50',
-                color: '#DDE6DF',
+                color: '#EBEBF5',
                 borderRadius: '6px',
                 padding: '6px 12px',
                 fontSize: '11.5px',
@@ -638,7 +638,7 @@ export default function AIWeeklyReportModal({
               style={{
                 background: '#133A2D',
                 border: '1px solid #2B6B50',
-                color: '#DDE6DF',
+                color: '#EBEBF5',
                 borderRadius: '6px',
                 padding: '6px 12px',
                 fontSize: '11.5px',
@@ -656,9 +656,9 @@ export default function AIWeeklyReportModal({
               target="_blank"
               rel="noreferrer"
               style={{
-                background: 'linear-gradient(135deg, #0B3A2E 0%, #14532D 100%)',
-                border: '1px solid #C9A227',
-                color: '#C9A227',
+                background: 'linear-gradient(135deg, #000000 0%, #14532D 100%)',
+                border: '1px solid #FF9500',
+                color: '#FF9500',
                 borderRadius: '8px',
                 padding: '8px 18px',
                 fontSize: '12px',
@@ -678,9 +678,9 @@ export default function AIWeeklyReportModal({
               type="button"
               onClick={onClose}
               style={{
-                background: '#16352A',
-                border: '1px solid #2B5746',
-                color: '#F4F2EA',
+                background: '#1C1C1E',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#FFFFFF',
                 borderRadius: '8px',
                 padding: '8px 16px',
                 fontSize: '12px',

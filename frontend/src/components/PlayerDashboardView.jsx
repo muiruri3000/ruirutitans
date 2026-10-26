@@ -49,7 +49,7 @@ export default function PlayerDashboardView({
 
   if (!playerUser) {
     return (
-      <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8FA89B', background: '#0F2E24', borderRadius: '14px', border: '1px solid #1E4636' }}>
+      <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8E8E93', background: '#121212', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
         Please sign in as a player to view your personal dashboard.
       </div>
     );
@@ -148,7 +148,7 @@ export default function PlayerDashboardView({
       <div
         style={{
           background: 'linear-gradient(135deg, rgba(15, 46, 36, 0.95) 0%, rgba(7, 31, 23, 0.95) 100%)',
-          border: '1px solid #C9A227',
+          border: '1px solid #FF9500',
           borderRadius: '14px',
           padding: '24px',
           display: 'flex',
@@ -169,7 +169,7 @@ export default function PlayerDashboardView({
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '28px',
-              border: '2px solid #C9A227',
+              border: '2px solid #FF9500',
               boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
             }}
           >
@@ -177,7 +177,7 @@ export default function PlayerDashboardView({
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '11px', color: '#C9A227', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '11px', color: '#FF9500', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                 OFFICIAL PLAYER PORTAL
               </span>
               <span
@@ -194,19 +194,19 @@ export default function PlayerDashboardView({
                 ✓ VERIFIED SQUAD MEMBER
               </span>
             </div>
-            <h1 className="scoreboard" style={{ margin: '4px 0', fontSize: '32px', color: '#F4F2EA' }}>
+            <h1 className="scoreboard" style={{ margin: '4px 0', fontSize: '32px', color: '#FFFFFF' }}>
               {playerUser.name}
             </h1>
-            <div style={{ fontSize: '13px', color: '#8FA89B', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ fontSize: '13px', color: '#8E8E93', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span>@{playerUser.username}</span>
               <span>•</span>
-              <span style={{ color: '#DDE6DF', fontWeight: 700 }}>{playerUser.team_name}</span>
+              <span style={{ color: '#EBEBF5', fontWeight: 700 }}>{playerUser.team_name}</span>
               <span>•</span>
               <span
                 style={{
-                  background: '#16352A',
-                  color: '#C9A227',
-                  border: '1px solid #2B5746',
+                  background: '#1C1C1E',
+                  color: '#FF9500',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '4px',
                   padding: '1px 6px',
                   fontWeight: 800,
@@ -225,7 +225,7 @@ export default function PlayerDashboardView({
           <button
             type="button"
             className="stat-btn"
-            style={{ background: '#16352A', color: '#F4F2EA', border: '1px solid #2B5746' }}
+            style={{ background: '#1C1C1E', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.1)' }}
             onClick={() => setShowPasswordModal(true)}
           >
             🔑 Change Password
@@ -243,36 +243,36 @@ export default function PlayerDashboardView({
 
       {/* Season Stats Summary */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
-        <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
-          <div style={{ fontSize: '11px', color: '#8FA89B', textTransform: 'uppercase', fontWeight: 700 }}>Goals Scored</div>
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
+          <div style={{ fontSize: '11px', color: '#8E8E93', textTransform: 'uppercase', fontWeight: 700 }}>Goals Scored</div>
           <div className="scoreboard" style={{ fontSize: '32px', color: '#4ADE80', marginTop: '4px' }}>
             {goalsCount}
           </div>
         </div>
 
-        <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
-          <div style={{ fontSize: '11px', color: '#8FA89B', textTransform: 'uppercase', fontWeight: 700 }}>Assists</div>
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
+          <div style={{ fontSize: '11px', color: '#8E8E93', textTransform: 'uppercase', fontWeight: 700 }}>Assists</div>
           <div className="scoreboard" style={{ fontSize: '32px', color: '#60A5FA', marginTop: '4px' }}>
             {assistsCount}
           </div>
         </div>
 
-        <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
-          <div style={{ fontSize: '11px', color: '#8FA89B', textTransform: 'uppercase', fontWeight: 700 }}>Yellow Cards</div>
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
+          <div style={{ fontSize: '11px', color: '#8E8E93', textTransform: 'uppercase', fontWeight: 700 }}>Yellow Cards</div>
           <div className="scoreboard" style={{ fontSize: '32px', color: '#FACC15', marginTop: '4px' }}>
             {yellowsCount}
           </div>
         </div>
 
-        <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
-          <div style={{ fontSize: '11px', color: '#8FA89B', textTransform: 'uppercase', fontWeight: 700 }}>Red Cards</div>
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
+          <div style={{ fontSize: '11px', color: '#8E8E93', textTransform: 'uppercase', fontWeight: 700 }}>Red Cards</div>
           <div className="scoreboard" style={{ fontSize: '32px', color: '#EF4444', marginTop: '4px' }}>
             {redsCount}
           </div>
         </div>
 
-        <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
-          <div style={{ fontSize: '11px', color: '#8FA89B', textTransform: 'uppercase', fontWeight: 700 }}>Discipline</div>
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
+          <div style={{ fontSize: '11px', color: '#8E8E93', textTransform: 'uppercase', fontWeight: 700 }}>Discipline</div>
           <div style={{ marginTop: '8px' }}>
             {isSuspended ? (
               <span style={{ background: '#7F1D1D', color: '#FCA5A5', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 800 }}>
@@ -290,23 +290,23 @@ export default function PlayerDashboardView({
       {/* Main Dashboard Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
         {/* Next Match Card */}
-        <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '12px', padding: '18px' }}>
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '18px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               ⏳ Next Team Fixture
             </span>
-            <span style={{ fontSize: '11px', color: '#8FA89B' }}>{playerUser.team_name}</span>
+            <span style={{ fontSize: '11px', color: '#8E8E93' }}>{playerUser.team_name}</span>
           </div>
 
           {nextFixture ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ background: '#082018', border: '1px solid #1E4636', borderRadius: '8px', padding: '14px' }}>
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginBottom: '4px' }}>
+              <div style={{ background: '#000000', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '14px' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginBottom: '4px' }}>
                   📅 {nextFixture.date} · 🧑‍⚖️ Ref: {nextFixture.referee || 'Assigned'}
                 </div>
-                <div style={{ fontSize: '15px', fontWeight: 800, color: '#F4F2EA' }}>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>
                   {nextFixture.home === team.id ? 'HOME vs ' : 'AWAY @ '}
-                  <span style={{ color: '#FCD34D' }}>
+                  <span style={{ color: '#FF9F0A' }}>
                     {nextFixture.home === team.id ? nextFixture.away : nextFixture.home}
                   </span>
                 </div>
@@ -323,16 +323,16 @@ export default function PlayerDashboardView({
               )}
             </div>
           ) : (
-            <div style={{ padding: '20px', textAlign: 'center', color: '#8FA89B', fontSize: '12.5px' }}>
+            <div style={{ padding: '20px', textAlign: 'center', color: '#8E8E93', fontSize: '12.5px' }}>
               🎉 All scheduled matches for <strong>{playerUser.team_name}</strong> have been completed for this season!
             </div>
           )}
         </div>
 
         {/* Voting & Honours Card */}
-        <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '12px', padding: '18px' }}>
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '18px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               🗳️ Official Player Voting Ballot
             </span>
             <span style={{ fontSize: '11px', color: hasVotedActiveRound ? '#6CE5A0' : '#4ADE80', fontWeight: 700 }}>
@@ -340,7 +340,7 @@ export default function PlayerDashboardView({
             </span>
           </div>
 
-          <p style={{ margin: '0 0 14px', fontSize: '12.5px', color: '#8FA89B', lineHeight: 1.5 }}>
+          <p style={{ margin: '0 0 14px', fontSize: '12.5px', color: '#8E8E93', lineHeight: 1.5 }}>
             {hasVotedActiveRound
               ? `Your official player ballot for ${activeRoundTitle} has been recorded! Single-vote policy is in effect. The ballot form will reopen once next week's round begins.`
               : `As a registered player in ${currentCategory?.label || playerUser.category_key || 'your tournament'}, you have exclusive voting privileges to select the official Team of the Week (TOTW).`}
@@ -350,9 +350,9 @@ export default function PlayerDashboardView({
             type="button"
             className="stat-btn"
             style={{
-              background: hasVotedActiveRound ? '#16352A' : '#C9A227',
+              background: hasVotedActiveRound ? '#1C1C1E' : '#FF9500',
               color: hasVotedActiveRound ? '#6CE5A0' : '#16201B',
-              border: hasVotedActiveRound ? '1px solid #2B5746' : 'none',
+              border: hasVotedActiveRound ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
               fontWeight: 800,
               padding: '10px 16px',
               width: '100%',
@@ -369,14 +369,14 @@ export default function PlayerDashboardView({
       {showPasswordModal && (
         <div className="h2h-overlay" onClick={(e) => { if (e.target.classList.contains('h2h-overlay')) setShowPasswordModal(false); }}>
           <div className="h2h-modal" style={{ maxWidth: '420px', padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #1E4636', paddingBottom: '10px' }}>
-              <div style={{ fontSize: '14px', fontWeight: 800, color: '#F4F2EA' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '10px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 800, color: '#FFFFFF' }}>
                 🔑 Update Account Password
               </div>
               <button
                 type="button"
                 onClick={() => setShowPasswordModal(false)}
-                style={{ background: 'none', border: 'none', color: '#8FA89B', fontSize: '18px', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: '#8E8E93', fontSize: '18px', cursor: 'pointer' }}
               >
                 ✕
               </button>
@@ -384,7 +384,7 @@ export default function PlayerDashboardView({
 
             <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', color: '#DDE6DF', fontWeight: 700, marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11px', color: '#EBEBF5', fontWeight: 700, marginBottom: '4px' }}>
                   Current Password (or temporary code)
                 </label>
                 <PasswordInput
@@ -396,7 +396,7 @@ export default function PlayerDashboardView({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '11px', color: '#DDE6DF', fontWeight: 700, marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11px', color: '#EBEBF5', fontWeight: 700, marginBottom: '4px' }}>
                   New Password (min. 4 characters)
                 </label>
                 <PasswordInput
@@ -408,7 +408,7 @@ export default function PlayerDashboardView({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '11px', color: '#DDE6DF', fontWeight: 700, marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11px', color: '#EBEBF5', fontWeight: 700, marginBottom: '4px' }}>
                   Confirm New Password
                 </label>
                 <PasswordInput

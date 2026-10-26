@@ -40,7 +40,7 @@ export default function TeamDetailModal({
       <div className="h2h-overlay" onClick={(e) => { if (e.target.className === 'h2h-overlay') onClose(); }}>
         <div className="team-modal" style={{ textAlign: 'center', padding: '40px 20px' }}>
           <h3 style={{ color: '#EF4444', margin: '0 0 10px' }}>Team Information Not Found</h3>
-          <p style={{ color: '#8FA89B', fontSize: '13px' }}>The requested team could not be loaded.</p>
+          <p style={{ color: '#8E8E93', fontSize: '13px' }}>The requested team could not be loaded.</p>
           <button type="button" className="btn-pill-action" onClick={onClose} style={{ marginTop: '14px' }}>
             ✕ Close
           </button>
@@ -67,7 +67,7 @@ export default function TeamDetailModal({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            borderBottom: '1px solid #1E4636',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             paddingBottom: '16px',
             flexWrap: 'wrap',
             gap: '12px',
@@ -79,9 +79,9 @@ export default function TeamDetailModal({
                 width: '42px',
                 height: '42px',
                 borderRadius: '50%',
-                background: team.color || '#C9A227',
-                border: '3px solid #163E31',
-                boxShadow: `0 0 16px ${team.color || '#C9A227'}55`,
+                background: team.color || '#FF9500',
+                border: '3px solid #1C1C1E',
+                boxShadow: `0 0 16px ${team.color || '#FF9500'}55`,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -100,7 +100,7 @@ export default function TeamDetailModal({
                   style={{
                     margin: 0,
                     fontSize: 'clamp(22px, 4vw, 30px)',
-                    color: '#F4F2EA',
+                    color: '#FFFFFF',
                     letterSpacing: '0.04em',
                   }}
                 >
@@ -108,9 +108,9 @@ export default function TeamDetailModal({
                 </h2>
                 <span
                   style={{
-                    background: 'rgba(201, 162, 39, 0.15)',
-                    color: '#C9A227',
-                    border: '1px solid #C9A227',
+                    background: 'rgba(255, 149, 0, 0.15)',
+                    color: '#FF9500',
+                    border: '1px solid #FF9500',
                     padding: '2px 8px',
                     borderRadius: '999px',
                     fontSize: '10.5px',
@@ -135,7 +135,7 @@ export default function TeamDetailModal({
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: '12px', color: '#8FA89B', marginTop: '3px' }}>
+              <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '3px' }}>
                 Squad: <strong>{profile.squadSize} Players</strong> · Total Matches Recorded: <strong>{last20Matches.length + next5Fixtures.length}</strong>
               </div>
             </div>
@@ -146,9 +146,9 @@ export default function TeamDetailModal({
             onClick={onClose}
             aria-label="Close Team Modal"
             style={{
-              background: '#16352A',
-              border: '1px solid #2B4E40',
-              color: '#8FA89B',
+              background: '#1C1C1E',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: '#8E8E93',
               fontSize: '16px',
               cursor: 'pointer',
               width: '32px',
@@ -170,7 +170,7 @@ export default function TeamDetailModal({
           style={{
             display: 'flex',
             gap: '8px',
-            borderBottom: '1px solid #16352A',
+            borderBottom: '1px solid #1C1C1E',
             paddingBottom: '8px',
             overflowX: 'auto',
             WebkitOverflowScrolling: 'touch',
@@ -181,8 +181,8 @@ export default function TeamDetailModal({
             className="tab-btn"
             onClick={() => setActiveTab('projections')}
             style={{
-              background: activeTab === 'projections' ? '#C9A227' : '#16352A',
-              color: activeTab === 'projections' ? '#16201B' : '#DDE6DF',
+              background: activeTab === 'projections' ? '#FF9500' : '#1C1C1E',
+              color: activeTab === 'projections' ? '#16201B' : '#EBEBF5',
               border: 'none',
               borderRadius: '8px',
               padding: '8px 14px',
@@ -199,8 +199,8 @@ export default function TeamDetailModal({
             className="tab-btn"
             onClick={() => setActiveTab('matches')}
             style={{
-              background: activeTab === 'matches' ? '#C9A227' : '#16352A',
-              color: activeTab === 'matches' ? '#16201B' : '#DDE6DF',
+              background: activeTab === 'matches' ? '#FF9500' : '#1C1C1E',
+              color: activeTab === 'matches' ? '#16201B' : '#EBEBF5',
               border: 'none',
               borderRadius: '8px',
               padding: '8px 14px',
@@ -217,8 +217,8 @@ export default function TeamDetailModal({
             className="tab-btn"
             onClick={() => setActiveTab('squad')}
             style={{
-              background: activeTab === 'squad' ? '#C9A227' : '#16352A',
-              color: activeTab === 'squad' ? '#16201B' : '#DDE6DF',
+              background: activeTab === 'squad' ? '#FF9500' : '#1C1C1E',
+              color: activeTab === 'squad' ? '#16201B' : '#EBEBF5',
               border: 'none',
               borderRadius: '8px',
               padding: '8px 14px',
@@ -235,8 +235,8 @@ export default function TeamDetailModal({
             className="tab-btn"
             onClick={() => setActiveTab('suspensions')}
             style={{
-              background: activeTab === 'suspensions' ? '#C9A227' : '#16352A',
-              color: activeTab === 'suspensions' ? '#16201B' : '#DDE6DF',
+              background: activeTab === 'suspensions' ? '#FF9500' : '#1C1C1E',
+              color: activeTab === 'suspensions' ? '#16201B' : '#EBEBF5',
               border: 'none',
               borderRadius: '8px',
               padding: '8px 14px',
@@ -258,7 +258,7 @@ export default function TeamDetailModal({
             <div
               style={{
                 background: '#071F17',
-                border: '1px solid #C9A227',
+                border: '1px solid #FF9500',
                 borderRadius: '12px',
                 padding: '16px',
                 display: 'flex',
@@ -268,10 +268,10 @@ export default function TeamDetailModal({
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#C9A227', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                     ⚡ DYNAMIC REAL-TIME PREDICTIVE INTELLIGENCE
                   </span>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#F4F2EA', marginTop: '2px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginTop: '2px' }}>
                     Tournament Progression &amp; Outcome Probabilities
                   </div>
                 </div>
@@ -290,7 +290,7 @@ export default function TeamDetailModal({
                 </span>
               </div>
 
-              <div style={{ fontSize: '11.5px', color: '#8FA89B', lineHeight: 1.5 }}>
+              <div style={{ fontSize: '11.5px', color: '#8E8E93', lineHeight: 1.5 }}>
                 This analysis simulates the rest of the competition <strong>1,000 times</strong>, incorporating current standings, goal differential rates, remaining fixtures, and head-to-head records across all competing teams.
               </div>
 
@@ -302,8 +302,8 @@ export default function TeamDetailModal({
                     style={{
                       background: tournamentProjections.isMathematicallyEliminated
                         ? 'rgba(239, 68, 68, 0.12)'
-                        : 'rgba(201, 162, 39, 0.12)',
-                      border: `1px solid ${tournamentProjections.isMathematicallyEliminated ? '#EF4444' : '#C9A227'}`,
+                        : 'rgba(255, 149, 0, 0.12)',
+                      border: `1px solid ${tournamentProjections.isMathematicallyEliminated ? '#EF4444' : '#FF9500'}`,
                       borderRadius: '8px',
                       padding: '10px 14px',
                       display: 'flex',
@@ -314,16 +314,16 @@ export default function TeamDetailModal({
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: '10.5px', color: '#8FA89B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <div style={{ fontSize: '10.5px', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Title Contention Status
                       </div>
-                      <div style={{ fontSize: '14px', fontWeight: 800, color: tournamentProjections.isMathematicallyEliminated ? '#EF4444' : '#FCD34D' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 800, color: tournamentProjections.isMathematicallyEliminated ? '#EF4444' : '#FF9F0A' }}>
                         {tournamentProjections.titleStatus}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>Projected Finish</div>
-                      <div className="scoreboard" style={{ fontSize: '20px', color: '#C9A227' }}>
+                      <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>Projected Finish</div>
+                      <div className="scoreboard" style={{ fontSize: '20px', color: '#FF9500' }}>
                         {tournamentProjections.projectedRank} ({tournamentProjections.projectedFinalPoints} Pts)
                       </div>
                     </div>
@@ -344,48 +344,48 @@ export default function TeamDetailModal({
                     }}
                   >
                     {/* 1. Title / Champion % */}
-                    <div style={{ background: '#09271E', border: '1px solid #1E4636', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <div style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700 }}>
+                    <div style={{ background: '#09271E', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700 }}>
                         🏆 League Champion Probability
                       </div>
-                      <div className="scoreboard" style={{ fontSize: '28px', color: '#C9A227' }}>
+                      <div className="scoreboard" style={{ fontSize: '28px', color: '#FF9500' }}>
                         {tournamentProjections.titleProbability}%
                       </div>
-                      <div style={{ width: '100%', height: '6px', background: '#16352A', borderRadius: '999px', overflow: 'hidden' }}>
-                        <div style={{ width: `${tournamentProjections.titleProbability}%`, height: '100%', background: '#C9A227', transition: 'width 0.4s ease' }} />
+                      <div style={{ width: '100%', height: '6px', background: '#1C1C1E', borderRadius: '999px', overflow: 'hidden' }}>
+                        <div style={{ width: `${tournamentProjections.titleProbability}%`, height: '100%', background: '#FF9500', transition: 'width 0.4s ease' }} />
                       </div>
                     </div>
 
                     {/* 2. Top 2 Finish % */}
-                    <div style={{ background: '#09271E', border: '1px solid #1E4636', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <div style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700 }}>
+                    <div style={{ background: '#09271E', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700 }}>
                         🥈 Top 2 Finish Probability
                       </div>
                       <div className="scoreboard" style={{ fontSize: '28px', color: '#5CD685' }}>
                         {tournamentProjections.top2Probability}%
                       </div>
-                      <div style={{ width: '100%', height: '6px', background: '#16352A', borderRadius: '999px', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', height: '6px', background: '#1C1C1E', borderRadius: '999px', overflow: 'hidden' }}>
                         <div style={{ width: `${tournamentProjections.top2Probability}%`, height: '100%', background: '#5CD685', transition: 'width 0.4s ease' }} />
                       </div>
                     </div>
 
                     {/* 3. Top 4 Finish % */}
-                    <div style={{ background: '#09271E', border: '1px solid #1E4636', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <div style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700 }}>
+                    <div style={{ background: '#09271E', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700 }}>
                         🎖️ Top 4 Finish Probability
                       </div>
                       <div className="scoreboard" style={{ fontSize: '28px', color: '#60A5FA' }}>
                         {tournamentProjections.top4Probability}%
                       </div>
-                      <div style={{ width: '100%', height: '6px', background: '#16352A', borderRadius: '999px', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', height: '6px', background: '#1C1C1E', borderRadius: '999px', overflow: 'hidden' }}>
                         <div style={{ width: `${tournamentProjections.top4Probability}%`, height: '100%', background: '#60A5FA', transition: 'width 0.4s ease' }} />
                       </div>
                     </div>
                   </div>
 
                   {/* League Standing Breakdown */}
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', fontSize: '11.5px', color: '#DDE6DF', background: '#0A241C', padding: '10px 14px', borderRadius: '8px' }}>
-                    <div>Current Rank: <strong style={{ color: '#C9A227' }}>#{tournamentProjections.currentRank}</strong> of {tournamentProjections.totalTeams}</div>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', fontSize: '11.5px', color: '#EBEBF5', background: '#121212', padding: '10px 14px', borderRadius: '8px' }}>
+                    <div>Current Rank: <strong style={{ color: '#FF9500' }}>#{tournamentProjections.currentRank}</strong> of {tournamentProjections.totalTeams}</div>
                     <div>• Current Points: <strong>{tournamentProjections.currentPoints}</strong></div>
                     <div>• Remaining Games: <strong>{tournamentProjections.remaining}</strong></div>
                     <div>• Max Possible Points: <strong>{tournamentProjections.maxPossiblePoints}</strong></div>
@@ -401,8 +401,8 @@ export default function TeamDetailModal({
                     style={{
                       background: tournamentProjections.isEliminated
                         ? 'rgba(239, 68, 68, 0.12)'
-                        : 'rgba(201, 162, 39, 0.12)',
-                      border: `1px solid ${tournamentProjections.isEliminated ? '#EF4444' : '#C9A227'}`,
+                        : 'rgba(255, 149, 0, 0.12)',
+                      border: `1px solid ${tournamentProjections.isEliminated ? '#EF4444' : '#FF9500'}`,
                       borderRadius: '8px',
                       padding: '10px 14px',
                       display: 'flex',
@@ -413,16 +413,16 @@ export default function TeamDetailModal({
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: '10.5px', color: '#8FA89B', textTransform: 'uppercase' }}>
+                      <div style={{ fontSize: '10.5px', color: '#8E8E93', textTransform: 'uppercase' }}>
                         Cup Tournament Status
                       </div>
-                      <div style={{ fontSize: '14px', fontWeight: 800, color: tournamentProjections.isEliminated ? '#EF4444' : '#FCD34D' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 800, color: tournamentProjections.isEliminated ? '#EF4444' : '#FF9F0A' }}>
                         {tournamentProjections.titleStatus}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>Current Stage</div>
-                      <div className="scoreboard" style={{ fontSize: '18px', color: '#C9A227' }}>
+                      <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>Current Stage</div>
+                      <div className="scoreboard" style={{ fontSize: '18px', color: '#FF9500' }}>
                         {tournamentProjections.currentStageLabel}
                       </div>
                     </div>
@@ -437,28 +437,28 @@ export default function TeamDetailModal({
                   {!tournamentProjections.isEliminated && (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
                       {tournamentProjections.isGroupStage && (
-                        <div style={{ background: '#09271E', border: '1px solid #1E4636', borderRadius: '10px', padding: '12px' }}>
-                          <div style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700 }}>🛡️ Group Advance %</div>
+                        <div style={{ background: '#09271E', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '12px' }}>
+                          <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700 }}>🛡️ Group Advance %</div>
                           <div className="scoreboard" style={{ fontSize: '26px', color: '#5CD685' }}>
                             {tournamentProjections.groupAdvanceProbability}%
                           </div>
                         </div>
                       )}
-                      <div style={{ background: '#09271E', border: '1px solid #1E4636', borderRadius: '10px', padding: '12px' }}>
-                        <div style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700 }}>⚔️ Semi-Finals %</div>
+                      <div style={{ background: '#09271E', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '12px' }}>
+                        <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700 }}>⚔️ Semi-Finals %</div>
                         <div className="scoreboard" style={{ fontSize: '26px', color: '#60A5FA' }}>
                           {tournamentProjections.semiFinalProbability}%
                         </div>
                       </div>
-                      <div style={{ background: '#09271E', border: '1px solid #1E4636', borderRadius: '10px', padding: '12px' }}>
-                        <div style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700 }}>🎯 Grand Final %</div>
+                      <div style={{ background: '#09271E', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '12px' }}>
+                        <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700 }}>🎯 Grand Final %</div>
                         <div className="scoreboard" style={{ fontSize: '26px', color: '#A78BFA' }}>
                           {tournamentProjections.finalProbability}%
                         </div>
                       </div>
-                      <div style={{ background: '#09271E', border: '1px solid #1E4636', borderRadius: '10px', padding: '12px' }}>
-                        <div style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700 }}>🏆 Lift Cup %</div>
-                        <div className="scoreboard" style={{ fontSize: '26px', color: '#C9A227' }}>
+                      <div style={{ background: '#09271E', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '12px' }}>
+                        <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700 }}>🏆 Lift Cup %</div>
+                        <div className="scoreboard" style={{ fontSize: '26px', color: '#FF9500' }}>
                           {tournamentProjections.cupWinnerProbability}%
                         </div>
                       </div>
@@ -469,36 +469,36 @@ export default function TeamDetailModal({
             </div>
 
             {/* Form Metrics Summary Widget */}
-            <div style={{ background: '#0B281F', border: '1px solid #1E4636', borderRadius: '12px', padding: '14px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '14px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', marginBottom: '8px' }}>
                 📈 Performance &amp; Form Metrics
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
-                <div style={{ background: '#082018', padding: '8px 10px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>Recent Form (Last 5)</div>
+                <div style={{ background: '#000000', padding: '8px 10px', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>Recent Form (Last 5)</div>
                   <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
                     {form.badges.length > 0 ? (
                       form.badges.map((b, idx) => <span key={idx} className={`form-badge ${b}`}>{b}</span>)
                     ) : (
-                      <span style={{ fontSize: '11px', color: '#6E9080' }}>No games played</span>
+                      <span style={{ fontSize: '11px', color: '#8E8E93' }}>No games played</span>
                     )}
                   </div>
                 </div>
-                <div style={{ background: '#082018', padding: '8px 10px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>Win Rate</div>
+                <div style={{ background: '#000000', padding: '8px 10px', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>Win Rate</div>
                   <div className="scoreboard" style={{ fontSize: '18px', color: '#5CD685' }}>{form.winRate}%</div>
                 </div>
-                <div style={{ background: '#082018', padding: '8px 10px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>Avg Goals Scored</div>
-                  <div className="scoreboard" style={{ fontSize: '18px', color: '#F4F2EA' }}>{form.avgGoalsScored} / game</div>
+                <div style={{ background: '#000000', padding: '8px 10px', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>Avg Goals Scored</div>
+                  <div className="scoreboard" style={{ fontSize: '18px', color: '#FFFFFF' }}>{form.avgGoalsScored} / game</div>
                 </div>
-                <div style={{ background: '#082018', padding: '8px 10px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>Avg Goals Conceded</div>
-                  <div className="scoreboard" style={{ fontSize: '18px', color: '#F4F2EA' }}>{form.avgGoalsConceded} / game</div>
+                <div style={{ background: '#000000', padding: '8px 10px', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>Avg Goals Conceded</div>
+                  <div className="scoreboard" style={{ fontSize: '18px', color: '#FFFFFF' }}>{form.avgGoalsConceded} / game</div>
                 </div>
-                <div style={{ background: '#082018', padding: '8px 10px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>Clean Sheets</div>
-                  <div className="scoreboard" style={{ fontSize: '18px', color: '#C9A227' }}>{form.cleanSheets} ({form.cleanSheetPct}%)</div>
+                <div style={{ background: '#000000', padding: '8px 10px', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>Clean Sheets</div>
+                  <div className="scoreboard" style={{ fontSize: '18px', color: '#FF9500' }}>{form.cleanSheets} ({form.cleanSheetPct}%)</div>
                 </div>
               </div>
             </div>
@@ -511,16 +511,16 @@ export default function TeamDetailModal({
         {activeTab === 'matches' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             {/* NEXT 5 UPCOMING FIXTURES */}
-            <div style={{ background: '#082018', border: '1px solid #1E4636', borderRadius: '12px', padding: '14px' }}>
+            <div style={{ background: '#000000', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   ⏳ Next 5 Upcoming Fixtures
                 </span>
-                <span style={{ fontSize: '11px', color: '#8FA89B' }}>{next5Fixtures.length} scheduled</span>
+                <span style={{ fontSize: '11px', color: '#8E8E93' }}>{next5Fixtures.length} scheduled</span>
               </div>
 
               {next5Fixtures.length === 0 ? (
-                <div style={{ padding: '16px', textAlign: 'center', color: '#8FA89B', fontSize: '12px' }}>
+                <div style={{ padding: '16px', textAlign: 'center', color: '#8E8E93', fontSize: '12px' }}>
                   No upcoming scheduled fixtures found for this team.
                 </div>
               ) : (
@@ -529,8 +529,8 @@ export default function TeamDetailModal({
                     <div
                       key={f.id || idx}
                       style={{
-                        background: '#0F2E24',
-                        border: '1px solid #1E4636',
+                        background: '#121212',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '8px',
                         padding: '10px 12px',
                         display: 'flex',
@@ -542,14 +542,14 @@ export default function TeamDetailModal({
                     >
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '10.5px', background: '#16352A', color: '#C9A227', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                          <span style={{ fontSize: '10.5px', background: '#1C1C1E', color: '#FF9500', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
                             {f.isHome ? 'HOME' : 'AWAY'}
                           </span>
-                          <span style={{ fontWeight: 800, fontSize: '13px', color: '#F4F2EA' }}>
+                          <span style={{ fontWeight: 800, fontSize: '13px', color: '#FFFFFF' }}>
                             {f.isHome ? `vs ${f.opponentName}` : `@ ${f.opponentName}`}
                           </span>
                         </div>
-                        <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '2px' }}>
+                        <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px' }}>
                           📅 {f.date} · 🧑‍⚖️ {f.referee} · {f.competitionName}
                         </div>
                       </div>
@@ -576,16 +576,16 @@ export default function TeamDetailModal({
             </div>
 
             {/* LAST 20 MATCHES PLAYED */}
-            <div style={{ background: '#082018', border: '1px solid #1E4636', borderRadius: '12px', padding: '14px' }}>
+            <div style={{ background: '#000000', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   📜 Last 20 Matches Played &amp; Results
                 </span>
-                <span style={{ fontSize: '11px', color: '#8FA89B' }}>Showing {last20Matches.length} past results</span>
+                <span style={{ fontSize: '11px', color: '#8E8E93' }}>Showing {last20Matches.length} past results</span>
               </div>
 
               {last20Matches.length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: '#8FA89B', fontSize: '12px' }}>
+                <div style={{ padding: '20px', textAlign: 'center', color: '#8E8E93', fontSize: '12px' }}>
                   No played matches on record yet for this team.
                 </div>
               ) : (
@@ -594,8 +594,8 @@ export default function TeamDetailModal({
                     <div
                       key={m.id || idx}
                       style={{
-                        background: '#0F2E24',
-                        border: '1px solid #1E4636',
+                        background: '#121212',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '8px',
                         padding: '10px 12px',
                         display: 'flex',
@@ -603,7 +603,7 @@ export default function TeamDetailModal({
                         gap: '6px',
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#8FA89B' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#8E8E93' }}>
                         <span>📅 {m.date} · {m.competitionName}</span>
                         <span
                           style={{
@@ -632,15 +632,15 @@ export default function TeamDetailModal({
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: m.homeColor }} />
-                          <span style={{ fontWeight: m.homeId === team.id ? 800 : 600, color: m.homeId === team.id ? '#FCD34D' : '#F4F2EA', fontSize: '13px' }}>
+                          <span style={{ fontWeight: m.homeId === team.id ? 800 : 600, color: m.homeId === team.id ? '#FF9F0A' : '#FFFFFF', fontSize: '13px' }}>
                             {m.homeName}
                           </span>
                         </div>
-                        <div className="scoreboard" style={{ fontSize: '20px', color: '#C9A227', padding: '0 12px' }}>
+                        <div className="scoreboard" style={{ fontSize: '20px', color: '#FF9500', padding: '0 12px' }}>
                           {m.homeScore} - {m.awayScore}
                         </div>
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
-                          <span style={{ fontWeight: m.awayId === team.id ? 800 : 600, color: m.awayId === team.id ? '#FCD34D' : '#F4F2EA', fontSize: '13px' }}>
+                          <span style={{ fontWeight: m.awayId === team.id ? 800 : 600, color: m.awayId === team.id ? '#FF9F0A' : '#FFFFFF', fontSize: '13px' }}>
                             {m.awayName}
                           </span>
                           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: m.awayColor }} />
@@ -649,14 +649,14 @@ export default function TeamDetailModal({
 
                       {/* Scorers Summary if available */}
                       {m.events && m.events.length > 0 && (
-                        <div style={{ fontSize: '10.5px', color: '#8FA89B', borderTop: '1px solid #16352A', paddingTop: '4px', marginTop: '2px' }}>
+                        <div style={{ fontSize: '10.5px', color: '#8E8E93', borderTop: '1px solid #1C1C1E', paddingTop: '4px', marginTop: '2px' }}>
                           {m.events
                             .filter((e) => e.type === 'goal')
                             .map((e, eIdx) => {
                               const p = (roster || []).find((pp) => pp.id === e.playerId);
                               const isOurGoal = e.teamId === team.id;
                               return (
-                                <span key={eIdx} style={{ marginRight: '8px', color: isOurGoal ? '#6CE5A0' : '#8FA89B' }}>
+                                <span key={eIdx} style={{ marginRight: '8px', color: isOurGoal ? '#6CE5A0' : '#8E8E93' }}>
                                   ⚽ {p?.name || e.playerId} ({e.teamId}){e.penalty ? ' [Pen]' : ''}
                                 </span>
                               );
@@ -677,10 +677,10 @@ export default function TeamDetailModal({
         {activeTab === 'squad' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase' }}>
                 👥 {team.name} Full Squad Roster ({roster.length} Players)
               </div>
-              <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+              <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                 Sorted by squad number · Includes goals, assists &amp; disciplinary records
               </div>
             </div>
@@ -708,8 +708,8 @@ export default function TeamDetailModal({
                   setTimeout(() => setAddMsg(''), 4000);
                 }}
                 style={{
-                  background: '#08231B',
-                  border: '1px solid #2B5746',
+                  background: '#121212',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '10px',
                   padding: '12px',
                   display: 'flex',
@@ -718,7 +718,7 @@ export default function TeamDetailModal({
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase' }}>
                     + Directly Add Player(s) to {team.name}
                   </span>
                   {addMsg && (
@@ -770,7 +770,7 @@ export default function TeamDetailModal({
                     type="submit"
                     className="stat-btn"
                     style={{
-                      background: '#C9A227',
+                      background: '#FF9500',
                       color: '#16201B',
                       fontWeight: 800,
                       padding: '6px 14px',
@@ -783,10 +783,10 @@ export default function TeamDetailModal({
               </form>
             )}
 
-            <div style={{ overflowX: 'auto', border: '1px solid #1E4636', borderRadius: '10px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', color: '#F4F2EA' }}>
+            <div style={{ overflowX: 'auto', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', color: '#FFFFFF' }}>
                 <thead>
-                  <tr style={{ background: '#0A241C', color: '#8FA89B', textAlign: 'left' }}>
+                  <tr style={{ background: '#121212', color: '#8E8E93', textAlign: 'left' }}>
                     <th style={{ padding: '8px 12px' }}>#</th>
                     <th style={{ padding: '8px 12px' }}>Player Name</th>
                     <th style={{ padding: '8px 10px', textAlign: 'center' }}>Pos</th>
@@ -806,7 +806,7 @@ export default function TeamDetailModal({
                     <tr
                       key={p.id || idx}
                       style={{
-                        borderTop: '1px solid #16352A',
+                        borderTop: '1px solid #1C1C1E',
                         background: p.isSuspended
                           ? 'rgba(239, 68, 68, 0.08)'
                           : idx % 2 === 0
@@ -814,7 +814,7 @@ export default function TeamDetailModal({
                           : 'transparent',
                       }}
                     >
-                      <td style={{ padding: '8px 12px', fontWeight: 800, color: '#C9A227' }}>
+                      <td style={{ padding: '8px 12px', fontWeight: 800, color: '#FF9500' }}>
                         {p.number || idx + 1}
                       </td>
                       <td style={{ padding: '8px 12px', fontWeight: 700 }}>
@@ -856,19 +856,19 @@ export default function TeamDetailModal({
                           </span>
                         )}
                       </td>
-                      <td style={{ padding: '8px 10px', textAlign: 'center', color: '#C9A227', fontWeight: 700 }}>
+                      <td style={{ padding: '8px 10px', textAlign: 'center', color: '#FF9500', fontWeight: 700 }}>
                         {p.category ? `Tier ${p.category}` : 'Standard'}
                       </td>
-                      <td style={{ padding: '8px 8px', textAlign: 'center', fontWeight: 800, color: p.goals > 0 ? '#4ADE80' : '#8FA89B' }}>
+                      <td style={{ padding: '8px 8px', textAlign: 'center', fontWeight: 800, color: p.goals > 0 ? '#4ADE80' : '#8E8E93' }}>
                         {p.goals}
                       </td>
-                      <td style={{ padding: '8px 8px', textAlign: 'center', color: p.assists > 0 ? '#60A5FA' : '#8FA89B' }}>
+                      <td style={{ padding: '8px 8px', textAlign: 'center', color: p.assists > 0 ? '#60A5FA' : '#8E8E93' }}>
                         {p.assists}
                       </td>
-                      <td style={{ padding: '8px 8px', textAlign: 'center', color: p.yellows > 0 ? '#FACC15' : '#8FA89B' }}>
+                      <td style={{ padding: '8px 8px', textAlign: 'center', color: p.yellows > 0 ? '#FACC15' : '#8E8E93' }}>
                         {p.yellows}
                       </td>
-                      <td style={{ padding: '8px 8px', textAlign: 'center', color: p.reds > 0 ? '#EF4444' : '#8FA89B' }}>
+                      <td style={{ padding: '8px 8px', textAlign: 'center', color: p.reds > 0 ? '#EF4444' : '#8E8E93' }}>
                         {p.reds}
                       </td>
                       <td style={{ padding: '8px 12px', textAlign: 'right' }}>
@@ -896,7 +896,7 @@ export default function TeamDetailModal({
                             style={{
                               background: '#0B2920',
                               color: '#6CE5A0',
-                              border: '1px solid #2B5746',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
                               borderRadius: '4px',
                               fontSize: '10.5px',
                               padding: '2px 5px',
@@ -928,7 +928,7 @@ export default function TeamDetailModal({
            ========================================================= */}
         {activeTab === 'suspensions' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase' }}>
               🚫 Squad Disciplinary &amp; Active Suspensions
             </div>
 
@@ -946,7 +946,7 @@ export default function TeamDetailModal({
                 <div style={{ fontSize: '14px', fontWeight: 800, color: '#4ADE80' }}>
                   Clean Disciplinary Record
                 </div>
-                <div style={{ fontSize: '12px', color: '#8FA89B', marginTop: '4px' }}>
+                <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '4px' }}>
                   No players are currently serving suspensions. Full squad is eligible for the next match.
                 </div>
               </div>
@@ -978,16 +978,16 @@ export default function TeamDetailModal({
                         Reason: <strong>{s.reason}</strong>
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right', fontSize: '11px', color: '#8FA89B' }}>
+                    <div style={{ textAlign: 'right', fontSize: '11px', color: '#8E8E93' }}>
                       Serving suspension for: <br />
-                      <strong style={{ color: '#F4F2EA' }}>{s.forFixture}</strong>
+                      <strong style={{ color: '#FFFFFF' }}>{s.forFixture}</strong>
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            <div style={{ background: '#0F2E24', padding: '12px', borderRadius: '8px', fontSize: '11px', color: '#8FA89B', lineHeight: 1.5 }}>
+            <div style={{ background: '#121212', padding: '12px', borderRadius: '8px', fontSize: '11px', color: '#8E8E93', lineHeight: 1.5 }}>
               📌 <strong>Ruiru Titans Disciplinary Rules:</strong>
               <ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
                 <li>Accumulation of 4 yellow cards = automatic 1-match ban.</li>

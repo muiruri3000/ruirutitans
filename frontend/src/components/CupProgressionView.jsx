@@ -668,10 +668,10 @@ export default function CupProgressionView({
 
   if (!cupCategory || cupCategory.mode !== 'cup') {
     return (
-      <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '14px', padding: '36px', textAlign: 'center', color: '#8FA89B' }}>
+      <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px', padding: '36px', textAlign: 'center', color: '#8E8E93' }}>
         <div style={{ fontSize: '28px', marginBottom: '8px' }}>🏆</div>
-        <div style={{ fontSize: '16px', fontWeight: 700, color: '#F4F2EA', marginBottom: '6px' }}>No Active Cup Tournament</div>
-        <div style={{ fontSize: '13px', color: '#8FA89B' }}>
+        <div style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF', marginBottom: '6px' }}>No Active Cup Tournament</div>
+        <div style={{ fontSize: '13px', color: '#8E8E93' }}>
           There is currently no knockout Cup tournament in progress. The active competition is <strong>Ruiru Titans League - Oct/Nov 2026</strong>.
         </div>
       </div>
@@ -738,21 +738,21 @@ export default function CupProgressionView({
       {/* Cup Banner & Progression Level Roadmap */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #0F2E24 0%, #092119 100%)',
-          border: '1px solid #2B5746',
+          background: 'linear-gradient(135deg, #121212 0%, #092119 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '16px',
           padding: '22px',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px', marginBottom: '18px' }}>
           <div>
-            <div style={{ color: '#C9A227', fontSize: '11px', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
+            <div style={{ color: '#FF9500', fontSize: '11px', fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
               KNOCKOUT ROADMAP &amp; STAGE PROGRESSION
             </div>
-            <h2 className="scoreboard" style={{ fontSize: '30px', color: '#F4F2EA', margin: '4px 0' }}>
+            <h2 className="scoreboard" style={{ fontSize: '30px', color: '#FFFFFF', margin: '4px 0' }}>
               🏆 {cupCategory.label.toUpperCase()} — PROGRESSION LEVELS &amp; FIXTURES
             </h2>
-            <div style={{ fontSize: '12.5px', color: '#8FA89B' }}>
+            <div style={{ fontSize: '12.5px', color: '#8E8E93' }}>
               Follow every stage from the Group Stage qualifiers through Quarter-Finals, Semi-Finals, and the Grand Final.
             </div>
           </div>
@@ -762,9 +762,9 @@ export default function CupProgressionView({
               type="button"
               onClick={() => openCategoryFixturesResultsPDF(cupCategoryKey)}
               style={{
-                background: '#0B3A2E',
-                color: '#F4F2EA',
-                border: '1px solid #2B5746',
+                background: '#000000',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '999px',
                 padding: '6px 14px',
                 fontSize: '12px',
@@ -784,8 +784,8 @@ export default function CupProgressionView({
                 type="button"
                 onClick={() => setShowScheduleConfig(!showScheduleConfig)}
                 style={{
-                  background: showScheduleConfig ? '#C9A227' : '#16352A',
-                  color: showScheduleConfig ? '#16201B' : '#DDE6DF',
+                  background: showScheduleConfig ? '#FF9500' : '#1C1C1E',
+                  color: showScheduleConfig ? '#16201B' : '#EBEBF5',
                   border: '1px solid #2F7D5C',
                   borderRadius: '999px',
                   padding: '6px 14px',
@@ -809,8 +809,8 @@ export default function CupProgressionView({
                       type="button"
                       onClick={() => onSelectCupCategory && onSelectCupCategory(k)}
                       style={{
-                        background: k === cupCategoryKey ? '#C9A227' : '#16352A',
-                        color: k === cupCategoryKey ? '#16201B' : '#DDE6DF',
+                        background: k === cupCategoryKey ? '#FF9500' : '#1C1C1E',
+                        color: k === cupCategoryKey ? '#16201B' : '#EBEBF5',
                         border: 'none',
                         borderRadius: '999px',
                         padding: '6px 14px',
@@ -832,8 +832,8 @@ export default function CupProgressionView({
         {isCmsMode && showScheduleConfig && (
           <div
             style={{
-              background: '#08231B',
-              border: '2px solid #C9A227',
+              background: '#121212',
+              border: '2px solid #FF9500',
               borderRadius: '12px',
               padding: '14px 16px',
               marginBottom: '16px',
@@ -844,10 +844,10 @@ export default function CupProgressionView({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
               <div>
-                <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   🗓️ Cup Match Days &amp; Per-Day Fixtures Configuration
                 </span>
-                <div style={{ fontSize: '11.5px', color: '#8FA89B', marginTop: '2px' }}>
+                <div style={{ fontSize: '11.5px', color: '#8E8E93', marginTop: '2px' }}>
                   Configure the number of games played on each specific day of the week. Games on the same day are separated by <strong>exactly 1 hour</strong>.
                 </div>
               </div>
@@ -856,9 +856,9 @@ export default function CupProgressionView({
                   type="button"
                   onClick={() => setShowBulkMoveTool(!showBulkMoveTool)}
                   style={{
-                    background: showBulkMoveTool ? '#C9A227' : '#16352A',
-                    color: showBulkMoveTool ? '#16201B' : '#DDE6DF',
-                    border: '1px solid #2B5746',
+                    background: showBulkMoveTool ? '#FF9500' : '#1C1C1E',
+                    color: showBulkMoveTool ? '#16201B' : '#EBEBF5',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '6px',
                     padding: '5px 10px',
                     fontSize: '11px',
@@ -871,7 +871,7 @@ export default function CupProgressionView({
                 <button
                   type="button"
                   onClick={() => setShowScheduleConfig(false)}
-                  style={{ background: 'transparent', border: 'none', color: '#8FA89B', cursor: 'pointer', fontSize: '12px' }}
+                  style={{ background: 'transparent', border: 'none', color: '#8E8E93', cursor: 'pointer', fontSize: '12px' }}
                 >
                   ✕ Close
                 </button>
@@ -879,9 +879,9 @@ export default function CupProgressionView({
             </div>
 
             {/* 1. Global Start Time & Info Strip */}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', background: '#0F2E24', padding: '10px 12px', borderRadius: '8px' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', background: '#121212', padding: '10px 12px', borderRadius: '8px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#DDE6DF', marginBottom: '3px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#EBEBF5', marginBottom: '3px' }}>
                   Cup Start Date:
                 </label>
                 <input
@@ -894,7 +894,7 @@ export default function CupProgressionView({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#DDE6DF', marginBottom: '3px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#EBEBF5', marginBottom: '3px' }}>
                   Default Kickoff Time:
                 </label>
                 <input
@@ -912,7 +912,7 @@ export default function CupProgressionView({
 
             {/* 2. Per-Day Configuration Grid */}
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 800, color: '#DDE6DF', marginBottom: '6px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 800, color: '#EBEBF5', marginBottom: '6px' }}>
                 Number of Games &amp; Start Time Set on a Per-Day Basis:
               </div>
               <div
@@ -929,8 +929,8 @@ export default function CupProgressionView({
                     <div
                       key={d.num}
                       style={{
-                        background: isEnabled ? 'rgba(201, 162, 39, 0.12)' : '#0F2E24',
-                        border: isEnabled ? '1px solid #C9A227' : '1px solid #1E4636',
+                        background: isEnabled ? 'rgba(255, 149, 0, 0.12)' : '#121212',
+                        border: isEnabled ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '8px',
                         padding: '8px 10px',
                         display: 'flex',
@@ -943,9 +943,9 @@ export default function CupProgressionView({
                           type="checkbox"
                           checked={isEnabled}
                           onChange={() => handleToggleScheduleDay(d.num)}
-                          style={{ accentColor: '#C9A227', width: '16px', height: '16px', cursor: 'pointer' }}
+                          style={{ accentColor: '#FF9500', width: '16px', height: '16px', cursor: 'pointer' }}
                         />
-                        <span style={{ fontSize: '12px', fontWeight: 800, color: isEnabled ? '#C9A227' : '#8FA89B' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 800, color: isEnabled ? '#FF9500' : '#8E8E93' }}>
                           {d.label}
                         </span>
                       </label>
@@ -953,7 +953,7 @@ export default function CupProgressionView({
                       {isEnabled && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
-                            <span style={{ fontSize: '10px', color: '#8FA89B' }}>Games:</span>
+                            <span style={{ fontSize: '10px', color: '#8E8E93' }}>Games:</span>
                             <input
                               type="number"
                               min="1"
@@ -966,7 +966,7 @@ export default function CupProgressionView({
                             />
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
-                            <span style={{ fontSize: '10px', color: '#8FA89B' }}>Start:</span>
+                            <span style={{ fontSize: '10px', color: '#8E8E93' }}>Start:</span>
                             <input
                               type="time"
                               className="form-input"
@@ -990,8 +990,8 @@ export default function CupProgressionView({
                 type="button"
                 onClick={() => handleSaveSchedule(false)}
                 style={{
-                  background: '#2B5746',
-                  color: '#F4F2EA',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '6px',
                   padding: '8px 14px',
@@ -1006,7 +1006,7 @@ export default function CupProgressionView({
                 type="button"
                 onClick={() => handleSaveSchedule(true)}
                 style={{
-                  background: '#C9A227',
+                  background: '#FF9500',
                   color: '#16201B',
                   border: 'none',
                   borderRadius: '6px',
@@ -1027,7 +1027,7 @@ export default function CupProgressionView({
                 style={{
                   marginTop: '6px',
                   background: '#041610',
-                  border: '1px dashed #C9A227',
+                  border: '1px dashed #FF9500',
                   borderRadius: '8px',
                   padding: '12px',
                   display: 'flex',
@@ -1035,15 +1035,15 @@ export default function CupProgressionView({
                   gap: '8px',
                 }}
               >
-                <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#C9A227' }}>
+                <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#FF9500' }}>
                   📦 Move Multiple Selected Cup Fixtures to Another Day
                 </div>
-                <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                   Tick the fixtures in the group matches and knockout ties below using their checkboxes, then pick the target date and starting kickoff time:
                 </div>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10.5px', color: '#8FA89B', marginBottom: '2px' }}>
+                    <label style={{ display: 'block', fontSize: '10.5px', color: '#8E8E93', marginBottom: '2px' }}>
                       Target Date:
                     </label>
                     <input
@@ -1055,7 +1055,7 @@ export default function CupProgressionView({
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10.5px', color: '#8FA89B', marginBottom: '2px' }}>
+                    <label style={{ display: 'block', fontSize: '10.5px', color: '#8E8E93', marginBottom: '2px' }}>
                       First Match Kickoff:
                     </label>
                     <input
@@ -1066,12 +1066,12 @@ export default function CupProgressionView({
                       style={{ width: '110px', fontSize: '12px', padding: '6px 8px' }}
                     />
                   </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#DDE6DF', cursor: 'pointer', paddingBottom: '6px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#EBEBF5', cursor: 'pointer', paddingBottom: '6px' }}>
                     <input
                       type="checkbox"
                       checked={bulkSpaceOneHour}
                       onChange={(e) => setBulkSpaceOneHour(e.target.checked)}
-                      style={{ accentColor: '#C9A227' }}
+                      style={{ accentColor: '#FF9500' }}
                     />
                     Space matches 1 hour apart
                   </label>
@@ -1079,9 +1079,9 @@ export default function CupProgressionView({
                     type="button"
                     onClick={handleSelectAllUnplayedForMove}
                     style={{
-                      background: '#16352A',
-                      color: '#DDE6DF',
-                      border: '1px solid #2B5746',
+                      background: '#1C1C1E',
+                      color: '#EBEBF5',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '6px',
                       padding: '7px 10px',
                       fontSize: '11px',
@@ -1097,12 +1097,12 @@ export default function CupProgressionView({
                     style={{
                       background:
                         bulkMoveDate && Object.values(selectedForMove).filter(Boolean).length > 0
-                          ? '#C9A227'
-                          : '#16352A',
+                          ? '#FF9500'
+                          : '#1C1C1E',
                       color:
                         bulkMoveDate && Object.values(selectedForMove).filter(Boolean).length > 0
                           ? '#16201B'
-                          : '#8FA89B',
+                          : '#8E8E93',
                       border: 'none',
                       borderRadius: '6px',
                       padding: '7px 14px',
@@ -1135,22 +1135,22 @@ export default function CupProgressionView({
             type="button"
             onClick={() => setSelectedLevel('all')}
             style={{
-              background: selectedLevel === 'all' ? 'rgba(201, 162, 39, 0.18)' : '#0B231B',
-              border: selectedLevel === 'all' ? '2px solid #C9A227' : '1px solid #1E4636',
+              background: selectedLevel === 'all' ? 'rgba(255, 149, 0, 0.18)' : '#0B231B',
+              border: selectedLevel === 'all' ? '2px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '10px',
               padding: '12px',
               textAlign: 'left',
               cursor: 'pointer',
-              color: '#F4F2EA',
+              color: '#FFFFFF',
             }}
           >
-            <div style={{ fontSize: '11px', color: '#C9A227', fontWeight: 800, textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '11px', color: '#FF9500', fontWeight: 800, textTransform: 'uppercase' }}>
               COMPLETE OVERVIEW
             </div>
             <div style={{ fontSize: '14px', fontWeight: 800, marginTop: '2px' }}>
               🗺️ All Progression Levels
             </div>
-            <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px' }}>
               Groups + Full Knockout Bracket
             </div>
           </button>
@@ -1163,22 +1163,22 @@ export default function CupProgressionView({
                 type="button"
                 onClick={() => setSelectedLevel(lvl.key)}
                 style={{
-                  background: active ? 'rgba(201, 162, 39, 0.18)' : '#0B231B',
-                  border: active ? '2px solid #C9A227' : '1px solid #1E4636',
+                  background: active ? 'rgba(255, 149, 0, 0.18)' : '#0B231B',
+                  border: active ? '2px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '10px',
                   padding: '12px',
                   textAlign: 'left',
                   cursor: 'pointer',
-                  color: '#F4F2EA',
+                  color: '#FFFFFF',
                 }}
               >
-                <div style={{ fontSize: '11px', color: '#C9A227', fontWeight: 800, textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '11px', color: '#FF9500', fontWeight: 800, textTransform: 'uppercase' }}>
                   {lvl.icon} {lvl.label.split(':')[0]}
                 </div>
                 <div style={{ fontSize: '14px', fontWeight: 800, marginTop: '2px' }}>
                   {lvl.label.split(':')[1] || lvl.label}
                 </div>
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '2px' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px' }}>
                   {lvl.sub}
                 </div>
               </button>
@@ -1189,7 +1189,7 @@ export default function CupProgressionView({
         {cupChampion && (
           <div
             style={{
-              background: '#C9A227',
+              background: '#FF9500',
               color: '#16201B',
               borderRadius: '10px',
               padding: '12px 16px',
@@ -1215,10 +1215,10 @@ export default function CupProgressionView({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   🧑‍⚖️ Cup Competition Referees Pool ({referees.length})
                 </div>
-                <div style={{ fontSize: '11.5px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '11.5px', color: '#8E8E93' }}>
                   Add officials and randomize across unplayed Group &amp; Knockout fixtures, or change any unplayed fixture&apos;s referee below.
                 </div>
               </div>
@@ -1264,7 +1264,7 @@ export default function CupProgressionView({
                       borderRadius: '999px',
                       padding: '3px 10px',
                       fontSize: '11.5px',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       fontWeight: 600,
                     }}
                   >
@@ -1297,8 +1297,8 @@ export default function CupProgressionView({
       {(selectedLevel === 'all' || selectedLevel.startsWith('round-')) && rounds.length > 0 && (
         <div
           style={{
-            background: '#0F2E24',
-            border: '1px solid #1E4636',
+            background: '#121212',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '16px',
             padding: '20px',
           }}
@@ -1310,16 +1310,16 @@ export default function CupProgressionView({
               alignItems: 'center',
               flexWrap: 'wrap',
               gap: '10px',
-              borderBottom: '1px solid #1E4636',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
               paddingBottom: '12px',
               marginBottom: '18px',
             }}
           >
             <div>
-              <div style={{ color: '#C9A227', fontSize: '11px', fontWeight: 800, letterSpacing: '0.12em' }}>
+              <div style={{ color: '#FF9500', fontSize: '11px', fontWeight: 800, letterSpacing: '0.12em' }}>
                 KNOCKOUT BRACKET TREE
               </div>
-              <h3 className="scoreboard" style={{ fontSize: '24px', color: '#F4F2EA', margin: '2px 0 0' }}>
+              <h3 className="scoreboard" style={{ fontSize: '24px', color: '#FFFFFF', margin: '2px 0 0' }}>
                 CUP KNOCKOUT PROGRESSION &amp; TIES
               </h3>
             </div>
@@ -1336,8 +1336,8 @@ export default function CupProgressionView({
                   type="button"
                   onClick={() => setFixtureFilter(f.key)}
                   style={{
-                    background: fixtureFilter === f.key ? '#C9A227' : '#16352A',
-                    color: fixtureFilter === f.key ? '#16201B' : '#DDE6DF',
+                    background: fixtureFilter === f.key ? '#FF9500' : '#1C1C1E',
+                    color: fixtureFilter === f.key ? '#16201B' : '#EBEBF5',
                     border: 'none',
                     borderRadius: '6px',
                     padding: '5px 10px',
@@ -1383,7 +1383,7 @@ export default function CupProgressionView({
                   key={rIdx}
                   style={{
                     background: '#09221A',
-                    border: '1px solid #1E4636',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '12px',
                     padding: '14px',
                     display: 'flex',
@@ -1396,11 +1396,11 @@ export default function CupProgressionView({
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      borderBottom: '1px solid #16352A',
+                      borderBottom: '1px solid #1C1C1E',
                       paddingBottom: '8px',
                     }}
                   >
-                    <span className="scoreboard" style={{ fontSize: '20px', color: '#C9A227', letterSpacing: '0.06em' }}>
+                    <span className="scoreboard" style={{ fontSize: '20px', color: '#FF9500', letterSpacing: '0.06em' }}>
                       {rIdx === rounds.length - 1 ? '🏆 ' : '⚔️ '}
                       {stageTitle.toUpperCase()}
                     </span>
@@ -1408,8 +1408,8 @@ export default function CupProgressionView({
                       style={{
                         fontSize: '11px',
                         fontWeight: 700,
-                        color: '#8FA89B',
-                        background: '#16352A',
+                        color: '#8E8E93',
+                        background: '#1C1C1E',
                         padding: '2px 8px',
                         borderRadius: '999px',
                       }}
@@ -1419,7 +1419,7 @@ export default function CupProgressionView({
                   </div>
 
                   {filteredTies.length === 0 && (
-                    <div style={{ padding: '20px', textAlign: 'center', fontSize: '12px', color: '#6E9080' }}>
+                    <div style={{ padding: '20px', textAlign: 'center', fontSize: '12px', color: '#8E8E93' }}>
                       No ties match the selected filter in this stage.
                     </div>
                   )}
@@ -1430,11 +1430,11 @@ export default function CupProgressionView({
                         <div
                           key={tIdx}
                           style={{
-                            border: '1px dashed #2B4E40',
+                            border: '1px dashed rgba(255, 255, 255, 0.1)',
                             borderRadius: '10px',
                             padding: '14px',
                             textAlign: 'center',
-                            color: '#6E9080',
+                            color: '#8E8E93',
                             fontSize: '12px',
                           }}
                         >
@@ -1467,32 +1467,32 @@ export default function CupProgressionView({
                         key={tie.id || tIdx}
                         className="tie-card"
                         style={{
-                          background: '#0F2E24',
-                          border: isPlayed ? '1px solid #2B5746' : '1px solid #1E4636',
+                          background: '#121212',
+                          border: isPlayed ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)',
                           borderRadius: '10px',
                           padding: '12px',
                         }}
                       >
                         {/* Tie Header: Stage & Date */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#8FA89B', marginBottom: '8px', flexWrap: 'wrap', gap: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#8E8E93', marginBottom: '8px', flexWrap: 'wrap', gap: '4px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {showBulkMoveTool && isCmsMode && !isPlayed && tie.id && (
                               <input
                                 type="checkbox"
                                 checked={Boolean(selectedForMove[tie.id])}
                                 onChange={() => handleToggleSelectForMove(tie.id)}
-                                style={{ accentColor: '#C9A227', width: '15px', height: '15px', cursor: 'pointer' }}
+                                style={{ accentColor: '#FF9500', width: '15px', height: '15px', cursor: 'pointer' }}
                                 title="Select tie to move date"
                               />
                             )}
-                            <span style={{ fontWeight: 700, color: '#C9A227' }}>
+                            <span style={{ fontWeight: 700, color: '#FF9500' }}>
                               {tie.stage || `${stageTitle} #${tIdx + 1}`}
                             </span>
                             {(tie.is_rescheduled || tie.match?.is_rescheduled) && (
                               <span
                                 style={{
-                                  background: 'rgba(201, 162, 39, 0.2)',
-                                  color: '#FCD34D',
+                                  background: 'rgba(255, 149, 0, 0.2)',
+                                  color: '#FF9F0A',
                                   fontSize: '9.5px',
                                   fontWeight: 800,
                                   padding: '1px 5px',
@@ -1518,8 +1518,8 @@ export default function CupProgressionView({
                           <div
                             className="reschedule-panel"
                             style={{
-                              background: '#08231B',
-                              border: '1px solid #C9A227',
+                              background: '#121212',
+                              border: '1px solid #FF9500',
                               borderRadius: '8px',
                               padding: '10px 12px',
                               marginBottom: '10px',
@@ -1529,20 +1529,20 @@ export default function CupProgressionView({
                             }}
                           >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#C9A227' }}>
+                              <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#FF9500' }}>
                                 🗓️ Reschedule Match &ldquo;{homeTeam?.name || 'TBD'} vs {awayTeam?.name || 'TBD'}&rdquo;
                               </span>
                               <button
                                 type="button"
                                 onClick={() => setMovingFixtureId(null)}
-                                style={{ background: 'transparent', border: 'none', color: '#8FA89B', cursor: 'pointer', fontSize: '12px' }}
+                                style={{ background: 'transparent', border: 'none', color: '#8E8E93', cursor: 'pointer', fontSize: '12px' }}
                               >
                                 ✕
                               </button>
                             </div>
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                               <div>
-                                <label style={{ display: 'block', fontSize: '10.5px', color: '#8FA89B', marginBottom: '2px' }}>
+                                <label style={{ display: 'block', fontSize: '10.5px', color: '#8E8E93', marginBottom: '2px' }}>
                                   Choose New Date:
                                 </label>
                                 <input
@@ -1555,7 +1555,7 @@ export default function CupProgressionView({
                                 />
                               </div>
                               <div>
-                                <label style={{ display: 'block', fontSize: '10.5px', color: '#8FA89B', marginBottom: '2px' }}>
+                                <label style={{ display: 'block', fontSize: '10.5px', color: '#8E8E93', marginBottom: '2px' }}>
                                   Kickoff Time:
                                 </label>
                                 <input
@@ -1572,8 +1572,8 @@ export default function CupProgressionView({
                                 onClick={() => handleConfirmSingleMove(tie.id)}
                                 disabled={!moveDateInput}
                                 style={{
-                                  background: moveDateInput ? '#C9A227' : '#16352A',
-                                  color: moveDateInput ? '#16201B' : '#8FA89B',
+                                  background: moveDateInput ? '#FF9500' : '#1C1C1E',
+                                  color: moveDateInput ? '#16201B' : '#8E8E93',
                                   border: 'none',
                                   borderRadius: '6px',
                                   padding: '8px 14px',
@@ -1597,8 +1597,8 @@ export default function CupProgressionView({
                             padding: '7px 10px',
                             borderRadius: '6px',
                             marginBottom: '4px',
-                            background: res?.winner === tie.home ? 'rgba(201, 162, 39, 0.14)' : '#08231B',
-                            border: res?.winner === tie.home ? '1px solid rgba(201, 162, 39, 0.45)' : '1px solid transparent',
+                            background: res?.winner === tie.home ? 'rgba(255, 149, 0, 0.14)' : '#121212',
+                            border: res?.winner === tie.home ? '1px solid rgba(255, 149, 0, 0.45)' : '1px solid transparent',
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1607,7 +1607,7 @@ export default function CupProgressionView({
                                 width: '10px',
                                 height: '10px',
                                 borderRadius: '50%',
-                                background: homeTeam?.color || '#2B4E40',
+                                background: homeTeam?.color || 'rgba(255, 255, 255, 0.1)',
                               }}
                             />
                             {onSelectTeam && tie.home && homeTeam ? (
@@ -1618,23 +1618,23 @@ export default function CupProgressionView({
                                   e.stopPropagation();
                                   onSelectTeam(tie.home, cupCategoryKey);
                                 }}
-                                style={{ fontWeight: 700, fontSize: '13.5px', color: '#F4F2EA' }}
+                                style={{ fontWeight: 700, fontSize: '13.5px', color: '#FFFFFF' }}
                                 title={`Click to view ${homeTeam.name} profile, cup trajectory & odds`}
                               >
                                 {homeTeam.name}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#F4F2EA' }}>
+                              <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#FFFFFF' }}>
                                 {homeTeam?.name || 'TBD (Qualifier)'}
                               </span>
                             )}
                             {res?.winner === tie.home && (
-                              <span style={{ fontSize: '10px', background: '#C9A227', color: '#16201B', fontWeight: 800, padding: '1px 6px', borderRadius: '4px' }}>
+                              <span style={{ fontSize: '10px', background: '#FF9500', color: '#16201B', fontWeight: 800, padding: '1px 6px', borderRadius: '4px' }}>
                                 ADVANCES
                               </span>
                             )}
                           </div>
-                          <span className="scoreboard" style={{ fontSize: '20px', color: isPlayed ? '#C9A227' : '#6E9080' }}>
+                          <span className="scoreboard" style={{ fontSize: '20px', color: isPlayed ? '#FF9500' : '#8E8E93' }}>
                             {isPlayed ? hs : '-'}
                           </span>
                         </div>
@@ -1647,8 +1647,8 @@ export default function CupProgressionView({
                             alignItems: 'center',
                             padding: '7px 10px',
                             borderRadius: '6px',
-                            background: res?.winner === tie.away ? 'rgba(201, 162, 39, 0.14)' : '#08231B',
-                            border: res?.winner === tie.away ? '1px solid rgba(201, 162, 39, 0.45)' : '1px solid transparent',
+                            background: res?.winner === tie.away ? 'rgba(255, 149, 0, 0.14)' : '#121212',
+                            border: res?.winner === tie.away ? '1px solid rgba(255, 149, 0, 0.45)' : '1px solid transparent',
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1657,7 +1657,7 @@ export default function CupProgressionView({
                                 width: '10px',
                                 height: '10px',
                                 borderRadius: '50%',
-                                background: awayTeam?.color || '#2B4E40',
+                                background: awayTeam?.color || 'rgba(255, 255, 255, 0.1)',
                               }}
                             />
                             {onSelectTeam && tie.away && awayTeam ? (
@@ -1668,23 +1668,23 @@ export default function CupProgressionView({
                                   e.stopPropagation();
                                   onSelectTeam(tie.away, cupCategoryKey);
                                 }}
-                                style={{ fontWeight: 700, fontSize: '13.5px', color: '#F4F2EA' }}
+                                style={{ fontWeight: 700, fontSize: '13.5px', color: '#FFFFFF' }}
                                 title={`Click to view ${awayTeam.name} profile, cup trajectory & odds`}
                               >
                                 {awayTeam.name}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#F4F2EA' }}>
+                              <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#FFFFFF' }}>
                                 {awayTeam?.name || 'Winner SF2 (TBD)'}
                               </span>
                             )}
                             {res?.winner === tie.away && (
-                              <span style={{ fontSize: '10px', background: '#C9A227', color: '#16201B', fontWeight: 800, padding: '1px 6px', borderRadius: '4px' }}>
+                              <span style={{ fontSize: '10px', background: '#FF9500', color: '#16201B', fontWeight: 800, padding: '1px 6px', borderRadius: '4px' }}>
                                 ADVANCES
                               </span>
                             )}
                           </div>
-                          <span className="scoreboard" style={{ fontSize: '20px', color: isPlayed ? '#C9A227' : '#6E9080' }}>
+                          <span className="scoreboard" style={{ fontSize: '20px', color: isPlayed ? '#FF9500' : '#8E8E93' }}>
                             {isPlayed ? as : '-'}
                           </span>
                         </div>
@@ -1697,8 +1697,8 @@ export default function CupProgressionView({
                               textAlign: 'center',
                               fontSize: '11px',
                               fontWeight: 700,
-                              color: '#C9A227',
-                              background: 'rgba(201, 162, 39, 0.1)',
+                              color: '#FF9500',
+                              background: 'rgba(255, 149, 0, 0.1)',
                               padding: '4px',
                               borderRadius: '5px',
                             }}
@@ -1709,7 +1709,7 @@ export default function CupProgressionView({
 
                         {/* Scorers Summary */}
                         {(homeScorers.length > 0 || awayScorers.length > 0) && (
-                          <div style={{ marginTop: '6px', fontSize: '11px', color: '#8FA89B', lineHeight: 1.4 }}>
+                          <div style={{ marginTop: '6px', fontSize: '11px', color: '#8E8E93', lineHeight: 1.4 }}>
                             {homeScorers.length > 0 && (
                               <div>
                                 ⚽ <strong>{homeTeam?.id}:</strong> {homeScorers.join(', ')}
@@ -1725,7 +1725,7 @@ export default function CupProgressionView({
 
                         {/* Interference Bookings */}
                         {interferenceEvents.length > 0 && (
-                          <div style={{ marginTop: '6px', padding: '4px 8px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', fontSize: '11px', color: '#FCD34D' }}>
+                          <div style={{ marginTop: '6px', padding: '4px 8px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', fontSize: '11px', color: '#FF9F0A' }}>
                             🚨 <strong>Interference Bookings:</strong>{' '}
                             {interferenceEvents.map((ev, i) => (
                               <span key={i} style={{ marginRight: '8px' }}>
@@ -1744,10 +1744,10 @@ export default function CupProgressionView({
                         )}
 
                         {/* Footer Actions: Referee / H2H, Sheet, & CMS Edit */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #16352A', flexWrap: 'wrap', gap: '6px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #1C1C1E', flexWrap: 'wrap', gap: '6px' }}>
                           {isCmsMode && !isPlayed ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ fontSize: '11px', color: '#C9A227' }}>🧑‍⚖️</span>
+                              <span style={{ fontSize: '11px', color: '#FF9500' }}>🧑‍⚖️</span>
                               <select
                                 className="form-input"
                                 style={{ fontSize: '11px', padding: '2px 6px', height: '24px', minWidth: '125px' }}
@@ -1761,7 +1761,7 @@ export default function CupProgressionView({
                               </select>
                             </div>
                           ) : (
-                            <span style={{ fontSize: '11px', color: '#6E9080' }}>
+                            <span style={{ fontSize: '11px', color: '#8E8E93' }}>
                               🧑‍⚖️ {tie.referee || tie.match?.referee || 'Official TBD'}
                             </span>
                           )}
@@ -1794,8 +1794,8 @@ export default function CupProgressionView({
                                   setMoveDateInput('');
                                 }}
                                 style={{
-                                  background: movingFixtureId === tie.id ? '#C9A227' : '#16352A',
-                                  color: movingFixtureId === tie.id ? '#16201B' : '#DDE6DF',
+                                  background: movingFixtureId === tie.id ? '#FF9500' : '#1C1C1E',
+                                  color: movingFixtureId === tie.id ? '#16201B' : '#EBEBF5',
                                   borderColor: '#2F7D5C',
                                 }}
                                 title="Move this tie to another date and time"
@@ -1808,7 +1808,7 @@ export default function CupProgressionView({
                                 type="button"
                                 className="btn-pill-action"
                                 onClick={() => toggleEditor(editorKey)}
-                                style={{ borderColor: '#C9A227', color: '#C9A227' }}
+                                style={{ borderColor: '#FF9500', color: '#FF9500' }}
                               >
                                 {isOpenEditor ? 'Close CMS ▲' : '✏️ Record Tie Events'}
                               </button>
@@ -1818,9 +1818,9 @@ export default function CupProgressionView({
 
                         {/* CMS Knockout Tie Editor */}
                         {isCmsMode && isOpenEditor && (
-                          <div style={{ marginTop: '10px', background: '#082018', padding: '10px', borderRadius: '8px', border: '1px solid #2B5746' }}>
+                          <div style={{ marginTop: '10px', background: '#000000', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                              <span style={{ fontSize: '11px', fontWeight: 800, color: '#C9A227' }}>CMS: TIE SCORE &amp; MATCH EVENTS</span>
+                              <span style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500' }}>CMS: TIE SCORE &amp; MATCH EVENTS</span>
                               <button
                                 type="button"
                                 className="played-toggle"
@@ -1828,9 +1828,9 @@ export default function CupProgressionView({
                                 style={{
                                   padding: '4px 10px',
                                   fontSize: '11px',
-                                  background: isPlayed ? '#C9A227' : 'transparent',
-                                  color: isPlayed ? '#16201B' : '#DDE6DF',
-                                  borderColor: '#C9A227',
+                                  background: isPlayed ? '#FF9500' : 'transparent',
+                                  color: isPlayed ? '#16201B' : '#EBEBF5',
+                                  borderColor: '#FF9500',
                                 }}
                               >
                                 {isPlayed ? '✓ Marked Final' : 'Mark Final'}
@@ -1874,8 +1874,8 @@ export default function CupProgressionView({
                                 const assistCandidates = teamPlayers.filter((p) => p.id !== tDraft.playerId && !p.unknown);
 
                                 return (
-                                  <div key={team.id} style={{ background: '#0F2E24', padding: '8px', borderRadius: '6px' }}>
-                                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#C9A227', marginBottom: '4px' }}>
+                                  <div key={team.id} style={{ background: '#121212', padding: '8px', borderRadius: '6px' }}>
+                                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#FF9500', marginBottom: '4px' }}>
                                       {team.name}
                                     </div>
                                     <select
@@ -1934,7 +1934,7 @@ export default function CupProgressionView({
                                           updateGoalDraft(editorKey, team.id, 'type', 'goal');
                                         }}
                                         style={{
-                                          background: tDraft.playerId ? '#C9A227' : '#1B3D30',
+                                          background: tDraft.playerId ? '#FF9500' : '#1B3D30',
                                           color: tDraft.playerId ? '#16201B' : '#5C7A6D',
                                           border: 'none',
                                           borderRadius: '4px',
@@ -2049,7 +2049,7 @@ export default function CupProgressionView({
                             )}
 
                             {/* Penalty Shootout Inputs */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#8FA89B', marginTop: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#8E8E93', marginTop: '8px' }}>
                               <span>Penalties (if tied):</span>
                               <input
                                 type="number"
@@ -2100,8 +2100,8 @@ export default function CupProgressionView({
                 <div
                   key={letter}
                   style={{
-                    background: '#0F2E24',
-                    border: '1px solid #1E4636',
+                    background: '#121212',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '14px',
                     overflow: 'hidden',
                     display: 'flex',
@@ -2111,15 +2111,15 @@ export default function CupProgressionView({
                   {/* Group Table Header */}
                   <div
                     style={{
-                      background: '#0A241C',
+                      background: '#121212',
                       padding: '12px 16px',
-                      borderBottom: '1px solid #1E4636',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
                     }}
                   >
-                    <span className="scoreboard" style={{ fontSize: '20px', color: '#C9A227', letterSpacing: '0.06em' }}>
+                    <span className="scoreboard" style={{ fontSize: '20px', color: '#FF9500', letterSpacing: '0.06em' }}>
                       🛡️ GROUP {letter} STANDINGS &amp; FIXTURES
                     </span>
                     <span style={{ fontSize: '11px', color: '#5CD685', fontWeight: 700 }}>
@@ -2128,10 +2128,10 @@ export default function CupProgressionView({
                   </div>
 
                   {/* Group Standings Table */}
-                  <div style={{ overflowX: 'auto', borderBottom: '1px solid #1E4636' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', color: '#F4F2EA' }}>
+                  <div style={{ overflowX: 'auto', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', color: '#FFFFFF' }}>
                       <thead>
-                        <tr style={{ color: '#8FA89B', textAlign: 'left', background: '#0B281F' }}>
+                        <tr style={{ color: '#8E8E93', textAlign: 'left', background: '#121212' }}>
                           <th style={{ padding: '8px 12px' }}>Club</th>
                           <th style={{ padding: '6px', textAlign: 'center' }}>P</th>
                           <th style={{ padding: '6px', textAlign: 'center' }}>W</th>
@@ -2146,12 +2146,12 @@ export default function CupProgressionView({
                           <tr
                             key={r.id}
                             style={{
-                              borderTop: '1px solid #16352A',
+                              borderTop: '1px solid #1C1C1E',
                               background: idx < 2 ? 'rgba(34, 197, 94, 0.06)' : 'transparent',
                             }}
                           >
                             <td style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ fontSize: '11px', color: idx < 2 ? '#5CD685' : '#6E9080', fontWeight: 700, width: '14px' }}>
+                              <span style={{ fontSize: '11px', color: idx < 2 ? '#5CD685' : '#8E8E93', fontWeight: 700, width: '14px' }}>
                                 {idx + 1}
                               </span>
                               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: r.color }} />
@@ -2160,7 +2160,7 @@ export default function CupProgressionView({
                                   type="button"
                                   className="team-link-btn"
                                   onClick={() => onSelectTeam(r.id, cupCategoryKey)}
-                                  style={{ fontWeight: 700, color: '#F4F2EA' }}
+                                  style={{ fontWeight: 700, color: '#FFFFFF' }}
                                   title={`Click to view ${r.name} profile, cup trajectory & odds`}
                                 >
                                   {r.name}
@@ -2174,7 +2174,7 @@ export default function CupProgressionView({
                             <td style={{ padding: '6px', textAlign: 'center' }}>{r.D}</td>
                             <td style={{ padding: '6px', textAlign: 'center' }}>{r.L}</td>
                             <td style={{ padding: '6px', textAlign: 'center' }}>{r.GD > 0 ? `+${r.GD}` : r.GD}</td>
-                            <td style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 800, color: '#C9A227' }}>{r.Pts}</td>
+                            <td style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 800, color: '#FF9500' }}>{r.Pts}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -2183,7 +2183,7 @@ export default function CupProgressionView({
 
                   {/* Respective Group Fixtures */}
                   <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#C9A227', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                       Group {letter} Respective Fixtures ({gFixtures.length})
                     </div>
 
@@ -2209,19 +2209,19 @@ export default function CupProgressionView({
                           key={f.id}
                           style={{
                             background: '#09221A',
-                            border: '1px solid #16352A',
+                            border: '1px solid #1C1C1E',
                             borderRadius: '8px',
                             padding: '10px 12px',
                           }}
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10.5px', color: '#8FA89B', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10.5px', color: '#8E8E93', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               {showBulkMoveTool && isCmsMode && !f.played && !f.walkover && (
                                 <input
                                   type="checkbox"
                                   checked={Boolean(selectedForMove[f.id])}
                                   onChange={() => handleToggleSelectForMove(f.id)}
-                                  style={{ accentColor: '#C9A227', width: '15px', height: '15px', cursor: 'pointer' }}
+                                  style={{ accentColor: '#FF9500', width: '15px', height: '15px', cursor: 'pointer' }}
                                   title="Select fixture to move date"
                                 />
                               )}
@@ -2229,8 +2229,8 @@ export default function CupProgressionView({
                               {f.is_rescheduled && (
                                 <span
                                   style={{
-                                    background: 'rgba(201, 162, 39, 0.2)',
-                                    color: '#FCD34D',
+                                    background: 'rgba(255, 149, 0, 0.2)',
+                                    color: '#FF9F0A',
                                     fontSize: '9.5px',
                                     fontWeight: 800,
                                     padding: '1px 5px',
@@ -2252,8 +2252,8 @@ export default function CupProgressionView({
                             <div
                               className="reschedule-panel"
                               style={{
-                                background: '#08231B',
-                                border: '1px solid #C9A227',
+                                background: '#121212',
+                                border: '1px solid #FF9500',
                                 borderRadius: '8px',
                                 padding: '10px 12px',
                                 marginBottom: '10px',
@@ -2263,20 +2263,20 @@ export default function CupProgressionView({
                               }}
                             >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#C9A227' }}>
+                                <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#FF9500' }}>
                                   🗓️ Reschedule Match &ldquo;{home?.name || f.home} vs {away?.name || f.away}&rdquo;
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => setMovingFixtureId(null)}
-                                  style={{ background: 'transparent', border: 'none', color: '#8FA89B', cursor: 'pointer', fontSize: '12px' }}
+                                  style={{ background: 'transparent', border: 'none', color: '#8E8E93', cursor: 'pointer', fontSize: '12px' }}
                                 >
                                   ✕
                                 </button>
                               </div>
                               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                                 <div>
-                                  <label style={{ display: 'block', fontSize: '10.5px', color: '#8FA89B', marginBottom: '2px' }}>
+                                  <label style={{ display: 'block', fontSize: '10.5px', color: '#8E8E93', marginBottom: '2px' }}>
                                     Choose New Date:
                                   </label>
                                   <input
@@ -2289,7 +2289,7 @@ export default function CupProgressionView({
                                   />
                                 </div>
                                 <div>
-                                  <label style={{ display: 'block', fontSize: '10.5px', color: '#8FA89B', marginBottom: '2px' }}>
+                                  <label style={{ display: 'block', fontSize: '10.5px', color: '#8E8E93', marginBottom: '2px' }}>
                                     Kickoff Time:
                                   </label>
                                   <input
@@ -2306,8 +2306,8 @@ export default function CupProgressionView({
                                   onClick={() => handleConfirmSingleMove(f.id)}
                                   disabled={!moveDateInput}
                                   style={{
-                                    background: moveDateInput ? '#C9A227' : '#16352A',
-                                    color: moveDateInput ? '#16201B' : '#8FA89B',
+                                    background: moveDateInput ? '#FF9500' : '#1C1C1E',
+                                    color: moveDateInput ? '#16201B' : '#8E8E93',
                                     border: 'none',
                                     borderRadius: '6px',
                                     padding: '8px 14px',
@@ -2333,16 +2333,16 @@ export default function CupProgressionView({
                                     e.stopPropagation();
                                     onSelectTeam(f.home, cupCategoryKey);
                                   }}
-                                  style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}
+                                  style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
                                   title={`Click to view ${home?.name || f.home} profile, cup trajectory & odds`}
                                 >
                                   {home?.name || f.home}
                                 </button>
                               ) : (
-                                <span style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}>{home?.name || f.home}</span>
+                                <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{home?.name || f.home}</span>
                               )}
                             </div>
-                            <div className="scoreboard" style={{ fontSize: '20px', color: f.played ? '#C9A227' : '#8FA89B', padding: '0 10px' }}>
+                            <div className="scoreboard" style={{ fontSize: '20px', color: f.played ? '#FF9500' : '#8E8E93', padding: '0 10px' }}>
                               {f.played ? `${hs} - ${as}` : 'VS'}
                             </div>
                             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
@@ -2354,27 +2354,27 @@ export default function CupProgressionView({
                                     e.stopPropagation();
                                     onSelectTeam(f.away, cupCategoryKey);
                                   }}
-                                  style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}
+                                  style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
                                   title={`Click to view ${away?.name || f.away} profile, cup trajectory & odds`}
                                 >
                                   {away?.name || f.away}
                                 </button>
                               ) : (
-                                <span style={{ fontWeight: 700, fontSize: '13px', color: '#F4F2EA' }}>{away?.name || f.away}</span>
+                                <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{away?.name || f.away}</span>
                               )}
                               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: away?.color }} />
                             </div>
                           </div>
 
                           {(homeScorers.length > 0 || awayScorers.length > 0) && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', color: '#8FA89B', marginTop: '4px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', color: '#8E8E93', marginTop: '4px' }}>
                               <div>{homeScorers.join(', ')}</div>
                               <div style={{ textAlign: 'right' }}>{awayScorers.join(', ')}</div>
                             </div>
                           )}
 
                           {interferenceEvents.length > 0 && (
-                            <div style={{ marginTop: '4px', padding: '3px 6px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '4px', fontSize: '10.5px', color: '#FCD34D' }}>
+                            <div style={{ marginTop: '4px', padding: '3px 6px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '4px', fontSize: '10.5px', color: '#FF9F0A' }}>
                               🚨 <strong>Interference:</strong> {interferenceEvents.map((ev, i) => `${ev.type === 'red' ? '🟥' : '🟨'} ${ev.player} (${ev.teamName})`).join(', ')}
                             </div>
                           )}
@@ -2388,7 +2388,7 @@ export default function CupProgressionView({
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
                             {isCmsMode && !f.played && !f.walkover ? (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span style={{ fontSize: '11px', color: '#C9A227' }}>🧑‍⚖️</span>
+                                <span style={{ fontSize: '11px', color: '#FF9500' }}>🧑‍⚖️</span>
                                 <select
                                   className="form-input"
                                   style={{ fontSize: '11px', padding: '2px 6px', height: '24px', minWidth: '120px' }}
@@ -2402,7 +2402,7 @@ export default function CupProgressionView({
                                 </select>
                               </div>
                             ) : (
-                              <span style={{ fontSize: '10.5px', color: '#6E9080' }}>
+                              <span style={{ fontSize: '10.5px', color: '#8E8E93' }}>
                                 🧑‍⚖️ {f.referee || 'Official TBD'}
                               </span>
                             )}
@@ -2424,8 +2424,8 @@ export default function CupProgressionView({
                                     setMoveDateInput('');
                                   }}
                                   style={{
-                                    background: movingFixtureId === f.id ? '#C9A227' : '#16352A',
-                                    color: movingFixtureId === f.id ? '#16201B' : '#DDE6DF',
+                                    background: movingFixtureId === f.id ? '#FF9500' : '#1C1C1E',
+                                    color: movingFixtureId === f.id ? '#16201B' : '#EBEBF5',
                                     borderColor: '#2F7D5C',
                                   }}
                                   title="Move this match to another date and time"
@@ -2438,7 +2438,7 @@ export default function CupProgressionView({
                                   type="button"
                                   className="btn-pill-action"
                                   onClick={() => toggleEditor(edKey)}
-                                  style={{ borderColor: '#C9A227', color: '#C9A227' }}
+                                  style={{ borderColor: '#FF9500', color: '#FF9500' }}
                                 >
                                   {isEdOpen ? 'Close ▲' : '✏️ Edit'}
                                 </button>
@@ -2447,9 +2447,9 @@ export default function CupProgressionView({
                           </div>
 
                           {isCmsMode && isEdOpen && (
-                            <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #16352A' }}>
+                            <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #1C1C1E' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                <span style={{ fontSize: '11px', color: '#C9A227', fontWeight: 700 }}>Record Group Match Events</span>
+                                <span style={{ fontSize: '11px', color: '#FF9500', fontWeight: 700 }}>Record Group Match Events</span>
                                 <button
                                   type="button"
                                   className="played-toggle"
@@ -2489,8 +2489,8 @@ export default function CupProgressionView({
                                   const assistCandidates = teamPlayers.filter((p) => p.id !== tDraft.playerId && !p.unknown);
 
                                   return (
-                                    <div key={team.id} style={{ background: '#0F2E24', padding: '6px', borderRadius: '6px' }}>
-                                      <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#C9A227', marginBottom: '3px' }}>
+                                    <div key={team.id} style={{ background: '#121212', padding: '6px', borderRadius: '6px' }}>
+                                      <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#FF9500', marginBottom: '3px' }}>
                                         {team.name}
                                       </div>
                                       <select
@@ -2545,7 +2545,7 @@ export default function CupProgressionView({
                                             updateGoalDraft(edKey, team.id, 'assistPlayerId', '');
                                           }}
                                           style={{
-                                            background: tDraft.playerId ? '#C9A227' : '#1B3D30',
+                                            background: tDraft.playerId ? '#FF9500' : '#1B3D30',
                                             color: tDraft.playerId ? '#16201B' : '#5C7A6D',
                                             border: 'none',
                                             borderRadius: '4px',

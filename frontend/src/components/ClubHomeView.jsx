@@ -22,7 +22,7 @@ const JERSEY_ROWS = [
     key: 'u17',
     label: 'U17 JERSEY PHOTOS',
     tag: 'UNDER-17 ELITE COLTS',
-    accent: '#C9A227',
+    accent: '#FF9500',
     speed: 5400,
     speedLabel: '5.4s',
   },
@@ -105,8 +105,8 @@ function JerseyRowCarousel({
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       style={{
-        background: '#0F2E24',
-        border: '1px solid #1E4636',
+        background: '#121212',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
         borderRadius: '16px',
         padding: '20px',
         boxShadow: '0 10px 24px rgba(0, 0, 0, 0.22)',
@@ -124,7 +124,7 @@ function JerseyRowCarousel({
           flexWrap: 'wrap',
           gap: '12px',
           paddingBottom: '12px',
-          borderBottom: '1px solid #16352A',
+          borderBottom: '1px solid #1C1C1E',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -134,7 +134,7 @@ function JerseyRowCarousel({
               fontWeight: 800,
               padding: '3px 10px',
               borderRadius: '999px',
-              background: 'rgba(201, 162, 39, 0.15)',
+              background: 'rgba(255, 149, 0, 0.15)',
               color: row.accent,
               border: `1px solid ${row.accent}`,
               letterSpacing: '0.1em',
@@ -146,7 +146,7 @@ function JerseyRowCarousel({
             className="scoreboard"
             style={{
               fontSize: '22px',
-              color: '#F4F2EA',
+              color: '#FFFFFF',
               margin: 0,
               letterSpacing: '0.04em',
             }}
@@ -165,7 +165,7 @@ function JerseyRowCarousel({
                 padding: '4px 10px',
                 borderRadius: '999px',
                 background: isPaused ? 'rgba(245, 158, 11, 0.15)' : 'rgba(92, 214, 133, 0.15)',
-                color: isPaused ? '#FCD34D' : row.accent,
+                color: isPaused ? '#FF9F0A' : row.accent,
                 border: `1px solid ${isPaused ? 'rgba(245, 158, 11, 0.4)' : row.accent}`,
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -192,9 +192,9 @@ function JerseyRowCarousel({
               type="button"
               onClick={() => setIsPaused(!isPaused)}
               style={{
-                background: '#16352A',
-                border: '1px solid #2B4E40',
-                color: '#DDE6DF',
+                background: '#1C1C1E',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#EBEBF5',
                 borderRadius: '8px',
                 padding: '4px 8px',
                 fontSize: '11px',
@@ -213,11 +213,11 @@ function JerseyRowCarousel({
               style={{
                 fontSize: '11px',
                 fontWeight: 700,
-                color: '#C9A227',
-                background: '#0B281F',
+                color: '#FF9500',
+                background: '#121212',
                 padding: '4px 8px',
                 borderRadius: '6px',
-                border: '1px solid #1E4636',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
               }}
             >
               {pages.length > 1
@@ -234,9 +234,9 @@ function JerseyRowCarousel({
                 onClick={handlePrev}
                 aria-label="Previous 4 kits"
                 style={{
-                  background: '#16352A',
-                  border: '1px solid #2B4E40',
-                  color: '#F4F2EA',
+                  background: '#1C1C1E',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#FFFFFF',
                   borderRadius: '6px',
                   padding: '3px 8px',
                   fontSize: '13px',
@@ -251,9 +251,9 @@ function JerseyRowCarousel({
                 onClick={handleNext}
                 aria-label="Next 4 kits"
                 style={{
-                  background: '#16352A',
-                  border: '1px solid #2B4E40',
-                  color: '#F4F2EA',
+                  background: '#1C1C1E',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#FFFFFF',
                   borderRadius: '6px',
                   padding: '3px 8px',
                   fontSize: '13px',
@@ -271,9 +271,9 @@ function JerseyRowCarousel({
               type="button"
               onClick={onNavigateManageHomepage}
               style={{
-                background: '#16352A',
-                color: '#C9A227',
-                border: '1px solid #C9A227',
+                background: '#1C1C1E',
+                color: '#FF9500',
+                border: '1px solid #FF9500',
                 borderRadius: '8px',
                 padding: '6px 12px',
                 fontSize: '11.5px',
@@ -293,8 +293,8 @@ function JerseyRowCarousel({
           style={{
             padding: '24px',
             textAlign: 'center',
-            color: '#8FA89B',
-            border: '1px dashed #2B4E40',
+            color: '#8E8E93',
+            border: '1px dashed rgba(255, 255, 255, 0.1)',
             borderRadius: '10px',
             fontSize: '12.5px',
           }}
@@ -335,8 +335,8 @@ function JerseyRowCarousel({
                     key={item.id || idx}
                     className="jersey-card-hover"
                     style={{
-                      background: '#08231B',
-                      border: '1px solid #1E4636',
+                      background: '#121212',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       display: 'flex',
@@ -350,7 +350,7 @@ function JerseyRowCarousel({
                       style={{
                         position: 'relative',
                         height: '210px',
-                        background: 'radial-gradient(circle at center, rgba(20, 90, 62, 0.35) 0%, #051610 80%)',
+                        background: 'radial-gradient(circle at center, rgba(255, 149, 0, 0.12) 0%, #121212 80%)',
                         overflow: 'hidden',
                         display: 'flex',
                         alignItems: 'center',
@@ -379,8 +379,8 @@ function JerseyRowCarousel({
                             top: '10px',
                             right: '10px',
                             background: 'rgba(8, 32, 24, 0.94)',
-                            color: '#C9A227',
-                            border: '1px solid rgba(201, 162, 39, 0.55)',
+                            color: '#FF9500',
+                            border: '1px solid rgba(255, 149, 0, 0.55)',
                             fontSize: '9px',
                             fontWeight: 800,
                             padding: '3px 8px',
@@ -397,11 +397,11 @@ function JerseyRowCarousel({
                           bottom: '8px',
                           right: '8px',
                           background: 'rgba(8, 32, 24, 0.88)',
-                          color: '#8FA89B',
+                          color: '#8E8E93',
                           fontSize: '9.5px',
                           padding: '2px 7px',
                           borderRadius: '5px',
-                          border: '1px solid #16352A',
+                          border: '1px solid #1C1C1E',
                         }}
                       >
                         🔍 Zoom
@@ -423,7 +423,7 @@ function JerseyRowCarousel({
                         className="scoreboard"
                         style={{
                           fontSize: '16px',
-                          color: '#F4F2EA',
+                          color: '#FFFFFF',
                           margin: 0,
                           letterSpacing: '0.03em',
                           lineHeight: 1.25,
@@ -436,9 +436,9 @@ function JerseyRowCarousel({
                         type="button"
                         onClick={() => onPhotoClick && onPhotoClick(item)}
                         style={{
-                          background: '#163E31',
-                          color: '#F4F2EA',
-                          border: '1px solid #2B5746',
+                          background: '#1C1C1E',
+                          color: '#FFFFFF',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
                           borderRadius: '6px',
                           padding: '6px 10px',
                           fontSize: '11px',
@@ -449,14 +449,14 @@ function JerseyRowCarousel({
                           transition: 'all 0.18s ease',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#C9A227';
+                          e.currentTarget.style.background = '#FF9500';
                           e.currentTarget.style.color = '#10221B';
-                          e.currentTarget.style.borderColor = '#C9A227';
+                          e.currentTarget.style.borderColor = '#FF9500';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#163E31';
-                          e.currentTarget.style.color = '#F4F2EA';
-                          e.currentTarget.style.borderColor = '#2B5746';
+                          e.currentTarget.style.background = '#1C1C1E';
+                          e.currentTarget.style.color = '#FFFFFF';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                         }}
                       >
                         🔍 View Fullscreen
@@ -484,8 +484,8 @@ function JerseyRowCarousel({
                   height: '36px',
                   borderRadius: '50%',
                   background: 'rgba(8, 32, 24, 0.88)',
-                  border: '1px solid #2B5746',
-                  color: '#F4F2EA',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#FFFFFF',
                   cursor: 'pointer',
                   fontWeight: 900,
                   fontSize: '18px',
@@ -511,8 +511,8 @@ function JerseyRowCarousel({
                   height: '36px',
                   borderRadius: '50%',
                   background: 'rgba(8, 32, 24, 0.88)',
-                  border: '1px solid #2B5746',
-                  color: '#F4F2EA',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#FFFFFF',
                   cursor: 'pointer',
                   fontWeight: 900,
                   fontSize: '18px',
@@ -552,7 +552,7 @@ function JerseyRowCarousel({
                 height: '8px',
                 borderRadius: '999px',
                 border: 'none',
-                background: pIdx === activePageIdx ? '#C9A227' : 'rgba(255,255,255,0.25)',
+                background: pIdx === activePageIdx ? '#FF9500' : 'rgba(255,255,255,0.25)',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 padding: 0,
@@ -571,7 +571,7 @@ const FIXTURE_CATEGORIES = [
   { key: 'friendly', label: 'Friendly', color: '#4FA8FF', bg: 'rgba(79, 168, 255, 0.16)' },
   { key: 'tournament', label: 'Tournament', color: '#FF9F5A', bg: 'rgba(255, 159, 90, 0.16)' },
   { key: 'league', label: 'League', color: '#5CD685', bg: 'rgba(92, 214, 133, 0.16)' },
-  { key: 'cup', label: 'Cup', color: '#C9A227', bg: 'rgba(201, 162, 39, 0.18)' },
+  { key: 'cup', label: 'Cup', color: '#FF9500', bg: 'rgba(255, 149, 0, 0.18)' },
 ];
 
 export default function ClubHomeView({
@@ -802,7 +802,7 @@ export default function ClubHomeView({
         .jersey-card-hover:hover {
           transform: translateY(-4px);
           box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-          border-color: #C9A227 !important;
+          border-color: #FF9500 !important;
         }
         .main-card-hover {
           transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
@@ -810,7 +810,7 @@ export default function ClubHomeView({
         .main-card-hover:hover {
           transform: translateY(-4px);
           box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
-          border-color: #C9A227 !important;
+          border-color: #FF9500 !important;
         }
       `}</style>
 
@@ -822,8 +822,8 @@ export default function ClubHomeView({
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
             style={{
-              background: '#0F2E24',
-              border: '1px solid #2B5746',
+              background: '#121212',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '18px',
               overflow: 'hidden',
               position: 'relative',
@@ -844,13 +844,13 @@ export default function ClubHomeView({
                 flexWrap: 'wrap',
                 gap: '12px',
                 paddingBottom: '12px',
-                borderBottom: '1px solid #16352A',
+                borderBottom: '1px solid #1C1C1E',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <span
                   style={{
-                    background: 'rgba(201, 162, 39, 0.92)',
+                    background: 'rgba(255, 149, 0, 0.92)',
                     color: '#10221B',
                     fontSize: '11px',
                     fontWeight: 900,
@@ -866,7 +866,7 @@ export default function ClubHomeView({
                   className="scoreboard"
                   style={{
                     fontSize: '22px',
-                    color: '#F4F2EA',
+                    color: '#FFFFFF',
                     margin: 0,
                     letterSpacing: '0.04em',
                   }}
@@ -884,7 +884,7 @@ export default function ClubHomeView({
                       padding: '4px 10px',
                       borderRadius: '999px',
                       background: isPaused ? 'rgba(245, 158, 11, 0.15)' : 'rgba(92, 214, 133, 0.15)',
-                      color: isPaused ? '#FCD34D' : '#5CD685',
+                      color: isPaused ? '#FF9F0A' : '#5CD685',
                       border: `1px solid ${isPaused ? 'rgba(245, 158, 11, 0.4)' : '#5CD685'}`,
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -910,9 +910,9 @@ export default function ClubHomeView({
                     type="button"
                     onClick={() => setIsPaused(!isPaused)}
                     style={{
-                      background: '#16352A',
-                      border: '1px solid #2B4E40',
-                      color: '#DDE6DF',
+                      background: '#1C1C1E',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#EBEBF5',
                       borderRadius: '8px',
                       padding: '4px 8px',
                       fontSize: '11px',
@@ -929,11 +929,11 @@ export default function ClubHomeView({
                     style={{
                       fontSize: '11px',
                       fontWeight: 700,
-                      color: '#C9A227',
-                      background: '#0B281F',
+                      color: '#FF9500',
+                      background: '#121212',
                       padding: '4px 8px',
                       borderRadius: '6px',
-                      border: '1px solid #1E4636',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                     }}
                   >
                     {mainPages.length > 1
@@ -948,8 +948,8 @@ export default function ClubHomeView({
                     onClick={onNavigateManageHomepage}
                     style={{
                       background: 'rgba(15, 46, 36, 0.9)',
-                      color: '#C9A227',
-                      border: '1px solid #C9A227',
+                      color: '#FF9500',
+                      border: '1px solid #FF9500',
                       borderRadius: '8px',
                       padding: '5px 12px',
                       fontSize: '11.5px',
@@ -965,7 +965,7 @@ export default function ClubHomeView({
 
             {/* Sliding Viewport (Cycles 3 at a time) */}
             {slides.length === 0 ? (
-              <div style={{ padding: '48px 24px', textAlign: 'center', color: '#8FA89B' }}>
+              <div style={{ padding: '48px 24px', textAlign: 'center', color: '#8E8E93' }}>
                 No carousel pictures uploaded yet. Sign in to CMS Admin to upload club pictures.
               </div>
             ) : (
@@ -1007,11 +1007,11 @@ export default function ClubHomeView({
                             height: '420px',
                             borderRadius: '14px',
                             overflow: 'hidden',
-                            border: '1px solid #1E4636',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
                             display: 'flex',
                             flexDirection: 'column',
                             justifyContent: 'flex-end',
-                            background: '#08231B',
+                            background: '#121212',
                           }}
                         >
                           {/* Ambient Blurred Backdrop */}
@@ -1070,7 +1070,7 @@ export default function ClubHomeView({
                           >
                             <span
                               style={{
-                                background: 'rgba(201, 162, 39, 0.92)',
+                                background: 'rgba(255, 149, 0, 0.92)',
                                 color: '#10221B',
                                 fontSize: '9.5px',
                                 fontWeight: 900,
@@ -1087,8 +1087,8 @@ export default function ClubHomeView({
                               onClick={() => setLightboxImage(slide)}
                               style={{
                                 background: 'rgba(8, 32, 24, 0.85)',
-                                color: '#C9A227',
-                                border: '1px solid rgba(201, 162, 39, 0.4)',
+                                color: '#FF9500',
+                                border: '1px solid rgba(255, 149, 0, 0.4)',
                                 borderRadius: '6px',
                                 fontSize: '10px',
                                 fontWeight: 700,
@@ -1107,7 +1107,7 @@ export default function ClubHomeView({
                               className="scoreboard"
                               style={{
                                 fontSize: '20px',
-                                color: '#F4F2EA',
+                                color: '#FFFFFF',
                                 margin: '0 0 6px 0',
                                 lineHeight: 1.15,
                                 letterSpacing: '0.03em',
@@ -1137,7 +1137,7 @@ export default function ClubHomeView({
                                 type="button"
                                 onClick={() => setLightboxImage(slide)}
                                 style={{
-                                  background: '#C9A227',
+                                  background: '#FF9500',
                                   color: '#16201B',
                                   border: 'none',
                                   borderRadius: '6px',
@@ -1153,8 +1153,8 @@ export default function ClubHomeView({
                                 type="button"
                                 onClick={onNavigateChampionship}
                                 style={{
-                                  background: '#163E31',
-                                  color: '#F4F2EA',
+                                  background: '#1C1C1E',
+                                  color: '#FFFFFF',
                                   border: '1px solid #2F7D5C',
                                   borderRadius: '6px',
                                   padding: '7px 12px',
@@ -1189,8 +1189,8 @@ export default function ClubHomeView({
                         height: '38px',
                         borderRadius: '50%',
                         background: 'rgba(8, 32, 24, 0.92)',
-                        border: '1px solid #2B5746',
-                        color: '#F4F2EA',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: '#FFFFFF',
                         cursor: 'pointer',
                         fontWeight: 900,
                         fontSize: '18px',
@@ -1216,8 +1216,8 @@ export default function ClubHomeView({
                         height: '38px',
                         borderRadius: '50%',
                         background: 'rgba(8, 32, 24, 0.92)',
-                        border: '1px solid #2B5746',
-                        color: '#F4F2EA',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: '#FFFFFF',
                         cursor: 'pointer',
                         fontWeight: 900,
                         fontSize: '18px',
@@ -1251,7 +1251,7 @@ export default function ClubHomeView({
                   type="button"
                   onClick={onNavigateChampionship}
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     border: 'none',
                     borderRadius: '8px',
@@ -1259,7 +1259,7 @@ export default function ClubHomeView({
                     fontSize: '12px',
                     fontWeight: 800,
                     cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(201,162,39,0.3)',
+                    boxShadow: '0 4px 14px rgba(255, 149, 0,0.3)',
                   }}
                 >
                   🏆 Championship Hub →
@@ -1269,8 +1269,8 @@ export default function ClubHomeView({
                     type="button"
                     onClick={onNavigateHighlights}
                     style={{
-                      background: '#163E31',
-                      color: '#F4F2EA',
+                      background: '#1C1C1E',
+                      color: '#FFFFFF',
                       border: '1px solid #2F7D5C',
                       borderRadius: '8px',
                       padding: '9px 14px',
@@ -1287,9 +1287,9 @@ export default function ClubHomeView({
                     type="button"
                     onClick={onNavigateArchives}
                     style={{
-                      background: '#113328',
-                      color: '#C9A227',
-                      border: '1px solid #2B5746',
+                      background: '#121212',
+                      color: '#FF9500',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '8px',
                       padding: '9px 14px',
                       fontSize: '12px',
@@ -1314,8 +1314,8 @@ export default function ClubHomeView({
                       height: '34px',
                       borderRadius: '50%',
                       background: 'rgba(22, 53, 42, 0.85)',
-                      border: '1px solid #2B5746',
-                      color: '#F4F2EA',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#FFFFFF',
                       cursor: 'pointer',
                       fontWeight: 900,
                       fontSize: '16px',
@@ -1335,7 +1335,7 @@ export default function ClubHomeView({
                           height: '8px',
                           borderRadius: '999px',
                           border: 'none',
-                          background: pIdx === activeMainPageIdx ? '#C9A227' : 'rgba(255,255,255,0.3)',
+                          background: pIdx === activeMainPageIdx ? '#FF9500' : 'rgba(255,255,255,0.3)',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
                           padding: 0,
@@ -1352,8 +1352,8 @@ export default function ClubHomeView({
                       height: '34px',
                       borderRadius: '50%',
                       background: 'rgba(22, 53, 42, 0.85)',
-                      border: '1px solid #2B5746',
-                      color: '#F4F2EA',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#FFFFFF',
                       cursor: 'pointer',
                       fontWeight: 900,
                       fontSize: '16px',
@@ -1384,8 +1384,8 @@ export default function ClubHomeView({
         <aside
           className="club-home-sidebar"
           style={{
-            background: '#0F2E24',
-            border: '1px solid #2B5746',
+            background: '#121212',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '16px',
             padding: '20px',
             display: 'flex',
@@ -1397,10 +1397,10 @@ export default function ClubHomeView({
             boxShadow: '0 14px 32px rgba(0, 0, 0, 0.35)',
           }}
         >
-          <div style={{ borderBottom: '1px solid #16352A', paddingBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ borderBottom: '1px solid #1C1C1E', paddingBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#C9A227', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                   ⚡ MATCHDAY FIXTURES &amp; UPCOMING SCHEDULE
                 </span>
                 <span
@@ -1416,10 +1416,10 @@ export default function ClubHomeView({
                   {filteredFixtures.length} Upcoming
                 </span>
               </div>
-              <h3 className="scoreboard" style={{ fontSize: '26px', color: '#F4F2EA', margin: '4px 0 2px', letterSpacing: '0.04em' }}>
+              <h3 className="scoreboard" style={{ fontSize: '26px', color: '#FFFFFF', margin: '4px 0 2px', letterSpacing: '0.04em' }}>
                 UPCOMING FIXTURES
               </h3>
-              <div style={{ fontSize: '12px', color: '#8FA89B' }}>
+              <div style={{ fontSize: '12px', color: '#8E8E93' }}>
                 Complete schedule across Internal, Friendly, Tournament, League &amp; Cup
               </div>
             </div>
@@ -1442,9 +1442,9 @@ export default function ClubHomeView({
                       fontSize: '11px',
                       fontWeight: 800,
                       cursor: 'pointer',
-                      border: isSelected ? '1px solid #C9A227' : '1px solid #1E4636',
-                      background: isSelected ? '#C9A227' : '#08231B',
-                      color: isSelected ? '#16201B' : '#9BB5A8',
+                      border: isSelected ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                      background: isSelected ? '#FF9500' : '#121212',
+                      color: isSelected ? '#16201B' : '#8E8E93',
                       transition: 'all 0.15s ease',
                     }}
                   >
@@ -1471,8 +1471,8 @@ export default function ClubHomeView({
                   gridColumn: '1 / -1',
                   padding: '36px 16px',
                   textAlign: 'center',
-                  color: '#8FA89B',
-                  border: '1px dashed #2B4E40',
+                  color: '#8E8E93',
+                  border: '1px dashed rgba(255, 255, 255, 0.1)',
                   borderRadius: '12px',
                   fontSize: '13px',
                 }}
@@ -1488,8 +1488,8 @@ export default function ClubHomeView({
                   <div
                     key={fix.id || idx}
                     style={{
-                      background: '#08231B',
-                      border: '1px solid #16352A',
+                      background: '#121212',
+                      border: '1px solid #1C1C1E',
                       borderRadius: '10px',
                       padding: '12px',
                       display: 'flex',
@@ -1506,19 +1506,19 @@ export default function ClubHomeView({
                           letterSpacing: '0.08em',
                           padding: '2px 8px',
                           borderRadius: '999px',
-                          background: catMeta.bg || 'rgba(201,162,39,0.15)',
-                          color: catMeta.color || '#C9A227',
+                          background: catMeta.bg || 'rgba(255, 149, 0,0.15)',
+                          color: catMeta.color || '#FF9500',
                         }}
                       >
                         {catMeta.label}
                       </span>
-                      <span style={{ fontSize: '10.5px', color: '#C9A227', fontWeight: 700 }}>
+                      <span style={{ fontSize: '10.5px', color: '#FF9500', fontWeight: 700 }}>
                         🗓️ {fix.date}
                       </span>
                     </div>
 
                     {fix.title && (
-                      <div style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 600 }}>
+                      <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 600 }}>
                         {fix.title}
                       </div>
                     )}
@@ -1537,13 +1537,13 @@ export default function ClubHomeView({
                           type="button"
                           className="team-link-btn"
                           onClick={() => onSelectTeam(fix.homeTeamId, fix.categoryKey)}
-                          style={{ fontSize: '12.5px', fontWeight: 800, color: '#F4F2EA', textAlign: 'left', flex: 1 }}
+                          style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', textAlign: 'left', flex: 1 }}
                           title={`Click to view ${fix.home} profile & tournament odds`}
                         >
                           {fix.home}
                         </button>
                       ) : (
-                        <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#F4F2EA', flex: 1 }}>
+                        <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', flex: 1 }}>
                           {fix.home}
                         </span>
                       )}
@@ -1553,8 +1553,8 @@ export default function ClubHomeView({
                           fontSize: '12px',
                           padding: '2px 7px',
                           borderRadius: '4px',
-                          background: '#16352A',
-                          color: '#C9A227',
+                          background: '#1C1C1E',
+                          color: '#FF9500',
                         }}
                       >
                         VS
@@ -1564,20 +1564,20 @@ export default function ClubHomeView({
                           type="button"
                           className="team-link-btn"
                           onClick={() => onSelectTeam(fix.awayTeamId, fix.categoryKey)}
-                          style={{ fontSize: '12.5px', fontWeight: 800, color: '#F4F2EA', textAlign: 'right', justifyContent: 'flex-end', flex: 1 }}
+                          style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', textAlign: 'right', justifyContent: 'flex-end', flex: 1 }}
                           title={`Click to view ${fix.away} profile & tournament odds`}
                         >
                           {fix.away}
                         </button>
                       ) : (
-                        <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#F4F2EA', flex: 1, textAlign: 'right' }}>
+                        <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', flex: 1, textAlign: 'right' }}>
                           {fix.away}
                         </span>
                       )}
                     </div>
 
                     {fix.venue && (
-                      <div style={{ fontSize: '10.5px', color: '#6E9080' }}>
+                      <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>
                         📍 {fix.venue}
                       </div>
                     )}
@@ -1592,9 +1592,9 @@ export default function ClubHomeView({
             onClick={onNavigateChampionship}
             style={{
               width: '100%',
-              background: '#16352A',
-              color: '#C9A227',
-              border: '1px solid #2B5746',
+              background: '#1C1C1E',
+              color: '#FF9500',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '8px',
               padding: '10px',
               fontSize: '12px',
@@ -1625,8 +1625,8 @@ export default function ClubHomeView({
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: '#0F2E24',
-              border: '2px solid #C9A227',
+              background: '#121212',
+              border: '2px solid #FF9500',
               borderRadius: '16px',
               maxWidth: '520px',
               width: '100%',
@@ -1639,17 +1639,17 @@ export default function ClubHomeView({
               alt={lightboxImage.title}
               style={{ width: '100%', maxHeight: '380px', objectFit: 'contain', borderRadius: '10px' }}
             />
-            <h3 className="scoreboard" style={{ fontSize: '24px', color: '#F4F2EA', margin: '12px 0 4px' }}>
+            <h3 className="scoreboard" style={{ fontSize: '24px', color: '#FFFFFF', margin: '12px 0 4px' }}>
               {lightboxImage.title}
             </h3>
             {lightboxImage.subtitle && (
-              <p style={{ fontSize: '13px', color: '#8FA89B', margin: '0 0 14px' }}>{lightboxImage.subtitle}</p>
+              <p style={{ fontSize: '13px', color: '#8E8E93', margin: '0 0 14px' }}>{lightboxImage.subtitle}</p>
             )}
             <button
               type="button"
               onClick={() => setLightboxImage(null)}
               style={{
-                background: '#C9A227',
+                background: '#FF9500',
                 color: '#16201B',
                 border: 'none',
                 borderRadius: '8px',

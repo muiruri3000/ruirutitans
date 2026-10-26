@@ -68,7 +68,7 @@ export function computeTeamProfile(teamId, currentCategory, allCategories = {}, 
     if (!f || (f.home !== teamId && f.away !== teamId)) return;
     const isHome = f.home === teamId;
     const opponentId = isHome ? f.away : f.home;
-    const opponent = teamsMap[opponentId] || { id: opponentId, name: opponentId, color: '#8FA89B' };
+    const opponent = teamsMap[opponentId] || { id: opponentId, name: opponentId, color: '#8E8E93' };
     const { hs, as } = computeFixtureScore(f, f.home, f.away);
     const teamScore = isHome ? hs : as;
     const oppScore = isHome ? as : hs;
@@ -93,10 +93,10 @@ export function computeTeamProfile(teamId, currentCategory, allCategories = {}, 
         isHome,
         homeId: f.home,
         homeName: teamsMap[f.home]?.name || f.home,
-        homeColor: teamsMap[f.home]?.color || '#8FA89B',
+        homeColor: teamsMap[f.home]?.color || '#8E8E93',
         awayId: f.away,
         awayName: teamsMap[f.away]?.name || f.away,
-        awayColor: teamsMap[f.away]?.color || '#8FA89B',
+        awayColor: teamsMap[f.away]?.color || '#8E8E93',
         opponentId,
         opponentName: opponent.name,
         opponentColor: opponent.color,
@@ -119,10 +119,10 @@ export function computeTeamProfile(teamId, currentCategory, allCategories = {}, 
         isHome,
         homeId: f.home,
         homeName: teamsMap[f.home]?.name || f.home,
-        homeColor: teamsMap[f.home]?.color || '#8FA89B',
+        homeColor: teamsMap[f.home]?.color || '#8E8E93',
         awayId: f.away,
         awayName: teamsMap[f.away]?.name || f.away,
-        awayColor: teamsMap[f.away]?.color || '#8FA89B',
+        awayColor: teamsMap[f.away]?.color || '#8E8E93',
         opponentId,
         opponentName: opponent.name,
         opponentColor: opponent.color,

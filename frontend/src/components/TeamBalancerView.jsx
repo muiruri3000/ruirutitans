@@ -100,8 +100,8 @@ function createTitansPlayerFormAndSheet() {
   var headers = ["Timestamp", "Player Name", "Position", "Category"];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   sheet.getRange(1, 1, 1, headers.length)
-    .setBackground("#0B3A2E")
-    .setFontColor("#C9A227")
+    .setBackground("#000000")
+    .setFontColor("#FF9500")
     .setFontWeight("bold")
     .setFontSize(11);
   sheet.setFrozenRows(1);
@@ -158,10 +158,10 @@ function createTitansPlayerFormAndSheet() {
 }`;
 
 const CORE_CLUB_PRESETS = [
-  { name: 'Mancheli', color: '#C9A227' },
+  { name: 'Mancheli', color: '#FF9500' },
   { name: 'Super Strikers', color: '#B23A2E' },
   { name: 'Rangers', color: '#3F7A4E' },
-  { name: 'Masters', color: '#D97B29' },
+  { name: 'Masters', color: '#FF9500' },
   { name: 'Oxford', color: '#2E5A8F' },
 ];
 
@@ -179,7 +179,7 @@ const PRESET_CLUB_NAMES = [
 ];
 
 const TEAM_COLORS = [
-  '#C9A227',
+  '#FF9500',
   '#2E8B57',
   '#2563EB',
   '#DC2626',
@@ -650,7 +650,7 @@ function getClassTierLabel(cls, distinctClasses) {
 function getClassBadgeStyle(cls, distinctClasses) {
   const idx = distinctClasses.indexOf(cls);
   const palette = [
-    { bg: 'rgba(201, 162, 39, 0.22)', border: '#C9A227', color: '#FDE047' }, // A - Gold Elite
+    { bg: 'rgba(255, 149, 0, 0.22)', border: '#FF9500', color: '#FDE047' }, // A - Gold Elite
     { bg: 'rgba(46, 139, 87, 0.25)', border: '#34D399', color: '#6EE7B7' },  // B - Emerald
     { bg: 'rgba(59, 130, 246, 0.22)', border: '#60A5FA', color: '#93C5FD' }, // C - Blue
     { bg: 'rgba(168, 85, 247, 0.22)', border: '#C084FC', color: '#D8B4FE' }, // D - Purple
@@ -1408,8 +1408,8 @@ export default function TeamBalancerView({
       {/* HEADER BANNER */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #0F2E24 0%, #091F18 100%)',
-          border: '1px solid #C9A227',
+          background: 'linear-gradient(135deg, #121212 0%, #000000 100%)',
+          border: '1px solid #FF9500',
           borderRadius: '14px',
           padding: '20px 22px',
           display: 'flex',
@@ -1423,9 +1423,9 @@ export default function TeamBalancerView({
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <span
               style={{
-                background: 'rgba(201, 162, 39, 0.2)',
-                border: '1px solid #C9A227',
-                color: '#C9A227',
+                background: 'rgba(255, 149, 0, 0.2)',
+                border: '1px solid #FF9500',
+                color: '#FF9500',
                 fontSize: '10.5px',
                 fontWeight: 800,
                 padding: '2px 10px',
@@ -1439,10 +1439,10 @@ export default function TeamBalancerView({
               Class A (Elite ★) → Class {distinctClasses[distinctClasses.length - 1] || 'D'} (Amateur)
             </span>
           </div>
-          <h2 className="scoreboard" style={{ color: '#F4F2EA', fontSize: '28px', margin: '2px 0 4px' }}>
+          <h2 className="scoreboard" style={{ color: '#FFFFFF', fontSize: '28px', margin: '2px 0 4px' }}>
             AUTOMATIC TEAM BALANCER &amp; DRAFT GENERATOR
           </h2>
-          <p style={{ color: '#8FA89B', fontSize: '12.5px', margin: 0, maxWidth: '720px', lineHeight: 1.5 }}>
+          <p style={{ color: '#8E8E93', fontSize: '12.5px', margin: 0, maxWidth: '720px', lineHeight: 1.5 }}>
             Import players with their skill class/category (<strong>A, B, C…</strong> from <strong>A = Elite</strong> down to the last letter = <strong>Amateur</strong>) via <strong>Excel (.xlsx)</strong>, <strong>CSV</strong>, <strong>Table Paste</strong>, or a <strong>Google Sheet Link</strong>. Set the number of players per team, generate balanced squads across all categories, and assign each team its official name.
           </p>
         </div>
@@ -1452,9 +1452,9 @@ export default function TeamBalancerView({
             type="button"
             onClick={handleDownloadTemplate}
             style={{
-              background: '#16352A',
-              color: '#DDE6DF',
-              border: '1px solid #2B5746',
+              background: '#1C1C1E',
+              color: '#EBEBF5',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '8px',
               padding: '9px 14px',
               fontSize: '12px',
@@ -1474,9 +1474,9 @@ export default function TeamBalancerView({
               setStatusMsg('✅ Loaded 24 sample Ruiru Titans players across Classes A, B, C, and D.');
             }}
             style={{
-              background: 'rgba(201, 162, 39, 0.18)',
-              color: '#C9A227',
-              border: '1px solid #C9A227',
+              background: 'rgba(255, 149, 0, 0.18)',
+              color: '#FF9500',
+              border: '1px solid #FF9500',
               borderRadius: '8px',
               padding: '9px 14px',
               fontSize: '12px',
@@ -1552,8 +1552,8 @@ export default function TeamBalancerView({
         }}
       >
         {/* STEP 1: IMPORT PLAYERS (EXCEL, CSV, GOOGLE SHEET, OR TABLE PASTE) */}
-        <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '12px', padding: '18px' }}>
-          <div className="scoreboard" style={{ color: '#C9A227', fontSize: '20px', marginBottom: '10px' }}>
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '18px' }}>
+          <div className="scoreboard" style={{ color: '#FF9500', fontSize: '20px', marginBottom: '10px' }}>
             1. IMPORT PLAYER ROSTER &amp; CLASSES (A, B, C…)
           </div>
 
@@ -1562,10 +1562,10 @@ export default function TeamBalancerView({
             style={{
               display: 'flex',
               gap: '6px',
-              background: '#08231B',
+              background: '#121212',
               padding: '5px',
               borderRadius: '10px',
-              border: '1px solid #16352A',
+              border: '1px solid #1C1C1E',
               marginBottom: '14px',
               flexWrap: 'wrap',
             }}
@@ -1591,8 +1591,8 @@ export default function TeamBalancerView({
                   cursor: 'pointer',
                   fontWeight: 800,
                   fontSize: '12px',
-                  background: inputMode === t.key ? '#C9A227' : 'transparent',
-                  color: inputMode === t.key ? '#16201B' : '#8FA89B',
+                  background: inputMode === t.key ? '#FF9500' : 'transparent',
+                  color: inputMode === t.key ? '#16201B' : '#8E8E93',
                 }}
               >
                 {t.label}
@@ -1604,18 +1604,18 @@ export default function TeamBalancerView({
           {inputMode === 'upload' && (
             <div
               style={{
-                background: '#08231B',
-                border: '1px dashed #2B5746',
+                background: '#121212',
+                border: '1px dashed rgba(255, 255, 255, 0.1)',
                 borderRadius: '10px',
                 padding: '18px',
                 textAlign: 'center',
               }}
             >
               <div style={{ fontSize: '28px', marginBottom: '6px' }}>📊</div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#F4F2EA', marginBottom: '4px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginBottom: '4px' }}>
                 Upload Excel (.xlsx) or CSV (.csv / .tsv) File
               </div>
-              <div style={{ fontSize: '11.5px', color: '#8FA89B', marginBottom: '14px' }}>
+              <div style={{ fontSize: '11.5px', color: '#8E8E93', marginBottom: '14px' }}>
                 File should contain columns for <strong>Player Name</strong> and <strong>Class / Category</strong> (<code>A</code> = Elite, <code>B</code>, <code>C</code>, <code>D</code>… down to Amateur).
               </div>
               <input
@@ -1638,8 +1638,8 @@ export default function TeamBalancerView({
             <form
               onSubmit={handleFetchGoogleSheet}
               style={{
-                background: '#08231B',
-                border: '1px solid #16352A',
+                background: '#121212',
+                border: '1px solid #1C1C1E',
                 borderRadius: '10px',
                 padding: '14px',
                 display: 'flex',
@@ -1647,7 +1647,7 @@ export default function TeamBalancerView({
                 gap: '10px',
               }}
             >
-              <label style={{ fontSize: '12px', fontWeight: 700, color: '#DDE6DF' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: '#EBEBF5' }}>
                 Paste Google Sheet Link (Share setting: &ldquo;Anyone with the link&rdquo;)
               </label>
               <input
@@ -1658,14 +1658,14 @@ export default function TeamBalancerView({
                 placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit#gid=0"
                 required
               />
-              <div style={{ fontSize: '11px', color: '#8FA89B', lineHeight: 1.4 }}>
+              <div style={{ fontSize: '11px', color: '#8E8E93', lineHeight: 1.4 }}>
                 Supports standard Google Sheets links (<code>/spreadsheets/d/.../edit</code>), specific sheet tabs (<code>#gid=...</code>), and published CSV links.
               </div>
               <button
                 type="submit"
                 disabled={loading}
                 style={{
-                  background: '#C9A227',
+                  background: '#FF9500',
                   color: '#16201B',
                   border: 'none',
                   borderRadius: '8px',
@@ -1685,8 +1685,8 @@ export default function TeamBalancerView({
           {inputMode === 'paste' && (
             <div
               style={{
-                background: '#08231B',
-                border: '1px solid #16352A',
+                background: '#121212',
+                border: '1px solid #1C1C1E',
                 borderRadius: '10px',
                 padding: '14px',
                 display: 'flex',
@@ -1694,7 +1694,7 @@ export default function TeamBalancerView({
                 gap: '10px',
               }}
             >
-              <label style={{ fontSize: '12px', fontWeight: 700, color: '#DDE6DF' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: '#EBEBF5' }}>
                 Paste Spreadsheet Cells (from Excel / Google Sheets) or CSV Rows
               </label>
               <textarea
@@ -1709,7 +1709,7 @@ export default function TeamBalancerView({
                 type="button"
                 onClick={handleParsePastedText}
                 style={{
-                  background: '#C9A227',
+                  background: '#FF9500',
                   color: '#16201B',
                   border: 'none',
                   borderRadius: '8px',
@@ -1729,8 +1729,8 @@ export default function TeamBalancerView({
           {inputMode === 'gform' && (
             <div
               style={{
-                background: '#08231B',
-                border: '1px solid #16352A',
+                background: '#121212',
+                border: '1px solid #1C1C1E',
                 borderRadius: '10px',
                 padding: '16px',
                 display: 'flex',
@@ -1741,19 +1741,19 @@ export default function TeamBalancerView({
               {/* Form & Sheet Architecture Card */}
               <div
                 style={{
-                  background: 'rgba(201, 162, 39, 0.08)',
-                  border: '1px solid rgba(201, 162, 39, 0.3)',
+                  background: 'rgba(255, 149, 0, 0.08)',
+                  border: '1px solid rgba(255, 149, 0, 0.3)',
                   borderRadius: '8px',
                   padding: '12px 14px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                   <span style={{ fontSize: '18px' }}>📝</span>
-                  <span style={{ color: '#F4F2EA', fontWeight: 800, fontSize: '13px' }}>
+                  <span style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '13px' }}>
                     Connected Google Form &amp; Sheet with Dropdowns
                   </span>
                 </div>
-                <div style={{ color: '#8FA89B', fontSize: '11.5px', lineHeight: 1.5 }}>
+                <div style={{ color: '#8E8E93', fontSize: '11.5px', lineHeight: 1.5 }}>
                   The connected Google Form collects:
                   <ul style={{ margin: '6px 0 6px 18px', padding: 0 }}>
                     <li><strong>Player Name</strong>: Text entry (e.g. <code>Patrick Kamau</code>)</li>
@@ -1767,8 +1767,8 @@ export default function TeamBalancerView({
               {/* Step 1: 1-Click Google Apps Script Generator */}
               <div
                 style={{
-                  background: '#0F2E24',
-                  border: '1px solid #1E4636',
+                  background: '#121212',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '8px',
                   padding: '12px',
                   display: 'flex',
@@ -1777,7 +1777,7 @@ export default function TeamBalancerView({
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500' }}>
                     ⚡ 1-Click Automated Form &amp; Sheet Setup Script
                   </div>
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -1785,7 +1785,7 @@ export default function TeamBalancerView({
                       type="button"
                       onClick={handleCopyScript}
                       style={{
-                        background: copiedScript ? '#2E8B57' : '#C9A227',
+                        background: copiedScript ? '#2E8B57' : '#FF9500',
                         color: '#16201B',
                         border: 'none',
                         borderRadius: '6px',
@@ -1801,9 +1801,9 @@ export default function TeamBalancerView({
                       type="button"
                       onClick={handleDownloadScript}
                       style={{
-                        background: '#16352A',
-                        color: '#DDE6DF',
-                        border: '1px solid #2B5746',
+                        background: '#1C1C1E',
+                        color: '#EBEBF5',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '6px',
                         padding: '6px 10px',
                         fontSize: '11.5px',
@@ -1818,8 +1818,8 @@ export default function TeamBalancerView({
                       onClick={() => setShowScriptCode((prev) => !prev)}
                       style={{
                         background: 'transparent',
-                        color: '#8FA89B',
-                        border: '1px solid #2B5746',
+                        color: '#8E8E93',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '6px',
                         padding: '6px 10px',
                         fontSize: '11.5px',
@@ -1831,7 +1831,7 @@ export default function TeamBalancerView({
                   </div>
                 </div>
 
-                <div style={{ color: '#8FA89B', fontSize: '11px', lineHeight: 1.4 }}>
+                <div style={{ color: '#8E8E93', fontSize: '11px', lineHeight: 1.4 }}>
                   <strong>How to run:</strong> Open <a href="https://script.google.com/" target="_blank" rel="noreferrer" style={{ color: '#6CE5A0', textDecoration: 'underline' }}>script.google.com</a>, create a New Project, paste this script, and click <strong>Run</strong>. Google will automatically create your Form and connected Sheet, setting up the exact dropdown fields.
                 </div>
 
@@ -1840,7 +1840,7 @@ export default function TeamBalancerView({
                     style={{
                       margin: '6px 0 0',
                       background: '#041610',
-                      border: '1px solid #16352A',
+                      border: '1px solid #1C1C1E',
                       borderRadius: '6px',
                       padding: '10px',
                       color: '#A7F3D0',
@@ -1864,13 +1864,13 @@ export default function TeamBalancerView({
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '8px',
-                  background: '#0F2E24',
-                  border: '1px solid #1E4636',
+                  background: '#121212',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '8px',
                   padding: '12px',
                 }}
               >
-                <label style={{ fontSize: '12px', fontWeight: 800, color: '#DDE6DF' }}>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: '#EBEBF5' }}>
                   🔗 Sync Responses from Your Connected Google Sheet
                 </label>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -1887,7 +1887,7 @@ export default function TeamBalancerView({
                     type="submit"
                     disabled={loading}
                     style={{
-                      background: '#C9A227',
+                      background: '#FF9500',
                       color: '#16201B',
                       border: 'none',
                       borderRadius: '6px',
@@ -1901,7 +1901,7 @@ export default function TeamBalancerView({
                     {loading ? 'Fetching Responses…' : '🌐 Import Sheet Responses into Balancer'}
                   </button>
                 </div>
-                <div style={{ fontSize: '10.5px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>
                   Reads all player submissions from the Google Sheet and loads them directly into the squad balancing roster.
                 </div>
               </form>
@@ -1914,7 +1914,7 @@ export default function TeamBalancerView({
             style={{
               marginTop: '14px',
               paddingTop: '14px',
-              borderTop: '1px solid #16352A',
+              borderTop: '1px solid #1C1C1E',
               display: 'flex',
               gap: '8px',
               flexWrap: 'wrap',
@@ -1922,7 +1922,7 @@ export default function TeamBalancerView({
             }}
           >
             <div style={{ flex: '2 1 140px' }}>
-              <label style={{ display: 'block', fontSize: '11px', color: '#8FA89B', marginBottom: '4px' }}>
+              <label style={{ display: 'block', fontSize: '11px', color: '#8E8E93', marginBottom: '4px' }}>
                 Add Player Name
               </label>
               <input
@@ -1934,7 +1934,7 @@ export default function TeamBalancerView({
               />
             </div>
             <div style={{ flex: '1 1 80px' }}>
-              <label style={{ display: 'block', fontSize: '11px', color: '#8FA89B', marginBottom: '4px' }}>
+              <label style={{ display: 'block', fontSize: '11px', color: '#8E8E93', marginBottom: '4px' }}>
                 Class (A–Z)
               </label>
               <input
@@ -1948,7 +1948,7 @@ export default function TeamBalancerView({
               />
             </div>
             <div style={{ flex: '1 1 85px' }}>
-              <label style={{ display: 'block', fontSize: '11px', color: '#8FA89B', marginBottom: '4px' }}>
+              <label style={{ display: 'block', fontSize: '11px', color: '#8E8E93', marginBottom: '4px' }}>
                 Position
               </label>
               <select
@@ -1967,7 +1967,7 @@ export default function TeamBalancerView({
             <button
               type="submit"
               style={{
-                background: '#16352A',
+                background: '#1C1C1E',
                 color: '#6CE5A0',
                 border: '1px solid #2F7D5C',
                 borderRadius: '8px',
@@ -1983,15 +1983,15 @@ export default function TeamBalancerView({
         </div>
 
         {/* STEP 2: TEAM SIZE & BALANCING CONFIGURATION */}
-        <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '12px', padding: '18px' }}>
-          <div className="scoreboard" style={{ color: '#C9A227', fontSize: '20px', marginBottom: '10px' }}>
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '18px' }}>
+          <div className="scoreboard" style={{ color: '#FF9500', fontSize: '20px', marginBottom: '10px' }}>
             2. SET PLAYERS PER TEAM &amp; GENERATE BALANCED SQUADS
           </div>
 
           <div
             style={{
-              background: '#08231B',
-              border: '1px solid #16352A',
+              background: '#121212',
+              border: '1px solid #1C1C1E',
               borderRadius: '10px',
               padding: '14px',
               marginBottom: '14px',
@@ -1999,7 +1999,7 @@ export default function TeamBalancerView({
           >
             <label
               htmlFor="players-per-team-input"
-              style={{ display: 'block', fontSize: '12.5px', fontWeight: 800, color: '#F4F2EA', marginBottom: '8px' }}
+              style={{ display: 'block', fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', marginBottom: '8px' }}
             >
               Number of Players in Each Team
             </label>
@@ -2012,7 +2012,7 @@ export default function TeamBalancerView({
                 className="form-input"
                 value={playersPerTeam}
                 onChange={(e) => setPlayersPerTeam(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                style={{ width: '110px', fontSize: '16px', fontWeight: 800, textAlign: 'center', color: '#C9A227' }}
+                style={{ width: '110px', fontSize: '16px', fontWeight: 800, textAlign: 'center', color: '#FF9500' }}
               />
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 {[5, 6, 7, 8, 11].map((presetSize) => (
@@ -2021,9 +2021,9 @@ export default function TeamBalancerView({
                     type="button"
                     onClick={() => setPlayersPerTeam(presetSize)}
                     style={{
-                      background: Number(playersPerTeam) === presetSize ? '#C9A227' : '#113328',
-                      color: Number(playersPerTeam) === presetSize ? '#16201B' : '#DDE6DF',
-                      border: '1px solid #2B5746',
+                      background: Number(playersPerTeam) === presetSize ? '#FF9500' : '#121212',
+                      color: Number(playersPerTeam) === presetSize ? '#16201B' : '#EBEBF5',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '6px',
                       padding: '6px 10px',
                       fontSize: '11.5px',
@@ -2045,23 +2045,23 @@ export default function TeamBalancerView({
                 gap: '8px',
                 marginTop: '14px',
                 paddingTop: '12px',
-                borderTop: '1px solid #16352A',
+                borderTop: '1px solid #1C1C1E',
               }}
             >
               <div style={{ background: '#0B2B21', padding: '8px 10px', borderRadius: '8px', textAlign: 'center' }}>
-                <div style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700 }}>TOTAL PLAYERS</div>
-                <div className="scoreboard" style={{ fontSize: '22px', color: '#F4F2EA' }}>
+                <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700 }}>TOTAL PLAYERS</div>
+                <div className="scoreboard" style={{ fontSize: '22px', color: '#FFFFFF' }}>
                   {players.length}
                 </div>
               </div>
               <div style={{ background: '#0B2B21', padding: '8px 10px', borderRadius: '8px', textAlign: 'center' }}>
-                <div style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700 }}>PLAYERS / TEAM</div>
-                <div className="scoreboard" style={{ fontSize: '22px', color: '#C9A227' }}>
+                <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700 }}>PLAYERS / TEAM</div>
+                <div className="scoreboard" style={{ fontSize: '22px', color: '#FF9500' }}>
                   {playersPerTeam}
                 </div>
               </div>
               <div style={{ background: '#0B2B21', padding: '8px 10px', borderRadius: '8px', textAlign: 'center' }}>
-                <div style={{ fontSize: '10.5px', color: '#8FA89B', fontWeight: 700 }}>TEAMS FORMED</div>
+                <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700 }}>TEAMS FORMED</div>
                 <div className="scoreboard" style={{ fontSize: '22px', color: '#6CE5A0' }}>
                   {estimatedTeamCount}
                 </div>
@@ -2071,7 +2071,7 @@ export default function TeamBalancerView({
 
           {/* Detected Class Tiers Breakdown */}
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#8FA89B', marginBottom: '8px', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#8E8E93', marginBottom: '8px', textTransform: 'uppercase' }}>
               Detected Skill Categories (A = Elite down to {distinctClasses[distinctClasses.length - 1] || 'Last'} = Amateur)
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -2118,7 +2118,7 @@ export default function TeamBalancerView({
             onClick={handleGenerateBalancedTeams}
             style={{
               width: '100%',
-              background: '#C9A227',
+              background: '#FF9500',
               color: '#16201B',
               border: 'none',
               borderRadius: '10px',
@@ -2126,7 +2126,7 @@ export default function TeamBalancerView({
               fontSize: '14px',
               fontWeight: 900,
               cursor: 'pointer',
-              boxShadow: '0 6px 20px rgba(201, 162, 39, 0.3)',
+              boxShadow: '0 6px 20px rgba(255, 149, 0, 0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -2142,8 +2142,8 @@ export default function TeamBalancerView({
       {balancedResult && balancedResult.teams && (
         <div
           style={{
-            background: '#0F2E24',
-            border: '2px solid #C9A227',
+            background: '#121212',
+            border: '2px solid #FF9500',
             borderRadius: '14px',
             padding: '20px',
           }}
@@ -2157,14 +2157,14 @@ export default function TeamBalancerView({
               gap: '12px',
               marginBottom: '16px',
               paddingBottom: '12px',
-              borderBottom: '1px solid #1E4636',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
             <div>
-              <div className="scoreboard" style={{ color: '#C9A227', fontSize: '24px' }}>
+              <div className="scoreboard" style={{ color: '#FF9500', fontSize: '24px' }}>
                 3. BALANCED TEAMS — ASSIGN TEAM NAMES ({balancedResult.teams.length} TEAMS)
               </div>
-              <div style={{ fontSize: '12px', color: '#8FA89B' }}>
+              <div style={{ fontSize: '12px', color: '#8E8E93' }}>
                 Each team below has an equal distribution of players from Classes{' '}
                 <strong>{balancedResult.classes.join(', ')}</strong>. Type a custom <strong>Team Name</strong> for each squad or click any two players to swap them.
               </div>
@@ -2175,9 +2175,9 @@ export default function TeamBalancerView({
                 type="button"
                 onClick={handleAssignPresetNames}
                 style={{
-                  background: '#16352A',
-                  color: '#C9A227',
-                  border: '1px solid #C9A227',
+                  background: '#1C1C1E',
+                  color: '#FF9500',
+                  border: '1px solid #FF9500',
                   borderRadius: '8px',
                   padding: '8px 13px',
                   fontSize: '12px',
@@ -2191,7 +2191,7 @@ export default function TeamBalancerView({
                 type="button"
                 onClick={handleExportBalancedCsv}
                 style={{
-                  background: '#16352A',
+                  background: '#1C1C1E',
                   color: '#6CE5A0',
                   border: '1px solid #2F7D5C',
                   borderRadius: '8px',
@@ -2208,7 +2208,7 @@ export default function TeamBalancerView({
                   type="button"
                   onClick={handleSaveToActiveCategory}
                   style={{
-                    background: '#C9A227',
+                    background: '#FF9500',
                     color: '#16201B',
                     border: 'none',
                     borderRadius: '8px',
@@ -2227,8 +2227,8 @@ export default function TeamBalancerView({
           {/* Quick-Add Player directly to Balanced Teams without Reshuffling */}
           <div
             style={{
-              background: '#082018',
-              border: '1px solid #1E4636',
+              background: '#000000',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '10px',
               padding: '12px 16px',
               marginBottom: '16px',
@@ -2245,7 +2245,7 @@ export default function TeamBalancerView({
                 <strong style={{ fontSize: '13px', color: '#6CE5A0' }}>
                   Intelligently Add Player(s) to Squads
                 </strong>
-                <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                   New arrivals are automatically placed on the best squad to preserve equal size & skill balance without reshuffling.
                 </div>
               </div>
@@ -2312,7 +2312,7 @@ export default function TeamBalancerView({
               <button
                 type="submit"
                 style={{
-                  background: '#16352A',
+                  background: '#1C1C1E',
                   color: '#6CE5A0',
                   border: '1px solid #2F7D5C',
                   borderRadius: '6px',
@@ -2342,9 +2342,9 @@ export default function TeamBalancerView({
                 <div
                   key={team.id || tIdx}
                   style={{
-                    background: '#08231B',
-                    border: `1px solid ${team.color || '#2B5746'}`,
-                    borderTop: `4px solid ${team.color || '#C9A227'}`,
+                    background: '#121212',
+                    border: `1px solid ${team.color || 'rgba(255, 255, 255, 0.1)'}`,
+                    borderTop: `4px solid ${team.color || '#FF9500'}`,
                     borderRadius: '12px',
                     padding: '14px',
                     display: 'flex',
@@ -2366,14 +2366,14 @@ export default function TeamBalancerView({
                         style={{
                           fontSize: '10.5px',
                           fontWeight: 800,
-                          color: team.color || '#C9A227',
+                          color: team.color || '#FF9500',
                           letterSpacing: '0.08em',
                           textTransform: 'uppercase',
                         }}
                       >
                         SQUAD #{team.team_number} · ASSIGN TEAM NAME
                       </span>
-                      <span style={{ fontSize: '11px', color: '#8FA89B', fontWeight: 700 }}>
+                      <span style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700 }}>
                         {team.players.length} / {balancedResult.players_per_team} Players
                       </span>
                     </div>
@@ -2387,8 +2387,8 @@ export default function TeamBalancerView({
                       style={{
                         fontWeight: 800,
                         fontSize: '15px',
-                        color: '#F4F2EA',
-                        borderColor: team.color || '#C9A227',
+                        color: '#FFFFFF',
+                        borderColor: team.color || '#FF9500',
                         background: '#0D2E23',
                       }}
                     />
@@ -2490,7 +2490,7 @@ export default function TeamBalancerView({
                         setCardInlineAddName({ ...cardInlineAddName, [tIdx]: '' });
                       }}
                       style={{
-                        background: '#C9A227',
+                        background: '#FF9500',
                         color: '#16201B',
                         border: 'none',
                         borderRadius: '4px',
@@ -2522,8 +2522,8 @@ export default function TeamBalancerView({
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            background: isSelectedForSwap ? 'rgba(201, 162, 39, 0.25)' : '#0D2E23',
-                            border: isSelectedForSwap ? '1px solid #C9A227' : '1px solid #163E31',
+                            background: isSelectedForSwap ? 'rgba(255, 149, 0, 0.25)' : '#0D2E23',
+                            border: isSelectedForSwap ? '1px solid #FF9500' : '1px solid #1C1C1E',
                             borderRadius: '8px',
                             padding: '7px 10px',
                             cursor: 'pointer',
@@ -2547,7 +2547,7 @@ export default function TeamBalancerView({
                             >
                               {p.player_class}
                             </span>
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#F4F2EA' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>
                               {p.name}
                             </span>
                             {p.is_newly_added && (
@@ -2590,8 +2590,8 @@ export default function TeamBalancerView({
                               }}
                               style={{
                                 fontSize: '10.5px',
-                                color: p.position ? '#C9A227' : '#9CA3AF',
-                                background: p.position ? '#082018' : '#1F2937',
+                                color: p.position ? '#FF9500' : '#9CA3AF',
+                                background: p.position ? '#000000' : '#1F2937',
                                 border: p.position ? '1px solid #1E4637' : '1px dashed #6B7280',
                                 padding: '2px 5px',
                                 borderRadius: '4px',
@@ -2623,7 +2623,7 @@ export default function TeamBalancerView({
                                   fontSize: '10px',
                                   color: '#6CE5A0',
                                   background: '#0B2920',
-                                  border: '1px solid #2B5746',
+                                  border: '1px solid rgba(255, 255, 255, 0.1)',
                                   padding: '2px 4px',
                                   borderRadius: '4px',
                                   fontWeight: 700,
@@ -2657,8 +2657,8 @@ export default function TeamBalancerView({
             style={{
               marginTop: '20px',
               padding: '18px',
-              background: '#08231B',
-              border: '1px solid #C9A227',
+              background: '#121212',
+              border: '1px solid #FF9500',
               borderRadius: '12px',
               display: 'flex',
               flexDirection: 'column',
@@ -2666,10 +2666,10 @@ export default function TeamBalancerView({
             }}
           >
             <div>
-              <div className="scoreboard" style={{ color: '#C9A227', fontSize: '21px' }}>
+              <div className="scoreboard" style={{ color: '#FF9500', fontSize: '21px' }}>
                 4. LAUNCH COMPETITION WORKFLOW — GENERATE FIXTURES, RANDOMIZE REFEREES &amp; OPEN PLAYER VOTING
               </div>
-              <div style={{ fontSize: '12px', color: '#9BB5A8', marginTop: '2px' }}>
+              <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '2px' }}>
                 Once your balanced teams and custom team names are ready, enter your competition referees and apply the teams to a specific <strong>League</strong> or <strong>Cup</strong> competition below. The system will automatically generate the competition&apos;s fixtures (or Cup Groups + Knockout Bracket), randomly assign referees across all unplayed matches, assign Permanent Player IDs, and open player voting under that specific competition.
               </div>
             </div>
@@ -2683,7 +2683,7 @@ export default function TeamBalancerView({
                 padding: '12px 14px',
               }}
             >
-              <label style={{ fontSize: '11.5px', fontWeight: 800, color: '#C9A227', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <label style={{ fontSize: '11.5px', fontWeight: 800, color: '#FF9500', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 🧑‍⚖️ Competition Referees Pool (Comma-Separated — Automatically Randomized Across Generated Fixtures)
               </label>
               <input
@@ -2694,7 +2694,7 @@ export default function TeamBalancerView({
                 placeholder="e.g. Ref Kamau, Ref Otieno, Ref Njoroge, Ref Mwangi"
                 style={{ width: '100%' }}
               />
-              <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '4px' }}>
+              <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '4px' }}>
                 These referees will be saved to the competition and randomly assigned to all generated fixtures. Managers can also change the referee for any unplayed fixture at any time.
               </div>
             </div>
@@ -2715,7 +2715,7 @@ export default function TeamBalancerView({
                   padding: '12px 14px',
                 }}
               >
-                <label style={{ fontSize: '11.5px', fontWeight: 800, color: '#C9A227', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 800, color: '#FF9500', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   🗓️ Competition Fixtures Start Date (Optional)
                 </label>
                 <input
@@ -2726,7 +2726,7 @@ export default function TeamBalancerView({
                   style={{ width: '160px' }}
                   title="Kickoff date for generated fixtures"
                 />
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '4px' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '4px' }}>
                   Set the kickoff date for the first match day. If left blank, it defaults to the upcoming enabled match day from today.
                 </div>
               </div>
@@ -2739,7 +2739,7 @@ export default function TeamBalancerView({
                   padding: '12px 14px',
                 }}
               >
-                <label style={{ fontSize: '11.5px', fontWeight: 800, color: '#C9A227', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 800, color: '#FF9500', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   🏟️ Match Venue
                 </label>
                 <input
@@ -2751,7 +2751,7 @@ export default function TeamBalancerView({
                   style={{ width: '100%', maxWidth: '280px', fontWeight: 700 }}
                   title="Primary match venue for this competition"
                 />
-                <div style={{ fontSize: '11px', color: '#8FA89B', marginTop: '4px' }}>
+                <div style={{ fontSize: '11px', color: '#8E8E93', marginTop: '4px' }}>
                   Primary match ground for this competition (defaults to <strong>Thoome Pri.</strong>, editable here).
                 </div>
               </div>
@@ -2769,7 +2769,7 @@ export default function TeamBalancerView({
                 <div
                   style={{
                     background: '#0D2E23',
-                    border: '1px solid #1E4636',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '10px',
                     padding: '14px',
                     display: 'flex',
@@ -2781,7 +2781,7 @@ export default function TeamBalancerView({
                     Option A · Apply to Existing League or Cup Competition
                   </div>
                   <div>
-                    <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                       Select Target Competition
                     </label>
                     <select
@@ -2809,7 +2809,7 @@ export default function TeamBalancerView({
                       alignItems: 'center',
                       gap: '8px',
                       fontSize: '11.5px',
-                      color: '#DDE6DF',
+                      color: '#EBEBF5',
                       cursor: 'pointer',
                     }}
                   >
@@ -2828,7 +2828,7 @@ export default function TeamBalancerView({
                     onClick={handleSaveToActiveCategory}
                     style={{
                       marginTop: 'auto',
-                      background: '#C9A227',
+                      background: '#FF9500',
                       color: '#16201B',
                       border: 'none',
                       borderRadius: '8px',
@@ -2849,7 +2849,7 @@ export default function TeamBalancerView({
                   onSubmit={handleCreateNewCategoryFromTeams}
                   style={{
                     background: '#0D2E23',
-                    border: '1px solid #1E4636',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '10px',
                     padding: '14px',
                     display: 'flex',
@@ -2857,12 +2857,12 @@ export default function TeamBalancerView({
                     gap: '10px',
                   }}
                 >
-                  <div style={{ fontSize: '12px', fontWeight: 800, color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Option B · Start a New League or Cup Competition
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     <div>
-                      <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                         New Competition Name
                       </label>
                       <input
@@ -2874,7 +2874,7 @@ export default function TeamBalancerView({
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                         Competition Type &amp; Fixtures
                       </label>
                       <select
@@ -2890,7 +2890,7 @@ export default function TeamBalancerView({
                     </div>
                   </div>
                   <div>
-                    <label style={{ fontSize: '11px', color: '#8FA89B', display: 'block', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '11px', color: '#8E8E93', display: 'block', marginBottom: '4px' }}>
                       Match Venue (Ground)
                     </label>
                     <input
@@ -2902,7 +2902,7 @@ export default function TeamBalancerView({
                       style={{ width: '100%', fontWeight: 700 }}
                     />
                   </div>
-                  <div style={{ fontSize: '11px', color: '#8FA89B' }}>
+                  <div style={{ fontSize: '11px', color: '#8E8E93' }}>
                     Automatically creates the competition, generates all fixtures, and opens TOTW/TOTT voting for these players.
                   </div>
                   <button
@@ -2910,7 +2910,7 @@ export default function TeamBalancerView({
                     style={{
                       marginTop: 'auto',
                       background: '#2E8B57',
-                      color: '#F4F2EA',
+                      color: '#FFFFFF',
                       border: 'none',
                       borderRadius: '8px',
                       padding: '10px 16px',
@@ -2944,7 +2944,7 @@ export default function TeamBalancerView({
                   <div style={{ fontSize: '13px', fontWeight: 800, color: '#6EE7B7' }}>
                     ✅ &ldquo;{savedCompetitionInfo.label}&rdquo; Ready — {savedCompetitionInfo.teamCount} Balanced Teams &amp; {savedCompetitionInfo.fixtureCount} Generated Fixtures
                   </div>
-                  <div style={{ fontSize: '11.5px', color: '#DDE6DF' }}>
+                  <div style={{ fontSize: '11.5px', color: '#EBEBF5' }}>
                     Proceed to the next competition processes for <strong>{savedCompetitionInfo.label}</strong>:
                   </div>
                 </div>
@@ -2953,7 +2953,7 @@ export default function TeamBalancerView({
                     type="button"
                     onClick={() => onNavigateToCompetitionView('fixtures', savedCompetitionInfo.key)}
                     style={{
-                      background: '#C9A227',
+                      background: '#FF9500',
                       color: '#16201B',
                       border: 'none',
                       borderRadius: '8px',
@@ -2974,8 +2974,8 @@ export default function TeamBalancerView({
                       )
                     }
                     style={{
-                      background: '#16352A',
-                      color: '#F4F2EA',
+                      background: '#1C1C1E',
+                      color: '#FFFFFF',
                       border: '1px solid #3F7A4E',
                       borderRadius: '8px',
                       padding: '8px 14px',
@@ -2990,9 +2990,9 @@ export default function TeamBalancerView({
                     type="button"
                     onClick={() => onNavigateToCompetitionView('voting', savedCompetitionInfo.key)}
                     style={{
-                      background: '#16352A',
+                      background: '#1C1C1E',
                       color: '#6CE5A0',
-                      border: '1px solid #C9A227',
+                      border: '1px solid #FF9500',
                       borderRadius: '8px',
                       padding: '8px 14px',
                       fontSize: '12px',
@@ -3010,7 +3010,7 @@ export default function TeamBalancerView({
       )}
 
       {/* INTERACTIVE PLAYER ROSTER TABLE (EDIT CLASSES A-Z OR REMOVE PLAYERS) */}
-      <div style={{ background: '#0F2E24', border: '1px solid #1E4636', borderRadius: '12px', padding: '18px' }}>
+      <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '18px' }}>
         <div
           style={{
             display: 'flex',
@@ -3022,10 +3022,10 @@ export default function TeamBalancerView({
           }}
         >
           <div>
-            <div className="scoreboard" style={{ color: '#F4F2EA', fontSize: '20px' }}>
+            <div className="scoreboard" style={{ color: '#FFFFFF', fontSize: '20px' }}>
               LOADED PLAYER POOL ({players.length} PLAYERS)
             </div>
-            <div style={{ fontSize: '11.5px', color: '#8FA89B' }}>
+            <div style={{ fontSize: '11.5px', color: '#8E8E93' }}>
               You can edit any player&apos;s name, class/category (<strong>A</strong> = Elite down to last letter = Amateur), or position before clicking Balance.
             </div>
           </div>
@@ -3053,14 +3053,14 @@ export default function TeamBalancerView({
         </div>
 
         {players.length === 0 ? (
-          <div style={{ padding: '24px', textAlign: 'center', color: '#8FA89B', fontSize: '13px' }}>
+          <div style={{ padding: '24px', textAlign: 'center', color: '#8E8E93', fontSize: '13px' }}>
             No players loaded yet. Upload an Excel/CSV file, paste a Google Sheet link, or click &ldquo;Load Sample Roster (A–D)&rdquo; above.
           </div>
         ) : (
-          <div style={{ maxHeight: '360px', overflowY: 'auto', borderRadius: '8px', border: '1px solid #16352A' }}>
+          <div style={{ maxHeight: '360px', overflowY: 'auto', borderRadius: '8px', border: '1px solid #1C1C1E' }}>
             <table className="standings-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: '#08231B', position: 'sticky', top: 0 }}>
+                <tr style={{ background: '#121212', position: 'sticky', top: 0 }}>
                   <th style={{ padding: '8px 12px', textAlign: 'left' }}>#</th>
                   <th style={{ padding: '8px 12px', textAlign: 'left' }}>Player Name</th>
                   <th style={{ padding: '8px 12px', textAlign: 'center' }}>Class / Category (A–Z)</th>
@@ -3075,7 +3075,7 @@ export default function TeamBalancerView({
                   const tierLabel = getClassTierLabel(p.player_class, distinctClasses);
                   return (
                     <tr key={p.id || idx} style={{ borderBottom: '1px solid #133328' }}>
-                      <td style={{ padding: '6px 12px', color: '#8FA89B', fontSize: '12px' }}>{idx + 1}</td>
+                      <td style={{ padding: '6px 12px', color: '#8E8E93', fontSize: '12px' }}>{idx + 1}</td>
                       <td style={{ padding: '6px 12px' }}>
                         <input
                           type="text"

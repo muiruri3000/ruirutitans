@@ -23,7 +23,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderBottom: '1px solid #1E4636',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             paddingBottom: '12px',
             marginBottom: '16px',
           }}
@@ -31,7 +31,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
           <div>
             <div
               style={{
-                color: '#C9A227',
+                color: '#FF9500',
                 fontSize: '11px',
                 fontWeight: '700',
                 letterSpacing: '0.15em',
@@ -42,7 +42,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
             </div>
             <h2
               className="scoreboard"
-              style={{ margin: '2px 0 0', fontSize: '24px', color: '#F4F2EA' }}
+              style={{ margin: '2px 0 0', fontSize: '24px', color: '#FFFFFF' }}
             >
               HEAD-TO-HEAD &amp; RECENT FORM
             </h2>
@@ -52,7 +52,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
             style={{
               background: 'none',
               border: 'none',
-              color: '#8FA89B',
+              color: '#8E8E93',
               fontSize: '20px',
               cursor: 'pointer',
               padding: '4px 8px',
@@ -65,7 +65,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
 
         {/* Content */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#8FA89B' }}>
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#8E8E93' }}>
             <div style={{ fontSize: '28px', marginBottom: '8px' }}>⚔️</div>
             <div style={{ fontSize: '13px' }}>Analyzing clash history and form statistics…</div>
           </div>
@@ -81,8 +81,8 @@ export default function H2HModal({ data, loading, error, onClose }) {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                background: '#082820',
-                border: '1px solid #1E4636',
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '10px',
                 padding: '16px 20px',
                 marginBottom: '18px',
@@ -98,22 +98,22 @@ export default function H2HModal({ data, loading, error, onClose }) {
                     margin: '0 auto 6px',
                   }}
                 />
-                <div className="scoreboard" style={{ fontSize: '22px', color: '#F4F2EA' }}>
+                <div className="scoreboard" style={{ fontSize: '22px', color: '#FFFFFF' }}>
                   {data.team1.name}
                 </div>
-                <div style={{ fontSize: '11.5px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '11.5px', color: '#8E8E93' }}>
                   {data.team1.points} pts · W{data.team1.won} D{data.team1.drawn} L{data.team1.lost}
                 </div>
               </div>
 
               <div style={{ textAlign: 'center', padding: '0 16px' }}>
-                <div className="scoreboard" style={{ fontSize: '28px', color: '#C9A227', lineHeight: 1 }}>
+                <div className="scoreboard" style={{ fontSize: '28px', color: '#FF9500', lineHeight: 1 }}>
                   {data.h2h_summary.team1_wins} - {data.h2h_summary.draws} - {data.h2h_summary.team2_wins}
                 </div>
                 <div
                   style={{
                     fontSize: '10px',
-                    color: '#8FA89B',
+                    color: '#8E8E93',
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
                     marginTop: '4px',
@@ -134,10 +134,10 @@ export default function H2HModal({ data, loading, error, onClose }) {
                     margin: '0 auto 6px',
                   }}
                 />
-                <div className="scoreboard" style={{ fontSize: '22px', color: '#F4F2EA' }}>
+                <div className="scoreboard" style={{ fontSize: '22px', color: '#FFFFFF' }}>
                   {data.team2.name}
                 </div>
-                <div style={{ fontSize: '11.5px', color: '#8FA89B' }}>
+                <div style={{ fontSize: '11.5px', color: '#8E8E93' }}>
                   {data.team2.points} pts · W{data.team2.won} D{data.team2.drawn} L{data.team2.lost}
                 </div>
               </div>
@@ -146,8 +146,8 @@ export default function H2HModal({ data, loading, error, onClose }) {
             {/* Form Ribbons */}
             <div
               style={{
-                background: '#082820',
-                border: '1px solid #1E4636',
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '10px',
                 padding: '14px 16px',
                 marginBottom: '18px',
@@ -157,7 +157,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
                 style={{
                   fontSize: '12px',
                   fontWeight: '700',
-                  color: '#C9A227',
+                  color: '#FF9500',
                   marginBottom: '12px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
@@ -173,10 +173,10 @@ export default function H2HModal({ data, loading, error, onClose }) {
                   alignItems: 'center',
                   marginBottom: '8px',
                   paddingBottom: '8px',
-                  borderBottom: '1px solid #16352A',
+                  borderBottom: '1px solid #1C1C1E',
                 }}
               >
-                <span style={{ fontSize: '13px', fontWeight: '600', color: '#DDE6DF' }}>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: '#EBEBF5' }}>
                   {data.team1.name}
                 </span>
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -191,7 +191,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
                       </span>
                     ))
                   ) : (
-                    <span style={{ fontSize: '11px', color: '#8FA89B' }}>No matches yet</span>
+                    <span style={{ fontSize: '11px', color: '#8E8E93' }}>No matches yet</span>
                   )}
                 </div>
               </div>
@@ -203,7 +203,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
                   alignItems: 'center',
                 }}
               >
-                <span style={{ fontSize: '13px', fontWeight: '600', color: '#DDE6DF' }}>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: '#EBEBF5' }}>
                   {data.team2.name}
                 </span>
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -218,7 +218,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
                       </span>
                     ))
                   ) : (
-                    <span style={{ fontSize: '11px', color: '#8FA89B' }}>No matches yet</span>
+                    <span style={{ fontSize: '11px', color: '#8E8E93' }}>No matches yet</span>
                   )}
                 </div>
               </div>
@@ -227,8 +227,8 @@ export default function H2HModal({ data, loading, error, onClose }) {
             {/* Side-by-side Comparative Metrics */}
             <div
               style={{
-                background: '#082820',
-                border: '1px solid #1E4636',
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '10px',
                 padding: '14px 16px',
                 marginBottom: '18px',
@@ -238,7 +238,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
                 style={{
                   fontSize: '12px',
                   fontWeight: '700',
-                  color: '#C9A227',
+                  color: '#FF9500',
                   marginBottom: '10px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
@@ -260,13 +260,13 @@ export default function H2HModal({ data, loading, error, onClose }) {
                     display: 'flex',
                     justifyContent: 'space-between',
                     padding: '6px 0',
-                    borderBottom: '1px solid #16352A',
+                    borderBottom: '1px solid #1C1C1E',
                     fontSize: '12.5px',
                   }}
                 >
-                  <span style={{ fontWeight: '700', color: '#F4F2EA', width: '40px' }}>{v1}</span>
-                  <span style={{ color: '#8FA89B', textAlign: 'center', flex: 1 }}>{label}</span>
-                  <span style={{ fontWeight: '700', color: '#F4F2EA', width: '40px', textAlign: 'right' }}>
+                  <span style={{ fontWeight: '700', color: '#FFFFFF', width: '40px' }}>{v1}</span>
+                  <span style={{ color: '#8E8E93', textAlign: 'center', flex: 1 }}>{label}</span>
+                  <span style={{ fontWeight: '700', color: '#FFFFFF', width: '40px', textAlign: 'right' }}>
                     {v2}
                   </span>
                 </div>
@@ -276,8 +276,8 @@ export default function H2HModal({ data, loading, error, onClose }) {
             {/* Past Encounters Log */}
             <div
               style={{
-                background: '#082820',
-                border: '1px solid #1E4636',
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '10px',
                 padding: '14px 16px',
               }}
@@ -286,7 +286,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
                 style={{
                   fontSize: '12px',
                   fontWeight: '700',
-                  color: '#C9A227',
+                  color: '#FF9500',
                   marginBottom: '8px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
@@ -303,29 +303,29 @@ export default function H2HModal({ data, loading, error, onClose }) {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '8px 10px',
-                      borderBottom: '1px solid #16352A',
+                      borderBottom: '1px solid #1C1C1E',
                       fontSize: '12px',
                     }}
                   >
-                    <span style={{ color: '#8FA89B', width: '60px' }}>{m.date}</span>
+                    <span style={{ color: '#8E8E93', width: '60px' }}>{m.date}</span>
                     <span
                       style={{
                         fontWeight: m.home_id === data.team1.id ? '700' : '400',
-                        color: m.home_id === data.team1.id ? '#C9A227' : '#DDE6DF',
+                        color: m.home_id === data.team1.id ? '#FF9500' : '#EBEBF5',
                       }}
                     >
                       {m.home_name}
                     </span>
                     <span
                       className="scoreboard"
-                      style={{ fontSize: '16px', color: '#F4F2EA', padding: '0 8px' }}
+                      style={{ fontSize: '16px', color: '#FFFFFF', padding: '0 8px' }}
                     >
                       {m.played ? `${m.home_score} – ${m.away_score}` : 'vs'}
                     </span>
                     <span
                       style={{
                         fontWeight: m.away_id === data.team1.id ? '700' : '400',
-                        color: m.away_id === data.team1.id ? '#C9A227' : '#DDE6DF',
+                        color: m.away_id === data.team1.id ? '#FF9500' : '#EBEBF5',
                       }}
                     >
                       {m.away_name}
@@ -337,7 +337,7 @@ export default function H2HModal({ data, loading, error, onClose }) {
                   style={{
                     padding: '12px',
                     fontSize: '12px',
-                    color: '#6E9080',
+                    color: '#8E8E93',
                     textAlign: 'center',
                     fontStyle: 'italic',
                   }}
