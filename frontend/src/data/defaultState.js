@@ -2210,7 +2210,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F10",
-      "date": "Wed, 28 Oct · 17:10",
+      "date": "Thu, 05 Nov · 18:10",
       "venue": "Thoome Pri.",
       "home": "EXM",
       "away": "BLA",
@@ -2350,7 +2350,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F24",
-      "date": "Thu, 05 Nov · 18:10",
+      "date": "Wed, 28 Oct · 17:10",
       "venue": "Thoome Pri.",
       "home": "BLA",
       "away": "SS",
