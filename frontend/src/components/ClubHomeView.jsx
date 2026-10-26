@@ -626,45 +626,35 @@ export default function ClubHomeView({
   const jerseys = homepageData?.jerseys || {};
   const customFixtures = homepageData?.upcoming_fixtures || [];
 
-  const MAIN_PAGE_SIZE = 3;
-  const mainPages = useMemo(() => {
-    if (!slides || slides.length === 0) return [];
-    const chunks = [];
-    for (let i = 0; i < slides.length; i += MAIN_PAGE_SIZE) {
-      chunks.push(slides.slice(i, i + MAIN_PAGE_SIZE));
-    }
-    return chunks;
-  }, [slides]);
-
-  const [activeMainPageIdx, setActiveMainPageIdx] = useState(0);
+  const [activeMainIdx, setActiveMainIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedFixtureCat, setSelectedFixtureCat] = useState('all');
   const [lightboxImage, setLightboxImage] = useState(null);
   const [mainTouchStartX, setMainTouchStartX] = useState(null);
 
-  // Auto-advance main carousel by 3 (next set of 3 images)
+  // Auto-advance main carousel by a single image at a time
   useEffect(() => {
-    if (mainPages.length <= 1 || isPaused) return;
+    if (slides.length <= 1 || isPaused) return;
     const timer = setInterval(() => {
-      setActiveMainPageIdx((prev) => (prev + 1) % mainPages.length);
+      setActiveMainIdx((prev) => (prev + 1) % slides.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [mainPages.length, isPaused]);
+  }, [slides.length, isPaused]);
 
   useEffect(() => {
-    if (activeMainPageIdx >= mainPages.length && mainPages.length > 0) {
-      setActiveMainPageIdx(0);
+    if (activeMainIdx >= slides.length && slides.length > 0) {
+      setActiveMainIdx(0);
     }
-  }, [mainPages.length, activeMainPageIdx]);
+  }, [slides.length, activeMainIdx]);
 
   const handlePrevMain = () => {
-    if (mainPages.length <= 1) return;
-    setActiveMainPageIdx((prev) => (prev - 1 + mainPages.length) % mainPages.length);
+    if (slides.length <= 1) return;
+    setActiveMainIdx((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
   const handleNextMain = () => {
-    if (mainPages.length <= 1) return;
-    setActiveMainPageIdx((prev) => (prev + 1) % mainPages.length);
+    if (slides.length <= 1) return;
+    setActiveMainIdx((prev) => (prev + 1) % slides.length);
   };
 
   const handleMainTouchStart = (e) => {
@@ -676,7 +666,7 @@ export default function ClubHomeView({
   const handleMainTouchEnd = (e) => {
     if (mainTouchStartX === null || !e.changedTouches || e.changedTouches.length === 0) return;
     const diff = mainTouchStartX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 35 && mainPages.length > 1) {
+    if (Math.abs(diff) > 35 && slides.length > 1) {
       if (diff > 0) handleNextMain();
       else handlePrevMain();
     }
@@ -913,7 +903,7 @@ export default function ClubHomeView({
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                {mainPages.length > 1 && (
+                {slides.length > 1 && (
                   <span
                     style={{
                       fontSize: '11px',
@@ -927,7 +917,7 @@ export default function ClubHomeView({
                       alignItems: 'center',
                       gap: '5px',
                     }}
-                    title="Main carousel cycles 3 pictures every 6.0s"
+                    title="Main carousel cycles 1 picture every 6.0s"
                   >
                     <span
                       style={{
@@ -938,11 +928,11 @@ export default function ClubHomeView({
                         display: 'inline-block',
                       }}
                     />
-                    {isPaused ? 'Paused' : 'Auto-Slide: 6.0s (3 at a time)'}
+                    {isPaused ? 'Paused' : 'Auto-Slide: 6.0s'}
                   </span>
                 )}
 
-                {mainPages.length > 1 && (
+                {slides.length > 1 && (
                   <button
                     type="button"
                     onClick={() => setIsPaused(!isPaused)}
@@ -973,9 +963,9 @@ export default function ClubHomeView({
                       border: '1px solid rgba(255, 255, 255, 0.1)',
                     }}
                   >
-                    {mainPages.length > 1
-                      ? `Slides ${activeMainPageIdx * MAIN_PAGE_SIZE + 1}–${Math.min((activeMainPageIdx + 1) * MAIN_PAGE_SIZE, slides.length)} / ${slides.length}`
-                      : `${slides.length} Slides`}
+                    {slides.length > 1
+                      ? `Slide ${activeMainIdx + 1} / ${slides.length}`
+                      : `${slides.length} Slide`}
                   </span>
                 )}
 
@@ -1000,7 +990,7 @@ export default function ClubHomeView({
               </div>
             </div>
 
-            {/* Sliding Viewport (Cycles 3 at a time) */}
+            {/* Sliding Viewport (Cycles 1 image at a time) */}
             {slides.length === 0 ? (
               <div style={{ padding: '48px 24px', textAlign: 'center', color: '#8E8E93' }}>
                 No carousel pictures uploaded yet. Sign in to CMS Admin to upload club pictures.
@@ -1015,254 +1005,253 @@ export default function ClubHomeView({
                 onTouchStart={handleMainTouchStart}
                 onTouchEnd={handleMainTouchEnd}
               >
-                {/* Sliding Track (Pages of 3) */}
+                {/* Sliding Track (1 slide at a time) */}
                 <div
                   style={{
                     display: 'flex',
                     width: '100%',
                     transition: 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
-                    transform: `translateX(-${activeMainPageIdx * 100}%)`,
+                    transform: `translateX(-${activeMainIdx * 100}%)`,
                   }}
                 >
-                  {mainPages.map((group, pageIndex) => (
+                  {slides.map((slide, sIdx) => (
                     <div
-                      key={pageIndex}
-                      className="main-three-grid"
+                      key={slide.id || sIdx}
                       style={{
                         flex: '0 0 100%',
                         minWidth: '100%',
+                        width: '100%',
                         boxSizing: 'border-box',
                       }}
                     >
-                      {group.map((slide, sIdx) => (
+                      <div
+                        className="main-card-hover"
+                        style={{
+                          position: 'relative',
+                          minHeight: '400px',
+                          height: '460px',
+                          borderRadius: '14px',
+                          overflow: 'hidden',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'flex-end',
+                          background: '#121212',
+                        }}
+                      >
+                        {/* Ambient Blurred Backdrop */}
                         <div
-                          key={slide.id || sIdx}
-                          className="main-card-hover"
                           style={{
-                            position: 'relative',
-                            minHeight: '390px',
-                            height: '420px',
-                            borderRadius: '14px',
-                            overflow: 'hidden',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            position: 'absolute',
+                            inset: 0,
+                            backgroundImage: `url(${slide.image})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            filter: 'blur(18px) brightness(0.35)',
+                            transform: 'scale(1.08)',
+                            zIndex: 0,
+                          }}
+                        />
+
+                        {/* Sharp Contained Image */}
+                        <img
+                          src={slide.image}
+                          alt={slide.title || 'Ruiru Titans Gallery'}
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                            objectPosition: 'center',
+                            zIndex: 1,
+                          }}
+                        />
+
+                        {/* Vignette Overlay */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'linear-gradient(180deg, rgba(6,22,16,0.12) 0%, rgba(6,22,16,0.55) 55%, rgba(6,22,16,0.96) 100%)',
+                            zIndex: 2,
+                          }}
+                        />
+
+                        {/* Top Tag on Card */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '14px',
+                            left: '14px',
+                            right: '14px',
+                            zIndex: 3,
                             display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'flex-end',
-                            background: '#121212',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
                           }}
                         >
-                          {/* Ambient Blurred Backdrop */}
-                          <div
+                          <span
                             style={{
-                              position: 'absolute',
-                              inset: 0,
-                              backgroundImage: `url(${slide.image})`,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center',
-                              filter: 'blur(18px) brightness(0.35)',
-                              transform: 'scale(1.08)',
-                              zIndex: 0,
-                            }}
-                          />
-
-                          {/* Sharp Contained Image */}
-                          <img
-                            src={slide.image}
-                            alt={slide.title || 'Ruiru Titans Gallery'}
-                            style={{
-                              position: 'absolute',
-                              inset: 0,
-                              width: '100%',
-                              height: '100%',
-                              maxWidth: '100%',
-                              maxHeight: '100%',
-                              objectFit: 'contain',
-                              objectPosition: 'center',
-                              zIndex: 1,
-                            }}
-                          />
-
-                          {/* Vignette Overlay */}
-                          <div
-                            style={{
-                              position: 'absolute',
-                              inset: 0,
-                              background: 'linear-gradient(180deg, rgba(6,22,16,0.15) 0%, rgba(6,22,16,0.6) 55%, rgba(6,22,16,0.96) 100%)',
-                              zIndex: 2,
-                            }}
-                          />
-
-                          {/* Top Tag on Card */}
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: '12px',
-                              left: '12px',
-                              right: '12px',
-                              zIndex: 3,
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
+                              background: 'rgba(255, 149, 0, 0.92)',
+                              color: '#10221B',
+                              fontSize: '10px',
+                              fontWeight: 900,
+                              padding: '4px 12px',
+                              borderRadius: '999px',
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
                             }}
                           >
-                            <span
+                            📸 {slide.tag || 'CLUB GALLERY'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setLightboxImage(slide)}
+                            style={{
+                              background: 'rgba(8, 32, 24, 0.85)',
+                              color: '#FF9500',
+                              border: '1px solid rgba(255, 149, 0, 0.4)',
+                              borderRadius: '8px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              padding: '4px 10px',
+                              cursor: 'pointer',
+                            }}
+                            title="Click to view full photo"
+                          >
+                            🔍 Zoom
+                          </button>
+                        </div>
+
+                        {/* Bottom Caption Content */}
+                        <div style={{ position: 'relative', zIndex: 3, padding: '22px 24px 20px', maxWidth: '850px' }}>
+                          <h4
+                            className="scoreboard"
+                            style={{
+                              fontSize: 'clamp(22px, 3.5vw, 32px)',
+                              color: '#FFFFFF',
+                              margin: '0 0 8px 0',
+                              lineHeight: 1.15,
+                              letterSpacing: '0.03em',
+                            }}
+                          >
+                            {slide.title}
+                          </h4>
+                          {slide.subtitle && (
+                            <p
                               style={{
-                                background: 'rgba(255, 149, 0, 0.92)',
-                                color: '#10221B',
-                                fontSize: '9.5px',
-                                fontWeight: 900,
-                                padding: '3px 10px',
-                                borderRadius: '999px',
-                                letterSpacing: '0.08em',
-                                textTransform: 'uppercase',
+                                fontSize: '13.5px',
+                                color: '#C2D6CB',
+                                margin: '0 0 14px 0',
+                                lineHeight: 1.5,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
                               }}
                             >
-                              📸 {slide.tag || 'CLUB GALLERY'}
-                            </span>
+                              {slide.subtitle}
+                            </p>
+                          )}
+
+                          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                             <button
                               type="button"
                               onClick={() => setLightboxImage(slide)}
                               style={{
-                                background: 'rgba(8, 32, 24, 0.85)',
-                                color: '#FF9500',
-                                border: '1px solid rgba(255, 149, 0, 0.4)',
-                                borderRadius: '6px',
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                padding: '3px 8px',
+                                background: '#FF9500',
+                                color: '#16201B',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 800,
                                 cursor: 'pointer',
                               }}
-                              title="Click to view full photo"
                             >
-                              🔍 Zoom
+                              🔍 Full Image
                             </button>
-                          </div>
-
-                          {/* Bottom Caption Content */}
-                          <div style={{ position: 'relative', zIndex: 3, padding: '18px 18px 16px' }}>
-                            <h4
-                              className="scoreboard"
+                            <button
+                              type="button"
+                              onClick={onNavigateChampionship}
                               style={{
-                                fontSize: '20px',
+                                background: '#1C1C1E',
                                 color: '#FFFFFF',
-                                margin: '0 0 6px 0',
-                                lineHeight: 1.15,
-                                letterSpacing: '0.03em',
+                                border: '1px solid #2F7D5C',
+                                borderRadius: '8px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 800,
+                                cursor: 'pointer',
                               }}
                             >
-                              {slide.title}
-                            </h4>
-                            {slide.subtitle && (
-                              <p
-                                style={{
-                                  fontSize: '12.5px',
-                                  color: '#C2D6CB',
-                                  margin: '0 0 12px 0',
-                                  lineHeight: 1.4,
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                  overflow: 'hidden',
-                                }}
-                              >
-                                {slide.subtitle}
-                              </p>
-                            )}
-
-                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                              <button
-                                type="button"
-                                onClick={() => setLightboxImage(slide)}
-                                style={{
-                                  background: '#FF9500',
-                                  color: '#16201B',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  padding: '7px 12px',
-                                  fontSize: '11px',
-                                  fontWeight: 800,
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                🔍 Full Image
-                              </button>
-                              <button
-                                type="button"
-                                onClick={onNavigateChampionship}
-                                style={{
-                                  background: '#1C1C1E',
-                                  color: '#FFFFFF',
-                                  border: '1px solid #2F7D5C',
-                                  borderRadius: '6px',
-                                  padding: '7px 12px',
-                                  fontSize: '11px',
-                                  fontWeight: 800,
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                🏆 Hub →
-                              </button>
-                            </div>
+                              🏆 Hub →
+                            </button>
                           </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Floating Prev & Next Arrows (Cycle by 3) */}
-                {mainPages.length > 1 && (
+                {/* Floating Prev & Next Arrows (Cycle by 1) */}
+                {slides.length > 1 && (
                   <>
                     <button
                       type="button"
-                      aria-label="Previous 3 slides"
+                      aria-label="Previous slide"
                       onClick={handlePrevMain}
                       style={{
                         position: 'absolute',
-                        left: '10px',
+                        left: '12px',
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        width: '38px',
-                        height: '38px',
+                        width: '42px',
+                        height: '42px',
                         borderRadius: '50%',
                         background: 'rgba(8, 32, 24, 0.92)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
                         color: '#FFFFFF',
                         cursor: 'pointer',
                         fontWeight: 900,
-                        fontSize: '18px',
+                        fontSize: '22px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         zIndex: 4,
-                        boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
+                        transition: 'transform 0.15s ease, background 0.15s ease',
                       }}
                     >
                       ‹
                     </button>
                     <button
                       type="button"
-                      aria-label="Next 3 slides"
+                      aria-label="Next slide"
                       onClick={handleNextMain}
                       style={{
                         position: 'absolute',
-                        right: '10px',
+                        right: '12px',
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        width: '38px',
-                        height: '38px',
+                        width: '42px',
+                        height: '42px',
                         borderRadius: '50%',
                         background: 'rgba(8, 32, 24, 0.92)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
                         color: '#FFFFFF',
                         cursor: 'pointer',
                         fontWeight: 900,
-                        fontSize: '18px',
+                        fontSize: '22px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         zIndex: 4,
-                        boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
+                        transition: 'transform 0.15s ease, background 0.15s ease',
                       }}
                     >
                       ›
@@ -1339,12 +1328,12 @@ export default function ClubHomeView({
                 )}
               </div>
 
-              {/* Prev / Next & Page Dots (Cycling by 3) */}
-              {mainPages.length > 1 && (
+              {/* Prev / Next & Page Dots (Cycling by 1) */}
+              {slides.length > 1 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <button
                     type="button"
-                    aria-label="Previous 3 slides"
+                    aria-label="Previous slide"
                     onClick={handlePrevMain}
                     style={{
                       width: '34px',
@@ -1360,29 +1349,30 @@ export default function ClubHomeView({
                   >
                     ‹
                   </button>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    {mainPages.map((_, pIdx) => (
+                  <div style={{ display: 'flex', gap: '6px', maxWidth: '280px', overflowX: 'auto', padding: '4px 0' }}>
+                    {slides.map((_, sIdx) => (
                       <button
-                        key={pIdx}
+                        key={sIdx}
                         type="button"
-                        aria-label={`Go to slide set ${pIdx + 1}`}
-                        onClick={() => setActiveMainPageIdx(pIdx)}
+                        aria-label={`Go to slide ${sIdx + 1}`}
+                        onClick={() => setActiveMainIdx(sIdx)}
                         style={{
-                          width: pIdx === activeMainPageIdx ? '24px' : '8px',
+                          width: sIdx === activeMainIdx ? '24px' : '8px',
                           height: '8px',
                           borderRadius: '999px',
                           border: 'none',
-                          background: pIdx === activeMainPageIdx ? '#FF9500' : 'rgba(255,255,255,0.3)',
+                          background: sIdx === activeMainIdx ? '#FF9500' : 'rgba(255,255,255,0.3)',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
                           padding: 0,
+                          flexShrink: 0,
                         }}
                       />
                     ))}
                   </div>
                   <button
                     type="button"
-                    aria-label="Next 3 slides"
+                    aria-label="Next slide"
                     onClick={handleNextMain}
                     style={{
                       width: '34px',
