@@ -22,18 +22,21 @@ export default function TopNav({
       ? 'Syncing…'
       : '⚠️ Unsaved';
 
+  const isAdmin = Boolean(cmsUser);
+  const isLoggedIn = Boolean(playerUser || cmsUser);
+
   const navItems = [
     { key: 'home', label: '🏠 Home' },
     { key: 'championship', label: '🏆 Championship' },
     { key: 'table', label: '📊 Table' },
     { key: 'fixtures', label: '⚽ Fixtures & Results' },
     { key: 'cup', label: '🏆 Cup' },
-    { key: 'tactics', label: '📋 Tactics' },
+    ...(isAdmin ? [{ key: 'tactics', label: '📋 Tactics' }] : []),
     { key: 'stats', label: '📈 Stats' },
-    { key: 'voting', label: '⭐ Voting' },
+    ...(isLoggedIn ? [{ key: 'voting', label: '⭐ Voting' }] : []),
     { key: 'highlights', label: '🎥 Highlights' },
     { key: 'archives', label: '🏛️ Archives' },
-    { key: 'balancer', label: '⚖️ Balancer' },
+    ...(isAdmin ? [{ key: 'balancer', label: '⚖️ Balancer' }] : []),
   ];
 
   return (

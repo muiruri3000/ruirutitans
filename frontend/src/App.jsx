@@ -2842,6 +2842,9 @@ export default function App() {
     );
   }
 
+  const isAdmin = Boolean(cmsUser);
+  const isLoggedIn = Boolean(playerUser || cmsUser);
+
   const navTabs = [
     { key: 'home', label: '🏠 Home' },
     { key: 'championship', label: '🏆 Championship' },
@@ -2850,10 +2853,10 @@ export default function App() {
     { key: 'cup', label: '🏆 Cup Progression' },
     { key: 'highlights', label: '🎥 Highlights' },
     { key: 'archives', label: '🏛️ Archives' },
-    { key: 'voting', label: '⭐ TOTW & TOTT (Vote)' },
+    ...(isLoggedIn ? [{ key: 'voting', label: '⭐ TOTW & TOTT (Vote)' }] : []),
     { key: 'stats', label: '📈 Player Stats' },
-    { key: 'balancer', label: '⚖️ Team Balancer' },
-    { key: 'tactics', label: '📋 Tactics' },
+    ...(isAdmin ? [{ key: 'balancer', label: '⚖️ Team Balancer' }] : []),
+    ...(isAdmin ? [{ key: 'tactics', label: '📋 Tactics' }] : []),
     ...(playerUser
       ? [{ key: 'player-dashboard', label: '👤 Player Dashboard' }]
       : isCmsMode && cmsUser
@@ -3550,6 +3553,48 @@ export default function App() {
           </nav>
         )}
 
+        {/* Voting Notice Banner: Shows non-logged in users that voting requires logging in */}
+        {!isDedicatedTacticsMode && !playerUser && !cmsUser && (
+          <div
+            style={{
+              background: 'rgba(255, 149, 0, 0.08)',
+              border: '1px solid rgba(255, 149, 0, 0.28)',
+              borderRadius: '12px',
+              padding: '10px 16px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>🗳️</span>
+              <span style={{ fontSize: '12.5px', color: '#EBEBF5' }}>
+                <strong style={{ color: '#FF9500' }}>Official Titans Voting:</strong> You should be logged in to cast your vote for Team of the Week (TOTW) and Team of the Tournament (TOTT).
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAuthModal({ open: true, tab: 'player' })}
+              style={{
+                background: '#FF9500',
+                color: '#16201B',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '6px 14px',
+                fontSize: '11.5px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              ⚽ Sign In to Vote
+            </button>
+          </div>
+        )}
+
         {/* Public Active Competition Switcher Bar (for Fixtures, Voting, Standings, Cup, Stats & Balancer) */}
         {!isDedicatedTacticsMode && currentView !== 'home' && currentView !== 'tactics' && activeCompetitionsList.length > 0 && (
           <div
@@ -4095,16 +4140,76 @@ export default function App() {
             5. DEDICATED TOTW, TOTT & PLAYER VOTING VIEW
            ========================================================= */}
         {currentView === 'voting' && (
-          <VotingView
-            activeCategoryKey={activeCategoryKey}
-            categories={data.categories}
-            onSelectCategory={(k) => handleSelectActiveCategory(k)}
-            playerUser={playerUser}
-            cmsUser={cmsUser}
-            isCmsMode={isCmsMode}
-            initialSubTab={votingInitialTab}
-            onRequestPlayerLogin={() => setAuthModal({ open: true, tab: 'player' })}
-          />
+          !playerUser && !cmsUser ? (
+            <div
+              style={{
+                background: '#121212',
+                border: '1px solid rgba(255, 149, 0, 0.35)',
+                borderRadius: '16px',
+                padding: '44px 24px',
+                textAlign: 'center',
+                maxWidth: '640px',
+                margin: '40px auto',
+              }}
+            >
+              <div style={{ fontSize: '42px', marginBottom: '14px' }}>⭐</div>
+              <div style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                OFFICIAL TITANS BALLOT
+              </div>
+              <h3 className="scoreboard" style={{ fontSize: '26px', color: '#FFFFFF', margin: '0 0 10px' }}>
+                YOU SHOULD BE LOGGED IN TO VOTE
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#8E8E93', maxWidth: '480px', margin: '0 auto 20px', lineHeight: 1.6 }}>
+                Official voting for Team of the Week (TOTW) and Team of the Tournament (TOTT) is reserved for registered Ruiru Titans players and team managers. Please sign in to submit your ballot.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setAuthModal({ open: true, tab: 'player' })}
+                  style={{
+                    background: '#FF9500',
+                    color: '#16201B',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 24px',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(255, 149, 0, 0.3)',
+                  }}
+                >
+                  ⚽ Sign In as Player to Vote
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthModal({ open: true, tab: 'cms' })}
+                  style={{
+                    background: '#1C1C1E',
+                    color: '#FFFFFF',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '8px',
+                    padding: '12px 24px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  🔐 Manager Sign-In
+                </button>
+              </div>
+            </div>
+          ) : (
+            <VotingView
+              activeCategoryKey={activeCategoryKey}
+              categories={data.categories}
+              onSelectCategory={(k) => handleSelectActiveCategory(k)}
+              playerUser={playerUser}
+              cmsUser={cmsUser}
+              isCmsMode={isCmsMode}
+              initialSubTab={votingInitialTab}
+              onRequestPlayerLogin={() => setAuthModal({ open: true, tab: 'player' })}
+            />
+          )
         )}
 
         {/* =========================================================
@@ -4123,14 +4228,56 @@ export default function App() {
             6B. TEAM BALANCER VIEW (Excel / CSV / Table / Google Sheet)
            ========================================================= */}
         {currentView === 'balancer' && (
-          <TeamBalancerView
-            categories={data.categories}
-            activeCategoryKey={activeCategoryKey}
-            activeCategoryLabel={cat?.label || 'Open League'}
-            onApplyBalancedTeamsToCategory={handleApplyBalancedTeamsToCategory}
-            onCreateCategoryWithBalancedTeams={handleCreateCategoryWithBalancedTeams}
-            onNavigateToCompetitionView={handleNavigateToCompetitionView}
-          />
+          !cmsUser ? (
+            <div
+              style={{
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '16px',
+                padding: '44px 24px',
+                textAlign: 'center',
+                maxWidth: '640px',
+                margin: '40px auto',
+              }}
+            >
+              <div style={{ fontSize: '42px', marginBottom: '14px' }}>⚖️</div>
+              <div style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                ADMIN TOOL RESTRICTED
+              </div>
+              <h3 className="scoreboard" style={{ fontSize: '26px', color: '#FFFFFF', margin: '0 0 10px' }}>
+                ADMIN ACCESS REQUIRED
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#8E8E93', maxWidth: '480px', margin: '0 auto 20px', lineHeight: 1.6 }}>
+                The Team Balancer is reserved exclusively for tournament managers and club administrators. Please sign in with your manager credentials to access this tool.
+              </p>
+              <button
+                type="button"
+                onClick={() => setAuthModal({ open: true, tab: 'cms' })}
+                style={{
+                  background: '#FF9500',
+                  color: '#16201B',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(255, 149, 0, 0.3)',
+                }}
+              >
+                🔐 Sign In as Manager
+              </button>
+            </div>
+          ) : (
+            <TeamBalancerView
+              categories={data.categories}
+              activeCategoryKey={activeCategoryKey}
+              activeCategoryLabel={cat?.label || 'Open League'}
+              onApplyBalancedTeamsToCategory={handleApplyBalancedTeamsToCategory}
+              onCreateCategoryWithBalancedTeams={handleCreateCategoryWithBalancedTeams}
+              onNavigateToCompetitionView={handleNavigateToCompetitionView}
+            />
+          )
         )}
 
         {/* =========================================================
@@ -4162,13 +4309,55 @@ export default function App() {
             6F. DEDICATED TACTICS & FORMATIONS BOARD VIEW
            ========================================================= */}
         {currentView === 'tactics' && (
-          <TacticsView
-            categories={data.categories}
-            activeCategoryKey={activeCategoryKey}
-            isCmsMode={isCmsMode}
-            isStandalonePage={isDedicatedTacticsMode}
-            onToggleStandalonePage={handleToggleStandaloneTactics}
-          />
+          !cmsUser ? (
+            <div
+              style={{
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '16px',
+                padding: '44px 24px',
+                textAlign: 'center',
+                maxWidth: '640px',
+                margin: '40px auto',
+              }}
+            >
+              <div style={{ fontSize: '42px', marginBottom: '14px' }}>📋</div>
+              <div style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                ADMIN TOOL RESTRICTED
+              </div>
+              <h3 className="scoreboard" style={{ fontSize: '26px', color: '#FFFFFF', margin: '0 0 10px' }}>
+                ADMIN ACCESS REQUIRED
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#8E8E93', maxWidth: '480px', margin: '0 auto 20px', lineHeight: 1.6 }}>
+                Tactics, chalkboard lineups, and formations are reserved exclusively for tournament managers and club administrators. Please sign in with your manager credentials to access tactics.
+              </p>
+              <button
+                type="button"
+                onClick={() => setAuthModal({ open: true, tab: 'cms' })}
+                style={{
+                  background: '#FF9500',
+                  color: '#16201B',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(255, 149, 0, 0.3)',
+                }}
+              >
+                🔐 Sign In as Manager
+              </button>
+            </div>
+          ) : (
+            <TacticsView
+              categories={data.categories}
+              activeCategoryKey={activeCategoryKey}
+              isCmsMode={isCmsMode}
+              isStandalonePage={isDedicatedTacticsMode}
+              onToggleStandalonePage={handleToggleStandaloneTactics}
+            />
+          )
         )}
 
         {/* =========================================================

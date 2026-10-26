@@ -594,6 +594,54 @@ export default function VotingView({
         </div>
       </div>
 
+      {/* Notice: You must be logged in to vote */}
+      {!playerUser && !cmsUser && (
+        <div
+          style={{
+            background: 'rgba(255, 149, 0, 0.1)',
+            border: '1px solid rgba(255, 149, 0, 0.38)',
+            borderRadius: '12px',
+            padding: '12px 18px',
+            marginBottom: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '20px' }}>📢</span>
+            <div>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                VOTING NOTICE: YOU SHOULD BE LOGGED IN TO VOTE
+              </div>
+              <div style={{ fontSize: '12px', color: '#EBEBF5', marginTop: '2px' }}>
+                Official voting is open to registered players and tournament staff. Please sign in with your Player Code or Manager account to cast your ballot.
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onRequestPlayerLogin}
+            style={{
+              background: '#FF9500',
+              color: '#16201B',
+              border: 'none',
+              borderRadius: '999px',
+              padding: '7px 16px',
+              fontSize: '12px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 8px rgba(255, 149, 0, 0.25)',
+            }}
+          >
+            ⚽ Sign In to Vote
+          </button>
+        </div>
+      )}
+
       {/* Sub-Tabs Navigation */}
       <div
         style={{
