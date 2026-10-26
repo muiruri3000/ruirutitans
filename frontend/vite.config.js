@@ -6,13 +6,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        entryFileNames: 'js/titans.js',
-        chunkFileNames: 'js/[name].js',
+        entryFileNames: 'js/titans-[hash].js',
+        chunkFileNames: 'js/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
           if (assetInfo.name && assetInfo.name.endsWith('.css')) {
-            return 'css/titans.css';
+            return 'css/titans-[hash].css';
           }
-          return 'assets/[name].[ext]';
+          return 'assets/[name]-[hash].[ext]';
         },
       },
     },
