@@ -3491,6 +3491,11 @@ export default function App() {
           <nav
             aria-label="Club Homepage Sections"
             className="club-section-navbar"
+            onWheel={(e) => {
+              if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                e.currentTarget.scrollLeft += e.deltaY;
+              }
+            }}
           >
             {navTabs.map((t) => (
               <button

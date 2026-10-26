@@ -310,7 +310,7 @@ button {
   background: rgba(18, 18, 18, 0.90) !important;
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  padding: 8px 10px;
+  padding: 8px 10px 11px;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   overflow-x: auto;
@@ -320,10 +320,31 @@ button {
   z-index: 820;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 149, 0, 0.6) rgba(255, 255, 255, 0.08);
 }
+
 .club-section-navbar::-webkit-scrollbar {
-  display: none;
+  height: 6px;
+  display: block !important;
+}
+
+.club-section-navbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  margin: 0 10px;
+}
+
+.club-section-navbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 149, 0, 0.55);
+  border-radius: 999px;
+  transition: background 0.15s ease;
+}
+
+.club-section-navbar::-webkit-scrollbar-thumb:hover,
+.club-section-navbar::-webkit-scrollbar-thumb:active {
+  background: var(--accent-orange-vibrant);
+  box-shadow: 0 0 8px rgba(255, 149, 0, 0.6);
 }
 
 .sync-badge {
