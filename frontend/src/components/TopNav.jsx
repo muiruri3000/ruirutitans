@@ -86,6 +86,7 @@ export default function TopNav({
 
         {/* Sync & Auth Actions */}
         <div className="top-nav-actions">
+          {/* Live Sync Status Badge: Positioned side by side with the Login Dropdown */}
           <div
             className="sync-badge"
             style={syncStatus === 'error' ? { cursor: 'pointer', borderColor: 'var(--status-danger)' } : {}}
@@ -100,21 +101,7 @@ export default function TopNav({
             <span>{statusText}</span>
           </div>
 
-          {/* Hamburger Menu Toggle Button for Small Screens */}
-          <button
-            type="button"
-            className="hamburger-btn"
-            onClick={() => {
-              setIsMenuOpen(!isMenuOpen);
-              setIsLoginOpen(false);
-            }}
-            aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            aria-expanded={isMenuOpen}
-          >
-            {isMenuOpen ? '✕' : '☰'}
-          </button>
-
-          {/* Unified Log In Dropdown: Placed immediately after Hamburger Menu */}
+          {/* Unified Log In Dropdown: Side by side with the Live Synced badge */}
           <div className="login-dropdown-wrapper" ref={loginDropdownRef} style={{ position: 'relative' }}>
             <button
               type="button"
@@ -146,6 +133,8 @@ export default function TopNav({
                 fontWeight: 800,
                 cursor: 'pointer',
                 minHeight: '34px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
                 transition: 'all 0.15s ease',
                 boxShadow: isLoginOpen || (!playerUser && !cmsUser) ? '0 2px 10px rgba(255, 149, 0, 0.25)' : 'none',
               }}
@@ -180,6 +169,7 @@ export default function TopNav({
                   top: 'calc(100% + 8px)',
                   right: 0,
                   minWidth: '280px',
+                  maxWidth: 'calc(100vw - 24px)',
                   background: 'rgba(20, 20, 22, 0.98)',
                   backdropFilter: 'blur(24px) saturate(180%)',
                   WebkitBackdropFilter: 'blur(24px) saturate(180%)',
@@ -344,6 +334,20 @@ export default function TopNav({
               </div>
             )}
           </div>
+
+          {/* Hamburger Menu Toggle Button for Small Screens */}
+          <button
+            type="button"
+            className="hamburger-btn"
+            onClick={() => {
+              setIsMenuOpen(!isMenuOpen);
+              setIsLoginOpen(false);
+            }}
+            aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={isMenuOpen}
+          >
+            {isMenuOpen ? '✕' : '☰'}
+          </button>
         </div>
       </div>
 

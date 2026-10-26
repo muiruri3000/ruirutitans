@@ -3108,9 +3108,9 @@ export default function App() {
 
             {/* Hero Action CTAs (Shown when logged in) */}
             {(cmsUser || playerUser) && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '240px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                 {cmsUser && isCmsMode && (
-                  <>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                     <button
                       type="button"
                       onClick={() => {
@@ -3119,17 +3119,20 @@ export default function App() {
                       style={{
                         background: '#FF9500',
                         color: '#16201B',
-                        border: 'none',
+                        border: '1px solid #FF9500',
                         borderRadius: '10px',
-                        padding: '11px 18px',
+                        padding: '10px 18px',
+                        minHeight: '40px',
                         fontSize: '13px',
                         fontWeight: 800,
                         cursor: 'pointer',
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '8px',
                         boxShadow: '0 4px 16px rgba(255, 149, 0, 0.3)',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
                       }}
                     >
                       🛠️ Open Manager Dashboard
@@ -3147,22 +3150,25 @@ export default function App() {
                         color: '#FFFFFF',
                         borderRadius: '10px',
                         padding: '10px 16px',
-                        fontSize: '12px',
+                        minHeight: '40px',
+                        fontSize: '12.5px',
                         fontWeight: 800,
                         cursor: 'pointer',
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '6px',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
                       }}
                     >
                       📝 Register New Player (4-Digit Code)
                     </button>
-                  </>
+                  </div>
                 )}
 
                 {playerUser && (
-                  <>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                     <button
                       type="button"
                       onClick={() => setCurrentView('player-dashboard')}
@@ -3172,13 +3178,16 @@ export default function App() {
                         border: '1px solid #3F7A4E',
                         borderRadius: '10px',
                         padding: '10px 16px',
+                        minHeight: '40px',
                         fontSize: '12.5px',
                         fontWeight: 800,
                         cursor: 'pointer',
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '6px',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
                       }}
                     >
                       👤 Player Dashboard ({playerUser.name})
@@ -3194,19 +3203,22 @@ export default function App() {
                         color: '#FF9500',
                         border: '1px solid #FF9500',
                         borderRadius: '10px',
-                        padding: '8px 14px',
+                        padding: '10px 14px',
+                        minHeight: '40px',
                         fontSize: '12px',
                         fontWeight: 700,
                         cursor: 'pointer',
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '6px',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
                       }}
                     >
                       🗳️ Cast Player Vote
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
             )}
