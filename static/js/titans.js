@@ -67,13 +67,6 @@ Matchweek MVP: ${((z=p.ai_analysis)==null?void 0:z.mvp_player)||"N/A"}`;(re=navi
           box-sizing: border-box !important;
           position: static !important;
         }
-        .main-three-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 16px;
-          width: 100%;
-          box-sizing: border-box;
-        }
         .jersey-four-grid {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -86,16 +79,9 @@ Matchweek MVP: ${((z=p.ai_analysis)==null?void 0:z.mvp_player)||"N/A"}`;(re=navi
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
           }
-          .main-three-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-          }
         }
         @media (max-width: 640px) {
           .jersey-four-grid {
-            grid-template-columns: 1fr;
-          }
-          .main-three-grid {
             grid-template-columns: 1fr;
           }
         }

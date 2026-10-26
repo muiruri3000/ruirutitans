@@ -791,13 +791,6 @@ export default function ClubHomeView({
           box-sizing: border-box !important;
           position: static !important;
         }
-        .main-three-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 16px;
-          width: 100%;
-          box-sizing: border-box;
-        }
         .jersey-four-grid {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -810,16 +803,9 @@ export default function ClubHomeView({
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
           }
-          .main-three-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-          }
         }
         @media (max-width: 640px) {
           .jersey-four-grid {
-            grid-template-columns: 1fr;
-          }
-          .main-three-grid {
             grid-template-columns: 1fr;
           }
         }
@@ -844,7 +830,7 @@ export default function ClubHomeView({
       <div className="club-home-grid" style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '28px', width: '100%' }}>
         {/* CAROUSELS SECTION (WIDTH 100%): HERO GALLERY CAROUSEL + U13, U15, U17, WAZAE JERSEY CAROUSELS */}
         <div className="club-home-carousels" style={{ display: 'flex', flexDirection: 'column', gap: '26px', width: '100%', minWidth: 0 }}>
-          {/* 1. ADMIN PICTURE CAROUSEL (CYCLES 3 IMAGES AT A TIME) */}
+          {/* 1. ADMIN PICTURE CAROUSEL (CYCLES 1 IMAGE AT A TIME) */}
           <section
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
