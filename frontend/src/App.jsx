@@ -3486,20 +3486,11 @@ export default function App() {
           </form>
         )}
 
-        {/* Primary Section Navigation Bar */}
+        {/* Primary Section Navigation Bar (Fixed / Sticky on Scroll) */}
         {!isDedicatedTacticsMode && (
           <nav
             aria-label="Club Homepage Sections"
-            style={{
-              display: 'flex',
-              gap: '6px',
-              marginBottom: '14px',
-              background: '#121212',
-              padding: '6px',
-              borderRadius: '12px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              overflowX: 'auto',
-            }}
+            className="club-section-navbar"
           >
             {navTabs.map((t) => (
               <button

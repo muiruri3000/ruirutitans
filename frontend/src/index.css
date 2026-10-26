@@ -59,7 +59,7 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 #root {
@@ -296,9 +296,34 @@ button {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-bottom: var(--hairline-border);
   font-size: 13px;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
-  z-index: 800;
+  z-index: 830;
+}
+
+/* Primary Section Navigation Bar (Fixed / Sticky on Scroll) */
+.club-section-navbar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  background: rgba(18, 18, 18, 0.90) !important;
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow-x: auto;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 52px;
+  z-index: 820;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.club-section-navbar::-webkit-scrollbar {
+  display: none;
 }
 
 .sync-badge {
@@ -525,6 +550,18 @@ button {
 }
 
 @media (max-width: 768px) {
+  .top-nav-bar {
+    position: static !important;
+  }
+
+  .club-section-navbar {
+    top: max(8px, env(safe-area-inset-top, 0px)) !important;
+    border-radius: 12px !important;
+    padding: 6px 8px !important;
+    margin-bottom: 12px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
+  }
+
   .desktop-nav-segments {
     display: none !important;
   }
