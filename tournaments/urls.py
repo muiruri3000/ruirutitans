@@ -39,6 +39,7 @@ from .views import (
     HighlightListCreateAPIView,
     HighlightDeleteAPIView,
     CategoryToggleArchiveAPIView,
+    ReloadCanonicalScheduleAPIView,
 )
 
 app_name = "tournaments"
@@ -57,6 +58,7 @@ urlpatterns = [
     path("api/state/", StateAPIView.as_view(), name="api_state"),
     path("api/homepage/", HomepageAPIView.as_view(), name="api_homepage"),
     path("api/reset-real-season/", ResetSeasonAPIView.as_view(), name="api_reset_season"),
+    path("api/admin/reload-canonical-schedule/", ReloadCanonicalScheduleAPIView.as_view(), name="api_reload_canonical_schedule"),
     path("api/team-balancer/", TeamBalancerAPIView.as_view(), name="api_team_balancer"),
     path("api/players/lookup/", PlayerLookupAPIView.as_view(), name="api_player_lookup"),
     path("api/players/update-profile/", PlayerUpdateProfileAPIView.as_view(), name="api_player_update_profile"),

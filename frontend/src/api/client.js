@@ -135,6 +135,17 @@ export const api = {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const serverData = await res.json();
       if (serverData && serverData.categories && Object.keys(serverData.categories).length > 0) {
+        Object.keys(serverData.categories).forEach((k) => {
+          const cat = serverData.categories[k];
+          const defaultCat = DEFAULT_TITANS_STATE.categories?.[k];
+          if (cat && cat.mode === "league" && Array.isArray(cat.fixtures) && defaultCat && Array.isArray(defaultCat.fixtures) && defaultCat.fixtures.length === 56) {
+            const hasTbd = cat.fixtures.some((f) => f.date === "TBD" || String(f.date || "").includes("TBD"));
+            if (cat.fixtures.length < 56 || hasTbd) {
+              const playedMap = new Map(cat.fixtures.filter((f) => f.played || (f.events && f.events.length > 0) || f.walkover).map((f) => [f.id, f]));
+              cat.fixtures = defaultCat.fixtures.map((f) => playedMap.get(f.id) || f);
+            }
+          }
+        });
         const sanitized = sanitizeExMilitaryFixtures(serverData);
         try {
           localStorage.setItem("ruiru_titans_react_state", JSON.stringify(sanitized));
@@ -155,6 +166,17 @@ export const api = {
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && parsed.categories && Object.keys(parsed.categories).length > 0) {
+          Object.keys(parsed.categories).forEach((k) => {
+            const cat = parsed.categories[k];
+            const defaultCat = DEFAULT_TITANS_STATE.categories?.[k];
+            if (cat && cat.mode === "league" && Array.isArray(cat.fixtures) && defaultCat && Array.isArray(defaultCat.fixtures) && defaultCat.fixtures.length === 56) {
+              const hasTbd = cat.fixtures.some((f) => f.date === "TBD" || String(f.date || "").includes("TBD"));
+              if (cat.fixtures.length < 56 || hasTbd) {
+                const playedMap = new Map(cat.fixtures.filter((f) => f.played || (f.events && f.events.length > 0) || f.walkover).map((f) => [f.id, f]));
+                cat.fixtures = defaultCat.fixtures.map((f) => playedMap.get(f.id) || f);
+              }
+            }
+          });
           const sanitizedCached = sanitizeExMilitaryFixtures(parsed);
           try {
             localStorage.setItem("ruiru_titans_react_state", JSON.stringify(sanitizedCached));
@@ -204,6 +226,21 @@ export const api = {
       localStorage.removeItem("ruiru_titans_react_state");
     } catch {}
     return { state: DEFAULT_TITANS_STATE };
+  },
+
+  async reloadCanonicalSchedule() {
+    const res = await fetch("/api/admin/reload-canonical-schedule/", {
+      method: "POST",
+      headers: defaultHeaders(),
+    });
+    if (!res.ok) throw new Error(`Schedule reload failed HTTP ${res.status}`);
+    const data = await res.json();
+    try {
+      if (data && data.state) {
+        localStorage.setItem("ruiru_titans_react_state", JSON.stringify(data.state));
+      }
+    } catch {}
+    return data;
   },
 
   async getAuthSession() {

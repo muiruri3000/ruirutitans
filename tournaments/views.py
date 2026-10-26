@@ -121,6 +121,27 @@ class ResetSeasonAPIView(views.APIView):
         })
 
 
+class ReloadCanonicalScheduleAPIView(views.APIView):
+    """
+    Reloads the canonical tournament schedule and fixtures from initial_tournament_state.json
+    into the active database models (requires CMS Administrator).
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def post(self, request):
+        from .services import import_state_to_db, export_state_from_db
+        import json
+        seed_path = "tournaments/initial_tournament_state.json"
+        with open(seed_path, "r", encoding="utf-8") as f:
+            state_dict = json.load(f)
+        import_state_to_db(state_dict, soft_delete_missing=False)
+        updated_state = export_state_from_db()
+        return Response({
+            "message": "Canonical tournament state successfully reloaded from initial_tournament_state.json.",
+            "state": updated_state,
+        })
+
+
 class HomepageAPIView(views.APIView):
     """
     GET: Returns the Club Homepage data (carousel pictures, U13/U15/U17/Wazae jersey photos, upcoming fixtures).

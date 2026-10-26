@@ -285,8 +285,18 @@ export default function App() {
           let needsReorg = false;
           const nextCategories = { ...sanitizedState.categories };
           Object.keys(nextCategories).forEach((k) => {
-            const cat = nextCategories[k];
+            let cat = nextCategories[k];
             if (cat && cat.mode === 'league' && Array.isArray(cat.fixtures)) {
+              // Self-heal stale caches or TBD schedules: ensure canonical 56-match rewired schedule
+              const defaultCat = DEFAULT_TITANS_STATE.categories[k];
+              const hasTbdFixtures = cat.fixtures.some((f) => f.date === 'TBD' || String(f.date || '').includes('TBD'));
+              if ((cat.fixtures.length < 56 || hasTbdFixtures) && defaultCat && Array.isArray(defaultCat.fixtures) && defaultCat.fixtures.length === 56) {
+                const playedMap = new Map(cat.fixtures.filter((f) => f.played || (f.events && f.events.length > 0) || f.walkover).map((f) => [f.id, f]));
+                const mergedFixtures = defaultCat.fixtures.map((f) => playedMap.get(f.id) || f);
+                cat = { ...cat, fixtures: mergedFixtures };
+                nextCategories[k] = cat;
+              }
+
               const hasAppendedFixtures = cat.fixtures.some((f) => String(f.id || '').startsWith('REAL-F4') || String(f.id || '').startsWith('REAL-F5'));
               const f4 = cat.fixtures.find((f) => f.id === 'F4');
               const f4IsEarlyGame2 = f4 && (f4.home === 'BAL' || f4.away === 'BAL') && !f4.played;
@@ -1390,6 +1400,21 @@ export default function App() {
         }
       } catch (err) {
         alert('Failed to reset: ' + err.message);
+      }
+    }
+  };
+
+  const handleReloadCanonicalSchedule = async () => {
+    if (window.confirm('Reload the canonical rest-optimized league fixture schedule (56 fixtures across 24 matchdays)?')) {
+      try {
+        const res = await api.reloadCanonicalSchedule();
+        if (res.state) {
+          setData(res.state);
+          setSyncStatus('synced');
+          alert('Successfully synchronized the canonical 56-match league schedule with zero player-recovery disadvantages!');
+        }
+      } catch (err) {
+        alert('Failed to reload schedule: ' + err.message);
       }
     }
   };
@@ -4450,6 +4475,7 @@ export default function App() {
               onRestoreCategory={handleRestoreCategory}
               onPermanentDeleteCategory={handlePermanentDeleteCategory}
               onResetRealSeason={handleResetRealSeason}
+              onReloadCanonicalSchedule={handleReloadCanonicalSchedule}
               onGenerateFixtures={handleGenerateFixtures}
               onReorganizeUnplayedFixtures={handleReorganizeUnplayedFixtures}
               onApplyBalancedTeamsToCategory={handleApplyBalancedTeamsToCategory}

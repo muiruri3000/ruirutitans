@@ -60,6 +60,7 @@ export default function ManageView({
   onRestoreCategory,
   onPermanentDeleteCategory,
   onResetRealSeason,
+  onReloadCanonicalSchedule,
   onGenerateFixtures,
   onApplyBalancedTeamsToCategory,
   onCreateCategoryWithBalancedTeams,
@@ -3395,6 +3396,16 @@ export default function ManageView({
               >
                 🔄 Restore 2026 Ruiru Titans Real Season Data
               </button>
+              {onReloadCanonicalSchedule && cat.mode === 'league' && (
+                <button
+                  className="stat-btn"
+                  onClick={onReloadCanonicalSchedule}
+                  style={{ background: '#1C1C1E', color: '#FF9F0A', border: '1px solid rgba(255, 159, 10, 0.4)', padding: '8px 14px', fontWeight: 700 }}
+                  title="Reloads the audited 56-match schedule with rest-day optimization and zero TBD fixtures."
+                >
+                  ⚡ Sync Rest-Optimized 56 Fixtures
+                </button>
+              )}
             </div>
 
             {/* Soft Delete Category */}
