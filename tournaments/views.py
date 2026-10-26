@@ -403,6 +403,33 @@ class ExportFixturesCSVView(views.View):
         return response
 
 
+class ExportFixturesJSONView(views.View):
+    """
+    Streams a downloadable JSON file of all fixtures, results, events and league info.
+    """
+
+    def get(self, request, key=None):
+        import json
+        from pathlib import Path
+        from django.conf import settings
+
+        json_path = settings.BASE_DIR / "league_fixtures_and_results.json"
+        if json_path.exists():
+            with open(json_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        else:
+            from .services import serialize_full_tournament_state
+            state = serialize_full_tournament_state()
+            target_key = key or "ruiru-titans-league-oct-nov-2026"
+            cat = state.get("categories", {}).get(target_key, {})
+            content = json.dumps(cat.get("fixtures", []), indent=2)
+
+        filename = f"ruiru_titans_{key or 'league'}_fixtures_and_results.json"
+        response = HttpResponse(content, content_type="application/json")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+
 class ExportPlayersCSVView(views.View):
     """
     Streams CSV export of player statistics (goals, assists, cards).
