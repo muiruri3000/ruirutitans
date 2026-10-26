@@ -134,6 +134,9 @@ class ReloadCanonicalScheduleAPIView(views.APIView):
         seed_path = "tournaments/initial_tournament_state.json"
         with open(seed_path, "r", encoding="utf-8") as f:
             state_dict = json.load(f)
+        settings_obj = GlobalSettings.objects.first()
+        if settings_obj and settings_obj.homepage_data:
+            state_dict["homepage"] = settings_obj.homepage_data
         import_state_to_db(state_dict, soft_delete_missing=False)
         updated_state = export_state_from_db()
         return Response({

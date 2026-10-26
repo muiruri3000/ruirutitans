@@ -70,7 +70,7 @@ spec:
               fi
               if [ -n "$SEED_FILE" ]; then
                 echo "Checking if active tournament seed or schedule update is required..."
-                python -c "import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings'); django.setup(); from tournaments.models import Category, Fixture; needs_seed = not Category.objects.filter(key='ruiru-titans-league-oct-nov-2026').exists() or Fixture.objects.filter(category_id='ruiru-titans-league-oct-nov-2026', date__contains='TBD').exists() or not Fixture.objects.filter(category_id='ruiru-titans-league-oct-nov-2026', fixture_id='F56', date__contains='27 Nov').exists(); exit(0 if needs_seed else 1)" && {
+                python -c "import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings'); django.setup(); from tournaments.models import Category, Fixture; needs_seed = not Category.objects.filter(key='ruiru-titans-league-oct-nov-2026').exists() or Fixture.objects.filter(category_id='ruiru-titans-league-oct-nov-2026', date__contains='TBD').exists() or not Fixture.objects.filter(category_id='ruiru-titans-league-oct-nov-2026', date__contains='27 Nov').exists(); exit(0 if needs_seed else 1)" && {
                   echo "Active tournament missing, contains TBD fixtures, or schedule update required. Auto-syncing tournament state from $SEED_FILE..."
                   python manage.py load_tournament_state "$SEED_FILE" || true
                 } || echo "Active tournament data already up to date, skipping auto-seed."

@@ -3840,12 +3840,14 @@ export default function App() {
                             )}
                           </div>
                           <div
-                            style={{ textAlign: 'center', cursor: 'pointer' }}
+                            style={{ textAlign: 'center', cursor: isCmsMode ? 'pointer' : 'default' }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleOpenFixtureInView(f.id, 'results');
+                              if (isCmsMode) {
+                                handleOpenFixtureInView(f.id, 'results');
+                              }
                             }}
-                            title="Click to edit score & events"
+                            title={isCmsMode ? "Click to edit score & events" : undefined}
                           >
                             <span
                               className="scoreboard"
@@ -3862,7 +3864,9 @@ export default function App() {
                               {hs} - {as}
                             </span>
                             <div style={{ fontSize: '9.5px', color: '#8E8E93', marginTop: '2px' }}>{f.date}</div>
-                            <div style={{ fontSize: '8.5px', color: '#FF9F0A', fontWeight: 700 }}>✏️ Edit Score</div>
+                            {isCmsMode && (
+                              <div style={{ fontSize: '8.5px', color: '#FF9F0A', fontWeight: 700 }}>✏️ Edit Score</div>
+                            )}
                           </div>
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', textAlign: 'right' }}>
                             {f.away ? (
@@ -3880,28 +3884,30 @@ export default function App() {
                             )}
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: away?.color || '#2E5A8F' }} />
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setAppReportFixture(f)}
-                            style={{
-                              background: hasReport ? 'rgba(46, 229, 157, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                              border: hasReport ? '1px solid #2EE59D' : '1px solid #335544',
-                              color: hasReport ? '#A7F3D0' : '#8E8E93',
-                              padding: '5px 9px',
-                              borderRadius: '6px',
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              whiteSpace: 'nowrap',
-                              flexShrink: 0,
-                            }}
-                            title={hasReport ? 'Read Official Match Report' : (isCmsMode ? 'Write Official Match Report' : 'Match Report')}
-                          >
-                            {hasReport ? '📄 Report' : (isCmsMode ? '✍️ Add Report' : '📄 Report')}
-                          </button>
+                          {(hasReport || isCmsMode) && (
+                            <button
+                              type="button"
+                              onClick={() => setAppReportFixture(f)}
+                              style={{
+                                background: hasReport ? 'rgba(46, 229, 157, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                                border: hasReport ? '1px solid #2EE59D' : '1px solid #335544',
+                                color: hasReport ? '#A7F3D0' : '#8E8E93',
+                                padding: '5px 9px',
+                                borderRadius: '6px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0,
+                              }}
+                              title={hasReport ? 'Read Official Match Report' : (isCmsMode ? 'Write Official Match Report' : 'Match Report')}
+                            >
+                              {hasReport ? '📄 Report' : '✍️ Add Report'}
+                            </button>
+                          )}
                         </div>
                       );
                     })}
@@ -3939,6 +3945,7 @@ export default function App() {
                         <div
                           key={f.id}
                           onClick={(e) => {
+                            if (!isCmsMode) return;
                             if (e.target.closest('button, a')) return;
                             handleOpenFixtureInView(f.id, 'upcoming');
                           }}
@@ -3951,10 +3958,10 @@ export default function App() {
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             gap: '8px',
-                            cursor: 'pointer',
+                            cursor: isCmsMode ? 'pointer' : 'default',
                             transition: 'all 0.15s ease',
                           }}
-                          title="Click to enter match results"
+                          title={isCmsMode ? "Click to enter match results" : undefined}
                         >
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: home?.color || '#FF9500' }} />
@@ -3973,12 +3980,14 @@ export default function App() {
                             )}
                           </div>
                           <div
-                            style={{ textAlign: 'center', cursor: 'pointer' }}
+                            style={{ textAlign: 'center', cursor: isCmsMode ? 'pointer' : 'default' }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleOpenFixtureInView(f.id, 'upcoming');
+                              if (isCmsMode) {
+                                handleOpenFixtureInView(f.id, 'upcoming');
+                              }
                             }}
-                            title="Click to enter match results"
+                            title={isCmsMode ? "Click to enter match results" : undefined}
                           >
                             <span
                               className="scoreboard"
@@ -3995,7 +4004,9 @@ export default function App() {
                               VS
                             </span>
                             <div style={{ fontSize: '9.5px', color: '#FF9500', marginTop: '2px', fontWeight: 600 }}>{f.date}</div>
-                            <div style={{ fontSize: '8.5px', color: '#FF9F0A', fontWeight: 700 }}>⚡ Enter Result</div>
+                            {isCmsMode && (
+                              <div style={{ fontSize: '8.5px', color: '#FF9F0A', fontWeight: 700 }}>⚡ Enter Result</div>
+                            )}
                           </div>
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', textAlign: 'right' }}>
                             {f.away ? (

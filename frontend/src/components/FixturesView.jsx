@@ -1557,6 +1557,7 @@ export default function FixturesView({
               key={f.id}
               className="fixture-card"
               onClick={(e) => {
+                if (!isCmsMode) return;
                 const tag = e.target.tagName.toLowerCase();
                 if (['button', 'a', 'input', 'select', 'textarea', 'label'].includes(tag) || e.target.closest('button, a, input, select, textarea, label, .ev-remove, .team-link-btn')) {
                   return;
@@ -1565,18 +1566,18 @@ export default function FixturesView({
               }}
               style={{
                 padding: '14px 16px',
-                background: isOpen ? '#161618' : '#121212',
-                border: isOpen
+                background: isOpen && isCmsMode ? '#161618' : '#121212',
+                border: (isOpen && isCmsMode)
                   ? '1px solid #FF9500'
                   : isCompleted
                   ? '1px solid rgba(255, 255, 255, 0.12)'
                   : '1px dashed rgba(255, 255, 255, 0.16)',
                 borderRadius: '14px',
-                cursor: 'pointer',
+                cursor: isCmsMode ? 'pointer' : 'default',
                 transition: 'all 0.18s ease',
-                boxShadow: isOpen ? '0 0 16px rgba(255, 149, 0, 0.2)' : 'none',
+                boxShadow: (isOpen && isCmsMode) ? '0 0 16px rgba(255, 149, 0, 0.2)' : 'none',
               }}
-              title={isCompleted ? "Click to view and edit score, goals & cards" : "Click to enter match results"}
+              title={isCmsMode ? (isCompleted ? "Click to view and edit score, goals & cards" : "Click to enter match results") : undefined}
             >
               {/* Top Meta Line: Date, Status Pill, Referee, Move Day */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
@@ -1637,27 +1638,29 @@ export default function FixturesView({
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleOpen(f.id);
-                    }}
-                    style={{
-                      fontSize: '10.5px',
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: '6px',
-                      background: isOpen ? 'rgba(255, 149, 0, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-                      color: isOpen ? '#FF9500' : '#8E8E93',
-                      border: isOpen ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
-                  >
-                    {isOpen ? '▲ Editing Result' : isCompleted ? '✏️ Edit Score & Cards' : '⚡ Enter Result'}
-                  </span>
+                  {isCmsMode && (
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleOpen(f.id);
+                      }}
+                      style={{
+                        fontSize: '10.5px',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        background: isOpen ? 'rgba(255, 149, 0, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                        color: isOpen ? '#FF9F0A' : '#8E8E93',
+                        border: isOpen ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      {isOpen ? '▲ Editing Result' : isCompleted ? '✏️ Edit Score & Cards' : '⚡ Enter Result'}
+                    </span>
+                  )}
                   <span
                     style={{
                       fontSize: '10px',
@@ -1814,28 +1817,31 @@ export default function FixturesView({
                   className="scoreboard"
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (!isCmsMode) return;
                     toggleOpen(f.id);
                   }}
                   style={{
                     fontSize: '26px',
                     color: isCompleted ? '#FF9500' : '#8E8E93',
                     padding: '4px 16px',
-                    background: isOpen ? 'rgba(255, 149, 0, 0.14)' : '#121212',
+                    background: (isOpen && isCmsMode) ? 'rgba(255, 149, 0, 0.14)' : '#121212',
                     borderRadius: '8px',
-                    border: isOpen ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                    border: (isOpen && isCmsMode) ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                     letterSpacing: '0.08em',
                     minWidth: '88px',
                     textAlign: 'center',
-                    cursor: 'pointer',
+                    cursor: isCmsMode ? 'pointer' : 'default',
                     userSelect: 'none',
                     transition: 'all 0.15s ease',
                   }}
-                  title={isCompleted ? "Click to view and edit score, goals & cards" : "Click to enter match results"}
+                  title={isCmsMode ? (isCompleted ? "Click to view and edit score, goals & cards" : "Click to enter match results") : undefined}
                 >
                   {isCompleted || (f.events && f.events.length > 0) ? `${hs} - ${as}` : 'VS'}
-                  <div style={{ fontSize: '9px', color: '#FF9F0A', fontWeight: 700, letterSpacing: 'normal', marginTop: '1px' }}>
-                    {isOpen ? '▲ Close' : isCompleted ? '✏️ Edit Score' : '⚡ Enter Result'}
-                  </div>
+                  {isCmsMode && (
+                    <div style={{ fontSize: '9px', color: '#FF9F0A', fontWeight: 700, letterSpacing: 'normal', marginTop: '1px' }}>
+                      {isOpen ? '▲ Close' : isCompleted ? '✏️ Edit Score' : '⚡ Enter Result'}
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', textAlign: 'right' }}>
@@ -1935,7 +1941,7 @@ export default function FixturesView({
                   </a>
 
                   {/* Quick Action Report Button */}
-                  {isCompleted && (
+                  {isCompleted && (Boolean(f.report && f.report.content) || isCmsMode) && (
                     <button
                       type="button"
                       className="btn-pill-action"
@@ -1961,15 +1967,13 @@ export default function FixturesView({
                         ? f.report && f.report.content
                           ? '✏️ Edit Game Report'
                           : '✍️ Add Match Report'
-                        : f.report && f.report.content
-                        ? '📝 Match Report ✓'
                         : '📝 Match Report'}
                     </button>
                   )}
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {isCmsMode && (
+                {isCmsMode && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button
                       type="button"
                       className="played-toggle"
@@ -1984,33 +1988,29 @@ export default function FixturesView({
                     >
                       {isCompleted ? '✓ Final' : 'Mark Final'}
                     </button>
-                  )}
 
-                  <button
-                    type="button"
-                    className="btn-pill-action"
-                    onClick={() => toggleOpen(f.id)}
-                    style={{
-                      background: isOpen ? 'rgba(255, 149, 0, 0.2)' : undefined,
-                      borderColor: isOpen ? '#FF9500' : undefined,
-                      color: isOpen ? '#FF9F0A' : undefined,
-                    }}
-                  >
-                    {isOpen
-                      ? 'Hide Details ▲'
-                      : isCmsMode
-                      ? isCompleted
+                    <button
+                      type="button"
+                      className="btn-pill-action"
+                      onClick={() => toggleOpen(f.id)}
+                      style={{
+                        background: isOpen ? 'rgba(255, 149, 0, 0.2)' : undefined,
+                        borderColor: isOpen ? '#FF9500' : undefined,
+                        color: isOpen ? '#FF9F0A' : undefined,
+                      }}
+                    >
+                      {isOpen
+                        ? 'Hide Details ▲'
+                        : isCompleted
                         ? '✏️ Edit Score & Cards ▾'
-                        : '⚡ Enter Results ▾'
-                      : isCompleted
-                      ? '✏️ Edit / Events ▾'
-                      : '⚡ Enter Result ▾'}
-                  </button>
-                </div>
+                        : '⚡ Enter Results ▾'}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Prominent Match Report Strip on Every Played Match */}
-              {isCompleted && (
+              {isCompleted && (Boolean(f.report && f.report.content) || isCmsMode) && (
                 <div
                   style={{
                     marginTop: '10px',
@@ -2072,75 +2072,7 @@ export default function FixturesView({
               )}
 
               {/* Expandable Match Events & Results Editor */}
-              {isOpen && (
-                !isCmsMode ? (
-                  <div style={{ marginTop: '12px', background: '#121212', borderRadius: '8px', padding: '14px', border: '1px solid rgba(255, 149, 0, 0.4)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#FF9500', marginBottom: '4px' }}>
-                          {isCompleted ? '✏️ EDIT MATCH RESULT & CARDS' : '⚡ ENTER MATCH RESULTS'}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#8E8E93' }}>
-                          {isCompleted
-                            ? 'Sign in as Manager/Referee to adjust score, add/remove goals, or assign yellow/red cards.'
-                            : 'Sign in as Manager/Referee to enter goals, penalties, assists, and mark match final.'}
-                        </div>
-                      </div>
-                      {onRequestCmsLogin && (
-                        <button
-                          type="button"
-                          onClick={() => onRequestCmsLogin(f.id)}
-                          style={{
-                            background: '#FF9500',
-                            color: '#16201B',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '8px 16px',
-                            fontSize: '12px',
-                            fontWeight: 800,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            boxShadow: '0 2px 8px rgba(255, 149, 0, 0.3)',
-                          }}
-                        >
-                          🔑 Manager Sign In to {isCompleted ? 'Edit' : 'Enter'} Results
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Display current match events list if any */}
-                    <div style={{ marginTop: '12px' }}>
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#8E8E93', textTransform: 'uppercase', marginBottom: '6px' }}>
-                        Logged Match Events ({f.events?.length || 0})
-                      </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {(f.events || []).map((e, idx) => {
-                          const t = teamsById[e.teamId];
-                          const p = t?.players?.find((pp) => pp.id === e.playerId);
-                          const a = e.assistPlayerId ? t?.players?.find((pp) => pp.id === e.assistPlayerId) : null;
-                          let label = `${p ? p.name : (e.playerId && e.playerId.endsWith('-UNK') ? 'Squad Goal' : 'Unknown')} (${t?.name || e.teamId})`;
-                          if (e.type === 'goal') {
-                            if (e.penalty) label += ' [Penalty Goal]';
-                            if (a) label += ` [🅰️ Assist: ${a.name}]`;
-                          } else if (e.type === 'owngoal') {
-                            label += ' [Own Goal]';
-                          }
-                          return (
-                            <span key={idx} className="ev-chip">
-                              <span>{e.type === 'goal' ? (e.penalty ? '🎯⚽' : '⚽') : e.type === 'owngoal' ? '🥅' : e.type === 'yellow' ? '🟨' : '🟥'}</span>
-                              <span>{label}</span>
-                            </span>
-                          );
-                        })}
-                        {(!f.events || f.events.length === 0) && (
-                          <span style={{ fontSize: '11.5px', color: '#8E8E93' }}>No events logged yet for this match.</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
+              {isCmsMode && isOpen && (
                 <div style={{ marginTop: '12px', background: '#121212', borderRadius: '8px', padding: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                     <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#FF9500' }}>
@@ -2694,7 +2626,7 @@ export default function FixturesView({
                     </button>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           );
         })}
