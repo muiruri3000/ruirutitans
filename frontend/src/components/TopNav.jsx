@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function TopNav({
   syncStatus,
@@ -13,6 +13,8 @@ export default function TopNav({
   onLogoutCms,
   onLogoutPlayer,
 }) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const statusText =
     syncStatus === 'synced'
       ? 'Live Synced'
@@ -20,300 +22,319 @@ export default function TopNav({
       ? 'Syncing…'
       : '⚠️ Unsaved';
 
+  const navItems = [
+    { key: 'home', label: '🏠 Home' },
+    { key: 'championship', label: '🏆 Championship' },
+    { key: 'table', label: '📊 Table' },
+    { key: 'fixtures', label: '⚽ Fixtures & Results' },
+    { key: 'cup', label: '🏆 Cup' },
+    { key: 'tactics', label: '📋 Tactics' },
+    { key: 'stats', label: '📈 Stats' },
+    { key: 'voting', label: '⭐ Voting' },
+    { key: 'highlights', label: '🎥 Highlights' },
+    { key: 'archives', label: '🏛️ Archives' },
+    { key: 'balancer', label: '⚖️ Balancer' },
+  ];
+
   return (
-    <nav className="top-nav-bar" aria-label="Club Portal Header">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+    <header className="top-nav-bar" aria-label="Club Portal Header">
+      {/* Top Header Row */}
+      <div className="top-nav-row-main">
         <a
           href="#home"
           onClick={(e) => {
             e.preventDefault();
+            setIsMenuOpen(false);
             if (onNavigate) onNavigate('home');
           }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '10px',
-            textDecoration: 'none',
-            color: '#FFFFFF',
-            fontWeight: 800,
-            fontSize: '13.5px',
-            letterSpacing: '0.04em',
-            minHeight: '44px',
-          }}
+          className="top-nav-brand"
         >
           <img
             src={(typeof window !== 'undefined' && window.CLUB_LOGO_URL) || '/club-logo.jpg'}
             alt="Ruiru Titans FC"
-            style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'contain', border: '1px solid rgba(255, 149, 0, 0.5)' }}
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              objectFit: 'contain',
+              border: '1.5px solid #FF9500',
+              flexShrink: 0,
+            }}
           />
-          <span style={{ fontWeight: 800 }}>RUIRU TITANS FC</span>
+          <span className="brand-title">RUIRU TITANS FC</span>
         </a>
 
-        {/* Desktop / Tablet Segmented Navigation */}
-        <div
-          className="desktop-nav-segments"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            background: 'var(--bg-surface-elevated)',
-            padding: '3px',
-            borderRadius: '999px',
-            border: 'var(--hairline-border)',
-            gap: '2px',
-          }}
-        >
-          {[
-            { key: 'home', label: '🏠 Home' },
-            { key: 'championship', label: '🏆 Championship' },
-            { key: 'table', label: '📊 Table' },
-            { key: 'fixtures', label: '⚽ Fixtures' },
-            { key: 'cup', label: '🏆 Cup' },
-            { key: 'tactics', label: '📋 Tactics' },
-            { key: 'highlights', label: '🎥 Highlights' },
-            { key: 'archives', label: '🏛️ Archives' },
-          ].map((item) => {
-            const isActive = currentView === item.key;
-            return (
-              <a
-                key={item.key}
-                href={`#${item.key}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (onNavigate) onNavigate(item.key);
-                }}
-                style={{
-                  textDecoration: 'none',
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  padding: '6px 12px',
-                  borderRadius: '999px',
-                  background: isActive ? 'var(--accent-orange)' : 'transparent',
-                  color: isActive ? '#000000' : 'var(--text-secondary)',
-                  transition: 'all 0.15s ease',
-                  minHeight: '32px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                }}
-              >
-                {item.label}
-              </a>
-            );
-          })}
-        </div>
-
-        <div
-          className="sync-badge"
-          style={syncStatus === 'error' ? { cursor: 'pointer', borderColor: 'var(--status-danger)' } : {}}
-          onClick={() => {
-            if (syncStatus === 'error' && onOpenAuthModal) {
-              onOpenAuthModal('cms');
-            }
-          }}
-          title={syncStatus === 'error' ? 'Manager login required to sync changes. Click to sign in.' : undefined}
-        >
-          <span className={`sync-dot ${syncStatus}`} />
-          <span>{statusText}</span>
-        </div>
-
-        {isCmsMode && (
-          <span
-            style={{
-              background: 'var(--accent-orange-soft)',
-              border: '1px solid var(--accent-orange-border)',
-              color: 'var(--accent-orange-vibrant)',
-              fontSize: '11px',
-              fontWeight: 800,
-              padding: '3px 10px',
-              borderRadius: '999px',
-              letterSpacing: '0.06em',
-            }}
-          >
-            🛠️ MANAGER DASHBOARD
-          </span>
-        )}
-      </div>
-
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-        {/* Player Auth Status / Sign-In */}
-        {playerUser ? (
+        {/* Sync & Auth Actions */}
+        <div className="top-nav-actions">
           <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'var(--bg-surface-elevated)',
-              border: 'var(--hairline-border)',
-              borderRadius: '999px',
-              padding: '4px 12px',
-              fontSize: '12px',
-              color: 'var(--text-primary)',
+            className="sync-badge"
+            style={syncStatus === 'error' ? { cursor: 'pointer', borderColor: 'var(--status-danger)' } : {}}
+            onClick={() => {
+              if (syncStatus === 'error' && onOpenAuthModal) {
+                onOpenAuthModal('cms');
+              }
             }}
+            title={syncStatus === 'error' ? 'Manager login required to sync changes. Click to sign in.' : undefined}
           >
-            <span
+            <span className={`sync-dot ${syncStatus}`} />
+            <span>{statusText}</span>
+          </div>
+
+          {/* Player Auth Status */}
+          {playerUser ? (
+            <div
+              className="desktop-auth-pill"
               style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: playerUser.team_color || 'var(--status-success)',
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => onNavigate && onNavigate('player-dashboard')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: currentView === 'player-dashboard' ? 'var(--accent-orange-vibrant)' : '#FFFFFF',
-                fontWeight: 700,
-                cursor: 'pointer',
-                padding: 0,
-                fontSize: '12px',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-              }}
-              title="Open your Player Dashboard"
-            >
-              ⚽ <strong>{playerUser.name}</strong> ({playerUser.team_name})
-              <span
-                style={{
-                  fontSize: '10px',
-                  color: currentView === 'player-dashboard' ? '#000000' : 'var(--accent-orange-vibrant)',
-                  background: currentView === 'player-dashboard' ? 'var(--accent-orange)' : 'var(--accent-orange-soft)',
-                  padding: '2px 6px',
-                  borderRadius: '6px',
-                  fontWeight: 800,
-                }}
-              >
-                Dashboard
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => (onLogoutPlayer ? onLogoutPlayer() : onLogout && onLogout('player'))}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--status-danger)',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                marginLeft: '6px',
-                padding: '2px 4px',
-              }}
-              title="Sign out of Player account"
-            >
-              Sign Out
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
-            <button
-              type="button"
-              onClick={() => onOpenAuthModal && onOpenAuthModal('player')}
-              className="admin-link"
-              style={{
                 background: 'var(--bg-surface-elevated)',
+                border: 'var(--hairline-border)',
+                borderRadius: '999px',
+                padding: '4px 10px',
+                fontSize: '11.5px',
                 color: 'var(--text-primary)',
-                borderColor: 'rgba(255, 255, 255, 0.15)',
-                cursor: 'pointer',
               }}
             >
-              ⚽ Player Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenAuthModal && onOpenAuthModal('lookup')}
-              className="admin-link"
-              style={{
-                background: 'var(--bg-surface-elevated)',
-                color: 'var(--accent-orange-vibrant)',
-                borderColor: 'var(--accent-orange-border)',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-              title="Search for your official username by your name"
-            >
-              🔍 Find Username
-            </button>
-          </div>
-        )}
-
-        {/* Manager Dashboard Sign-In / Mode Switcher */}
-        {!playerUser && (
-          cmsUser && isCmsMode ? (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <button
                 type="button"
-                onClick={() => {
-                  if (onNavigate) onNavigate('manage');
-                }}
-                className="admin-link"
+                onClick={() => onNavigate && onNavigate('player-dashboard')}
                 style={{
-                  background: currentView === 'manage' ? 'var(--accent-orange)' : 'var(--bg-surface-elevated)',
-                  color: currentView === 'manage' ? '#000000' : 'var(--text-primary)',
-                  borderColor: currentView === 'manage' ? 'var(--accent-orange)' : 'rgba(255, 255, 255, 0.15)',
-                  cursor: 'pointer',
-                  fontWeight: 800,
-                }}
-              >
-                🛠️ Manager
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onToggleCmsMode) onToggleCmsMode(false);
-                  if (onNavigate) onNavigate('home');
-                }}
-                className="admin-link"
-                style={{
-                  background: 'var(--bg-surface-elevated)',
-                  color: 'var(--text-secondary)',
-                  borderColor: 'rgba(255, 255, 255, 0.15)',
-                  cursor: 'pointer',
+                  background: 'none',
+                  border: 'none',
+                  color: currentView === 'player-dashboard' ? 'var(--accent-orange-vibrant)' : '#FFFFFF',
                   fontWeight: 700,
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: '11.5px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                 }}
               >
-                🏠 Home
+                ⚽ <strong>{playerUser.name}</strong>
               </button>
               <button
                 type="button"
-                onClick={() => (onLogoutCms ? onLogoutCms() : onLogout && onLogout('cms'))}
-                className="admin-link"
+                onClick={() => (onLogoutPlayer ? onLogoutPlayer() : onLogout && onLogout('player'))}
                 style={{
-                  background: 'rgba(255, 69, 58, 0.15)',
+                  background: 'none',
+                  border: 'none',
                   color: 'var(--status-danger)',
-                  borderColor: 'rgba(255, 69, 58, 0.3)',
+                  fontSize: '11px',
+                  fontWeight: 700,
                   cursor: 'pointer',
+                  padding: '1px 3px',
                 }}
-                title="Sign out of Manager Dashboard"
+                title="Sign out"
               >
-                Logout
+                ✕
               </button>
             </div>
           ) : (
-            <a
-              href="#manager-signin"
-              onClick={(e) => {
-                e.preventDefault();
-                onOpenAuthModal && onOpenAuthModal('cms');
-              }}
-              className="admin-link"
+            <button
+              type="button"
+              onClick={() => onOpenAuthModal && onOpenAuthModal('player')}
+              className="admin-link desktop-auth-btn"
               style={{
-                background: 'var(--accent-orange)',
-                color: '#000000',
-                borderColor: 'var(--accent-orange)',
-                fontWeight: 800,
-                padding: '6px 14px',
+                fontSize: '11.5px',
+                padding: '4px 10px',
+                minHeight: '34px',
+                cursor: 'pointer',
               }}
             >
-              🔐 Manager Sign In
-            </a>
-          )
-        )}
+              ⚽ Sign In
+            </button>
+          )}
+
+          {/* Manager Auth Button */}
+          {!playerUser && (
+            cmsUser && isCmsMode ? (
+              <button
+                type="button"
+                onClick={() => onNavigate && onNavigate('manage')}
+                className="admin-link desktop-auth-btn"
+                style={{
+                  background: currentView === 'manage' ? 'var(--accent-orange)' : 'var(--bg-surface-elevated)',
+                  color: currentView === 'manage' ? '#000000' : 'var(--text-primary)',
+                  fontSize: '11.5px',
+                  padding: '4px 10px',
+                  minHeight: '34px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                🛠️ CMS
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onOpenAuthModal && onOpenAuthModal('cms')}
+                className="admin-link desktop-auth-btn"
+                style={{
+                  background: 'var(--accent-orange)',
+                  color: '#000000',
+                  fontSize: '11.5px',
+                  padding: '4px 10px',
+                  minHeight: '34px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                🔐 CMS
+              </button>
+            )
+          )}
+
+          {/* Hamburger Menu Toggle Button for Small Screens */}
+          <button
+            type="button"
+            className="hamburger-btn"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={isMenuOpen}
+          >
+            {isMenuOpen ? '✕' : '☰'}
+          </button>
+        </div>
       </div>
-    </nav>
+
+      {/* Desktop Navigation Segments Bar: Visible on screens > 768px */}
+      <nav
+        className="top-nav-segments-bar desktop-segments"
+        aria-label="Desktop Club Navigation"
+        onWheel={(e) => {
+          if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+            e.currentTarget.scrollLeft += e.deltaY;
+          }
+        }}
+      >
+        {navItems.map((item) => {
+          const isActive = currentView === item.key;
+          return (
+            <a
+              key={item.key}
+              href={`#${item.key}`}
+              onClick={(e) => {
+                e.preventDefault();
+                if (onNavigate) onNavigate(item.key);
+              }}
+              className={`top-nav-pill ${isActive ? 'active' : ''}`}
+            >
+              {item.label}
+            </a>
+          );
+        })}
+      </nav>
+
+      {/* Mobile Hamburger Dropdown Menu: Visible when opened on small screens */}
+      {isMenuOpen && (
+        <div
+          className="hamburger-dropdown"
+          onClick={() => setIsMenuOpen(false)}
+        >
+          <div
+            className="hamburger-dropdown-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px 10px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent-orange-vibrant)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Navigation Menu
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#8E8E93',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  padding: '2px 8px',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '65vh', overflowY: 'auto', padding: '6px 0' }}>
+              {navItems.map((item) => {
+                const isActive = currentView === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      if (onNavigate) onNavigate(item.key);
+                    }}
+                    className={`hamburger-menu-item ${isActive ? 'active' : ''}`}
+                  >
+                    <span>{item.label}</span>
+                    {isActive && <span style={{ color: '#000000', fontWeight: 900 }}>✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="hamburger-dropdown-divider" />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '8px' }}>
+              {playerUser ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onNavigate && onNavigate('player-dashboard');
+                  }}
+                  className="hamburger-action-btn"
+                  style={{ background: 'rgba(255, 149, 0, 0.15)', color: 'var(--accent-orange-vibrant)' }}
+                >
+                  ⚽ Player Dashboard ({playerUser.name})
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenAuthModal && onOpenAuthModal('player');
+                  }}
+                  className="hamburger-action-btn"
+                  style={{ background: '#1C1C1E', color: '#FFFFFF' }}
+                >
+                  ⚽ Player Sign In (Vote & Dashboard)
+                </button>
+              )}
+
+              {cmsUser && isCmsMode ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onNavigate && onNavigate('manage');
+                  }}
+                  className="hamburger-action-btn"
+                  style={{ background: 'var(--accent-orange)', color: '#000000', fontWeight: 800 }}
+                >
+                  🛠️ Manager Dashboard Active
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenAuthModal && onOpenAuthModal('cms');
+                  }}
+                  className="hamburger-action-btn"
+                  style={{ background: 'var(--accent-orange)', color: '#000000', fontWeight: 800 }}
+                >
+                  🔐 Open Manager Dashboard
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
   );
 }
