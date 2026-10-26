@@ -4329,7 +4329,10 @@ export default function App() {
               }}
               onOpenTeamModal={(teamId) => handleOpenTeamDetails(teamId, activeCategoryKey)}
               onLogoutPlayer={handleLogoutPlayer}
-              onPlayerUpdated={(updated) => setPlayerUser(updated)}
+              onPlayerUpdated={(updated) => {
+                setPlayerUser(updated);
+                api.setPlayerToken(api.getPlayerToken(), updated);
+              }}
             />
           ) : (
             <div

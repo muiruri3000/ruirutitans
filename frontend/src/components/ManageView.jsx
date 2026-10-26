@@ -218,6 +218,11 @@ export default function ManageView({
   };
 
   // Player Registration & Password Reset state
+  const [regPlayerFirstName, setRegPlayerFirstName] = useState('');
+  const [regPlayerSurname, setRegPlayerSurname] = useState('');
+  const [regPlayerDob, setRegPlayerDob] = useState('');
+  const [regPlayerFoot, setRegPlayerFoot] = useState('right');
+  const [regPlayerPositions, setRegPlayerPositions] = useState([]);
   const [regPlayerName, setRegPlayerName] = useState('');
   const [regPlayerUsername, setRegPlayerUsername] = useState('');
   const [regPlayerTeamId, setRegPlayerTeamId] = useState('');
@@ -311,8 +316,9 @@ export default function ManageView({
 
   const handleAdminRegisterPlayer = async (e) => {
     e.preventDefault();
-    if (!regPlayerName.trim()) {
-      setRegError('Please provide player full name.');
+    const fullName = `${regPlayerFirstName} ${regPlayerSurname}`.trim() || regPlayerName.trim();
+    if (!fullName) {
+      setRegError('Please provide at least a first name or full name for the player.');
       return;
     }
     const cleanJersey = String(regPlayerJersey || '').trim().replace(/^#/, '');
@@ -340,15 +346,26 @@ export default function ManageView({
     setRegError(null);
     setRegSuccess(null);
     try {
+      const primaryPos = regPlayerPosition || (regPlayerPositions.length ? regPlayerPositions[0] : '');
       const res = await api.registerPlayerAdmin({
         category_key: activeCategoryKey,
         team_id: targetTeamId,
-        name: regPlayerName.trim(),
+        name: fullName,
+        first_name: regPlayerFirstName.trim(),
+        surname: regPlayerSurname.trim(),
+        date_of_birth: regPlayerDob || null,
+        active_foot: regPlayerFoot || 'right',
+        preferred_positions: regPlayerPositions,
         username: regPlayerUsername.trim(),
-        position: regPlayerPosition,
+        position: primaryPos,
         jersey_number: jNum,
       });
       setRegSuccess(res);
+      setRegPlayerFirstName('');
+      setRegPlayerSurname('');
+      setRegPlayerDob('');
+      setRegPlayerFoot('right');
+      setRegPlayerPositions([]);
       setRegPlayerName('');
       setRegPlayerUsername('');
       setRegPlayerJersey('');
@@ -2205,19 +2222,158 @@ export default function ManageView({
                 </div>
               )}
 
-              <form onSubmit={handleAdminRegisterPlayer} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <form onSubmit={handleAdminRegisterPlayer} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                      First Name *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Samuel"
+                      value={regPlayerFirstName}
+                      onChange={(e) => {
+                        setRegPlayerFirstName(e.target.value);
+                        setRegPlayerName(`${e.target.value} ${regPlayerSurname}`.trim());
+                      }}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                      Surname / Last Name
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Kibe"
+                      value={regPlayerSurname}
+                      onChange={(e) => {
+                        setRegPlayerSurname(e.target.value);
+                        setRegPlayerName(`${regPlayerFirstName} ${e.target.value}`.trim());
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                      Date of Birth
+                    </label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={regPlayerDob}
+                      onChange={(e) => setRegPlayerDob(e.target.value)}
+                      style={{ colorScheme: 'dark' }}
+                    />
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                      <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700 }}>
+                        Username
+                      </label>
+                      <span style={{ fontSize: '9.5px', color: '#FF9500', fontWeight: 800 }}>Used to log in</span>
+                    </div>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Auto if blank"
+                      value={regPlayerUsername}
+                      onChange={(e) => setRegPlayerUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
+                    />
+                  </div>
+                </div>
+
+                {/* Active Foot */}
                 <div>
-                  <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
-                    Player Full Name *
+                  <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    Active Foot
                   </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. Samuel Kibe"
-                    value={regPlayerName}
-                    onChange={(e) => setRegPlayerName(e.target.value)}
-                    required
-                  />
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                    {[
+                      { key: 'right', label: '👟 Right Foot' },
+                      { key: 'left', label: '👟 Left Foot' },
+                      { key: 'both', label: '👟 Both (Ambidextrous)' },
+                    ].map((f) => (
+                      <button
+                        key={f.key}
+                        type="button"
+                        onClick={() => setRegPlayerFoot(f.key)}
+                        style={{
+                          padding: '6px 8px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          borderRadius: '6px',
+                          border: regPlayerFoot === f.key ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: regPlayerFoot === f.key ? 'rgba(255, 149, 0, 0.18)' : '#1C1C1E',
+                          color: regPlayerFoot === f.key ? '#FF9500' : '#8E8E93',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preferred Positions Checkbox Grid */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700 }}>
+                      Preferred Position(s) (Checkboxes)
+                    </label>
+                    <span style={{ fontSize: '10px', color: '#6CE5A0', fontWeight: 700 }}>
+                      {regPlayerPositions.length ? `${regPlayerPositions.length} selected` : 'Select positions'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px' }}>
+                    {['GK', 'LB', 'CB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST'].map((pos) => {
+                      const isSelected = regPlayerPositions.includes(pos);
+                      return (
+                        <label
+                          key={pos}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px',
+                            background: isSelected ? 'rgba(255, 149, 0, 0.2)' : '#1C1C1E',
+                            border: isSelected ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '6px',
+                            padding: '6px 4px',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            color: isSelected ? '#FF9500' : '#8E8E93',
+                            userSelect: 'none',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              setRegPlayerPositions((prev) => {
+                                const next = prev.includes(pos) ? prev.filter((p) => p !== pos) : [...prev, pos];
+                                if (next.length > 0 && !regPlayerPosition) {
+                                  setRegPlayerPosition(next[0]);
+                                }
+                                return next;
+                              });
+                            }}
+                            style={{ accentColor: '#FF9500', cursor: 'pointer' }}
+                          />
+                          <span>{pos}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -2230,7 +2386,7 @@ export default function ManageView({
                       value={regPlayerTeamId || '__auto__'}
                       onChange={(e) => setRegPlayerTeamId(e.target.value)}
                     >
-                      <option value="__auto__">⚡ Intelligently Auto-Assign (Balance)</option>
+                      <option value="__auto__">⚡ Auto-Assign (Balance)</option>
                       {(cat?.teams || []).map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name}
@@ -2240,40 +2396,8 @@ export default function ManageView({
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
-                      Position *
-                    </label>
-                    <select
-                      className="form-input"
-                      value={regPlayerPosition}
-                      onChange={(e) => setRegPlayerPosition(e.target.value)}
-                    >
-                      {POSITIONS.map((p) => (
-                        <option key={p.value} value={p.value}>
-                          {p.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <div>
-                    <label style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
-                      Username (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Auto if blank"
-                      value={regPlayerUsername}
-                      onChange={(e) => setRegPlayerUsername(e.target.value)}
-                    />
-                  </div>
-
-                  <div>
                     <label style={{ fontSize: '11px', color: '#6CE5A0', fontWeight: 800, display: 'block', marginBottom: '2px' }}>
-                      Squad / Jersey No. * (Mandatory)
+                      Squad / Jersey No. *
                     </label>
                     <input
                       type="number"

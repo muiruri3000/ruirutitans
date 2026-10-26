@@ -367,6 +367,19 @@ export const api = {
     return await res.json();
   },
 
+  async updatePlayerProfile(payload) {
+    const res = await fetch("/api/players/update-profile/", {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to update player profile (${res.status})`);
+    }
+    return await res.json();
+  },
+
   async resetPlayerPasswordAdmin(identifier, categoryKey = null, teamId = null) {
     const payload = typeof identifier === 'object' && identifier !== null
       ? identifier

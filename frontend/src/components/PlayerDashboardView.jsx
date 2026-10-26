@@ -21,6 +21,44 @@ export default function PlayerDashboardView({
   const [hasVotedActiveRound, setHasVotedActiveRound] = useState(false);
   const [activeRoundTitle, setActiveRoundTitle] = useState('Active Round');
 
+  // Personal details state
+  const [firstName, setFirstName] = useState(
+    playerUser?.first_name || playerUser?.firstName || (playerUser?.name ? playerUser.name.split(' ')[0] : '')
+  );
+  const [surname, setSurname] = useState(
+    playerUser?.surname || (playerUser?.name && playerUser.name.includes(' ') ? playerUser.name.split(' ').slice(1).join(' ') : '')
+  );
+  const [dob, setDob] = useState(
+    playerUser?.dob || playerUser?.date_of_birth || playerUser?.dateOfBirth || ''
+  );
+  const [username, setUsername] = useState(playerUser?.username || '');
+  const [activeFoot, setActiveFoot] = useState(playerUser?.active_foot || playerUser?.activeFoot || 'right');
+  const [preferredPositions, setPreferredPositions] = useState(() => {
+    const pref = playerUser?.preferred_positions || playerUser?.preferredPositions;
+    if (Array.isArray(pref) && pref.length > 0) return pref;
+    if (playerUser?.position) return [playerUser.position];
+    return [];
+  });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState(null);
+  const [profileError, setProfileError] = useState(null);
+
+  useEffect(() => {
+    if (playerUser) {
+      setFirstName(playerUser.first_name || playerUser.firstName || (playerUser.name ? playerUser.name.split(' ')[0] : ''));
+      setSurname(playerUser.surname || (playerUser.name && playerUser.name.includes(' ') ? playerUser.name.split(' ').slice(1).join(' ') : ''));
+      setDob(playerUser.dob || playerUser.date_of_birth || playerUser.dateOfBirth || '');
+      setUsername(playerUser.username || '');
+      setActiveFoot(playerUser.active_foot || playerUser.activeFoot || 'right');
+      const pref = playerUser.preferred_positions || playerUser.preferredPositions;
+      if (Array.isArray(pref) && pref.length > 0) {
+        setPreferredPositions(pref);
+      } else if (playerUser.position) {
+        setPreferredPositions([playerUser.position]);
+      }
+    }
+  }, [playerUser]);
+
   useEffect(() => {
     let mounted = true;
     async function checkVoting() {
@@ -142,6 +180,38 @@ export default function PlayerDashboardView({
     }
   };
 
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    const cleanUname = (username || '').trim().toLowerCase().replace(/\s+/g, '_');
+    if (!cleanUname) {
+      setProfileError('Username cannot be empty. This username is what will be used to log in.');
+      return;
+    }
+    setProfileSaving(true);
+    setProfileError(null);
+    setProfileSuccess(null);
+    try {
+      const res = await api.updatePlayerProfile({
+        player_id: playerUser.player_id,
+        first_name: firstName.trim(),
+        surname: surname.trim(),
+        date_of_birth: dob || null,
+        username: cleanUname,
+        active_foot: activeFoot,
+        preferred_positions: preferredPositions,
+      });
+      setProfileSuccess(res.message || 'Personal details updated successfully!');
+      if (onPlayerUpdated && res.player) {
+        onPlayerUpdated(res.player);
+      }
+      setTimeout(() => setProfileSuccess(null), 5000);
+    } catch (err) {
+      setProfileError(err.message || 'Failed to update personal details.');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Hero Welcome Card */}
@@ -214,6 +284,20 @@ export default function PlayerDashboardView({
                 }}
               >
                 Pos: {playerUser.position || 'Unassigned'}
+              </span>
+              <span>•</span>
+              <span
+                style={{
+                  background: 'rgba(108, 229, 160, 0.12)',
+                  color: '#6CE5A0',
+                  border: '1px solid #3F7A4E',
+                  borderRadius: '4px',
+                  padding: '1px 6px',
+                  fontWeight: 800,
+                  fontSize: '11px',
+                }}
+              >
+                👟 {(playerUser.active_foot || playerUser.activeFoot || 'Right').toUpperCase()} FOOT
               </span>
               <span>•</span>
               <span>Permanent ID: <code style={{ color: '#6CE5A0', fontWeight: 700 }}>{playerUser.player_id}</code></span>
@@ -363,6 +447,261 @@ export default function PlayerDashboardView({
             {hasVotedActiveRound ? '🏆 View Team of the Week (Vote Submitted)' : '🗳️ Cast Official Ballot for Team of the Week'}
           </button>
         </div>
+      </div>
+
+      {/* Personal Details & Account Credentials Card */}
+      <div
+        style={{
+          background: '#121212',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '14px',
+          padding: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              👤 Personal Profile &amp; Login Details
+            </div>
+            <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '2px' }}>
+              Keep your player identity up-to-date. Your username is used to log in to your Titans account.
+            </div>
+          </div>
+          <span
+            style={{
+              background: '#1C1C1E',
+              color: '#6CE5A0',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: '4px 10px',
+              borderRadius: '999px',
+              fontSize: '11px',
+              fontWeight: 700,
+            }}
+          >
+            Signed in as: @{playerUser.username}
+          </span>
+        </div>
+
+        {profileSuccess && (
+          <div
+            style={{
+              background: 'rgba(34, 197, 94, 0.15)',
+              border: '1px solid #22C55E',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              color: '#4ADE80',
+              fontSize: '12.5px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <span>✓</span>
+            <span>{profileSuccess}</span>
+          </div>
+        )}
+
+        {profileError && (
+          <div
+            style={{
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid #EF4444',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              color: '#FCA5A5',
+              fontSize: '12.5px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <span>⚠️</span>
+            <span>{profileError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Row 1: First Name & Surname */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '11.5px', color: '#EBEBF5', fontWeight: 700, marginBottom: '4px' }}>
+                First Name *
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. Samuel"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '11.5px', color: '#EBEBF5', fontWeight: 700, marginBottom: '4px' }}>
+                Surname / Last Name
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. Kibe"
+                value={surname}
+                onChange={(e) => setSurname(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Date of Birth & Username */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '11.5px', color: '#EBEBF5', fontWeight: 700, marginBottom: '4px' }}>
+                Date of Birth
+              </label>
+              <input
+                type="date"
+                className="form-input"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                style={{ colorScheme: 'dark' }}
+              />
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11.5px', color: '#EBEBF5', fontWeight: 700 }}>
+                  Username *
+                </label>
+                <span style={{ fontSize: '10.5px', color: '#FF9500', fontWeight: 800 }}>Used to log in</span>
+              </div>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. samuel_kibe"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Row 3: Active Foot */}
+          <div>
+            <label style={{ display: 'block', fontSize: '11.5px', color: '#EBEBF5', fontWeight: 700, marginBottom: '6px' }}>
+              Active Foot
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+              {[
+                { key: 'right', label: '👟 Right Foot' },
+                { key: 'left', label: '👟 Left Foot' },
+                { key: 'both', label: '👟 Both (Ambidextrous)' },
+              ].map((f) => {
+                const isActive = activeFoot === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setActiveFoot(f.key)}
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      borderRadius: '8px',
+                      border: isActive ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                      background: isActive ? 'rgba(255, 149, 0, 0.18)' : '#1C1C1E',
+                      color: isActive ? '#FF9500' : '#8E8E93',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Row 4: Preferred Positions (Checkboxes) */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ fontSize: '11.5px', color: '#EBEBF5', fontWeight: 700 }}>
+                Preferred Position(s) (List of positions in checkboxes)
+              </label>
+              <span style={{ fontSize: '11px', color: '#6CE5A0', fontWeight: 700 }}>
+                {preferredPositions.length ? `${preferredPositions.length} selected` : 'None selected'}
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '8px' }}>
+              {[
+                { code: 'GK', label: 'GK' },
+                { code: 'LB', label: 'LB' },
+                { code: 'CB', label: 'CB' },
+                { code: 'RB', label: 'RB' },
+                { code: 'CDM', label: 'CDM' },
+                { code: 'CM', label: 'CM' },
+                { code: 'CAM', label: 'CAM' },
+                { code: 'LW', label: 'LW' },
+                { code: 'RW', label: 'RW' },
+                { code: 'ST', label: 'ST' },
+              ].map((pos) => {
+                const isChecked = preferredPositions.includes(pos.code);
+                return (
+                  <label
+                    key={pos.code}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: isChecked ? 'rgba(255, 149, 0, 0.2)' : '#1C1C1E',
+                      border: isChecked ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      padding: '8px 10px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      color: isChecked ? '#FF9500' : '#8E8E93',
+                      userSelect: 'none',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {
+                        setPreferredPositions((prev) =>
+                          prev.includes(pos.code) ? prev.filter((p) => p !== pos.code) : [...prev, pos.code]
+                        );
+                      }}
+                      style={{ accentColor: '#FF9500', cursor: 'pointer' }}
+                    />
+                    <span>{pos.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Action Row */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+            <button
+              type="submit"
+              disabled={profileSaving}
+              className="stat-btn"
+              style={{
+                background: '#FF9500',
+                color: '#16201B',
+                fontWeight: 800,
+                padding: '10px 20px',
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              {profileSaving ? 'Saving Changes…' : '💾 Save Personal Details'}
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Change Password Modal */}
