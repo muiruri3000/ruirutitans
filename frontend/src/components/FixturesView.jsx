@@ -137,6 +137,8 @@ export default function FixturesView({
   isCmsMode = false,
   cmsUser = null,
   initialFilter = 'all',
+  initialOpenFixtureId = null,
+  onRequestCmsLogin = null,
   onTogglePlayed,
   onAddEvent,
   onRemoveEvent,
@@ -158,8 +160,14 @@ export default function FixturesView({
 }) {
   const [activeReportFixture, setActiveReportFixture] = useState(null);
   const [showAIReportModal, setShowAIReportModal] = useState(false);
-  const [openFixtureIds, setOpenFixtureIds] = useState({});
+  const [openFixtureIds, setOpenFixtureIds] = useState(() => (initialOpenFixtureId ? { [initialOpenFixtureId]: true } : {}));
   const [recentlyEditedIds, setRecentlyEditedIds] = useState({});
+
+  useEffect(() => {
+    if (initialOpenFixtureId) {
+      setOpenFixtureIds((prev) => ({ ...prev, [initialOpenFixtureId]: true }));
+    }
+  }, [initialOpenFixtureId]);
   const [statusFilter, setStatusFilter] = useState(initialFilter); // 'all' | 'results' | 'upcoming'
   const [teamFilter, setTeamFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -417,6 +425,35 @@ export default function FixturesView({
     });
     // Reset draft
     setInterfDrafts((prev) => ({ ...prev, [fId]: { teamId: '', playerId: '', type: 'yellow' } }));
+  };
+
+  const handleQuickAddGoal = (fId, teamId) => {
+    const team = teamsById[teamId];
+    const defaultPlayerId = team?.players?.[0]?.id || `${teamId}-UNK`;
+    setRecentlyEditedIds((prev) => ({ ...prev, [fId]: true }));
+    setOpenFixtureIds((prev) => ({ ...prev, [fId]: true }));
+    onAddEvent(fId, {
+      teamId: teamId,
+      playerId: defaultPlayerId,
+      type: 'goal',
+    });
+  };
+
+  const handleQuickRemoveGoal = (fId, teamId) => {
+    const fixture = fixtures.find((f) => f.id === fId);
+    if (!fixture || !fixture.events) return;
+    for (let i = fixture.events.length - 1; i >= 0; i--) {
+      const ev = fixture.events[i];
+      const isTeamGoal =
+        (ev.type === 'goal' && ev.teamId === teamId) ||
+        (ev.type === 'owngoal' && ev.teamId !== teamId);
+      if (isTeamGoal) {
+        setRecentlyEditedIds((prev) => ({ ...prev, [fId]: true }));
+        setOpenFixtureIds((prev) => ({ ...prev, [fId]: true }));
+        onRemoveEvent(fId, i);
+        return;
+      }
+    }
   };
 
   if (!fixtures || fixtures.length === 0) {
@@ -1519,12 +1556,27 @@ export default function FixturesView({
             <div
               key={f.id}
               className="fixture-card"
+              onClick={(e) => {
+                const tag = e.target.tagName.toLowerCase();
+                if (['button', 'a', 'input', 'select', 'textarea', 'label'].includes(tag) || e.target.closest('button, a, input, select, textarea, label, .ev-remove, .team-link-btn')) {
+                  return;
+                }
+                toggleOpen(f.id);
+              }}
               style={{
                 padding: '14px 16px',
-                background: '#121212',
-                border: isCompleted ? '1px solid rgba(255, 255, 255, 0.1)' : '1px dashed rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
+                background: isOpen ? '#161618' : '#121212',
+                border: isOpen
+                  ? '1px solid #FF9500'
+                  : isCompleted
+                  ? '1px solid rgba(255, 255, 255, 0.12)'
+                  : '1px dashed rgba(255, 255, 255, 0.16)',
+                borderRadius: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.18s ease',
+                boxShadow: isOpen ? '0 0 16px rgba(255, 149, 0, 0.2)' : 'none',
               }}
+              title={isCompleted ? "Click to view and edit score, goals & cards" : "Click to enter match results"}
             >
               {/* Top Meta Line: Date, Status Pill, Referee, Move Day */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
@@ -1585,6 +1637,27 @@ export default function FixturesView({
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleOpen(f.id);
+                    }}
+                    style={{
+                      fontSize: '10.5px',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      background: isOpen ? 'rgba(255, 149, 0, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                      color: isOpen ? '#FF9500' : '#8E8E93',
+                      border: isOpen ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    {isOpen ? '▲ Editing Result' : isCompleted ? '✏️ Edit Score & Cards' : '⚡ Enter Result'}
+                  </span>
                   <span
                     style={{
                       fontSize: '10px',
@@ -1739,19 +1812,30 @@ export default function FixturesView({
 
                 <div
                   className="scoreboard"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleOpen(f.id);
+                  }}
                   style={{
                     fontSize: '26px',
                     color: isCompleted ? '#FF9500' : '#8E8E93',
                     padding: '4px 16px',
-                    background: '#121212',
+                    background: isOpen ? 'rgba(255, 149, 0, 0.14)' : '#121212',
                     borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: isOpen ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
                     letterSpacing: '0.08em',
                     minWidth: '88px',
                     textAlign: 'center',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    transition: 'all 0.15s ease',
                   }}
+                  title={isCompleted ? "Click to view and edit score, goals & cards" : "Click to enter match results"}
                 >
                   {isCompleted || (f.events && f.events.length > 0) ? `${hs} - ${as}` : 'VS'}
+                  <div style={{ fontSize: '9px', color: '#FF9F0A', fontWeight: 700, letterSpacing: 'normal', marginTop: '1px' }}>
+                    {isOpen ? '▲ Close' : isCompleted ? '✏️ Edit Score' : '⚡ Enter Result'}
+                  </div>
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', textAlign: 'right' }}>
@@ -1884,8 +1968,8 @@ export default function FixturesView({
                   )}
                 </div>
 
-                {isCmsMode && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {isCmsMode && (
                     <button
                       type="button"
                       className="played-toggle"
@@ -1900,16 +1984,29 @@ export default function FixturesView({
                     >
                       {isCompleted ? '✓ Final' : 'Mark Final'}
                     </button>
+                  )}
 
-                    <button
-                      type="button"
-                      className="btn-pill-action"
-                      onClick={() => toggleOpen(f.id)}
-                    >
-                      {isOpen ? 'Hide CMS Events ▲' : '✏️ Record Match Events ▾'}
-                    </button>
-                  </div>
-                )}
+                  <button
+                    type="button"
+                    className="btn-pill-action"
+                    onClick={() => toggleOpen(f.id)}
+                    style={{
+                      background: isOpen ? 'rgba(255, 149, 0, 0.2)' : undefined,
+                      borderColor: isOpen ? '#FF9500' : undefined,
+                      color: isOpen ? '#FF9F0A' : undefined,
+                    }}
+                  >
+                    {isOpen
+                      ? 'Hide Details ▲'
+                      : isCmsMode
+                      ? isCompleted
+                        ? '✏️ Edit Score & Cards ▾'
+                        : '⚡ Enter Results ▾'
+                      : isCompleted
+                      ? '✏️ Edit / Events ▾'
+                      : '⚡ Enter Result ▾'}
+                  </button>
+                </div>
               </div>
 
               {/* Prominent Match Report Strip on Every Played Match */}
@@ -1974,11 +2071,219 @@ export default function FixturesView({
                 </div>
               )}
 
-              {/* Expandable CMS Match Events Panel */}
-              {isCmsMode && isOpen && (
+              {/* Expandable Match Events & Results Editor */}
+              {isOpen && (
+                !isCmsMode ? (
+                  <div style={{ marginTop: '12px', background: '#121212', borderRadius: '8px', padding: '14px', border: '1px solid rgba(255, 149, 0, 0.4)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#FF9500', marginBottom: '4px' }}>
+                          {isCompleted ? '✏️ EDIT MATCH RESULT & CARDS' : '⚡ ENTER MATCH RESULTS'}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#8E8E93' }}>
+                          {isCompleted
+                            ? 'Sign in as Manager/Referee to adjust score, add/remove goals, or assign yellow/red cards.'
+                            : 'Sign in as Manager/Referee to enter goals, penalties, assists, and mark match final.'}
+                        </div>
+                      </div>
+                      {onRequestCmsLogin && (
+                        <button
+                          type="button"
+                          onClick={() => onRequestCmsLogin(f.id)}
+                          style={{
+                            background: '#FF9500',
+                            color: '#16201B',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '8px 16px',
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            boxShadow: '0 2px 8px rgba(255, 149, 0, 0.3)',
+                          }}
+                        >
+                          🔑 Manager Sign In to {isCompleted ? 'Edit' : 'Enter'} Results
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Display current match events list if any */}
+                    <div style={{ marginTop: '12px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#8E8E93', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        Logged Match Events ({f.events?.length || 0})
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {(f.events || []).map((e, idx) => {
+                          const t = teamsById[e.teamId];
+                          const p = t?.players?.find((pp) => pp.id === e.playerId);
+                          const a = e.assistPlayerId ? t?.players?.find((pp) => pp.id === e.assistPlayerId) : null;
+                          let label = `${p ? p.name : (e.playerId && e.playerId.endsWith('-UNK') ? 'Squad Goal' : 'Unknown')} (${t?.name || e.teamId})`;
+                          if (e.type === 'goal') {
+                            if (e.penalty) label += ' [Penalty Goal]';
+                            if (a) label += ` [🅰️ Assist: ${a.name}]`;
+                          } else if (e.type === 'owngoal') {
+                            label += ' [Own Goal]';
+                          }
+                          return (
+                            <span key={idx} className="ev-chip">
+                              <span>{e.type === 'goal' ? (e.penalty ? '🎯⚽' : '⚽') : e.type === 'owngoal' ? '🥅' : e.type === 'yellow' ? '🟨' : '🟥'}</span>
+                              <span>{label}</span>
+                            </span>
+                          );
+                        })}
+                        {(!f.events || f.events.length === 0) && (
+                          <span style={{ fontSize: '11.5px', color: '#8E8E93' }}>No events logged yet for this match.</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
                 <div style={{ marginTop: '12px', background: '#121212', borderRadius: '8px', padding: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                  <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#FF9500', marginBottom: '8px' }}>
-                    CMS: RECORD MATCH EVENTS (GOALS WITH ASSISTS / PENALTY / OWN GOAL &amp; CARDS)
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#FF9500' }}>
+                      {isCompleted ? '✏️ CMS: EDIT MATCH RESULT & DISCIPLINARY EVENTS' : '⚡ CMS: ENTER MATCH RESULTS & EVENTS'}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleOpen(f.id)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#8E8E93',
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+
+                  {/* Quick Score Adjustment & Status Bar */}
+                  <div
+                    style={{
+                      marginBottom: '12px',
+                      padding: '10px 14px',
+                      background: '#092119',
+                      borderRadius: '8px',
+                      border: '1px solid #163E30',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                    }}
+                  >
+                    {/* Home Team quick score */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontWeight: 800, fontSize: '13px', color: '#FFFFFF' }}>{home?.name || f.home}</span>
+                      <span style={{ fontSize: '20px', fontWeight: 900, color: '#FF9500', minWidth: '24px', textAlign: 'center' }}>{hs}</span>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleQuickRemoveGoal(f.id, f.home)}
+                          disabled={hs <= 0}
+                          title="Deduct 1 goal from this team"
+                          style={{
+                            background: hs > 0 ? '#1C1C1E' : 'rgba(255,255,255,0.05)',
+                            color: hs > 0 ? '#FF453A' : '#555',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '4px',
+                            width: '28px',
+                            height: '28px',
+                            fontSize: '14px',
+                            fontWeight: 800,
+                            cursor: hs > 0 ? 'pointer' : 'not-allowed',
+                          }}
+                        >
+                          -
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleQuickAddGoal(f.id, f.home)}
+                          title="Quick add 1 goal for this team"
+                          style={{
+                            background: '#FF9500',
+                            color: '#16201B',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '0 8px',
+                            height: '28px',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          +1 Goal
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Match Status Toggle */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        className="played-toggle"
+                        onClick={() => onTogglePlayed(f.id)}
+                        style={{
+                          background: isCompleted ? 'rgba(255, 149, 0, 0.2)' : 'transparent',
+                          borderColor: isCompleted ? '#FF9500' : 'rgba(255, 255, 255, 0.2)',
+                          color: isCompleted ? '#FF9500' : '#8E8E93',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                        }}
+                      >
+                        {isCompleted ? '✓ Match Final' : 'Mark Match Final'}
+                      </button>
+                    </div>
+
+                    {/* Away Team quick score */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleQuickAddGoal(f.id, f.away)}
+                          title="Quick add 1 goal for this team"
+                          style={{
+                            background: '#FF9500',
+                            color: '#16201B',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '0 8px',
+                            height: '28px',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          +1 Goal
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleQuickRemoveGoal(f.id, f.away)}
+                          disabled={as <= 0}
+                          title="Deduct 1 goal from this team"
+                          style={{
+                            background: as > 0 ? '#1C1C1E' : 'rgba(255,255,255,0.05)',
+                            color: as > 0 ? '#FF453A' : '#555',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '4px',
+                            width: '28px',
+                            height: '28px',
+                            fontSize: '14px',
+                            fontWeight: 800,
+                            cursor: as > 0 ? 'pointer' : 'not-allowed',
+                          }}
+                        >
+                          -
+                        </button>
+                      </div>
+                      <span style={{ fontSize: '20px', fontWeight: 900, color: '#FF9500', minWidth: '24px', textAlign: 'center' }}>{as}</span>
+                      <span style={{ fontWeight: 800, fontSize: '13px', color: '#FFFFFF' }}>{away?.name || f.away}</span>
+                    </div>
                   </div>
 
                   {/* Existing event chips */}
@@ -1990,7 +2295,7 @@ export default function FixturesView({
                       const isInterf = Boolean(
                         e.interference || (f.home && f.away && e.teamId !== f.home && e.teamId !== f.away)
                       );
-                      let label = `${p ? p.name : 'Unknown'} (${t?.name || e.teamId})`;
+                      let label = `${p ? p.name : (e.playerId && e.playerId.endsWith('-UNK') ? 'Squad Goal' : 'Unknown')} (${t?.name || e.teamId})`;
                       if (e.type === 'goal') {
                         if (e.penalty) label += ' [Penalty Goal]';
                         if (a) label += ` [🅰️ Assist: ${a.name}]`;
@@ -2137,6 +2442,7 @@ export default function FixturesView({
                                 }}
                               >
                                 <option value="">Select Scorer…</option>
+                                <option value={`${team.id}-UNK`}>⚽ Squad / Uncredited Goal ({team.name})</option>
                                 {teamPlayers.map((p) => (
                                   <option key={p.id} value={p.id}>
                                     {p.name} {p.position ? `(${p.position})` : ''}
@@ -2388,7 +2694,7 @@ export default function FixturesView({
                     </button>
                   </div>
                 </div>
-              )}
+              ))}
             </div>
           );
         })}

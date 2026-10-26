@@ -241,6 +241,13 @@ export default function App() {
     }
   };
   const [fixturesInitialFilter, setFixturesInitialFilter] = useState('all');
+  const [fixturesInitialOpenId, setFixturesInitialOpenId] = useState(null);
+
+  const handleOpenFixtureInView = (fixtureId, filter = 'all') => {
+    setFixturesInitialFilter(filter);
+    setFixturesInitialOpenId(fixtureId);
+    setCurrentView('fixtures');
+  };
   const [votingInitialTab, setVotingInitialTab] = useState('totw');
 
   // Authentication & CMS Mode State
@@ -3798,6 +3805,10 @@ export default function App() {
                       return (
                         <div
                           key={f.id}
+                          onClick={(e) => {
+                            if (e.target.closest('button, a')) return;
+                            handleOpenFixtureInView(f.id, 'results');
+                          }}
                           style={{
                             background: '#121212',
                             border: '1px solid #1C1C1E',
@@ -3807,7 +3818,10 @@ export default function App() {
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             gap: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
                           }}
+                          title="Click to view or edit match score and cards"
                         >
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: home?.color || '#FF9500' }} />
@@ -3825,7 +3839,14 @@ export default function App() {
                               <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{home?.name || f.home}</span>
                             )}
                           </div>
-                          <div style={{ textAlign: 'center' }}>
+                          <div
+                            style={{ textAlign: 'center', cursor: 'pointer' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenFixtureInView(f.id, 'results');
+                            }}
+                            title="Click to edit score & events"
+                          >
                             <span
                               className="scoreboard"
                               style={{
@@ -3835,11 +3856,13 @@ export default function App() {
                                 padding: '2px 10px',
                                 borderRadius: '6px',
                                 border: '1px solid rgba(255, 255, 255, 0.1)',
+                                display: 'inline-block',
                               }}
                             >
                               {hs} - {as}
                             </span>
                             <div style={{ fontSize: '9.5px', color: '#8E8E93', marginTop: '2px' }}>{f.date}</div>
+                            <div style={{ fontSize: '8.5px', color: '#FF9F0A', fontWeight: 700 }}>✏️ Edit Score</div>
                           </div>
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', textAlign: 'right' }}>
                             {f.away ? (
@@ -3915,6 +3938,10 @@ export default function App() {
                       return (
                         <div
                           key={f.id}
+                          onClick={(e) => {
+                            if (e.target.closest('button, a')) return;
+                            handleOpenFixtureInView(f.id, 'upcoming');
+                          }}
                           style={{
                             background: '#121212',
                             border: '1px dashed rgba(255, 255, 255, 0.1)',
@@ -3924,7 +3951,10 @@ export default function App() {
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             gap: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
                           }}
+                          title="Click to enter match results"
                         >
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: home?.color || '#FF9500' }} />
@@ -3942,7 +3972,14 @@ export default function App() {
                               <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{home?.name || f.home}</span>
                             )}
                           </div>
-                          <div style={{ textAlign: 'center' }}>
+                          <div
+                            style={{ textAlign: 'center', cursor: 'pointer' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenFixtureInView(f.id, 'upcoming');
+                            }}
+                            title="Click to enter match results"
+                          >
                             <span
                               className="scoreboard"
                               style={{
@@ -3952,11 +3989,13 @@ export default function App() {
                                 padding: '2px 10px',
                                 borderRadius: '6px',
                                 border: '1px solid rgba(255, 255, 255, 0.1)',
+                                display: 'inline-block',
                               }}
                             >
                               VS
                             </span>
                             <div style={{ fontSize: '9.5px', color: '#FF9500', marginTop: '2px', fontWeight: 600 }}>{f.date}</div>
+                            <div style={{ fontSize: '8.5px', color: '#FF9F0A', fontWeight: 700 }}>⚡ Enter Result</div>
                           </div>
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', textAlign: 'right' }}>
                             {f.away ? (
@@ -4089,6 +4128,8 @@ export default function App() {
             isCmsMode={isCmsMode}
             cmsUser={cmsUser}
             initialFilter={fixturesInitialFilter}
+            initialOpenFixtureId={fixturesInitialOpenId}
+            onRequestCmsLogin={() => setAuthModal({ open: true, tab: 'cms' })}
             onTogglePlayed={(fId) => handleTogglePlayed(fId, effectiveCategoryKey)}
             onAddEvent={(fId, ev) => handleAddEvent(fId, ev, effectiveCategoryKey)}
             onRemoveEvent={(fId, idx) => handleRemoveEvent(fId, idx, effectiveCategoryKey)}
