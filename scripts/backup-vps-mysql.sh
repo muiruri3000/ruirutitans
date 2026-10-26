@@ -21,7 +21,16 @@ echo "${LOG_PREFIX} Initiating Ruiru Titans MySQL backup..."
 mkdir -p "${BACKUP_DIR}"
 chmod 700 "${BACKUP_DIR}"
 
-# 2. Locate kubectl or k3s binary
+# 2. Configure KUBECONFIG if default k3s locations exist and are readable
+if [ -z "${KUBECONFIG:-}" ]; then
+    if [ -f "$HOME/.kube/config" ]; then
+        export KUBECONFIG="$HOME/.kube/config"
+    elif [ -r "/etc/rancher/k3s/k3s.yaml" ]; then
+        export KUBECONFIG="/etc/rancher/k3s/k3s.yaml"
+    fi
+fi
+
+# Locate kubectl or k3s binary
 if command -v kubectl >/dev/null 2>&1; then
     KUBECTL="kubectl"
 elif command -v k3s >/dev/null 2>&1; then
@@ -32,11 +41,21 @@ else
 fi
 
 # 3. Find running MySQL pod
-MYSQL_POD=$(${KUBECTL} get pods -n "${NAMESPACE}" -l app.kubernetes.io/name=ruirutitans-mysql --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+# Query pods matching label; if none, try matching by name prefix
+MYSQL_POD=$(${KUBECTL} get pods -n "${NAMESPACE}" -l app.kubernetes.io/name=ruirutitans-mysql --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}' 2>&1 || true)
 
-if [ -z "${MYSQL_POD}" ]; then
-    echo "${LOG_PREFIX} [ERROR] No running MySQL pod found in namespace '${NAMESPACE}'." >&2
-    exit 1
+# If label didn't match or failed, check for any pod starting with ruirutitans-mysql
+if [ -z "${MYSQL_POD}" ] || echo "${MYSQL_POD}" | grep -q "error"; then
+    POD_ERROR="${MYSQL_POD}"
+    MYSQL_POD=$(${KUBECTL} get pods -n "${NAMESPACE}" --field-selector=status.phase=Running -o jsonpath='{.items[?(@.metadata.labels.app\.kubernetes\.io/name=="ruirutitans-mysql")].metadata.name}' 2>&1 || true)
+    
+    if [ -z "${MYSQL_POD}" ] || echo "${MYSQL_POD}" | grep -q "error"; then
+        echo "${LOG_PREFIX} [ERROR] Could not find running MySQL pod in namespace '${NAMESPACE}'." >&2
+        if [ -n "${POD_ERROR}" ]; then
+            echo "${LOG_PREFIX} Cluster output: ${POD_ERROR}" >&2
+        fi
+        exit 1
+    fi
 fi
 
 echo "${LOG_PREFIX} Found active MySQL pod: ${MYSQL_POD}"
