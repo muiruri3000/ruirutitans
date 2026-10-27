@@ -39,6 +39,9 @@ spec:
             - "--default-authentication-plugin=mysql_native_password"
             - "--character-set-server=utf8mb4"
             - "--collation-server=utf8mb4_unicode_ci"
+            - "--performance-schema=OFF"
+            - "--innodb-buffer-pool-size=128M"
+            - "--max-connections=100"
           env:
             - name: MYSQL_DATABASE
               valueFrom:
@@ -68,23 +71,25 @@ spec:
               cpu: 100m
               memory: 256Mi
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: 1000m
+              memory: 1Gi
           livenessProbe:
             tcpSocket:
               port: 3306
-            initialDelaySeconds: 30
-            periodSeconds: 10
+            initialDelaySeconds: 45
+            periodSeconds: 15
             timeoutSeconds: 5
+            failureThreshold: 3
           readinessProbe:
             exec:
               command:
                 - "/bin/sh"
                 - "-c"
-                - "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD"
-            initialDelaySeconds: 15
+                - "mysqladmin ping -h 127.0.0.1 --silent || mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD"
+            initialDelaySeconds: 20
             periodSeconds: 10
-            timeoutSeconds: 5
+            timeoutSeconds: 10
+            failureThreshold: 5
           volumeMounts:
             - name: mysql-data
               mountPath: /var/lib/mysql

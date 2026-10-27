@@ -106,10 +106,10 @@ spec:
                   value: ruirutitans.com
                 - name: X-Forwarded-Proto
                   value: https
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 5
-            failureThreshold: 18
+            failureThreshold: 30
           livenessProbe:
             httpGet:
               path: /api/health/?check=live
@@ -119,7 +119,7 @@ spec:
                   value: ruirutitans.com
                 - name: X-Forwarded-Proto
                   value: https
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 3
@@ -132,10 +132,10 @@ spec:
                   value: ruirutitans.com
                 - name: X-Forwarded-Proto
                   value: https
-            initialDelaySeconds: 10
+            initialDelaySeconds: 15
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
+            timeoutSeconds: 10
+            failureThreshold: 6
           volumeMounts:
             - name: data-volume
               mountPath: /app/data
