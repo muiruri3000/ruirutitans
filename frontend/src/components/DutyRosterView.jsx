@@ -22,6 +22,14 @@ export default function DutyRosterView({
   const [savingKey, setSavingKey] = useState(null);
   const [notification, setNotification] = useState(null);
 
+  // Exemptions state
+  const [showExemptionsSection, setShowExemptionsSection] = useState(false);
+  const [exemptTeamId, setExemptTeamId] = useState('');
+  const [exemptPlayerId, setExemptPlayerId] = useState('');
+  const [exemptReason, setExemptReason] = useState('Medical / Injured');
+  const [customReason, setCustomReason] = useState('');
+  const [exemptSubmitting, setExemptSubmitting] = useState(false);
+
   // Teams lookup
   const teamsMap = useMemo(() => {
     const map = {};
@@ -87,14 +95,23 @@ export default function DutyRosterView({
     return set;
   }, [dutyRoster]);
 
-  // Get selectable players for a team — strictly EXCLUDING players who have completed duty!
+  // Set of exempted player IDs
+  const exemptionsList = useMemo(() => dutyRoster?.exemptions || [], [dutyRoster?.exemptions]);
+  const exemptedPlayerIds = useMemo(() => {
+    return new Set(exemptionsList.map((e) => String(e.playerId)));
+  }, [exemptionsList]);
+
+  // Get selectable players for a team — strictly EXCLUDING players who have completed duty OR are exempted!
   // "if a player has been ticked remove from list"
+  // "the system should not select a player for duty if they appear in the exemption list"
   const getSelectablePlayersForTeam = (teamId) => {
     const backendData = eligiblePlayersMap[teamId];
     if (backendData?.available && backendData.available.length > 0) {
-      // Filter out any newly completed IDs in optimistic state
+      // Filter out any newly completed or exempted IDs in optimistic state
       const filtered = backendData.available.filter(
-        (p) => !completedPlayerIds.has(String(p.id || p.permanentId))
+        (p) =>
+          !completedPlayerIds.has(String(p.id || p.permanentId)) &&
+          !exemptedPlayerIds.has(String(p.id || p.permanentId))
       );
       if (filtered.length > 0) return filtered;
     }
@@ -102,17 +119,78 @@ export default function DutyRosterView({
     const tObj = teamsMap[teamId];
     if (!tObj?.players) return [];
 
-    // All team players excluding 'Unrecorded scorer' and players who have already completed duty
+    // All team players excluding 'Unrecorded scorer', completed players, and exempted players
     const validPlayers = tObj.players.filter(
       (p) => !p.unknown && p.name !== 'Unrecorded scorer'
     );
 
     const availableOnly = validPlayers.filter(
-      (p) => !completedPlayerIds.has(String(p.id || p.permanentId))
+      (p) =>
+        !completedPlayerIds.has(String(p.id || p.permanentId)) &&
+        !exemptedPlayerIds.has(String(p.id || p.permanentId))
     );
 
-    // If every single player on the team has finished, allow rotation among all
-    return availableOnly.length > 0 ? availableOnly : validPlayers;
+    // If every single non-exempt player on the team has finished, allow rotation among non-exempt
+    const nonExemptPool = validPlayers.filter((p) => !exemptedPlayerIds.has(String(p.id || p.permanentId)));
+    return availableOnly.length > 0 ? availableOnly : nonExemptPool;
+  };
+
+  // Add a player to the exemption list
+  const handleAddExemption = async (e) => {
+    if (e) e.preventDefault();
+    if (!exemptPlayerId) {
+      setNotification({ type: 'error', text: 'Please select a player to exempt.' });
+      return;
+    }
+    const finalReason = customReason.trim() || exemptReason;
+    setExemptSubmitting(true);
+    try {
+      const res = await api.updateDutyRoster(targetCategoryKey, {
+        action: 'add_exemption',
+        playerId: exemptPlayerId,
+        reason: finalReason,
+      });
+      if (res?.dutyRoster) {
+        setDutyRoster(res.dutyRoster);
+        if (res.eligiblePlayers) setEligiblePlayersMap(res.eligiblePlayers);
+      }
+      setNotification({
+        type: 'success',
+        text: '🛡️ Player exempted from duties and removed from upcoming uncompleted tasks.',
+      });
+      setExemptPlayerId('');
+      setCustomReason('');
+    } catch (err) {
+      console.error('Failed to add exemption:', err);
+      setNotification({ type: 'error', text: err.message || 'Failed to add exemption.' });
+    } finally {
+      setExemptSubmitting(false);
+    }
+  };
+
+  // Remove a player from the exemption list
+  const handleRemoveExemption = async (playerId) => {
+    if (!isAdmin) return;
+    setExemptSubmitting(true);
+    try {
+      const res = await api.updateDutyRoster(targetCategoryKey, {
+        action: 'remove_exemption',
+        playerId,
+      });
+      if (res?.dutyRoster) {
+        setDutyRoster(res.dutyRoster);
+        if (res.eligiblePlayers) setEligiblePlayersMap(res.eligiblePlayers);
+      }
+      setNotification({
+        type: 'success',
+        text: '✓ Exemption removed. Player restored to active duty selection pool.',
+      });
+    } catch (err) {
+      console.error('Failed to remove exemption:', err);
+      setNotification({ type: 'error', text: err.message || 'Failed to remove exemption.' });
+    } finally {
+      setExemptSubmitting(false);
+    }
   };
 
   // Toggle duty completion (ticking work done)
@@ -395,6 +473,22 @@ export default function DutyRosterView({
               <div style={{ fontSize: '20px', fontWeight: 800, color: '#FF9500' }}>{summary.pendingDuties}</div>
               <div style={{ fontSize: '11px', color: '#FF9500', fontWeight: 700, textTransform: 'uppercase' }}>⏳ Pending</div>
             </div>
+            <div
+              style={{
+                background: 'rgba(191, 90, 242, 0.1)',
+                borderRadius: '12px',
+                padding: '10px 16px',
+                border: '1px solid rgba(191, 90, 242, 0.3)',
+                textAlign: 'center',
+                minWidth: '85px',
+                cursor: 'pointer',
+              }}
+              onClick={() => setShowExemptionsSection((v) => !v)}
+              title="Click to view/manage duty exemptions"
+            >
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#BF5AF2' }}>{exemptionsList.length}</div>
+              <div style={{ fontSize: '11px', color: '#BF5AF2', fontWeight: 700, textTransform: 'uppercase' }}>🛡️ Exempted</div>
+            </div>
           </div>
         </div>
 
@@ -447,8 +541,27 @@ export default function DutyRosterView({
             <span style={{ fontSize: '12px', color: '#AEAEB2', fontWeight: 600 }}>Manager Actions:</span>
             <button
               type="button"
+              onClick={() => setShowExemptionsSection((v) => !v)}
+              style={{
+                background: showExemptionsSection ? '#BF5AF2' : 'rgba(191, 90, 242, 0.15)',
+                border: '1px solid #BF5AF2',
+                color: showExemptionsSection ? '#1C1C1E' : '#BF5AF2',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              🛡️ {showExemptionsSection ? 'Close Exemptions Manager' : `Manage Duty Exemptions (${exemptionsList.length})`}
+            </button>
+            <button
+              type="button"
               onClick={() => {
-                if (window.confirm('Regenerate and distribute unticked duty roster fairly across all teams?')) {
+                if (window.confirm('Regenerate and distribute unticked duty roster fairly across all non-exempt players?')) {
                   loadDutyRoster(true);
                 }
               }}
@@ -489,6 +602,261 @@ export default function DutyRosterView({
           </div>
         )}
       </div>
+
+      {/* =========================================================
+          DUTY EXEMPTIONS SECTION
+         ========================================================= */}
+      {(showExemptionsSection || (!isAdmin && exemptionsList.length > 0)) && (
+        <div
+          style={{
+            background: '#1C1C1E',
+            borderRadius: '16px',
+            border: '1px solid rgba(191, 90, 242, 0.3)',
+            padding: '20px 24px',
+            marginBottom: '24px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+          }}
+        >
+          {/* Section Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '20px' }}>🛡️</span>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+                Duty Exemptions ({exemptionsList.length})
+              </h2>
+            </div>
+            <span style={{ fontSize: '12px', color: '#AEAEB2' }}>
+              Exempted players are never selected for matchday duties
+            </span>
+          </div>
+
+          {/* Admin: Add Exemption Form */}
+          {isAdmin && (
+            <form
+              onSubmit={handleAddExemption}
+              style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                marginBottom: '20px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '12px',
+                alignItems: 'end',
+              }}
+            >
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#8E8E93', marginBottom: '4px', textTransform: 'uppercase' }}>
+                  1. Select Team
+                </label>
+                <select
+                  value={exemptTeamId}
+                  onChange={(e) => {
+                    setExemptTeamId(e.target.value);
+                    setExemptPlayerId('');
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    background: '#2C2C2E',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#FFFFFF',
+                    fontSize: '12.5px',
+                  }}
+                >
+                  <option value="">-- Choose Team --</option>
+                  {cat?.teams?.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#8E8E93', marginBottom: '4px', textTransform: 'uppercase' }}>
+                  2. Select Player to Exempt
+                </label>
+                <select
+                  value={exemptPlayerId}
+                  onChange={(e) => setExemptPlayerId(e.target.value)}
+                  disabled={!exemptTeamId}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    background: '#2C2C2E',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#FFFFFF',
+                    fontSize: '12.5px',
+                  }}
+                >
+                  <option value="">-- Choose Player --</option>
+                  {exemptTeamId &&
+                    teamsMap[exemptTeamId]?.players
+                      ?.filter((p) => !p.unknown && p.name !== 'Unrecorded scorer' && !exemptedPlayerIds.has(String(p.id || p.permanentId)))
+                      .map((p) => (
+                        <option key={p.id || p.permanentId} value={p.id || p.permanentId}>
+                          {p.name} {p.position ? `(${p.position})` : ''}
+                        </option>
+                      ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#8E8E93', marginBottom: '4px', textTransform: 'uppercase' }}>
+                  3. Reason for Exemption
+                </label>
+                <select
+                  value={exemptReason}
+                  onChange={(e) => setExemptReason(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    background: '#2C2C2E',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#FFFFFF',
+                    fontSize: '12.5px',
+                  }}
+                >
+                  <option value="Medical / Injured">Medical / Injured</option>
+                  <option value="Refereeing / Match Official">Refereeing / Match Official</option>
+                  <option value="Club Executive Duty">Club Executive Duty</option>
+                  <option value="Work / Academic Obligation">Work / Academic Obligation</option>
+                  <option value="Compassionate Leave">Compassionate Leave</option>
+                  <option value="Custom">Other (Specify below)</option>
+                </select>
+              </div>
+
+              {exemptReason === 'Custom' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#8E8E93', marginBottom: '4px', textTransform: 'uppercase' }}>
+                    Specify Custom Reason
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter reason..."
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      background: '#2C2C2E',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      color: '#FFFFFF',
+                      fontSize: '12.5px',
+                    }}
+                  />
+                </div>
+              )}
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={exemptSubmitting || !exemptPlayerId}
+                  style={{
+                    width: '100%',
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: '#BF5AF2',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '12.5px',
+                    cursor: exemptPlayerId ? 'pointer' : 'not-allowed',
+                    opacity: exemptPlayerId ? 1 : 0.6,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {exemptSubmitting ? 'Adding…' : '+ Add Exemption'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* List of currently exempted players */}
+          {exemptionsList.length === 0 ? (
+            <div style={{ padding: '16px', textAlign: 'center', color: '#8E8E93', fontSize: '13px' }}>
+              No squad members currently exempted. All players are in the active rotating duty pool.
+            </div>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '12px',
+              }}
+            >
+              {exemptionsList.map((ex) => {
+                const tObj = teamsMap[ex.teamId];
+                return (
+                  <div
+                    key={ex.playerId}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      border: '1px solid rgba(191, 90, 242, 0.25)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                        <span
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: tObj?.color || '#BF5AF2',
+                            display: 'inline-block',
+                          }}
+                        />
+                        <span style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase' }}>
+                          {ex.teamName || ex.teamId}
+                        </span>
+                      </div>
+                      <div style={{ fontWeight: 800, fontSize: '14px', color: '#FFFFFF' }}>
+                        {ex.playerName}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#BF5AF2', marginTop: '2px' }}>
+                        Reason: {ex.reason || 'Exempted'}
+                      </div>
+                    </div>
+
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExemption(ex.playerId)}
+                        disabled={exemptSubmitting}
+                        title="Remove exemption and restore to duty pool"
+                        style={{
+                          background: 'rgba(255, 69, 58, 0.15)',
+                          border: '1px solid #FF453A',
+                          color: '#FF453A',
+                          borderRadius: '6px',
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ✕ Remove
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Control Bar: Filters & Search */}
       <div
@@ -817,8 +1185,13 @@ export default function DutyRosterView({
                           </div>
 
                           {/* Player Name & Task */}
-                          <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF', marginBottom: '2px' }}>
-                            👤 {hDuty.playerName || 'Unassigned'}
+                          <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF', marginBottom: '2px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                            <span>👤 {hDuty.playerName || 'Unassigned'}</span>
+                            {hDuty.playerId && exemptedPlayerIds.has(String(hDuty.playerId)) && (
+                              <span style={{ fontSize: '10.5px', background: 'rgba(191,90,242,0.2)', color: '#BF5AF2', border: '1px solid #BF5AF2', padding: '1px 6px', borderRadius: '4px' }}>
+                                🛡️ EXEMPTED
+                              </span>
+                            )}
                           </div>
                           <div style={{ fontSize: '12px', color: '#AEAEB2' }}>
                             {hDuty.task || (isFirst ? `Wash ${m.homeTeam?.name} Bibs` : `Take ${m.homeTeam?.name} Side Goalpost to Store`)}
@@ -962,8 +1335,13 @@ export default function DutyRosterView({
                           </div>
 
                           {/* Player Name & Task */}
-                          <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF', marginBottom: '2px' }}>
-                            👤 {aDuty.playerName || 'Unassigned'}
+                          <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF', marginBottom: '2px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                            <span>👤 {aDuty.playerName || 'Unassigned'}</span>
+                            {aDuty.playerId && exemptedPlayerIds.has(String(aDuty.playerId)) && (
+                              <span style={{ fontSize: '10.5px', background: 'rgba(191,90,242,0.2)', color: '#BF5AF2', border: '1px solid #BF5AF2', padding: '1px 6px', borderRadius: '4px' }}>
+                                🛡️ EXEMPTED
+                              </span>
+                            )}
                           </div>
                           <div style={{ fontSize: '12px', color: '#AEAEB2' }}>
                             {aDuty.task || (isFirst ? `Wash ${m.awayTeam?.name} Bibs` : `Take ${m.awayTeam?.name} Side Goalpost to Store`)}

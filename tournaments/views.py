@@ -23,6 +23,9 @@ from .services import (
     update_duty_roster_assignment,
     get_category_duty_eligible_players,
     get_category_completed_duty_player_ids,
+    get_category_duty_exempted_player_ids,
+    add_duty_roster_exemption,
+    remove_duty_roster_exemption,
 )
 
 
@@ -1792,6 +1795,36 @@ class DutyRosterAPIView(views.APIView):
                 "eligiblePlayers": eligible_players,
             })
 
+        elif action == "add_exemption":
+            player_id = request.data.get("playerId") or request.data.get("player_id")
+            reason = request.data.get("reason", "")
+            if not player_id:
+                return Response({"error": "playerId is required."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                roster = add_duty_roster_exemption(cat, player_id, reason=reason)
+            except ValueError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            eligible_players = get_category_duty_eligible_players(cat)
+            return Response({
+                "status": "success",
+                "message": f"Player {player_id} added to exemption list.",
+                "dutyRoster": roster,
+                "eligiblePlayers": eligible_players,
+            })
+
+        elif action == "remove_exemption":
+            player_id = request.data.get("playerId") or request.data.get("player_id")
+            if not player_id:
+                return Response({"error": "playerId is required."}, status=status.HTTP_400_BAD_REQUEST)
+            roster = remove_duty_roster_exemption(cat, player_id)
+            eligible_players = get_category_duty_eligible_players(cat)
+            return Response({
+                "status": "success",
+                "message": f"Exemption removed for {player_id}.",
+                "dutyRoster": roster,
+                "eligiblePlayers": eligible_players,
+            })
+
         elif action in ("update_assignment", "toggle_completion"):
             fixture_id = request.data.get("fixtureId") or request.data.get("fixture_id")
             side = request.data.get("side")
@@ -1805,14 +1838,17 @@ class DutyRosterAPIView(views.APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            roster = update_duty_roster_assignment(
-                category=cat,
-                fixture_id=fixture_id,
-                side=side,
-                player_id=player_id,
-                player_name=player_name,
-                completed=completed,
-            )
+            try:
+                roster = update_duty_roster_assignment(
+                    category=cat,
+                    fixture_id=fixture_id,
+                    side=side,
+                    player_id=player_id,
+                    player_name=player_name,
+                    completed=completed,
+                )
+            except ValueError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             eligible_players = get_category_duty_eligible_players(cat)
             return Response({
                 "status": "success",

@@ -2614,6 +2614,65 @@ class DutyRosterTests(TestCase):
         )
         self.assertIn(res.status_code, [401, 403])
 
+    def test_exemption_management_and_exclusion(self):
+        # 1. Admin adds T1-P1 to exemption list
+        exempt_res = self.client.post(
+            f"/api/categories/{self.category.key}/duty-roster/",
+            data=json.dumps({
+                "action": "add_exemption",
+                "playerId": "T1-P1",
+                "reason": "Knee injury in training",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(exempt_res.status_code, 200)
+        data = exempt_res.json()
+        exemptions = data["dutyRoster"].get("exemptions", [])
+        self.assertEqual(len(exemptions), 1)
+        self.assertEqual(exemptions[0]["playerId"], "T1-P1")
+        self.assertEqual(exemptions[0]["reason"], "Knee injury in training")
+
+        # 2. Verify T1-P1 is excluded from available players
+        t1_avail = [p["id"] for p in data["eligiblePlayers"]["T1"]["available"]]
+        t1_exempt = [p["id"] for p in data["eligiblePlayers"]["T1"]["exempted"]]
+        self.assertNotIn("T1-P1", t1_avail)
+        self.assertIn("T1-P1", t1_exempt)
+
+        # 3. Verify FX-1 Home duty was NOT given to T1-P1 (reassigned to non-exempt T1-P2)
+        fx1_home = data["dutyRoster"]["assignments"]["FX-1"]["homeDuty"]
+        self.assertNotEqual(fx1_home["playerId"], "T1-P1")
+        self.assertEqual(fx1_home["playerId"], "T1-P2")
+
+        # 4. Attempting to manually assign exempted T1-P1 should fail
+        assign_res = self.client.post(
+            f"/api/categories/{self.category.key}/duty-roster/",
+            data=json.dumps({
+                "action": "update_assignment",
+                "fixtureId": "FX-1",
+                "side": "home",
+                "playerId": "T1-P1",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(assign_res.status_code, 400)
+        self.assertIn("exemption list", assign_res.json().get("error", "").lower())
+
+        # 5. Remove exemption and verify player returns to eligible pool
+        remove_res = self.client.post(
+            f"/api/categories/{self.category.key}/duty-roster/",
+            data=json.dumps({
+                "action": "remove_exemption",
+                "playerId": "T1-P1",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(remove_res.status_code, 200)
+        data2 = remove_res.json()
+        self.assertEqual(len(data2["dutyRoster"].get("exemptions", [])), 0)
+        t1_avail2 = [p["id"] for p in data2["eligiblePlayers"]["T1"]["available"]]
+        self.assertIn("T1-P1", t1_avail2)
+
+
 
 
 

@@ -5149,17 +5149,30 @@ def get_category_completed_duty_player_ids(duty_roster):
     return completed
 
 
-def get_category_duty_eligible_players(category, completed_player_ids=None):
+def get_category_duty_exempted_player_ids(duty_roster):
+    """Return set of permanent player IDs who are currently exempted from duties."""
+    if not isinstance(duty_roster, dict):
+        return set()
+    exemptions = duty_roster.get("exemptions") or []
+    return {str(e["playerId"]) for e in exemptions if isinstance(e, dict) and e.get("playerId")}
+
+
+def get_category_duty_eligible_players(category, completed_player_ids=None, exempted_player_ids=None):
     """
     Return dictionary mapping team_id to:
-      - 'available': players who have NOT completed duty yet (or all if all finished)
+      - 'available': players who have NOT completed duty yet AND are NOT exempted
       - 'completed': players who have completed duty
+      - 'exempted': players who are currently on the exemption list
       - 'all': all valid players
-    This directly enforces: 'if a player has been ticked remove from list'.
+    This directly enforces:
+      1. 'if a player has been ticked remove from list'
+      2. 'the system should not select a player for duty if they appear in the exemption list'
     """
+    duty_roster = (category.schedule_days or {}).get("duty_roster") or {}
     if completed_player_ids is None:
-        duty_roster = (category.schedule_days or {}).get("duty_roster") or {}
         completed_player_ids = get_category_completed_duty_player_ids(duty_roster)
+    if exempted_player_ids is None:
+        exempted_player_ids = get_category_duty_exempted_player_ids(duty_roster)
 
     teams = list(category.teams.all().prefetch_related("players"))
     eligible_map = {}
@@ -5169,13 +5182,18 @@ def get_category_duty_eligible_players(category, completed_player_ids=None):
             if not p.is_unknown and p.name != "Unrecorded scorer"
         ]
         completed_list = [p for p in all_players if p.player_id in completed_player_ids]
-        available_list = [p for p in all_players if p.player_id not in completed_player_ids]
+        exempted_list = [p for p in all_players if p.player_id in exempted_player_ids]
+        available_list = [
+            p for p in all_players
+            if p.player_id not in completed_player_ids and p.player_id not in exempted_player_ids
+        ]
 
         eligible_map[t.team_id] = {
             "team_id": t.team_id,
             "team_name": t.name,
             "available": [p.to_dict() for p in available_list],
             "completed": [p.to_dict() for p in completed_list],
+            "exempted": [p.to_dict() for p in exempted_list],
             "all": [p.to_dict() for p in all_players],
         }
     return eligible_map
@@ -5190,12 +5208,15 @@ def build_category_duty_roster(category, force_regenerate=False):
       - 2nd match of the day: 2 opposing players assigned to take side goalpost to the store.
       - Ticked players have completed: True.
       - Ticked players are excluded from selection lists for remaining duties.
+      - Exempted players are NEVER selected for duty and replaced if currently assigned to uncompleted tasks.
     """
     from collections import defaultdict
 
     existing_schedule_days = category.schedule_days if isinstance(category.schedule_days, dict) else {}
     existing_roster = existing_schedule_days.get("duty_roster") or {}
     existing_assignments = existing_roster.get("assignments") or {}
+    exemptions = existing_roster.get("exemptions") or []
+    exempted_ids = get_category_duty_exempted_player_ids(existing_roster)
 
     fixtures_list = list(category.fixtures.all())
     fixtures_list.sort(key=fixture_sort_key)
@@ -5250,13 +5271,25 @@ def build_category_duty_roster(category, force_regenerate=False):
             # Resolve Home duty
             h_duty = None
             if ex and ex.get("homeDuty") and ex["homeDuty"].get("playerId"):
-                h_duty = dict(ex["homeDuty"])
-                h_duty["task"] = h_task  # ensure canonical task description
-            else:
-                # Pick next eligible unticked player for home team
+                h_p_id = str(ex["homeDuty"]["playerId"])
+                h_is_done = bool(ex["homeDuty"].get("completed"))
+                # If player is now exempted and duty is not yet completed, reassign!
+                if h_p_id in exempted_ids and not h_is_done:
+                    h_duty = None
+                else:
+                    h_duty = dict(ex["homeDuty"])
+                    h_duty["task"] = h_task  # ensure canonical task description
+
+            if not h_duty:
+                # Pick next eligible unticked & non-exempt player for home team
                 h_players = team_players_map.get(h_id, [])
-                unticked_h = [p for p in h_players if p.player_id not in completed_ids]
-                pool = unticked_h if unticked_h else h_players
+                unticked_nonexempt_h = [
+                    p for p in h_players
+                    if p.player_id not in completed_ids and p.player_id not in exempted_ids
+                ]
+                # If all unticked are exhausted, pick any non-exempt player
+                nonexempt_h = [p for p in h_players if p.player_id not in exempted_ids]
+                pool = unticked_nonexempt_h if unticked_nonexempt_h else nonexempt_h
                 picked_p = pool[team_assignment_ptrs[h_id] % len(pool)] if pool else None
                 team_assignment_ptrs[h_id] += 1
                 is_comp = bool(f.played)
@@ -5273,13 +5306,24 @@ def build_category_duty_roster(category, force_regenerate=False):
             # Resolve Away duty
             a_duty = None
             if ex and ex.get("awayDuty") and ex["awayDuty"].get("playerId"):
-                a_duty = dict(ex["awayDuty"])
-                a_duty["task"] = a_task  # ensure canonical task description
-            else:
-                # Pick next eligible unticked player for away team
+                a_p_id = str(ex["awayDuty"]["playerId"])
+                a_is_done = bool(ex["awayDuty"].get("completed"))
+                # If player is now exempted and duty is not yet completed, reassign!
+                if a_p_id in exempted_ids and not a_is_done:
+                    a_duty = None
+                else:
+                    a_duty = dict(ex["awayDuty"])
+                    a_duty["task"] = a_task  # ensure canonical task description
+
+            if not a_duty:
+                # Pick next eligible unticked & non-exempt player for away team
                 a_players = team_players_map.get(a_id, [])
-                unticked_a = [p for p in a_players if p.player_id not in completed_ids]
-                pool = unticked_a if unticked_a else a_players
+                unticked_nonexempt_a = [
+                    p for p in a_players
+                    if p.player_id not in completed_ids and p.player_id not in exempted_ids
+                ]
+                nonexempt_a = [p for p in a_players if p.player_id not in exempted_ids]
+                pool = unticked_nonexempt_a if unticked_nonexempt_a else nonexempt_a
                 picked_p = pool[team_assignment_ptrs[a_id] % len(pool)] if pool else None
                 team_assignment_ptrs[a_id] += 1
                 is_comp = bool(f.played)
@@ -5343,6 +5387,7 @@ def build_category_duty_roster(category, force_regenerate=False):
     roster_data = {
         "categoryKey": category.key,
         "updatedAt": timezone.now().isoformat(),
+        "exemptions": exemptions,
         "days": structured_days,
         "assignments": new_assignments,
         "completedPlayerIds": final_completed_ids,
@@ -5350,6 +5395,7 @@ def build_category_duty_roster(category, force_regenerate=False):
             "totalDuties": total_duties,
             "completedDuties": comp_count,
             "pendingDuties": max(0, total_duties - comp_count),
+            "exemptedCount": len(exemptions),
         },
     }
 
@@ -5358,6 +5404,59 @@ def build_category_duty_roster(category, force_regenerate=False):
     category.schedule_days = existing_schedule_days
     category.save(update_fields=["schedule_days"])
     return roster_data
+
+
+def add_duty_roster_exemption(category, player_id, reason=""):
+    """
+    Exempt a player from all duties.
+    Adds them to duty_roster['exemptions'], and replaces any uncompleted duty assignments
+    for this player with an eligible non-exempt teammate.
+    """
+    player = Player.objects.filter(team__category=category, player_id=player_id).select_related("team").first()
+    if not player:
+        raise ValueError(f"Player '{player_id}' not found in category '{category.key}'.")
+
+    existing_schedule_days = category.schedule_days if isinstance(category.schedule_days, dict) else {}
+    roster = existing_schedule_days.get("duty_roster") or build_category_duty_roster(category, force_regenerate=False)
+    exemptions = roster.get("exemptions") or []
+
+    # Check if already present
+    existing = next((e for e in exemptions if str(e.get("playerId")) == str(player.player_id)), None)
+    if existing:
+        existing["reason"] = reason.strip() or existing.get("reason", "Exempted")
+        existing["exemptedAt"] = timezone.now().isoformat()
+    else:
+        exemptions.append({
+            "playerId": player.player_id,
+            "playerName": player.name,
+            "teamId": player.team.team_id,
+            "teamName": player.team.name,
+            "reason": reason.strip() or "Exempted by Admin",
+            "exemptedAt": timezone.now().isoformat(),
+        })
+
+    roster["exemptions"] = exemptions
+    existing_schedule_days["duty_roster"] = roster
+    category.schedule_days = existing_schedule_days
+    category.save(update_fields=["schedule_days"])
+
+    # Rebuild roster to replace any uncompleted assignments of this newly exempted player
+    return build_category_duty_roster(category, force_regenerate=False)
+
+
+def remove_duty_roster_exemption(category, player_id):
+    """
+    Remove an exemption for a player, returning them to the active rotation pool.
+    """
+    existing_schedule_days = category.schedule_days if isinstance(category.schedule_days, dict) else {}
+    roster = existing_schedule_days.get("duty_roster") or build_category_duty_roster(category, force_regenerate=False)
+    exemptions = roster.get("exemptions") or []
+    roster["exemptions"] = [e for e in exemptions if str(e.get("playerId")) != str(player_id)]
+
+    existing_schedule_days["duty_roster"] = roster
+    category.schedule_days = existing_schedule_days
+    category.save(update_fields=["schedule_days"])
+    return build_category_duty_roster(category, force_regenerate=False)
 
 
 def update_duty_roster_assignment(category, fixture_id, side, player_id=None, player_name=None, completed=None):
@@ -5374,6 +5473,11 @@ def update_duty_roster_assignment(category, fixture_id, side, player_id=None, pl
     assignments = roster_data.get("assignments") or {}
     if fixture_id not in assignments:
         raise ValueError(f"Fixture '{fixture_id}' not found in duty roster.")
+
+    # Validate exemption constraint
+    exempted_ids = get_category_duty_exempted_player_ids(roster_data)
+    if player_id and str(player_id) in exempted_ids:
+        raise ValueError(f"Player {player_id} is on the duty exemption list and cannot be selected for duty.")
 
     entry = assignments[fixture_id]
     target_key = "homeDuty" if side == "home" else "awayDuty"
