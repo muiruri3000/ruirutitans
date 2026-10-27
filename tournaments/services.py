@@ -5254,7 +5254,7 @@ def build_category_duty_roster(category, force_regenerate=False):
         day_matches_structured = []
         for order_idx, f in enumerate(day_matches, 1):
             duty_type = "bibs" if order_idx == 1 else "goalpost"
-            duty_label = "Wash Team Bibs" if order_idx == 1 else "Take Side Goalpost to Store"
+            duty_label = "Wash Team Bibs" if order_idx == 1 else "Take Side Goalpost From & Back to Store"
 
             h_t = f.home_team
             a_t = f.away_team
@@ -5263,8 +5263,8 @@ def build_category_duty_roster(category, force_regenerate=False):
             h_name = h_t.name if h_t else "Home Team"
             a_name = a_t.name if a_t else "Away Team"
 
-            h_task = f"Wash {h_name} Bibs" if duty_type == "bibs" else f"Take {h_name} Side Goalpost to Store"
-            a_task = f"Wash {a_name} Bibs" if duty_type == "bibs" else f"Take {a_name} Side Goalpost to Store"
+            h_task = f"Wash {h_name} Bibs" if duty_type == "bibs" else f"Take {h_name} Side Goalpost from and back to the Store"
+            a_task = f"Wash {a_name} Bibs" if duty_type == "bibs" else f"Take {a_name} Side Goalpost from and back to the Store"
 
             ex = existing_assignments.get(f.fixture_id) if not force_regenerate else None
 

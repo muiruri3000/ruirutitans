@@ -2571,13 +2571,13 @@ class DutyRosterTests(TestCase):
         self.assertEqual(m1["homeTeam"]["duty"]["task"], "Wash Titans Alpha Bibs")
         self.assertEqual(m1["awayTeam"]["duty"]["task"], "Wash Titans Beta Bibs")
 
-        # Match 2 of day: Take side goalpost to store
+        # Match 2 of day: Take side goalpost from and back to store
         m2 = matches[1]
         self.assertEqual(m2["orderOfDay"], 2)
         self.assertEqual(m2["dutyType"], "goalpost")
-        self.assertEqual(m2["dutyLabel"], "Take Side Goalpost to Store")
-        self.assertEqual(m2["homeTeam"]["duty"]["task"], "Take Titans Gamma Side Goalpost to Store")
-        self.assertEqual(m2["awayTeam"]["duty"]["task"], "Take Titans Delta Side Goalpost to Store")
+        self.assertEqual(m2["dutyLabel"], "Take Side Goalpost From & Back to Store")
+        self.assertEqual(m2["homeTeam"]["duty"]["task"], "Take Titans Gamma Side Goalpost from and back to the Store")
+        self.assertEqual(m2["awayTeam"]["duty"]["task"], "Take Titans Delta Side Goalpost from and back to the Store")
 
     def test_tick_completed_removes_player_from_eligible_list(self):
         # Admin ticks work done for T1 in FX-1

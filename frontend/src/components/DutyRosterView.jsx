@@ -519,7 +519,7 @@ export default function DutyRosterView({
             <div>
               <div style={{ fontWeight: 700, fontSize: '13px', color: '#FF9500' }}>Match 2 of the Day (18:10)</div>
               <div style={{ fontSize: '12.5px', color: '#D1D1D6' }}>
-                Store Side Goalposts — 2 players picked from opposing teams
+                Goalposts (To &amp; From Store) — 2 opposing players take side goalpost from store and return back after match
               </div>
             </div>
           </div>
@@ -1034,7 +1034,7 @@ export default function DutyRosterView({
               {day.matches.map((m) => {
                 const isFirst = m.orderOfDay === 1;
                 const dutyIcon = isFirst ? '👕' : '🥅';
-                const dutyTitle = isFirst ? 'Wash Team Bibs' : 'Take Side Goalpost to Store';
+                const dutyTitle = isFirst ? 'Wash Team Bibs' : 'Take Side Goalpost From & Back to Store';
                 const dutyAccent = isFirst ? '#6CE5A0' : '#FF9500';
 
                 const hDuty = m.homeTeam?.duty || {};
@@ -1194,7 +1194,7 @@ export default function DutyRosterView({
                             )}
                           </div>
                           <div style={{ fontSize: '12px', color: '#AEAEB2' }}>
-                            {hDuty.task || (isFirst ? `Wash ${m.homeTeam?.name} Bibs` : `Take ${m.homeTeam?.name} Side Goalpost to Store`)}
+                            {hDuty.task || (isFirst ? `Wash ${m.homeTeam?.name} Bibs` : `Take ${m.homeTeam?.name} Side Goalpost from and back to the Store`)}
                           </div>
                           {hCompleted && hDuty.completedAt && (
                             <div style={{ fontSize: '11px', color: '#30D158', marginTop: '4px' }}>
@@ -1344,7 +1344,7 @@ export default function DutyRosterView({
                             )}
                           </div>
                           <div style={{ fontSize: '12px', color: '#AEAEB2' }}>
-                            {aDuty.task || (isFirst ? `Wash ${m.awayTeam?.name} Bibs` : `Take ${m.awayTeam?.name} Side Goalpost to Store`)}
+                            {aDuty.task || (isFirst ? `Wash ${m.awayTeam?.name} Bibs` : `Take ${m.awayTeam?.name} Side Goalpost from and back to the Store`)}
                           </div>
                           {aCompleted && aDuty.completedAt && (
                             <div style={{ fontSize: '11px', color: '#30D158', marginTop: '4px' }}>

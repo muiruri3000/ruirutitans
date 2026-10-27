@@ -4704,7 +4704,8 @@
       "deletedAt": null,
       "dutyRoster": {
         "categoryKey": "ruiru-titans-league-oct-nov-2026",
-        "updatedAt": "2026-10-27T10:29:52.445182+00:00",
+        "updatedAt": "2026-10-27T12:23:50.122981+00:00",
+        "exemptions": [],
         "days": [
           {
             "dayString": "Wed, 21 Oct",
@@ -4743,14 +4744,14 @@
                 "date": "Wed, 21 Oct \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "RAN",
                   "name": "Rangers",
                   "duty": {
                     "playerId": "RAN-P1",
                     "playerName": "Sam",
-                    "task": "Take Rangers Side Goalpost to Store",
+                    "task": "Take Rangers Side Goalpost from and back to the Store",
                     "completed": true,
                     "completedAt": "2026-10-27T10:22:28.314679+00:00"
                   }
@@ -4761,7 +4762,7 @@
                   "duty": {
                     "playerId": "BLA-P1",
                     "playerName": "Jimmy",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": true,
                     "completedAt": "2026-10-27T10:22:28.314769+00:00"
                   }
@@ -4840,14 +4841,14 @@
                 "date": "Fri, 23 Oct \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "EXM",
                   "name": "ExMilitary FC",
                   "duty": {
                     "playerId": "EXM-P1",
                     "playerName": "Kevo",
-                    "task": "Take ExMilitary FC Side Goalpost to Store",
+                    "task": "Take ExMilitary FC Side Goalpost from and back to the Store",
                     "completed": true,
                     "completedAt": "2026-10-27T10:22:28.327540+00:00"
                   }
@@ -4858,7 +4859,7 @@
                   "duty": {
                     "playerId": "OXF-P3",
                     "playerName": "Caleb",
-                    "task": "Take Oxford Side Goalpost to Store",
+                    "task": "Take Oxford Side Goalpost from and back to the Store",
                     "completed": true,
                     "completedAt": "2026-10-27T10:22:28.327562+00:00"
                   }
@@ -4903,14 +4904,14 @@
                 "date": "Sat, 24 Oct \u00b7 17:00",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "MAN",
                   "name": "Mancheli",
                   "duty": {
                     "playerId": "MAN-P1",
                     "playerName": "Aizo",
-                    "task": "Take Mancheli Side Goalpost to Store",
+                    "task": "Take Mancheli Side Goalpost from and back to the Store",
                     "completed": true,
                     "completedAt": "2026-10-27T10:22:28.331676+00:00"
                   }
@@ -4921,7 +4922,7 @@
                   "duty": {
                     "playerId": "BLA-P4",
                     "playerName": "Wanyama",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": true,
                     "completedAt": "2026-10-27T10:22:28.331692+00:00"
                   }
@@ -4932,14 +4933,14 @@
                 "date": "Sat, 24 Oct \u00b7 18:00",
                 "orderOfDay": 3,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "MAN",
                   "name": "Mancheli",
                   "duty": {
                     "playerId": "MAN-P4",
                     "playerName": "Mark",
-                    "task": "Take Mancheli Side Goalpost to Store",
+                    "task": "Take Mancheli Side Goalpost from and back to the Store",
                     "completed": true,
                     "completedAt": "2026-10-27T10:22:28.334200+00:00"
                   }
@@ -4950,7 +4951,7 @@
                   "duty": {
                     "playerId": "MAS-P3",
                     "playerName": "Isaac",
-                    "task": "Take Masters Side Goalpost to Store",
+                    "task": "Take Masters Side Goalpost from and back to the Store",
                     "completed": true,
                     "completedAt": "2026-10-27T10:22:28.334242+00:00"
                   }
@@ -4995,14 +4996,14 @@
                 "date": "Mon, 26 Oct \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "OXF",
                   "name": "Oxford",
                   "duty": {
                     "playerId": "OXF-P5",
                     "playerName": "Frank",
-                    "task": "Take Oxford Side Goalpost to Store",
+                    "task": "Take Oxford Side Goalpost from and back to the Store",
                     "completed": true,
                     "completedAt": "2026-10-27T10:22:28.342004+00:00"
                   }
@@ -5013,7 +5014,7 @@
                   "duty": {
                     "playerId": "SS-P6",
                     "playerName": "Ishmael",
-                    "task": "Take Super Strikers Side Goalpost to Store",
+                    "task": "Take Super Strikers Side Goalpost from and back to the Store",
                     "completed": true,
                     "completedAt": "2026-10-27T10:22:28.342063+00:00"
                   }
@@ -5058,14 +5059,14 @@
                 "date": "Wed, 28 Oct \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "BLA",
                   "name": "Black Hawk",
                   "duty": {
                     "playerId": "BLA-P6",
                     "playerName": "Maina",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5076,7 +5077,7 @@
                   "duty": {
                     "playerId": "BAL-P7",
                     "playerName": "M. Francis",
-                    "task": "Take Ballers FC Side Goalpost to Store",
+                    "task": "Take Ballers FC Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5121,14 +5122,14 @@
                 "date": "Thu, 29 Oct \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "OXF",
                   "name": "Oxford",
                   "duty": {
                     "playerId": "OXF-P2",
                     "playerName": "Alex",
-                    "task": "Take Oxford Side Goalpost to Store",
+                    "task": "Take Oxford Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5139,7 +5140,7 @@
                   "duty": {
                     "playerId": "RAN-P7",
                     "playerName": "Brayo",
-                    "task": "Take Rangers Side Goalpost to Store",
+                    "task": "Take Rangers Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5184,14 +5185,14 @@
                 "date": "Fri, 30 Oct \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "BLA",
                   "name": "Black Hawk",
                   "duty": {
                     "playerId": "BLA-P8",
                     "playerName": "Baite",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5202,7 +5203,7 @@
                   "duty": {
                     "playerId": "EXM-P6",
                     "playerName": "Dee",
-                    "task": "Take ExMilitary FC Side Goalpost to Store",
+                    "task": "Take ExMilitary FC Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5247,14 +5248,14 @@
                 "date": "Sat, 31 Oct \u00b7 18:00",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "MAS",
                   "name": "Masters",
                   "duty": {
                     "playerId": "MAS-P6",
                     "playerName": "Sammy M.",
-                    "task": "Take Masters Side Goalpost to Store",
+                    "task": "Take Masters Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5265,7 +5266,7 @@
                   "duty": {
                     "playerId": "RAN-P2",
                     "playerName": "Eddie",
-                    "task": "Take Rangers Side Goalpost to Store",
+                    "task": "Take Rangers Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5310,14 +5311,14 @@
                 "date": "Mon, 02 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "MAN",
                   "name": "Mancheli",
                   "duty": {
                     "playerId": "MAN-P8",
                     "playerName": "Derro",
-                    "task": "Take Mancheli Side Goalpost to Store",
+                    "task": "Take Mancheli Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5328,7 +5329,7 @@
                   "duty": {
                     "playerId": "OXF-P4",
                     "playerName": "Dennis",
-                    "task": "Take Oxford Side Goalpost to Store",
+                    "task": "Take Oxford Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5373,14 +5374,14 @@
                 "date": "Wed, 04 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "BLA",
                   "name": "Black Hawk",
                   "duty": {
                     "playerId": "BLA-P2",
                     "playerName": "Karis",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5391,7 +5392,7 @@
                   "duty": {
                     "playerId": "OXF-P6",
                     "playerName": "Danny",
-                    "task": "Take Oxford Side Goalpost to Store",
+                    "task": "Take Oxford Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5436,14 +5437,14 @@
                 "date": "Thu, 05 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "SS",
                   "name": "Super Strikers",
                   "duty": {
                     "playerId": "SS-P7",
                     "playerName": "Tonka",
-                    "task": "Take Super Strikers Side Goalpost to Store",
+                    "task": "Take Super Strikers Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5454,7 +5455,7 @@
                   "duty": {
                     "playerId": "MAN-P9",
                     "playerName": "Ng'ang'a",
-                    "task": "Take Mancheli Side Goalpost to Store",
+                    "task": "Take Mancheli Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5499,14 +5500,14 @@
                 "date": "Fri, 06 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "BLA",
                   "name": "Black Hawk",
                   "duty": {
                     "playerId": "BLA-P5",
                     "playerName": "Wayne",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5517,7 +5518,7 @@
                   "duty": {
                     "playerId": "MAS-P4",
                     "playerName": "Moja",
-                    "task": "Take Masters Side Goalpost to Store",
+                    "task": "Take Masters Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5562,14 +5563,14 @@
                 "date": "Sat, 07 Nov \u00b7 18:00",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "MAN",
                   "name": "Mancheli",
                   "duty": {
                     "playerId": "MAN-P2",
                     "playerName": "Josee",
-                    "task": "Take Mancheli Side Goalpost to Store",
+                    "task": "Take Mancheli Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5580,7 +5581,7 @@
                   "duty": {
                     "playerId": "RAN-P6",
                     "playerName": "Yusuf",
-                    "task": "Take Rangers Side Goalpost to Store",
+                    "task": "Take Rangers Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5625,14 +5626,14 @@
                 "date": "Mon, 09 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "BLA",
                   "name": "Black Hawk",
                   "duty": {
                     "playerId": "BLA-P6",
                     "playerName": "Maina",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5643,7 +5644,7 @@
                   "duty": {
                     "playerId": "RAN-P7",
                     "playerName": "Brayo",
-                    "task": "Take Rangers Side Goalpost to Store",
+                    "task": "Take Rangers Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5688,14 +5689,14 @@
                 "date": "Wed, 11 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "MAS",
                   "name": "Masters",
                   "duty": {
                     "playerId": "MAS-P5",
                     "playerName": "Tyson",
-                    "task": "Take Masters Side Goalpost to Store",
+                    "task": "Take Masters Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5706,7 +5707,7 @@
                   "duty": {
                     "playerId": "MAN-P5",
                     "playerName": "Chrisphod",
-                    "task": "Take Mancheli Side Goalpost to Store",
+                    "task": "Take Mancheli Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5751,14 +5752,14 @@
                 "date": "Thu, 12 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "BAL",
                   "name": "Ballers FC",
                   "duty": {
                     "playerId": "BAL-P2",
                     "playerName": "Mugane",
-                    "task": "Take Ballers FC Side Goalpost to Store",
+                    "task": "Take Ballers FC Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5769,7 +5770,7 @@
                   "duty": {
                     "playerId": "BLA-P8",
                     "playerName": "Baite",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5814,14 +5815,14 @@
                 "date": "Fri, 13 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "MAN",
                   "name": "Mancheli",
                   "duty": {
                     "playerId": "MAN-P6",
                     "playerName": "Imma",
-                    "task": "Take Mancheli Side Goalpost to Store",
+                    "task": "Take Mancheli Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5832,7 +5833,7 @@
                   "duty": {
                     "playerId": "EXM-P6",
                     "playerName": "Dee",
-                    "task": "Take ExMilitary FC Side Goalpost to Store",
+                    "task": "Take ExMilitary FC Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5877,14 +5878,14 @@
                 "date": "Sat, 14 Nov \u00b7 18:00",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "BLA",
                   "name": "Black Hawk",
                   "duty": {
                     "playerId": "BLA-P9",
                     "playerName": "S. Mukuria",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5895,7 +5896,7 @@
                   "duty": {
                     "playerId": "SS-P2",
                     "playerName": "Ramsey",
-                    "task": "Take Super Strikers Side Goalpost to Store",
+                    "task": "Take Super Strikers Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5940,14 +5941,14 @@
                 "date": "Mon, 16 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "OXF",
                   "name": "Oxford",
                   "duty": {
                     "playerId": "OXF-P2",
                     "playerName": "Alex",
-                    "task": "Take Oxford Side Goalpost to Store",
+                    "task": "Take Oxford Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -5958,7 +5959,7 @@
                   "duty": {
                     "playerId": "MAN-P7",
                     "playerName": "Tomaso",
-                    "task": "Take Mancheli Side Goalpost to Store",
+                    "task": "Take Mancheli Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6003,14 +6004,14 @@
                 "date": "Wed, 18 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "BLA",
                   "name": "Black Hawk",
                   "duty": {
                     "playerId": "BLA-P2",
                     "playerName": "Karis",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6021,7 +6022,7 @@
                   "duty": {
                     "playerId": "MAN-P8",
                     "playerName": "Derro",
-                    "task": "Take Mancheli Side Goalpost to Store",
+                    "task": "Take Mancheli Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6066,14 +6067,14 @@
                 "date": "Thu, 19 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "RAN",
                   "name": "Rangers",
                   "duty": {
                     "playerId": "RAN-P6",
                     "playerName": "Yusuf",
-                    "task": "Take Rangers Side Goalpost to Store",
+                    "task": "Take Rangers Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6084,7 +6085,7 @@
                   "duty": {
                     "playerId": "MAS-P2",
                     "playerName": "Jobu",
-                    "task": "Take Masters Side Goalpost to Store",
+                    "task": "Take Masters Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6129,14 +6130,14 @@
                 "date": "Fri, 20 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "EXM",
                   "name": "ExMilitary FC",
                   "duty": {
                     "playerId": "EXM-P4",
                     "playerName": "Willy",
-                    "task": "Take ExMilitary FC Side Goalpost to Store",
+                    "task": "Take ExMilitary FC Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6147,7 +6148,7 @@
                   "duty": {
                     "playerId": "BLA-P5",
                     "playerName": "Wayne",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6192,14 +6193,14 @@
                 "date": "Sat, 21 Nov \u00b7 18:00",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "RAN",
                   "name": "Rangers",
                   "duty": {
                     "playerId": "RAN-P7",
                     "playerName": "Brayo",
-                    "task": "Take Rangers Side Goalpost to Store",
+                    "task": "Take Rangers Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6210,7 +6211,7 @@
                   "duty": {
                     "playerId": "OXF-P6",
                     "playerName": "Danny",
-                    "task": "Take Oxford Side Goalpost to Store",
+                    "task": "Take Oxford Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6255,14 +6256,14 @@
                 "date": "Mon, 23 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "OXF",
                   "name": "Oxford",
                   "duty": {
                     "playerId": "OXF-P2",
                     "playerName": "Alex",
-                    "task": "Take Oxford Side Goalpost to Store",
+                    "task": "Take Oxford Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6273,7 +6274,7 @@
                   "duty": {
                     "playerId": "BLA-P6",
                     "playerName": "Maina",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6318,14 +6319,14 @@
                 "date": "Wed, 25 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "MAN",
                   "name": "Mancheli",
                   "duty": {
                     "playerId": "MAN-P2",
                     "playerName": "Josee",
-                    "task": "Take Mancheli Side Goalpost to Store",
+                    "task": "Take Mancheli Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6336,7 +6337,7 @@
                   "duty": {
                     "playerId": "SS-P2",
                     "playerName": "Ramsey",
-                    "task": "Take Super Strikers Side Goalpost to Store",
+                    "task": "Take Super Strikers Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6381,14 +6382,14 @@
                 "date": "Thu, 26 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "MAS",
                   "name": "Masters",
                   "duty": {
                     "playerId": "MAS-P6",
                     "playerName": "Sammy M.",
-                    "task": "Take Masters Side Goalpost to Store",
+                    "task": "Take Masters Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6399,7 +6400,7 @@
                   "duty": {
                     "playerId": "BLA-P8",
                     "playerName": "Baite",
-                    "task": "Take Black Hawk Side Goalpost to Store",
+                    "task": "Take Black Hawk Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6444,14 +6445,14 @@
                 "date": "Fri, 27 Nov \u00b7 18:10",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
-                "dutyLabel": "Take Side Goalpost to Store",
+                "dutyLabel": "Take Side Goalpost From & Back to Store",
                 "homeTeam": {
                   "id": "RAN",
                   "name": "Rangers",
                   "duty": {
                     "playerId": "RAN-P4",
                     "playerName": "Felix",
-                    "task": "Take Rangers Side Goalpost to Store",
+                    "task": "Take Rangers Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6462,7 +6463,7 @@
                   "duty": {
                     "playerId": "MAN-P5",
                     "playerName": "Chrisphod",
-                    "task": "Take Mancheli Side Goalpost to Store",
+                    "task": "Take Mancheli Side Goalpost from and back to the Store",
                     "completed": false,
                     "completedAt": null
                   }
@@ -6504,13 +6505,13 @@
             "dayString": "Wed, 21 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "RAN",
             "homeTeamName": "Rangers",
             "homeDuty": {
               "playerId": "RAN-P1",
               "playerName": "Sam",
-              "task": "Take Rangers Side Goalpost to Store",
+              "task": "Take Rangers Side Goalpost from and back to the Store",
               "completed": true,
               "completedAt": "2026-10-27T10:22:28.314679+00:00"
             },
@@ -6519,7 +6520,7 @@
             "awayDuty": {
               "playerId": "BLA-P1",
               "playerName": "Jimmy",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": true,
               "completedAt": "2026-10-27T10:22:28.314769+00:00"
             }
@@ -6582,13 +6583,13 @@
             "dayString": "Fri, 23 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "EXM",
             "homeTeamName": "ExMilitary FC",
             "homeDuty": {
               "playerId": "EXM-P1",
               "playerName": "Kevo",
-              "task": "Take ExMilitary FC Side Goalpost to Store",
+              "task": "Take ExMilitary FC Side Goalpost from and back to the Store",
               "completed": true,
               "completedAt": "2026-10-27T10:22:28.327540+00:00"
             },
@@ -6597,7 +6598,7 @@
             "awayDuty": {
               "playerId": "OXF-P3",
               "playerName": "Caleb",
-              "task": "Take Oxford Side Goalpost to Store",
+              "task": "Take Oxford Side Goalpost from and back to the Store",
               "completed": true,
               "completedAt": "2026-10-27T10:22:28.327562+00:00"
             }
@@ -6634,13 +6635,13 @@
             "dayString": "Sat, 24 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "MAN",
             "homeTeamName": "Mancheli",
             "homeDuty": {
               "playerId": "MAN-P1",
               "playerName": "Aizo",
-              "task": "Take Mancheli Side Goalpost to Store",
+              "task": "Take Mancheli Side Goalpost from and back to the Store",
               "completed": true,
               "completedAt": "2026-10-27T10:22:28.331676+00:00"
             },
@@ -6649,7 +6650,7 @@
             "awayDuty": {
               "playerId": "BLA-P4",
               "playerName": "Wanyama",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": true,
               "completedAt": "2026-10-27T10:22:28.331692+00:00"
             }
@@ -6660,13 +6661,13 @@
             "dayString": "Sat, 24 Oct",
             "orderOfDay": 3,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "MAN",
             "homeTeamName": "Mancheli",
             "homeDuty": {
               "playerId": "MAN-P4",
               "playerName": "Mark",
-              "task": "Take Mancheli Side Goalpost to Store",
+              "task": "Take Mancheli Side Goalpost from and back to the Store",
               "completed": true,
               "completedAt": "2026-10-27T10:22:28.334200+00:00"
             },
@@ -6675,7 +6676,7 @@
             "awayDuty": {
               "playerId": "MAS-P3",
               "playerName": "Isaac",
-              "task": "Take Masters Side Goalpost to Store",
+              "task": "Take Masters Side Goalpost from and back to the Store",
               "completed": true,
               "completedAt": "2026-10-27T10:22:28.334242+00:00"
             }
@@ -6712,13 +6713,13 @@
             "dayString": "Mon, 26 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "OXF",
             "homeTeamName": "Oxford",
             "homeDuty": {
               "playerId": "OXF-P5",
               "playerName": "Frank",
-              "task": "Take Oxford Side Goalpost to Store",
+              "task": "Take Oxford Side Goalpost from and back to the Store",
               "completed": true,
               "completedAt": "2026-10-27T10:22:28.342004+00:00"
             },
@@ -6727,7 +6728,7 @@
             "awayDuty": {
               "playerId": "SS-P6",
               "playerName": "Ishmael",
-              "task": "Take Super Strikers Side Goalpost to Store",
+              "task": "Take Super Strikers Side Goalpost from and back to the Store",
               "completed": true,
               "completedAt": "2026-10-27T10:22:28.342063+00:00"
             }
@@ -6764,13 +6765,13 @@
             "dayString": "Wed, 28 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "BLA",
             "homeTeamName": "Black Hawk",
             "homeDuty": {
               "playerId": "BLA-P6",
               "playerName": "Maina",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -6779,7 +6780,7 @@
             "awayDuty": {
               "playerId": "BAL-P7",
               "playerName": "M. Francis",
-              "task": "Take Ballers FC Side Goalpost to Store",
+              "task": "Take Ballers FC Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -6816,13 +6817,13 @@
             "dayString": "Thu, 29 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "OXF",
             "homeTeamName": "Oxford",
             "homeDuty": {
               "playerId": "OXF-P2",
               "playerName": "Alex",
-              "task": "Take Oxford Side Goalpost to Store",
+              "task": "Take Oxford Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -6831,7 +6832,7 @@
             "awayDuty": {
               "playerId": "RAN-P7",
               "playerName": "Brayo",
-              "task": "Take Rangers Side Goalpost to Store",
+              "task": "Take Rangers Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -6868,13 +6869,13 @@
             "dayString": "Fri, 30 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "BLA",
             "homeTeamName": "Black Hawk",
             "homeDuty": {
               "playerId": "BLA-P8",
               "playerName": "Baite",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -6883,7 +6884,7 @@
             "awayDuty": {
               "playerId": "EXM-P6",
               "playerName": "Dee",
-              "task": "Take ExMilitary FC Side Goalpost to Store",
+              "task": "Take ExMilitary FC Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -6920,13 +6921,13 @@
             "dayString": "Sat, 31 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "MAS",
             "homeTeamName": "Masters",
             "homeDuty": {
               "playerId": "MAS-P6",
               "playerName": "Sammy M.",
-              "task": "Take Masters Side Goalpost to Store",
+              "task": "Take Masters Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -6935,7 +6936,7 @@
             "awayDuty": {
               "playerId": "RAN-P2",
               "playerName": "Eddie",
-              "task": "Take Rangers Side Goalpost to Store",
+              "task": "Take Rangers Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -6972,13 +6973,13 @@
             "dayString": "Mon, 02 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "MAN",
             "homeTeamName": "Mancheli",
             "homeDuty": {
               "playerId": "MAN-P8",
               "playerName": "Derro",
-              "task": "Take Mancheli Side Goalpost to Store",
+              "task": "Take Mancheli Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -6987,7 +6988,7 @@
             "awayDuty": {
               "playerId": "OXF-P4",
               "playerName": "Dennis",
-              "task": "Take Oxford Side Goalpost to Store",
+              "task": "Take Oxford Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7024,13 +7025,13 @@
             "dayString": "Wed, 04 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "BLA",
             "homeTeamName": "Black Hawk",
             "homeDuty": {
               "playerId": "BLA-P2",
               "playerName": "Karis",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7039,7 +7040,7 @@
             "awayDuty": {
               "playerId": "OXF-P6",
               "playerName": "Danny",
-              "task": "Take Oxford Side Goalpost to Store",
+              "task": "Take Oxford Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7076,13 +7077,13 @@
             "dayString": "Thu, 05 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "SS",
             "homeTeamName": "Super Strikers",
             "homeDuty": {
               "playerId": "SS-P7",
               "playerName": "Tonka",
-              "task": "Take Super Strikers Side Goalpost to Store",
+              "task": "Take Super Strikers Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7091,7 +7092,7 @@
             "awayDuty": {
               "playerId": "MAN-P9",
               "playerName": "Ng'ang'a",
-              "task": "Take Mancheli Side Goalpost to Store",
+              "task": "Take Mancheli Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7128,13 +7129,13 @@
             "dayString": "Fri, 06 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "BLA",
             "homeTeamName": "Black Hawk",
             "homeDuty": {
               "playerId": "BLA-P5",
               "playerName": "Wayne",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7143,7 +7144,7 @@
             "awayDuty": {
               "playerId": "MAS-P4",
               "playerName": "Moja",
-              "task": "Take Masters Side Goalpost to Store",
+              "task": "Take Masters Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7180,13 +7181,13 @@
             "dayString": "Sat, 07 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "MAN",
             "homeTeamName": "Mancheli",
             "homeDuty": {
               "playerId": "MAN-P2",
               "playerName": "Josee",
-              "task": "Take Mancheli Side Goalpost to Store",
+              "task": "Take Mancheli Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7195,7 +7196,7 @@
             "awayDuty": {
               "playerId": "RAN-P6",
               "playerName": "Yusuf",
-              "task": "Take Rangers Side Goalpost to Store",
+              "task": "Take Rangers Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7232,13 +7233,13 @@
             "dayString": "Mon, 09 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "BLA",
             "homeTeamName": "Black Hawk",
             "homeDuty": {
               "playerId": "BLA-P6",
               "playerName": "Maina",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7247,7 +7248,7 @@
             "awayDuty": {
               "playerId": "RAN-P7",
               "playerName": "Brayo",
-              "task": "Take Rangers Side Goalpost to Store",
+              "task": "Take Rangers Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7284,13 +7285,13 @@
             "dayString": "Wed, 11 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "MAS",
             "homeTeamName": "Masters",
             "homeDuty": {
               "playerId": "MAS-P5",
               "playerName": "Tyson",
-              "task": "Take Masters Side Goalpost to Store",
+              "task": "Take Masters Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7299,7 +7300,7 @@
             "awayDuty": {
               "playerId": "MAN-P5",
               "playerName": "Chrisphod",
-              "task": "Take Mancheli Side Goalpost to Store",
+              "task": "Take Mancheli Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7336,13 +7337,13 @@
             "dayString": "Thu, 12 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "BAL",
             "homeTeamName": "Ballers FC",
             "homeDuty": {
               "playerId": "BAL-P2",
               "playerName": "Mugane",
-              "task": "Take Ballers FC Side Goalpost to Store",
+              "task": "Take Ballers FC Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7351,7 +7352,7 @@
             "awayDuty": {
               "playerId": "BLA-P8",
               "playerName": "Baite",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7388,13 +7389,13 @@
             "dayString": "Fri, 13 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "MAN",
             "homeTeamName": "Mancheli",
             "homeDuty": {
               "playerId": "MAN-P6",
               "playerName": "Imma",
-              "task": "Take Mancheli Side Goalpost to Store",
+              "task": "Take Mancheli Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7403,7 +7404,7 @@
             "awayDuty": {
               "playerId": "EXM-P6",
               "playerName": "Dee",
-              "task": "Take ExMilitary FC Side Goalpost to Store",
+              "task": "Take ExMilitary FC Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7440,13 +7441,13 @@
             "dayString": "Sat, 14 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "BLA",
             "homeTeamName": "Black Hawk",
             "homeDuty": {
               "playerId": "BLA-P9",
               "playerName": "S. Mukuria",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7455,7 +7456,7 @@
             "awayDuty": {
               "playerId": "SS-P2",
               "playerName": "Ramsey",
-              "task": "Take Super Strikers Side Goalpost to Store",
+              "task": "Take Super Strikers Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7492,13 +7493,13 @@
             "dayString": "Mon, 16 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "OXF",
             "homeTeamName": "Oxford",
             "homeDuty": {
               "playerId": "OXF-P2",
               "playerName": "Alex",
-              "task": "Take Oxford Side Goalpost to Store",
+              "task": "Take Oxford Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7507,7 +7508,7 @@
             "awayDuty": {
               "playerId": "MAN-P7",
               "playerName": "Tomaso",
-              "task": "Take Mancheli Side Goalpost to Store",
+              "task": "Take Mancheli Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7544,13 +7545,13 @@
             "dayString": "Wed, 18 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "BLA",
             "homeTeamName": "Black Hawk",
             "homeDuty": {
               "playerId": "BLA-P2",
               "playerName": "Karis",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7559,7 +7560,7 @@
             "awayDuty": {
               "playerId": "MAN-P8",
               "playerName": "Derro",
-              "task": "Take Mancheli Side Goalpost to Store",
+              "task": "Take Mancheli Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7596,13 +7597,13 @@
             "dayString": "Thu, 19 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "RAN",
             "homeTeamName": "Rangers",
             "homeDuty": {
               "playerId": "RAN-P6",
               "playerName": "Yusuf",
-              "task": "Take Rangers Side Goalpost to Store",
+              "task": "Take Rangers Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7611,7 +7612,7 @@
             "awayDuty": {
               "playerId": "MAS-P2",
               "playerName": "Jobu",
-              "task": "Take Masters Side Goalpost to Store",
+              "task": "Take Masters Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7648,13 +7649,13 @@
             "dayString": "Fri, 20 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "EXM",
             "homeTeamName": "ExMilitary FC",
             "homeDuty": {
               "playerId": "EXM-P4",
               "playerName": "Willy",
-              "task": "Take ExMilitary FC Side Goalpost to Store",
+              "task": "Take ExMilitary FC Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7663,7 +7664,7 @@
             "awayDuty": {
               "playerId": "BLA-P5",
               "playerName": "Wayne",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7700,13 +7701,13 @@
             "dayString": "Sat, 21 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "RAN",
             "homeTeamName": "Rangers",
             "homeDuty": {
               "playerId": "RAN-P7",
               "playerName": "Brayo",
-              "task": "Take Rangers Side Goalpost to Store",
+              "task": "Take Rangers Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7715,7 +7716,7 @@
             "awayDuty": {
               "playerId": "OXF-P6",
               "playerName": "Danny",
-              "task": "Take Oxford Side Goalpost to Store",
+              "task": "Take Oxford Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7752,13 +7753,13 @@
             "dayString": "Mon, 23 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "OXF",
             "homeTeamName": "Oxford",
             "homeDuty": {
               "playerId": "OXF-P2",
               "playerName": "Alex",
-              "task": "Take Oxford Side Goalpost to Store",
+              "task": "Take Oxford Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7767,7 +7768,7 @@
             "awayDuty": {
               "playerId": "BLA-P6",
               "playerName": "Maina",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7804,13 +7805,13 @@
             "dayString": "Wed, 25 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "MAN",
             "homeTeamName": "Mancheli",
             "homeDuty": {
               "playerId": "MAN-P2",
               "playerName": "Josee",
-              "task": "Take Mancheli Side Goalpost to Store",
+              "task": "Take Mancheli Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7819,7 +7820,7 @@
             "awayDuty": {
               "playerId": "SS-P2",
               "playerName": "Ramsey",
-              "task": "Take Super Strikers Side Goalpost to Store",
+              "task": "Take Super Strikers Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7856,13 +7857,13 @@
             "dayString": "Thu, 26 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "MAS",
             "homeTeamName": "Masters",
             "homeDuty": {
               "playerId": "MAS-P6",
               "playerName": "Sammy M.",
-              "task": "Take Masters Side Goalpost to Store",
+              "task": "Take Masters Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7871,7 +7872,7 @@
             "awayDuty": {
               "playerId": "BLA-P8",
               "playerName": "Baite",
-              "task": "Take Black Hawk Side Goalpost to Store",
+              "task": "Take Black Hawk Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7908,13 +7909,13 @@
             "dayString": "Fri, 27 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
-            "dutyLabel": "Take Side Goalpost to Store",
+            "dutyLabel": "Take Side Goalpost From & Back to Store",
             "homeTeamId": "RAN",
             "homeTeamName": "Rangers",
             "homeDuty": {
               "playerId": "RAN-P4",
               "playerName": "Felix",
-              "task": "Take Rangers Side Goalpost to Store",
+              "task": "Take Rangers Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             },
@@ -7923,7 +7924,7 @@
             "awayDuty": {
               "playerId": "MAN-P5",
               "playerName": "Chrisphod",
-              "task": "Take Mancheli Side Goalpost to Store",
+              "task": "Take Mancheli Side Goalpost from and back to the Store",
               "completed": false,
               "completedAt": null
             }
@@ -7954,7 +7955,8 @@
         "summary": {
           "totalDuties": 112,
           "completedDuties": 20,
-          "pendingDuties": 92
+          "pendingDuties": 92,
+          "exemptedCount": 0
         }
       }
     }
