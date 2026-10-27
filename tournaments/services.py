@@ -732,7 +732,7 @@ def build_real_cup_season_dict():
 
 
 def _make_svg_banner_uri(bg1, bg2, accent, badge_text, title, subtitle):
-    import urllib.parse
+    import base64
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520">
       <defs>
         <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -761,11 +761,11 @@ def _make_svg_banner_uri(bg1, bg2, accent, badge_text, title, subtitle):
       <text x="95" y="215" font-family="Arial, sans-serif" font-weight="900" font-size="52" fill="#F4F2EA">{title}</text>
       <text x="95" y="268" font-family="Arial, sans-serif" font-size="22" fill="#A9C4B6">{subtitle}</text>
     </svg>"""
-    return "data:image/svg+xml;utf8," + urllib.parse.quote(svg)
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
 
 
 def _make_jersey_svg_uri(primary_color, secondary_color, trim_color, age_group, kit_type, number="10"):
-    import urllib.parse
+    import base64
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 460" width="420" height="460">
       <defs>
         <linearGradient id="cardBg" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -798,7 +798,7 @@ def _make_jersey_svg_uri(primary_color, secondary_color, trim_color, age_group, 
       <text x="210" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="16" fill="#F4F2EA" letter-spacing="1.5">{age_group} • {kit_type}</text>
       <text x="210" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" fill="#C9A227" letter-spacing="1">OFFICIAL RUIRU TITANS CLUB KIT</text>
     </svg>"""
-    return "data:image/svg+xml;utf8," + urllib.parse.quote(svg)
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
 
 
 def build_default_homepage_data():
@@ -991,6 +991,95 @@ def build_default_homepage_data():
     }
 
 
+def save_data_url_image_to_media(image_str):
+    """
+    If `image_str` is a raster base64 data URL (e.g. data:image/jpeg;base64,...),
+    saves the decoded bytes to MEDIA_ROOT/homepage/<sha256>.<ext> and returns
+    the clean `/media/homepage/<sha256>.<ext>` URL.
+    Also converts raw `data:image/svg+xml;utf8,<svg...` strings to base64 SVG data URLs
+    so WAFs never block `<svg` tags in JSON POST bodies.
+    Falls back to returning `image_str` unchanged if not a data URL or on write error.
+    """
+    import base64
+    import hashlib
+    import urllib.parse
+    from django.conf import settings
+
+    if not image_str or not isinstance(image_str, str):
+        return image_str
+
+    s = image_str.strip()
+    if s.startswith("data:image/svg+xml;utf8,"):
+        try:
+            raw_svg = urllib.parse.unquote(s[len("data:image/svg+xml;utf8,"):])
+            b64_svg = base64.b64encode(raw_svg.encode("utf-8")).decode("ascii")
+            return f"data:image/svg+xml;base64,{b64_svg}"
+        except Exception:
+            return s
+
+    m = re.match(r"^data:image/(jpeg|jpg|png|webp|gif);base64,(.+)$", s, re.IGNORECASE | re.DOTALL)
+    if not m:
+        return s
+
+    ext = m.group(1).lower()
+    if ext == "jpeg":
+        ext = "jpg"
+    b64_payload = m.group(2).strip()
+    try:
+        raw_bytes = base64.b64decode(b64_payload)
+        if not raw_bytes:
+            return s
+        digest = hashlib.sha256(raw_bytes).hexdigest()[:24]
+        filename = f"{digest}.{ext}"
+        media_dir = settings.MEDIA_ROOT / "homepage"
+        media_dir.mkdir(parents=True, exist_ok=True)
+        target_path = media_dir / filename
+        if not target_path.exists():
+            target_path.write_bytes(raw_bytes)
+        media_url = (getattr(settings, "MEDIA_URL", "/media/") or "/media/").rstrip("/")
+        return f"{media_url}/homepage/{filename}"
+    except Exception:
+        return s
+
+
+def persist_homepage_images_to_media(homepage_dict):
+    """
+    Normalizes a homepage dictionary (`carousel`, `jerseys`, `upcoming_fixtures`),
+    persisting any embedded base64 raster images to `/media/homepage/` files.
+    """
+    if not isinstance(homepage_dict, dict):
+        return homepage_dict
+
+    cleaned = dict(homepage_dict)
+    if isinstance(cleaned.get("carousel"), list):
+        new_carousel = []
+        for slide in cleaned["carousel"]:
+            if isinstance(slide, dict):
+                s_copy = dict(slide)
+                if "image" in s_copy:
+                    s_copy["image"] = save_data_url_image_to_media(s_copy["image"])
+                new_carousel.append(s_copy)
+        cleaned["carousel"] = new_carousel
+
+    if isinstance(cleaned.get("jerseys"), dict):
+        new_jerseys = {}
+        for grp_key, items in cleaned["jerseys"].items():
+            if isinstance(items, list):
+                new_items = []
+                for item in items:
+                    if isinstance(item, dict):
+                        i_copy = dict(item)
+                        if "image" in i_copy:
+                            i_copy["image"] = save_data_url_image_to_media(i_copy["image"])
+                        new_items.append(i_copy)
+                new_jerseys[grp_key] = new_items
+            else:
+                new_jerseys[grp_key] = items
+        cleaned["jerseys"] = new_jerseys
+
+    return cleaned
+
+
 @transaction.atomic
 def import_state_to_db(state_dict, soft_delete_missing=True):
     """
@@ -1006,7 +1095,7 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
         settings.active_category_key = "open"
 
     if "homepage" in state_dict and isinstance(state_dict["homepage"], dict):
-        settings.homepage_data = state_dict["homepage"]
+        settings.homepage_data = persist_homepage_images_to_media(state_dict["homepage"])
     elif not settings.homepage_data:
         settings.homepage_data = build_default_homepage_data()
     settings.save()
@@ -1710,6 +1799,11 @@ def export_state_from_db():
     if not settings.homepage_data:
         settings.homepage_data = build_default_homepage_data()
         settings.save(update_fields=["homepage_data"])
+    else:
+        normalized_hp = persist_homepage_images_to_media(settings.homepage_data)
+        if normalized_hp != settings.homepage_data:
+            settings.homepage_data = normalized_hp
+            settings.save(update_fields=["homepage_data"])
 
     categories = {}
     for cat in Category.objects.filter(is_deleted=False).order_by("key"):
@@ -3993,7 +4087,6 @@ def get_authenticated_cms_from_request(request):
                         "username": user.username,
                         "email": user.email,
                     }
-        return None
 
     if hasattr(request, "user") and request.user.is_authenticated and getattr(request.user, "is_active", True) and (request.user.is_staff or request.user.is_superuser):
         return {
@@ -4007,7 +4100,9 @@ def get_authenticated_cms_from_request(request):
         user = User.objects.filter(username__iexact=session_cms["username"]).first()
         if user and user.is_active and (user.is_staff or user.is_superuser):
             token_cv = session_cms.get("_cv")
-            if not token_cv or secrets.compare_digest(str(token_cv), get_cms_user_credential_fingerprint(user)):
+            expected_cv = get_cms_user_credential_fingerprint(user)
+            cv_ok = bool(token_cv and secrets.compare_digest(str(token_cv), expected_cv)) if token else bool(not token_cv or secrets.compare_digest(str(token_cv), expected_cv))
+            if cv_ok:
                 return {
                     "role": "cms",
                     "username": user.username,

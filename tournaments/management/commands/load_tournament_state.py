@@ -38,6 +38,25 @@ class Command(BaseCommand):
         if not state_dict or "categories" not in state_dict:
             raise CommandError("Invalid tournament state: 'categories' key is missing.")
 
+        from tournaments.models import GlobalSettings
+        from tournaments.services import export_state_from_db
+        settings_obj = GlobalSettings.objects.first()
+        if settings_obj and settings_obj.homepage_data:
+            state_dict["homepage"] = settings_obj.homepage_data
+
+        current_db_state = export_state_from_db()
+        for cat_key, cat_data in state_dict.get("categories", {}).items():
+            db_cat = (current_db_state.get("categories") or {}).get(cat_key)
+            if db_cat and "fixtures" in db_cat and "fixtures" in cat_data:
+                db_played_by_id = {
+                    fx["id"]: fx
+                    for fx in db_cat["fixtures"]
+                    if fx.get("played") or fx.get("walkover") or (fx.get("events") and len(fx["events"]) > 0)
+                }
+                cat_data["fixtures"] = [
+                    db_played_by_id.get(fx["id"], fx) for fx in cat_data["fixtures"]
+                ]
+
         self.stdout.write("Importing tournament categories, teams, players, and match events into active database...")
         import_state_to_db(state_dict, soft_delete_missing=False)
         self.stdout.write(self.style.SUCCESS("✓ Successfully imported tournament state into database!"))

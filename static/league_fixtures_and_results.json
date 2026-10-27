@@ -6,8 +6,8 @@
     "season": "2026 Season",
     "format": "Double Round-Robin",
     "total_fixtures": 56,
-    "completed_count": 8,
-    "upcoming_count": 48
+    "completed_count": 10,
+    "upcoming_count": 46
   },
   "teams": [
     {
@@ -19,10 +19,16 @@
           "id": "MAN-UNK",
           "permanentId": "MAN-UNK",
           "name": "Unrecorded scorer",
+          "firstName": "Unrecorded",
+          "surname": "scorer",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true,
           "unknown": true
         },
@@ -30,77 +36,125 @@
           "id": "MAN-P1",
           "permanentId": "MAN-P1",
           "name": "Aizo",
+          "firstName": "Aizo",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "aizo",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAN-P2",
           "permanentId": "MAN-P2",
           "name": "Josee",
+          "firstName": "Josee",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "josee",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAN-P4",
           "permanentId": "MAN-P4",
           "name": "Mark",
+          "firstName": "Mark",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "mark",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAN-P5",
           "permanentId": "MAN-P5",
           "name": "Chrisphod",
+          "firstName": "Chrisphod",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "chrisphod",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAN-P6",
           "permanentId": "MAN-P6",
           "name": "Imma",
+          "firstName": "Imma",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "imma",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAN-P7",
           "permanentId": "MAN-P7",
           "name": "Tomaso",
+          "firstName": "Tomaso",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "admin",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAN-P8",
           "permanentId": "MAN-P8",
           "name": "Derro",
+          "firstName": "Derro",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "derro",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAN-P9",
           "permanentId": "MAN-P9",
           "name": "Ng'ang'a",
+          "firstName": "Ng'ang'a",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "ng_ang_a",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
           "mustChangePassword": true,
@@ -117,10 +171,16 @@
           "id": "SS-UNK",
           "permanentId": "SS-UNK",
           "name": "Unrecorded scorer",
+          "firstName": "Unrecorded",
+          "surname": "scorer",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true,
           "unknown": true
         },
@@ -128,60 +188,96 @@
           "id": "SS-P1",
           "permanentId": "SS-P1",
           "name": "Brandy",
+          "firstName": "Brandy",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "brandy",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "SS-P2",
           "permanentId": "SS-P2",
           "name": "Ramsey",
+          "firstName": "Ramsey",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "ramsey",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "SS-P4",
           "permanentId": "SS-P4",
           "name": "Clayton",
+          "firstName": "Clayton",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "clayton",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "SS-P5",
           "permanentId": "SS-P5",
           "name": "Obonyo",
+          "firstName": "Obonyo",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "obonyo",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "SS-P6",
           "permanentId": "SS-P6",
           "name": "Ishmael",
+          "firstName": "Ishmael",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "ishmael",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "SS-P7",
           "permanentId": "SS-P7",
           "name": "Tonka",
+          "firstName": "Tonka",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "admin",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         }
       ]
@@ -195,10 +291,16 @@
           "id": "RAN-UNK",
           "permanentId": "RAN-UNK",
           "name": "Unrecorded scorer",
+          "firstName": "Unrecorded",
+          "surname": "scorer",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true,
           "unknown": true
         },
@@ -206,70 +308,112 @@
           "id": "RAN-P1",
           "permanentId": "RAN-P1",
           "name": "Sam",
+          "firstName": "Sam",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "sam",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "RAN-P2",
           "permanentId": "RAN-P2",
           "name": "Eddie",
+          "firstName": "Eddie",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "eddie",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "RAN-P3",
           "permanentId": "RAN-P3",
           "name": "Francis M.",
+          "firstName": "Francis",
+          "surname": "M.",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "francis_m",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "RAN-P4",
           "permanentId": "RAN-P4",
           "name": "Felix",
+          "firstName": "Felix",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "felix",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "RAN-P5",
           "permanentId": "RAN-P5",
           "name": "Rasta",
+          "firstName": "Rasta",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "rasta",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "RAN-P6",
           "permanentId": "RAN-P6",
           "name": "Yusuf",
+          "firstName": "Yusuf",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "yusuf",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "RAN-P7",
           "permanentId": "RAN-P7",
           "name": "Brayo",
+          "firstName": "Brayo",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "admin",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         }
       ]
@@ -283,10 +427,16 @@
           "id": "MAS-UNK",
           "permanentId": "MAS-UNK",
           "name": "Unrecorded scorer",
+          "firstName": "Unrecorded",
+          "surname": "scorer",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true,
           "unknown": true
         },
@@ -294,67 +444,109 @@
           "id": "MAS-P1",
           "permanentId": "MAS-P1",
           "name": "Ian",
+          "firstName": "Ian",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "ian",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAS-P2",
           "permanentId": "MAS-P2",
           "name": "Jobu",
+          "firstName": "Jobu",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "jobu",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAS-P3",
           "permanentId": "MAS-P3",
           "name": "Isaac",
+          "firstName": "Isaac",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "isaac",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAS-P4",
           "permanentId": "MAS-P4",
           "name": "Moja",
+          "firstName": "Moja",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "moja",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAS-P5",
           "permanentId": "MAS-P5",
           "name": "Tyson",
+          "firstName": "Tyson",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "tyson",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAS-P6",
           "permanentId": "MAS-P6",
           "name": "Sammy M.",
+          "firstName": "Sammy",
+          "surname": "M.",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "sammy_m",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "MAS-P7",
           "permanentId": "MAS-P7",
           "name": "Hezbon",
+          "firstName": "Hezbon",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "hezbon",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
           "mustChangePassword": true,
@@ -371,10 +563,16 @@
           "id": "OXF-UNK",
           "permanentId": "OXF-UNK",
           "name": "Unrecorded scorer",
+          "firstName": "Unrecorded",
+          "surname": "scorer",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true,
           "unknown": true
         },
@@ -382,60 +580,96 @@
           "id": "OXF-P1",
           "permanentId": "OXF-P1",
           "name": "Babu",
+          "firstName": "Babu",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "babu",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "OXF-P2",
           "permanentId": "OXF-P2",
           "name": "Alex",
+          "firstName": "Alex",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "alex",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "OXF-P3",
           "permanentId": "OXF-P3",
           "name": "Caleb",
+          "firstName": "Caleb",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "caleb",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "OXF-P4",
           "permanentId": "OXF-P4",
           "name": "Dennis",
+          "firstName": "Dennis",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "dennis",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "OXF-P5",
           "permanentId": "OXF-P5",
           "name": "Frank",
+          "firstName": "Frank",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "frank",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "OXF-P6",
           "permanentId": "OXF-P6",
           "name": "Danny",
+          "firstName": "Danny",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "danny",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         }
       ]
@@ -449,10 +683,16 @@
           "id": "BLA-UNK",
           "permanentId": "BLA-UNK",
           "name": "Unrecorded scorer",
+          "firstName": "Unrecorded",
+          "surname": "scorer",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true,
           "unknown": true
         },
@@ -460,70 +700,112 @@
           "id": "BLA-P1",
           "permanentId": "BLA-P1",
           "name": "Jimmy",
+          "firstName": "Jimmy",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "jimmy",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BLA-P2",
           "permanentId": "BLA-P2",
           "name": "Karis",
+          "firstName": "Karis",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "karis",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BLA-P4",
           "permanentId": "BLA-P4",
           "name": "Wanyama",
+          "firstName": "Wanyama",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "wanyama",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BLA-P5",
           "permanentId": "BLA-P5",
           "name": "Wayne",
+          "firstName": "Wayne",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "wayne",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BLA-P6",
           "permanentId": "BLA-P6",
           "name": "Maina",
+          "firstName": "Maina",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "maina",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BLA-P8",
           "permanentId": "BLA-P8",
           "name": "Baite",
+          "firstName": "Baite",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "baite",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BLA-P9",
           "permanentId": "BLA-P9",
           "name": "S. Mukuria",
+          "firstName": "S.",
+          "surname": "Mukuria",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "s_mukuria",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         }
       ]
@@ -537,10 +819,16 @@
           "id": "BAL-UNK",
           "permanentId": "BAL-UNK",
           "name": "Unrecorded scorer",
+          "firstName": "Unrecorded",
+          "surname": "scorer",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true,
           "unknown": true
         },
@@ -548,70 +836,112 @@
           "id": "BAL-P1",
           "permanentId": "BAL-P1",
           "name": "Imma",
+          "firstName": "Imma",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "imma",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BAL-P2",
           "permanentId": "BAL-P2",
           "name": "Mugane",
+          "firstName": "Mugane",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "mugane",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BAL-P3",
           "permanentId": "BAL-P3",
           "name": "Buntu",
+          "firstName": "Buntu",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "buntu",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BAL-P4",
           "permanentId": "BAL-P4",
           "name": "Rafo",
+          "firstName": "Rafo",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "rafo",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BAL-P5",
           "permanentId": "BAL-P5",
           "name": "Kevo K.",
+          "firstName": "Kevo",
+          "surname": "K.",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "kevo_k",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BAL-P6",
           "permanentId": "BAL-P6",
           "name": "Mbeumo",
+          "firstName": "Mbeumo",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "mbeumo",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "BAL-P7",
           "permanentId": "BAL-P7",
           "name": "M. Francis",
+          "firstName": "M.",
+          "surname": "Francis",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "m_francis",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         }
       ]
@@ -625,10 +955,16 @@
           "id": "EXM-UNK",
           "permanentId": "EXM-UNK",
           "name": "Unrecorded scorer",
+          "firstName": "Unrecorded",
+          "surname": "scorer",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "exm_unk",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true,
           "unknown": true
         },
@@ -636,67 +972,109 @@
           "id": "EXM-P1",
           "permanentId": "EXM-P1",
           "name": "Kevo",
+          "firstName": "Kevo",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "kevo",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "EXM-P2",
           "permanentId": "EXM-P2",
           "name": "Kaama",
+          "firstName": "Kaama",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "kaama",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "EXM-P3",
           "permanentId": "EXM-P3",
           "name": "Sando",
+          "firstName": "Sando",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "sando",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "EXM-P4",
           "permanentId": "EXM-P4",
           "name": "Willy",
+          "firstName": "Willy",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "willy",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "EXM-P5",
           "permanentId": "EXM-P5",
           "name": "Mark",
+          "firstName": "Mark",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "mark",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "EXM-P6",
           "permanentId": "EXM-P6",
           "name": "Dee",
+          "firstName": "Dee",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "dee",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
-          "mustChangePassword": false,
+          "mustChangePassword": true,
           "isActive": true
         },
         {
           "id": "EXM-P7",
           "permanentId": "EXM-P7",
           "name": "Mugwe",
+          "firstName": "Mugwe",
+          "surname": "",
+          "dob": "",
+          "dateOfBirth": "",
           "username": "mugwe",
+          "activeFoot": "right",
+          "preferredPositions": [],
           "position": "",
           "jerseyNumber": null,
           "mustChangePassword": true,
@@ -766,18 +1144,6 @@
         {
           "teamId": "SS",
           "team": "SS",
-          "playerId": "SS-P7",
-          "player": "SS-P7",
-          "playerName": "Tonka",
-          "type": "goal",
-          "assistPlayerId": null,
-          "assistPlayer": null,
-          "penalty": false,
-          "is_penalty": false
-        },
-        {
-          "teamId": "SS",
-          "team": "SS",
           "playerId": "SS-P1",
           "player": "SS-P1",
           "playerName": "Brandy",
@@ -822,18 +1188,30 @@
           "assistPlayer": null,
           "penalty": false,
           "is_penalty": false
+        },
+        {
+          "teamId": "SS",
+          "team": "SS",
+          "playerId": "SS-P7",
+          "player": "SS-P7",
+          "playerName": "Tonka",
+          "type": "goal",
+          "assistPlayerId": "SS-P1",
+          "assistPlayer": "Brandy",
+          "penalty": false,
+          "is_penalty": false
         }
       ],
       "report": {
-        "title": "Electric Clash",
-        "content": "An incredible opening encounter.",
         "motm": "John Doe",
-        "motm_team": "Oxford",
-        "tactical_notes": "",
-        "attendance": "",
-        "weather": "",
+        "title": "Electric Clash",
         "author": "admin",
-        "updated_at": "2026-10-22T12:59:43.172142+00:00"
+        "content": "An incredible opening encounter.",
+        "weather": "",
+        "motm_team": "Oxford",
+        "attendance": "",
+        "updated_at": "2026-10-22T12:59:43.172142+00:00",
+        "tactical_notes": ""
       }
     },
     {
@@ -1376,9 +1754,7 @@
           "is_penalty": false
         }
       ]
-    }
-  ],
-  "upcoming_fixtures": [
+    },
     {
       "id": "F9",
       "date": "Mon, 26 Oct \u00b7 18:00",
@@ -1391,11 +1767,64 @@
         "id": "BAL",
         "name": "Ballers FC"
       },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Joseph",
-      "score": null,
-      "events": []
+      "status": "COMPLETED",
+      "played": true,
+      "referee": "Ref Tomaso",
+      "score": {
+        "home": 2,
+        "away": 2,
+        "display": "Rangers 2 - 2 Ballers FC"
+      },
+      "events": [
+        {
+          "teamId": "BAL",
+          "team": "BAL",
+          "playerId": "BAL-P5",
+          "player": "BAL-P5",
+          "playerName": "Kevo K.",
+          "type": "goal",
+          "assistPlayerId": "BAL-P4",
+          "assistPlayer": "Rafo",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "BAL",
+          "team": "BAL",
+          "playerId": "BAL-P4",
+          "player": "BAL-P4",
+          "playerName": "Rafo",
+          "type": "goal",
+          "assistPlayerId": "BAL-P2",
+          "assistPlayer": "Mugane",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "RAN",
+          "team": "RAN",
+          "playerId": "RAN-P2",
+          "player": "RAN-P2",
+          "playerName": "Eddie",
+          "type": "goal",
+          "assistPlayerId": "RAN-P3",
+          "assistPlayer": "Francis M.",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "RAN",
+          "team": "RAN",
+          "playerId": "RAN-P7",
+          "player": "RAN-P7",
+          "playerName": "Brayo",
+          "type": "goal",
+          "assistPlayerId": "RAN-P2",
+          "assistPlayer": "Eddie",
+          "penalty": false,
+          "is_penalty": false
+        }
+      ]
     },
     {
       "id": "F11",
@@ -1409,59 +1838,118 @@
         "id": "SS",
         "name": "Super Strikers"
       },
-      "status": "UPCOMING",
-      "played": false,
+      "status": "COMPLETED",
+      "played": true,
       "referee": "Ref OG",
-      "score": null,
-      "events": []
-    },
+      "score": {
+        "home": 2,
+        "away": 4,
+        "display": "Oxford 2 - 4 Super Strikers"
+      },
+      "events": [
+        {
+          "teamId": "OXF",
+          "team": "OXF",
+          "playerId": "OXF-P4",
+          "player": "OXF-P4",
+          "playerName": "Dennis",
+          "type": "goal",
+          "assistPlayerId": "OXF-P3",
+          "assistPlayer": "Caleb",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "OXF",
+          "team": "OXF",
+          "playerId": "OXF-P4",
+          "player": "OXF-P4",
+          "playerName": "Dennis",
+          "type": "goal",
+          "assistPlayerId": "OXF-P3",
+          "assistPlayer": "Caleb",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "SS",
+          "team": "SS",
+          "playerId": "SS-P1",
+          "player": "SS-P1",
+          "playerName": "Brandy",
+          "type": "goal",
+          "assistPlayerId": "SS-P5",
+          "assistPlayer": "Obonyo",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "SS",
+          "team": "SS",
+          "playerId": "SS-P7",
+          "player": "SS-P7",
+          "playerName": "Tonka",
+          "type": "goal",
+          "assistPlayerId": "SS-P1",
+          "assistPlayer": "Brandy",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "SS",
+          "team": "SS",
+          "playerId": "SS-P1",
+          "player": "SS-P1",
+          "playerName": "Brandy",
+          "type": "goal",
+          "assistPlayerId": "SS-P5",
+          "assistPlayer": "Obonyo",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "SS",
+          "team": "SS",
+          "playerId": "SS-P7",
+          "player": "SS-P7",
+          "playerName": "Tonka",
+          "type": "goal",
+          "assistPlayerId": "SS-P5",
+          "assistPlayer": "Obonyo",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "OXF",
+          "team": "OXF",
+          "playerId": "OXF-P2",
+          "player": "OXF-P2",
+          "playerName": "Alex",
+          "type": "yellow"
+        },
+        {
+          "teamId": "OXF",
+          "team": "OXF",
+          "playerId": "OXF-P4",
+          "player": "OXF-P4",
+          "playerName": "Dennis",
+          "type": "yellow"
+        }
+      ]
+    }
+  ],
+  "upcoming_fixtures": [
     {
       "id": "F19",
       "date": "Wed, 28 Oct \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "away_team": {
         "id": "MAN",
         "name": "Mancheli"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Tomaso",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F8",
-      "date": "Wed, 28 Oct \u00b7 18:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "MAS",
-        "name": "Masters"
-      },
-      "away_team": {
-        "id": "OXF",
-        "name": "Oxford"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Jacob",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F3",
-      "date": "Thu, 29 Oct \u00b7 17:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
-      },
-      "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
       },
       "status": "UPCOMING",
       "played": false,
@@ -1470,16 +1958,16 @@
       "events": []
     },
     {
-      "id": "F10",
-      "date": "Thu, 29 Oct \u00b7 18:10",
+      "id": "F8",
+      "date": "Wed, 28 Oct \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "away_team": {
-        "id": "MAS",
-        "name": "Masters"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
@@ -1488,16 +1976,16 @@
       "events": []
     },
     {
-      "id": "F13",
-      "date": "Fri, 30 Oct \u00b7 17:10",
+      "id": "F3",
+      "date": "Thu, 29 Oct \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "OXF",
-        "name": "Oxford"
+        "id": "MAS",
+        "name": "Masters"
       },
       "away_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "SS",
+        "name": "Super Strikers"
       },
       "status": "UPCOMING",
       "played": false,
@@ -1506,20 +1994,56 @@
       "events": []
     },
     {
-      "id": "F14",
-      "date": "Fri, 30 Oct \u00b7 18:10",
+      "id": "F10",
+      "date": "Thu, 29 Oct \u00b7 18:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "OXF",
+        "name": "Oxford"
+      },
+      "away_team": {
+        "id": "RAN",
+        "name": "Rangers"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Jacob",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F13",
+      "date": "Fri, 30 Oct \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
         "name": "Ballers FC"
       },
       "away_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref Joseph",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F14",
+      "date": "Fri, 30 Oct \u00b7 18:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "BLA",
+        "name": "Black Hawk"
+      },
+      "away_team": {
+        "id": "EXM",
+        "name": "ExMilitary FC"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -1532,12 +2056,12 @@
         "name": "Super Strikers"
       },
       "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -1550,12 +2074,12 @@
         "name": "Masters"
       },
       "away_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "RAN",
+        "name": "Rangers"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref OG",
+      "referee": "Ref Jacob",
       "score": null,
       "events": []
     },
@@ -1568,12 +2092,12 @@
         "name": "Masters"
       },
       "away_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Tomaso",
+      "referee": "Ref Joseph",
       "score": null,
       "events": []
     },
@@ -1582,16 +2106,16 @@
       "date": "Mon, 02 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
+        "id": "OXF",
+        "name": "Oxford"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -1600,16 +2124,16 @@
       "date": "Wed, 04 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "OXF",
-        "name": "Oxford"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "away_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "MAS",
+        "name": "Masters"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -1618,16 +2142,16 @@
       "date": "Wed, 04 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "away_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "OXF",
+        "name": "Oxford"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref OG",
+      "referee": "Ref Jacob",
       "score": null,
       "events": []
     },
@@ -1636,16 +2160,16 @@
       "date": "Thu, 05 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "away_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
+        "id": "RAN",
+        "name": "Rangers"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Tomaso",
+      "referee": "Ref Joseph",
       "score": null,
       "events": []
     },
@@ -1654,16 +2178,16 @@
       "date": "Thu, 05 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "MAS",
-        "name": "Masters"
+        "id": "SS",
+        "name": "Super Strikers"
       },
       "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -1672,16 +2196,16 @@
       "date": "Fri, 06 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "away_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "OXF",
+        "name": "Oxford"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -1690,16 +2214,16 @@
       "date": "Fri, 06 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "away_team": {
-        "id": "OXF",
-        "name": "Oxford"
+        "id": "MAS",
+        "name": "Masters"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref OG",
+      "referee": "Ref Jacob",
       "score": null,
       "events": []
     },
@@ -1708,16 +2232,16 @@
       "date": "Sat, 07 Nov \u00b7 17:00",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "SS",
+        "name": "Super Strikers"
       },
       "away_team": {
-        "id": "MAS",
-        "name": "Masters"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Tomaso",
+      "referee": "Ref Joseph",
       "score": null,
       "events": []
     },
@@ -1726,8 +2250,8 @@
       "date": "Sat, 07 Nov \u00b7 18:00",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "away_team": {
         "id": "RAN",
@@ -1735,7 +2259,7 @@
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -1744,16 +2268,16 @@
       "date": "Mon, 09 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "SS",
+        "name": "Super Strikers"
       },
       "away_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -1762,48 +2286,12 @@
       "date": "Mon, 09 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "away_team": {
-        "id": "OXF",
-        "name": "Oxford"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref OG",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F31",
-      "date": "Wed, 11 Nov \u00b7 17:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "MAN",
-        "name": "Mancheli"
-      },
-      "away_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Tomaso",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F32",
-      "date": "Wed, 11 Nov \u00b7 18:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
         "id": "RAN",
         "name": "Rangers"
-      },
-      "away_team": {
-        "id": "MAS",
-        "name": "Masters"
       },
       "status": "UPCOMING",
       "played": false,
@@ -1812,16 +2300,16 @@
       "events": []
     },
     {
-      "id": "F33",
-      "date": "Thu, 12 Nov \u00b7 17:10",
+      "id": "F31",
+      "date": "Wed, 11 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "OXF",
+        "name": "Oxford"
       },
       "away_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "status": "UPCOMING",
       "played": false,
@@ -1830,16 +2318,16 @@
       "events": []
     },
     {
-      "id": "F34",
-      "date": "Thu, 12 Nov \u00b7 18:10",
+      "id": "F32",
+      "date": "Wed, 11 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "OXF",
-        "name": "Oxford"
+        "id": "MAS",
+        "name": "Masters"
       },
       "away_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "status": "UPCOMING",
       "played": false,
@@ -1848,20 +2336,56 @@
       "events": []
     },
     {
-      "id": "F35",
-      "date": "Fri, 13 Nov \u00b7 17:10",
+      "id": "F33",
+      "date": "Thu, 12 Nov \u00b7 17:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "SS",
+        "name": "Super Strikers"
+      },
+      "away_team": {
+        "id": "RAN",
+        "name": "Rangers"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Tomaso",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F34",
+      "date": "Thu, 12 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
         "name": "Ballers FC"
       },
       "away_team": {
-        "id": "MAS",
-        "name": "Masters"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Tomaso",
+      "referee": "Ref Jacob",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F35",
+      "date": "Fri, 13 Nov \u00b7 17:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "MAS",
+        "name": "Masters"
+      },
+      "away_team": {
+        "id": "OXF",
+        "name": "Oxford"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Joseph",
       "score": null,
       "events": []
     },
@@ -1874,12 +2398,12 @@
         "name": "Mancheli"
       },
       "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -1888,16 +2412,16 @@
       "date": "Sat, 14 Nov \u00b7 17:00",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "away_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "RAN",
+        "name": "Rangers"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -1906,16 +2430,16 @@
       "date": "Sat, 14 Nov \u00b7 18:00",
       "venue": "Thoome Pri.",
       "home_team": {
+        "id": "BLA",
+        "name": "Black Hawk"
+      },
+      "away_team": {
         "id": "SS",
         "name": "Super Strikers"
       },
-      "away_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
-      },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref OG",
+      "referee": "Ref Jacob",
       "score": null,
       "events": []
     },
@@ -1928,12 +2452,12 @@
         "name": "ExMilitary FC"
       },
       "away_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "MAS",
+        "name": "Masters"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Tomaso",
+      "referee": "Ref Joseph",
       "score": null,
       "events": []
     },
@@ -1942,16 +2466,16 @@
       "date": "Mon, 16 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
-      },
-      "away_team": {
         "id": "OXF",
         "name": "Oxford"
       },
+      "away_team": {
+        "id": "MAN",
+        "name": "Mancheli"
+      },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -1960,78 +2484,6 @@
       "date": "Wed, 18 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
-      },
-      "away_team": {
-        "id": "SS",
-        "name": "Super Strikers"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Joseph",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F42",
-      "date": "Wed, 18 Nov \u00b7 18:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
-      },
-      "away_team": {
-        "id": "MAS",
-        "name": "Masters"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref OG",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F43",
-      "date": "Thu, 19 Nov \u00b7 17:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "RAN",
-        "name": "Rangers"
-      },
-      "away_team": {
-        "id": "OXF",
-        "name": "Oxford"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Tomaso",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F44",
-      "date": "Thu, 19 Nov \u00b7 18:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "MAN",
-        "name": "Mancheli"
-      },
-      "away_team": {
-        "id": "SS",
-        "name": "Super Strikers"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Jacob",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F45",
-      "date": "Fri, 20 Nov \u00b7 17:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
         "id": "BAL",
         "name": "Ballers FC"
       },
@@ -2041,21 +2493,57 @@
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
     {
-      "id": "F46",
-      "date": "Fri, 20 Nov \u00b7 18:10",
+      "id": "F42",
+      "date": "Wed, 18 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
         "name": "Black Hawk"
       },
       "away_team": {
+        "id": "MAN",
+        "name": "Mancheli"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Jacob",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F43",
+      "date": "Thu, 19 Nov \u00b7 17:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "SS",
+        "name": "Super Strikers"
+      },
+      "away_team": {
         "id": "OXF",
         "name": "Oxford"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Joseph",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F44",
+      "date": "Thu, 19 Nov \u00b7 18:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "RAN",
+        "name": "Rangers"
+      },
+      "away_team": {
+        "id": "MAS",
+        "name": "Masters"
       },
       "status": "UPCOMING",
       "played": false,
@@ -2064,16 +2552,16 @@
       "events": []
     },
     {
-      "id": "F47",
-      "date": "Sat, 21 Nov \u00b7 17:00",
+      "id": "F45",
+      "date": "Fri, 20 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "RAN",
-        "name": "Rangers"
-      },
-      "away_team": {
         "id": "MAN",
         "name": "Mancheli"
+      },
+      "away_team": {
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
@@ -2082,20 +2570,56 @@
       "events": []
     },
     {
-      "id": "F48",
-      "date": "Sat, 21 Nov \u00b7 18:00",
+      "id": "F46",
+      "date": "Fri, 20 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "MAS",
-        "name": "Masters"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "away_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "status": "UPCOMING",
       "played": false,
       "referee": "Ref Jacob",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F47",
+      "date": "Sat, 21 Nov \u00b7 17:00",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "SS",
+        "name": "Super Strikers"
+      },
+      "away_team": {
+        "id": "MAS",
+        "name": "Masters"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Joseph",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F48",
+      "date": "Sat, 21 Nov \u00b7 18:00",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "RAN",
+        "name": "Rangers"
+      },
+      "away_team": {
+        "id": "OXF",
+        "name": "Oxford"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -2108,12 +2632,12 @@
         "name": "Masters"
       },
       "away_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -2126,12 +2650,12 @@
         "name": "Oxford"
       },
       "away_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref OG",
+      "referee": "Ref Jacob",
       "score": null,
       "events": []
     },
@@ -2140,48 +2664,12 @@
       "date": "Wed, 25 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
-      },
-      "away_team": {
-        "id": "MAN",
-        "name": "Mancheli"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Tomaso",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F52",
-      "date": "Wed, 25 Nov \u00b7 18:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
         "id": "RAN",
         "name": "Rangers"
       },
       "away_team": {
         "id": "EXM",
         "name": "ExMilitary FC"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Jacob",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F53",
-      "date": "Thu, 26 Nov \u00b7 17:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "MAS",
-        "name": "Masters"
-      },
-      "away_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
@@ -2190,16 +2678,16 @@
       "events": []
     },
     {
-      "id": "F54",
-      "date": "Thu, 26 Nov \u00b7 18:10",
+      "id": "F52",
+      "date": "Wed, 25 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "OXF",
-        "name": "Oxford"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
+        "id": "SS",
+        "name": "Super Strikers"
       },
       "status": "UPCOMING",
       "played": false,
@@ -2208,16 +2696,16 @@
       "events": []
     },
     {
-      "id": "F55",
-      "date": "Fri, 27 Nov \u00b7 17:10",
+      "id": "F53",
+      "date": "Thu, 26 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "OXF",
+        "name": "Oxford"
       },
       "away_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
@@ -2226,20 +2714,56 @@
       "events": []
     },
     {
-      "id": "F56",
-      "date": "Fri, 27 Nov \u00b7 18:10",
+      "id": "F54",
+      "date": "Thu, 26 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "MAS",
+        "name": "Masters"
       },
       "away_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "status": "UPCOMING",
       "played": false,
       "referee": "Ref Jacob",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F55",
+      "date": "Fri, 27 Nov \u00b7 17:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "EXM",
+        "name": "ExMilitary FC"
+      },
+      "away_team": {
+        "id": "SS",
+        "name": "Super Strikers"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Joseph",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F56",
+      "date": "Fri, 27 Nov \u00b7 18:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "RAN",
+        "name": "Rangers"
+      },
+      "away_team": {
+        "id": "MAN",
+        "name": "Mancheli"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref OG",
       "score": null,
       "events": []
     }
@@ -2305,18 +2829,6 @@
         {
           "teamId": "SS",
           "team": "SS",
-          "playerId": "SS-P7",
-          "player": "SS-P7",
-          "playerName": "Tonka",
-          "type": "goal",
-          "assistPlayerId": null,
-          "assistPlayer": null,
-          "penalty": false,
-          "is_penalty": false
-        },
-        {
-          "teamId": "SS",
-          "team": "SS",
           "playerId": "SS-P1",
           "player": "SS-P1",
           "playerName": "Brandy",
@@ -2361,18 +2873,30 @@
           "assistPlayer": null,
           "penalty": false,
           "is_penalty": false
+        },
+        {
+          "teamId": "SS",
+          "team": "SS",
+          "playerId": "SS-P7",
+          "player": "SS-P7",
+          "playerName": "Tonka",
+          "type": "goal",
+          "assistPlayerId": "SS-P1",
+          "assistPlayer": "Brandy",
+          "penalty": false,
+          "is_penalty": false
         }
       ],
       "report": {
-        "title": "Electric Clash",
-        "content": "An incredible opening encounter.",
         "motm": "John Doe",
-        "motm_team": "Oxford",
-        "tactical_notes": "",
-        "attendance": "",
-        "weather": "",
+        "title": "Electric Clash",
         "author": "admin",
-        "updated_at": "2026-10-22T12:59:43.172142+00:00"
+        "content": "An incredible opening encounter.",
+        "weather": "",
+        "motm_team": "Oxford",
+        "attendance": "",
+        "updated_at": "2026-10-22T12:59:43.172142+00:00",
+        "tactical_notes": ""
       }
     },
     {
@@ -2928,11 +3452,64 @@
         "id": "BAL",
         "name": "Ballers FC"
       },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Joseph",
-      "score": null,
-      "events": []
+      "status": "COMPLETED",
+      "played": true,
+      "referee": "Ref Tomaso",
+      "score": {
+        "home": 2,
+        "away": 2,
+        "display": "Rangers 2 - 2 Ballers FC"
+      },
+      "events": [
+        {
+          "teamId": "BAL",
+          "team": "BAL",
+          "playerId": "BAL-P5",
+          "player": "BAL-P5",
+          "playerName": "Kevo K.",
+          "type": "goal",
+          "assistPlayerId": "BAL-P4",
+          "assistPlayer": "Rafo",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "BAL",
+          "team": "BAL",
+          "playerId": "BAL-P4",
+          "player": "BAL-P4",
+          "playerName": "Rafo",
+          "type": "goal",
+          "assistPlayerId": "BAL-P2",
+          "assistPlayer": "Mugane",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "RAN",
+          "team": "RAN",
+          "playerId": "RAN-P2",
+          "player": "RAN-P2",
+          "playerName": "Eddie",
+          "type": "goal",
+          "assistPlayerId": "RAN-P3",
+          "assistPlayer": "Francis M.",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "RAN",
+          "team": "RAN",
+          "playerId": "RAN-P7",
+          "player": "RAN-P7",
+          "playerName": "Brayo",
+          "type": "goal",
+          "assistPlayerId": "RAN-P2",
+          "assistPlayer": "Eddie",
+          "penalty": false,
+          "is_penalty": false
+        }
+      ]
     },
     {
       "id": "F11",
@@ -2946,59 +3523,116 @@
         "id": "SS",
         "name": "Super Strikers"
       },
-      "status": "UPCOMING",
-      "played": false,
+      "status": "COMPLETED",
+      "played": true,
       "referee": "Ref OG",
-      "score": null,
-      "events": []
+      "score": {
+        "home": 2,
+        "away": 4,
+        "display": "Oxford 2 - 4 Super Strikers"
+      },
+      "events": [
+        {
+          "teamId": "OXF",
+          "team": "OXF",
+          "playerId": "OXF-P4",
+          "player": "OXF-P4",
+          "playerName": "Dennis",
+          "type": "goal",
+          "assistPlayerId": "OXF-P3",
+          "assistPlayer": "Caleb",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "OXF",
+          "team": "OXF",
+          "playerId": "OXF-P4",
+          "player": "OXF-P4",
+          "playerName": "Dennis",
+          "type": "goal",
+          "assistPlayerId": "OXF-P3",
+          "assistPlayer": "Caleb",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "SS",
+          "team": "SS",
+          "playerId": "SS-P1",
+          "player": "SS-P1",
+          "playerName": "Brandy",
+          "type": "goal",
+          "assistPlayerId": "SS-P5",
+          "assistPlayer": "Obonyo",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "SS",
+          "team": "SS",
+          "playerId": "SS-P7",
+          "player": "SS-P7",
+          "playerName": "Tonka",
+          "type": "goal",
+          "assistPlayerId": "SS-P1",
+          "assistPlayer": "Brandy",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "SS",
+          "team": "SS",
+          "playerId": "SS-P1",
+          "player": "SS-P1",
+          "playerName": "Brandy",
+          "type": "goal",
+          "assistPlayerId": "SS-P5",
+          "assistPlayer": "Obonyo",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "SS",
+          "team": "SS",
+          "playerId": "SS-P7",
+          "player": "SS-P7",
+          "playerName": "Tonka",
+          "type": "goal",
+          "assistPlayerId": "SS-P5",
+          "assistPlayer": "Obonyo",
+          "penalty": false,
+          "is_penalty": false
+        },
+        {
+          "teamId": "OXF",
+          "team": "OXF",
+          "playerId": "OXF-P2",
+          "player": "OXF-P2",
+          "playerName": "Alex",
+          "type": "yellow"
+        },
+        {
+          "teamId": "OXF",
+          "team": "OXF",
+          "playerId": "OXF-P4",
+          "player": "OXF-P4",
+          "playerName": "Dennis",
+          "type": "yellow"
+        }
+      ]
     },
     {
       "id": "F19",
       "date": "Wed, 28 Oct \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "away_team": {
         "id": "MAN",
         "name": "Mancheli"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Tomaso",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F8",
-      "date": "Wed, 28 Oct \u00b7 18:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "MAS",
-        "name": "Masters"
-      },
-      "away_team": {
-        "id": "OXF",
-        "name": "Oxford"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Jacob",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F3",
-      "date": "Thu, 29 Oct \u00b7 17:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
-      },
-      "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
       },
       "status": "UPCOMING",
       "played": false,
@@ -3007,16 +3641,16 @@
       "events": []
     },
     {
-      "id": "F10",
-      "date": "Thu, 29 Oct \u00b7 18:10",
+      "id": "F8",
+      "date": "Wed, 28 Oct \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "away_team": {
-        "id": "MAS",
-        "name": "Masters"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
@@ -3025,16 +3659,16 @@
       "events": []
     },
     {
-      "id": "F13",
-      "date": "Fri, 30 Oct \u00b7 17:10",
+      "id": "F3",
+      "date": "Thu, 29 Oct \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "OXF",
-        "name": "Oxford"
+        "id": "MAS",
+        "name": "Masters"
       },
       "away_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "SS",
+        "name": "Super Strikers"
       },
       "status": "UPCOMING",
       "played": false,
@@ -3043,20 +3677,56 @@
       "events": []
     },
     {
-      "id": "F14",
-      "date": "Fri, 30 Oct \u00b7 18:10",
+      "id": "F10",
+      "date": "Thu, 29 Oct \u00b7 18:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "OXF",
+        "name": "Oxford"
+      },
+      "away_team": {
+        "id": "RAN",
+        "name": "Rangers"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Jacob",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F13",
+      "date": "Fri, 30 Oct \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
         "name": "Ballers FC"
       },
       "away_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref Joseph",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F14",
+      "date": "Fri, 30 Oct \u00b7 18:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "BLA",
+        "name": "Black Hawk"
+      },
+      "away_team": {
+        "id": "EXM",
+        "name": "ExMilitary FC"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -3069,12 +3739,12 @@
         "name": "Super Strikers"
       },
       "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -3087,12 +3757,12 @@
         "name": "Masters"
       },
       "away_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "RAN",
+        "name": "Rangers"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref OG",
+      "referee": "Ref Jacob",
       "score": null,
       "events": []
     },
@@ -3105,12 +3775,12 @@
         "name": "Masters"
       },
       "away_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Tomaso",
+      "referee": "Ref Joseph",
       "score": null,
       "events": []
     },
@@ -3119,16 +3789,16 @@
       "date": "Mon, 02 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
+        "id": "OXF",
+        "name": "Oxford"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -3137,16 +3807,16 @@
       "date": "Wed, 04 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "OXF",
-        "name": "Oxford"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "away_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "MAS",
+        "name": "Masters"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -3155,16 +3825,16 @@
       "date": "Wed, 04 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "away_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "OXF",
+        "name": "Oxford"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref OG",
+      "referee": "Ref Jacob",
       "score": null,
       "events": []
     },
@@ -3173,16 +3843,16 @@
       "date": "Thu, 05 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "away_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
+        "id": "RAN",
+        "name": "Rangers"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Tomaso",
+      "referee": "Ref Joseph",
       "score": null,
       "events": []
     },
@@ -3191,16 +3861,16 @@
       "date": "Thu, 05 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "MAS",
-        "name": "Masters"
+        "id": "SS",
+        "name": "Super Strikers"
       },
       "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -3209,16 +3879,16 @@
       "date": "Fri, 06 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "away_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "OXF",
+        "name": "Oxford"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -3227,16 +3897,16 @@
       "date": "Fri, 06 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "away_team": {
-        "id": "OXF",
-        "name": "Oxford"
+        "id": "MAS",
+        "name": "Masters"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref OG",
+      "referee": "Ref Jacob",
       "score": null,
       "events": []
     },
@@ -3245,16 +3915,16 @@
       "date": "Sat, 07 Nov \u00b7 17:00",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "SS",
+        "name": "Super Strikers"
       },
       "away_team": {
-        "id": "MAS",
-        "name": "Masters"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Tomaso",
+      "referee": "Ref Joseph",
       "score": null,
       "events": []
     },
@@ -3263,8 +3933,8 @@
       "date": "Sat, 07 Nov \u00b7 18:00",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "away_team": {
         "id": "RAN",
@@ -3272,7 +3942,7 @@
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -3281,16 +3951,16 @@
       "date": "Mon, 09 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "SS",
+        "name": "Super Strikers"
       },
       "away_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -3299,48 +3969,12 @@
       "date": "Mon, 09 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "away_team": {
-        "id": "OXF",
-        "name": "Oxford"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref OG",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F31",
-      "date": "Wed, 11 Nov \u00b7 17:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "MAN",
-        "name": "Mancheli"
-      },
-      "away_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Tomaso",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F32",
-      "date": "Wed, 11 Nov \u00b7 18:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
         "id": "RAN",
         "name": "Rangers"
-      },
-      "away_team": {
-        "id": "MAS",
-        "name": "Masters"
       },
       "status": "UPCOMING",
       "played": false,
@@ -3349,16 +3983,16 @@
       "events": []
     },
     {
-      "id": "F33",
-      "date": "Thu, 12 Nov \u00b7 17:10",
+      "id": "F31",
+      "date": "Wed, 11 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "OXF",
+        "name": "Oxford"
       },
       "away_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "status": "UPCOMING",
       "played": false,
@@ -3367,16 +4001,16 @@
       "events": []
     },
     {
-      "id": "F34",
-      "date": "Thu, 12 Nov \u00b7 18:10",
+      "id": "F32",
+      "date": "Wed, 11 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "OXF",
-        "name": "Oxford"
+        "id": "MAS",
+        "name": "Masters"
       },
       "away_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "status": "UPCOMING",
       "played": false,
@@ -3385,20 +4019,56 @@
       "events": []
     },
     {
-      "id": "F35",
-      "date": "Fri, 13 Nov \u00b7 17:10",
+      "id": "F33",
+      "date": "Thu, 12 Nov \u00b7 17:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "SS",
+        "name": "Super Strikers"
+      },
+      "away_team": {
+        "id": "RAN",
+        "name": "Rangers"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Tomaso",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F34",
+      "date": "Thu, 12 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
         "name": "Ballers FC"
       },
       "away_team": {
-        "id": "MAS",
-        "name": "Masters"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Tomaso",
+      "referee": "Ref Jacob",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F35",
+      "date": "Fri, 13 Nov \u00b7 17:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "MAS",
+        "name": "Masters"
+      },
+      "away_team": {
+        "id": "OXF",
+        "name": "Oxford"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Joseph",
       "score": null,
       "events": []
     },
@@ -3411,12 +4081,12 @@
         "name": "Mancheli"
       },
       "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -3425,16 +4095,16 @@
       "date": "Sat, 14 Nov \u00b7 17:00",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "away_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "RAN",
+        "name": "Rangers"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -3443,16 +4113,16 @@
       "date": "Sat, 14 Nov \u00b7 18:00",
       "venue": "Thoome Pri.",
       "home_team": {
+        "id": "BLA",
+        "name": "Black Hawk"
+      },
+      "away_team": {
         "id": "SS",
         "name": "Super Strikers"
       },
-      "away_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
-      },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref OG",
+      "referee": "Ref Jacob",
       "score": null,
       "events": []
     },
@@ -3465,12 +4135,12 @@
         "name": "ExMilitary FC"
       },
       "away_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "MAS",
+        "name": "Masters"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Tomaso",
+      "referee": "Ref Joseph",
       "score": null,
       "events": []
     },
@@ -3479,16 +4149,16 @@
       "date": "Mon, 16 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
-      },
-      "away_team": {
         "id": "OXF",
         "name": "Oxford"
       },
+      "away_team": {
+        "id": "MAN",
+        "name": "Mancheli"
+      },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Jacob",
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -3497,78 +4167,6 @@
       "date": "Wed, 18 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
-      },
-      "away_team": {
-        "id": "SS",
-        "name": "Super Strikers"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Joseph",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F42",
-      "date": "Wed, 18 Nov \u00b7 18:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
-      },
-      "away_team": {
-        "id": "MAS",
-        "name": "Masters"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref OG",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F43",
-      "date": "Thu, 19 Nov \u00b7 17:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "RAN",
-        "name": "Rangers"
-      },
-      "away_team": {
-        "id": "OXF",
-        "name": "Oxford"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Tomaso",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F44",
-      "date": "Thu, 19 Nov \u00b7 18:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "MAN",
-        "name": "Mancheli"
-      },
-      "away_team": {
-        "id": "SS",
-        "name": "Super Strikers"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Jacob",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F45",
-      "date": "Fri, 20 Nov \u00b7 17:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
         "id": "BAL",
         "name": "Ballers FC"
       },
@@ -3578,21 +4176,57 @@
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
     {
-      "id": "F46",
-      "date": "Fri, 20 Nov \u00b7 18:10",
+      "id": "F42",
+      "date": "Wed, 18 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
         "name": "Black Hawk"
       },
       "away_team": {
+        "id": "MAN",
+        "name": "Mancheli"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Jacob",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F43",
+      "date": "Thu, 19 Nov \u00b7 17:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "SS",
+        "name": "Super Strikers"
+      },
+      "away_team": {
         "id": "OXF",
         "name": "Oxford"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Joseph",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F44",
+      "date": "Thu, 19 Nov \u00b7 18:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "RAN",
+        "name": "Rangers"
+      },
+      "away_team": {
+        "id": "MAS",
+        "name": "Masters"
       },
       "status": "UPCOMING",
       "played": false,
@@ -3601,16 +4235,16 @@
       "events": []
     },
     {
-      "id": "F47",
-      "date": "Sat, 21 Nov \u00b7 17:00",
+      "id": "F45",
+      "date": "Fri, 20 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "RAN",
-        "name": "Rangers"
-      },
-      "away_team": {
         "id": "MAN",
         "name": "Mancheli"
+      },
+      "away_team": {
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
@@ -3619,20 +4253,56 @@
       "events": []
     },
     {
-      "id": "F48",
-      "date": "Sat, 21 Nov \u00b7 18:00",
+      "id": "F46",
+      "date": "Fri, 20 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "MAS",
-        "name": "Masters"
+        "id": "EXM",
+        "name": "ExMilitary FC"
       },
       "away_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "status": "UPCOMING",
       "played": false,
       "referee": "Ref Jacob",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F47",
+      "date": "Sat, 21 Nov \u00b7 17:00",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "SS",
+        "name": "Super Strikers"
+      },
+      "away_team": {
+        "id": "MAS",
+        "name": "Masters"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Joseph",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F48",
+      "date": "Sat, 21 Nov \u00b7 18:00",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "RAN",
+        "name": "Rangers"
+      },
+      "away_team": {
+        "id": "OXF",
+        "name": "Oxford"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref OG",
       "score": null,
       "events": []
     },
@@ -3645,12 +4315,12 @@
         "name": "Masters"
       },
       "away_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref Joseph",
+      "referee": "Ref Tomaso",
       "score": null,
       "events": []
     },
@@ -3663,12 +4333,12 @@
         "name": "Oxford"
       },
       "away_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "status": "UPCOMING",
       "played": false,
-      "referee": "Ref OG",
+      "referee": "Ref Jacob",
       "score": null,
       "events": []
     },
@@ -3677,48 +4347,12 @@
       "date": "Wed, 25 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
-      },
-      "away_team": {
-        "id": "MAN",
-        "name": "Mancheli"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Tomaso",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F52",
-      "date": "Wed, 25 Nov \u00b7 18:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
         "id": "RAN",
         "name": "Rangers"
       },
       "away_team": {
         "id": "EXM",
         "name": "ExMilitary FC"
-      },
-      "status": "UPCOMING",
-      "played": false,
-      "referee": "Ref Jacob",
-      "score": null,
-      "events": []
-    },
-    {
-      "id": "F53",
-      "date": "Thu, 26 Nov \u00b7 17:10",
-      "venue": "Thoome Pri.",
-      "home_team": {
-        "id": "MAS",
-        "name": "Masters"
-      },
-      "away_team": {
-        "id": "BAL",
-        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
@@ -3727,16 +4361,16 @@
       "events": []
     },
     {
-      "id": "F54",
-      "date": "Thu, 26 Nov \u00b7 18:10",
+      "id": "F52",
+      "date": "Wed, 25 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "OXF",
-        "name": "Oxford"
+        "id": "MAN",
+        "name": "Mancheli"
       },
       "away_team": {
-        "id": "RAN",
-        "name": "Rangers"
+        "id": "SS",
+        "name": "Super Strikers"
       },
       "status": "UPCOMING",
       "played": false,
@@ -3745,16 +4379,16 @@
       "events": []
     },
     {
-      "id": "F55",
-      "date": "Fri, 27 Nov \u00b7 17:10",
+      "id": "F53",
+      "date": "Thu, 26 Nov \u00b7 17:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "SS",
-        "name": "Super Strikers"
+        "id": "OXF",
+        "name": "Oxford"
       },
       "away_team": {
-        "id": "BLA",
-        "name": "Black Hawk"
+        "id": "BAL",
+        "name": "Ballers FC"
       },
       "status": "UPCOMING",
       "played": false,
@@ -3763,20 +4397,56 @@
       "events": []
     },
     {
-      "id": "F56",
-      "date": "Fri, 27 Nov \u00b7 18:10",
+      "id": "F54",
+      "date": "Thu, 26 Nov \u00b7 18:10",
       "venue": "Thoome Pri.",
       "home_team": {
-        "id": "MAN",
-        "name": "Mancheli"
+        "id": "MAS",
+        "name": "Masters"
       },
       "away_team": {
-        "id": "EXM",
-        "name": "ExMilitary FC"
+        "id": "BLA",
+        "name": "Black Hawk"
       },
       "status": "UPCOMING",
       "played": false,
       "referee": "Ref Jacob",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F55",
+      "date": "Fri, 27 Nov \u00b7 17:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "EXM",
+        "name": "ExMilitary FC"
+      },
+      "away_team": {
+        "id": "SS",
+        "name": "Super Strikers"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref Joseph",
+      "score": null,
+      "events": []
+    },
+    {
+      "id": "F56",
+      "date": "Fri, 27 Nov \u00b7 18:10",
+      "venue": "Thoome Pri.",
+      "home_team": {
+        "id": "RAN",
+        "name": "Rangers"
+      },
+      "away_team": {
+        "id": "MAN",
+        "name": "Mancheli"
+      },
+      "status": "UPCOMING",
+      "played": false,
+      "referee": "Ref OG",
       "score": null,
       "events": []
     }

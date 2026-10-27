@@ -13,19 +13,38 @@ const CMS_TOKEN_KEY = "ruiru_titans_cms_token";
 const PLAYER_SESSION_KEY = "ruiru_titans_player_user";
 const CMS_SESSION_KEY = "ruiru_titans_cms_user";
 
-export function getPlayerToken() {
+let memoryPlayerToken = "";
+let memoryCmsToken = "";
+
+function safeSetAuthStorage(key, value) {
   try {
-    return localStorage.getItem(PLAYER_TOKEN_KEY) || "";
+    localStorage.setItem(key, value);
   } catch {
-    return "";
+    try {
+      localStorage.removeItem("ruiru_titans_pending_sync");
+      localStorage.removeItem("ruiru_titans_react_state");
+      localStorage.setItem(key, value);
+    } catch {}
+  }
+}
+
+export function getPlayerToken() {
+  if (memoryPlayerToken) return memoryPlayerToken;
+  try {
+    const stored = localStorage.getItem(PLAYER_TOKEN_KEY) || "";
+    if (stored) memoryPlayerToken = stored;
+    return stored;
+  } catch {
+    return memoryPlayerToken || "";
   }
 }
 
 export function setPlayerToken(token, userObj = null) {
+  memoryPlayerToken = token || "";
   try {
     if (token) {
-      localStorage.setItem(PLAYER_TOKEN_KEY, token);
-      if (userObj) localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(userObj));
+      safeSetAuthStorage(PLAYER_TOKEN_KEY, token);
+      if (userObj) safeSetAuthStorage(PLAYER_SESSION_KEY, JSON.stringify(userObj));
     } else {
       localStorage.removeItem(PLAYER_TOKEN_KEY);
       localStorage.removeItem(PLAYER_SESSION_KEY);
@@ -34,18 +53,22 @@ export function setPlayerToken(token, userObj = null) {
 }
 
 export function getCmsToken() {
+  if (memoryCmsToken) return memoryCmsToken;
   try {
-    return localStorage.getItem(CMS_TOKEN_KEY) || "";
+    const stored = localStorage.getItem(CMS_TOKEN_KEY) || "";
+    if (stored) memoryCmsToken = stored;
+    return stored;
   } catch {
-    return "";
+    return memoryCmsToken || "";
   }
 }
 
 export function setCmsToken(token, userObj = null) {
+  memoryCmsToken = token || "";
   try {
     if (token) {
-      localStorage.setItem(CMS_TOKEN_KEY, token);
-      if (userObj) localStorage.setItem(CMS_SESSION_KEY, JSON.stringify(userObj));
+      safeSetAuthStorage(CMS_TOKEN_KEY, token);
+      if (userObj) safeSetAuthStorage(CMS_SESSION_KEY, JSON.stringify(userObj));
     } else {
       localStorage.removeItem(CMS_TOKEN_KEY);
       localStorage.removeItem(CMS_SESSION_KEY);
@@ -61,11 +84,13 @@ export function clearAuthTokens() {
   } catch {}
 }
 
-const defaultHeaders = () => {
+const defaultHeaders = (includeContentType = true) => {
   const headers = {
-    "Content-Type": "application/json",
     "X-CSRFToken": getCsrfToken(),
   };
+  if (includeContentType) {
+    headers["Content-Type"] = "application/json";
+  }
   const pToken = getPlayerToken();
   if (pToken) headers["X-Titans-Player-Token"] = pToken;
   const cToken = getCmsToken();
@@ -74,53 +99,7 @@ const defaultHeaders = () => {
 };
 
 export function sanitizeExMilitaryFixtures(state) {
-  if (!state || !state.categories) return state;
-  let modified = false;
-  const nextCategories = { ...state.categories };
-
-  Object.keys(nextCategories).forEach((catKey) => {
-    const cat = nextCategories[catKey];
-    if (!cat || !Array.isArray(cat.fixtures)) return;
-
-    const hasWedConflict = cat.fixtures.some(
-      (f) =>
-        String(f.date || '').includes('28 Oct') &&
-        (f.home === 'EXM' || f.away === 'EXM' || f.home === 'BLA' || f.away === 'BLA' ||
-         f.home === 'ExMilitary FC' || f.away === 'ExMilitary FC' || f.home === 'Black Hawk' || f.away === 'Black Hawk')
-    );
-    const f10OnWed = cat.fixtures.some(
-      (f) => f.id === 'F10' && String(f.date || '').includes('28 Oct')
-    );
-
-    if (hasWedConflict || f10OnWed) {
-      modified = true;
-      const nextFixtures = cat.fixtures.map((f) => {
-        if (f.id === 'F10') {
-          return { ...f, date: 'Thu, 05 Nov · 18:10' };
-        }
-        if (f.id === 'F19') {
-          return { ...f, date: 'Wed, 28 Oct · 17:10' };
-        }
-        if (f.id === 'F8') {
-          return { ...f, date: 'Wed, 28 Oct · 18:10' };
-        }
-        if (f.id === 'F24') {
-          return { ...f, date: 'Mon, 02 Nov · 18:10' };
-        }
-        if (
-          String(f.date || '').includes('28 Oct') &&
-          (f.home === 'EXM' || f.away === 'EXM' || f.home === 'BLA' || f.away === 'BLA' ||
-           f.home === 'ExMilitary FC' || f.away === 'ExMilitary FC' || f.home === 'Black Hawk' || f.away === 'Black Hawk')
-        ) {
-          return { ...f, date: 'Thu, 05 Nov · 18:10' };
-        }
-        return f;
-      });
-      nextCategories[catKey] = { ...cat, fixtures: nextFixtures };
-    }
-  });
-
-  return modified ? { ...state, categories: nextCategories } : state;
+  return state;
 }
 
 export const api = {
@@ -197,20 +176,60 @@ export const api = {
   async saveState(stateData) {
     const res = await fetch("/api/state/", {
       method: "POST",
+      credentials: "same-origin",
       headers: defaultHeaders(),
       body: JSON.stringify(stateData),
     });
-    if (!res.ok) throw new Error(`Save failed HTTP ${res.status}`);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const err = new Error(errData.error || errData.detail || `Save failed HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     return await res.json();
   },
 
   async saveHomepage(homepageData) {
     const res = await fetch("/api/homepage/", {
       method: "POST",
+      credentials: "same-origin",
       headers: defaultHeaders(),
       body: JSON.stringify(homepageData),
     });
-    if (!res.ok) throw new Error(`Homepage save failed HTTP ${res.status}`);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const err = new Error(errData.error || errData.detail || `Homepage save failed HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    return await res.json();
+  },
+
+  async uploadHomepageImage(fileOrDataUrl) {
+    let res;
+    if (typeof File !== "undefined" && fileOrDataUrl instanceof Blob) {
+      const formData = new FormData();
+      formData.append("file", fileOrDataUrl);
+      res = await fetch("/api/homepage/upload-image/", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: defaultHeaders(false),
+        body: formData,
+      });
+    } else {
+      res = await fetch("/api/homepage/upload-image/", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: defaultHeaders(),
+        body: JSON.stringify({ image: fileOrDataUrl }),
+      });
+    }
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const err = new Error(errData.error || errData.detail || `Image upload failed HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     return await res.json();
   },
 
@@ -218,6 +237,7 @@ export const api = {
     try {
       const res = await fetch("/api/reset-real-season/", {
         method: "POST",
+        credentials: "same-origin",
         headers: defaultHeaders(),
       });
       if (res.ok) return await res.json();
@@ -231,6 +251,7 @@ export const api = {
   async reloadCanonicalSchedule() {
     const res = await fetch("/api/admin/reload-canonical-schedule/", {
       method: "POST",
+      credentials: "same-origin",
       headers: defaultHeaders(),
     });
     if (!res.ok) throw new Error(`Schedule reload failed HTTP ${res.status}`);
@@ -246,14 +267,19 @@ export const api = {
   async getAuthSession() {
     try {
       const res = await fetch("/api/auth/session/", {
+        credentials: "same-origin",
         headers: defaultHeaders(),
       });
       if (res.ok) {
         const data = await res.json();
         if (data.cms_user || data.cms) {
+          const cmsObj = data.cms_user || data.cms || null;
           setPlayerToken("");
+          if (data.token) {
+            setCmsToken(data.token, cmsObj);
+          }
           return {
-            cms: data.cms_user || data.cms || null,
+            cms: cmsObj,
             player: null,
           };
         }
@@ -288,6 +314,7 @@ export const api = {
     try {
       res = await fetch("/api/auth/cms-login/", {
         method: "POST",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": getCsrfToken(),

@@ -52,6 +52,34 @@ class TitansCMSAuthentication(BaseAuthentication):
     3. Django session ('titans_cms' session dictionary or standard staff session)
     """
 
+    def _authenticate_from_session(self, request, require_cv=False):
+        if hasattr(request, "session"):
+            session_cms = request.session.get("titans_cms")
+            if session_cms and session_cms.get("role") == "cms":
+                user = User.objects.filter(username__iexact=session_cms.get("username", "")).first()
+                if user and (user.is_staff or user.is_superuser) and user.is_active:
+                    sess_cv = session_cms.get("_cv")
+                    expected_cv = get_cms_user_credential_fingerprint(user)
+                    if require_cv:
+                        cv_ok = bool(sess_cv and secrets.compare_digest(str(sess_cv), expected_cv))
+                    else:
+                        cv_ok = bool(not sess_cv or secrets.compare_digest(str(sess_cv), expected_cv))
+                    if cv_ok:
+                        request.cms_user = {k: v for k, v in session_cms.items() if k != "_cv"}
+                        return (user, None)
+
+        raw_req = getattr(request, "_request", request)
+        django_user = getattr(raw_req, "user", None)
+        if django_user and django_user.is_authenticated and (django_user.is_staff or django_user.is_superuser) and django_user.is_active:
+            request.cms_user = {
+                "role": "cms",
+                "username": django_user.username,
+                "email": getattr(django_user, "email", ""),
+            }
+            return (django_user, None)
+
+        return None
+
     def authenticate(self, request):
         token = (request.headers.get("X-Titans-CMS-Token") or "").strip()
         if not token:
@@ -70,6 +98,9 @@ class TitansCMSAuthentication(BaseAuthentication):
         if token:
             payload = verify_signed_token(token, salt="titans-cms-auth")
             if not payload or payload.get("role") != "cms":
+                session_auth = self._authenticate_from_session(request, require_cv=True)
+                if session_auth:
+                    return session_auth
                 if is_safe_or_auth:
                     return None
                 raise exceptions.AuthenticationFailed("Invalid or expired CMS admin token. Please sign in again.")
@@ -78,6 +109,9 @@ class TitansCMSAuthentication(BaseAuthentication):
             user = User.objects.filter(username__iexact=username).first()
 
             if not user or not (user.is_staff or user.is_superuser):
+                session_auth = self._authenticate_from_session(request, require_cv=True)
+                if session_auth:
+                    return session_auth
                 if is_safe_or_auth:
                     return None
                 raise exceptions.AuthenticationFailed("CMS admin account is invalid or lacks staff privileges.")
@@ -90,6 +124,9 @@ class TitansCMSAuthentication(BaseAuthentication):
             expected_cv = get_cms_user_credential_fingerprint(user)
             token_cv = payload.get("_cv")
             if not token_cv or not secrets.compare_digest(str(token_cv), expected_cv):
+                session_auth = self._authenticate_from_session(request, require_cv=True)
+                if session_auth:
+                    return session_auth
                 if is_safe_or_auth:
                     return None
                 raise exceptions.AuthenticationFailed("CMS admin token has been revoked after a credential change. Please sign in again.")
@@ -98,22 +135,7 @@ class TitansCMSAuthentication(BaseAuthentication):
             request.cms_user = clean_payload
             return (user, token)
 
-        if hasattr(request, "session"):
-            session_cms = request.session.get("titans_cms")
-            if session_cms and session_cms.get("role") == "cms":
-                user = User.objects.filter(username__iexact=session_cms.get("username", "")).first()
-                if user and (user.is_staff or user.is_superuser) and user.is_active:
-                    sess_cv = session_cms.get("_cv")
-                    if not sess_cv or secrets.compare_digest(str(sess_cv), get_cms_user_credential_fingerprint(user)):
-                        request.cms_user = {k: v for k, v in session_cms.items() if k != "_cv"}
-                        return (user, None)
-
-        raw_req = getattr(request, "_request", request)
-        django_user = getattr(raw_req, "user", None)
-        if django_user and django_user.is_authenticated and (django_user.is_staff or django_user.is_superuser) and django_user.is_active:
-            return (django_user, None)
-
-        return None
+        return self._authenticate_from_session(request, require_cv=False)
 
     def authenticate_header(self, request):
         return 'Bearer realm="titans-cms"'
@@ -129,6 +151,9 @@ class TitansPlayerAuthentication(BaseAuthentication):
     """
 
     def authenticate(self, request):
+        if getattr(request, "cms_user", None):
+            return None
+
         token = (request.headers.get("X-Titans-Player-Token") or "").strip()
         if not token:
             auth_header = (request.headers.get("Authorization") or "").strip()
@@ -144,6 +169,7 @@ class TitansPlayerAuthentication(BaseAuthentication):
             getattr(raw_req, "method", request.method) in ("GET", "HEAD", "OPTIONS")
             or req_path.startswith("/api/auth/")
             or req_path.startswith("/api/state/")
+            or req_path.startswith("/api/homepage/")
         )
 
         if token:

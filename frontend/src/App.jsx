@@ -278,6 +278,7 @@ export default function App() {
   const [appShowAIReport, setAppShowAIReport] = useState(false);
 
   const syncTimerRef = useRef(null);
+  const pendingSyncRef = useRef(null);
 
   // Initial load from Django REST API + Player Auth Session check
   useEffect(() => {
@@ -344,14 +345,16 @@ export default function App() {
             const pending = JSON.parse(rawPending);
             if (pending && pending.categories) {
               const sanitizedPending = sanitizeExMilitaryFixtures(pending);
-              try {
-                localStorage.setItem('ruiru_titans_pending_sync', JSON.stringify(sanitizedPending));
-              } catch {}
+              pendingSyncRef.current = sanitizedPending;
               if (sessionInfo?.cms) {
                 try {
-                  await api.saveState(sanitizedPending);
+                  if (sanitizedPending.homepage) {
+                    await api.saveHomepage(sanitizedPending.homepage).catch(() => {});
+                  }
+                  const saved = await api.saveState(sanitizedPending);
                   localStorage.removeItem('ruiru_titans_pending_sync');
-                  setData(sanitizedPending);
+                  pendingSyncRef.current = null;
+                  setData(saved && saved.categories ? saved : sanitizedPending);
                   setSyncStatus('synced');
                   return;
                 } catch {}
@@ -373,6 +376,7 @@ export default function App() {
   // Commit and sync function (debounced so UI clicks/selects never freeze)
   const commitData = (nextData) => {
     setData(nextData);
+    pendingSyncRef.current = nextData;
     setSyncStatus('saving');
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
 
@@ -381,26 +385,60 @@ export default function App() {
         try {
           localStorage.setItem('ruiru_titans_react_state', JSON.stringify(nextData));
         } catch (e) {}
-        await api.saveState(nextData);
+        const saved = await api.saveState(nextData);
+        if (saved && saved.homepage) {
+          const merged = { ...nextData, homepage: saved.homepage };
+          setData(merged);
+          try {
+            localStorage.setItem('ruiru_titans_react_state', JSON.stringify(merged));
+          } catch (e) {}
+        }
+        pendingSyncRef.current = null;
         try {
           localStorage.removeItem('ruiru_titans_pending_sync');
         } catch (e) {}
         setSyncStatus('synced');
       } catch (err) {
+        const status = err?.status;
+        const msg = String(err?.message || '');
+        const isAuthErr =
+          status === 401 ||
+          status === 403 ||
+          msg.includes('401') ||
+          msg.includes('403') ||
+          msg.toLowerCase().includes('token') ||
+          msg.toLowerCase().includes('credentials');
+
+        if (isAuthErr) {
+          // Verify with /api/auth/session/ (which refreshes a stale token if the session is still active)
+          const sess = await api.getAuthSession().catch(() => ({ cms: null }));
+          if (sess?.cms) {
+            setCmsUser(sess.cms);
+            setIsCmsMode(true);
+            try {
+              await api.saveState(nextData);
+              pendingSyncRef.current = null;
+              try {
+                localStorage.removeItem('ruiru_titans_pending_sync');
+              } catch (e) {}
+              setSyncStatus('synced');
+              return;
+            } catch (retryErr) {
+              console.error('Retry sync failed after session refresh:', retryErr);
+            }
+          }
+        }
+
         console.error('Failed to sync to backend:', err);
         setSyncStatus('error');
+        pendingSyncRef.current = nextData;
         try {
           localStorage.setItem('ruiru_titans_pending_sync', JSON.stringify(nextData));
         } catch (e) {}
-        const msg = String(err?.message || '');
-        if (
-          msg.includes('401') ||
-          msg.includes('403') ||
-          msg.includes('auth') ||
-          msg.includes('token') ||
-          msg.includes('credentials') ||
-          msg.includes('permission')
-        ) {
+
+        if (isAuthErr && !cmsUser) {
+          setAuthModal({ open: true, tab: 'cms' });
+        } else if (status === 401) {
           setAuthModal({ open: true, tab: 'cms' });
         }
       }
@@ -1369,15 +1407,75 @@ export default function App() {
   };
 
   const handleUpdateHomepage = async (nextHomepage) => {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     const nextData = {
       ...data,
       homepage: nextHomepage,
     };
-    commitData(nextData);
+    setData(nextData);
+    pendingSyncRef.current = nextData;
+    setSyncStatus('saving');
+
     try {
-      await api.saveHomepage(nextHomepage);
+      const res = await api.saveHomepage(nextHomepage);
+      const savedHomepage = res?.homepage || nextHomepage;
+      const syncedData = {
+        ...nextData,
+        homepage: savedHomepage,
+      };
+      setData(syncedData);
+      pendingSyncRef.current = null;
+      try {
+        localStorage.removeItem('ruiru_titans_pending_sync');
+        localStorage.setItem('ruiru_titans_react_state', JSON.stringify(syncedData));
+      } catch (e) {}
+      setSyncStatus('synced');
     } catch (err) {
-      console.warn('Could not save homepage directly, synced via state API:', err);
+      const status = err?.status;
+      const msg = String(err?.message || '');
+      const isAuthErr =
+        status === 401 ||
+        status === 403 ||
+        msg.includes('401') ||
+        msg.includes('403');
+
+      if (isAuthErr) {
+        // Check if admin session is active and refresh token before prompting for login
+        const sess = await api.getAuthSession().catch(() => ({ cms: null }));
+        if (sess?.cms) {
+          setCmsUser(sess.cms);
+          setIsCmsMode(true);
+          try {
+            const retryRes = await api.saveHomepage(nextHomepage);
+            const savedHomepage = retryRes?.homepage || nextHomepage;
+            const syncedData = {
+              ...nextData,
+              homepage: savedHomepage,
+            };
+            setData(syncedData);
+            pendingSyncRef.current = null;
+            try {
+              localStorage.removeItem('ruiru_titans_pending_sync');
+              localStorage.setItem('ruiru_titans_react_state', JSON.stringify(syncedData));
+            } catch (e) {}
+            setSyncStatus('synced');
+            return;
+          } catch (retryErr) {
+            console.warn('Homepage retry failed after session refresh:', retryErr);
+          }
+        }
+      }
+
+      console.warn('Could not save homepage directly, falling back to state sync:', err);
+      setSyncStatus('error');
+      pendingSyncRef.current = nextData;
+      try {
+        localStorage.setItem('ruiru_titans_pending_sync', JSON.stringify(nextData));
+      } catch (e) {}
+
+      if (status === 401 || (isAuthErr && !cmsUser)) {
+        setAuthModal({ open: true, tab: 'cms' });
+      }
     }
   };
 
@@ -2829,21 +2927,47 @@ export default function App() {
     setIsCmsMode(true);
     setCurrentView('manage');
 
-    // Automatically flush any pending unsaved state now that manager is authenticated!
+    // Automatically flush any pending unsaved state (from memory ref or localStorage) now that manager is authenticated!
     try {
-      const rawPending = localStorage.getItem('ruiru_titans_pending_sync');
-      if (rawPending) {
-        const pendingState = JSON.parse(rawPending);
-        if (pendingState && pendingState.categories) {
-          setSyncStatus('saving');
-          await api.saveState(pendingState);
-          setData(pendingState);
-          localStorage.removeItem('ruiru_titans_pending_sync');
-          setSyncStatus('synced');
+      let pendingState = pendingSyncRef.current;
+      if (!pendingState) {
+        const rawPending = localStorage.getItem('ruiru_titans_pending_sync');
+        if (rawPending) {
+          pendingState = JSON.parse(rawPending);
         }
+      }
+      if (!pendingState && (syncStatus === 'error' || syncStatus === 'saving')) {
+        pendingState = data;
+      }
+
+      if (pendingState && pendingState.categories) {
+        setSyncStatus('saving');
+        let workingState = { ...pendingState };
+        if (workingState.homepage) {
+          try {
+            const hpRes = await api.saveHomepage(workingState.homepage);
+            if (hpRes && hpRes.homepage) {
+              workingState = { ...workingState, homepage: hpRes.homepage };
+            }
+          } catch (hpErr) {
+            console.warn('Homepage sync during login flush:', hpErr);
+          }
+        }
+        const savedState = await api.saveState(workingState);
+        const finalSynced = savedState && savedState.categories ? savedState : workingState;
+        setData(finalSynced);
+        pendingSyncRef.current = null;
+        try {
+          localStorage.removeItem('ruiru_titans_pending_sync');
+          localStorage.setItem('ruiru_titans_react_state', JSON.stringify(finalSynced));
+        } catch (e) {}
+        setSyncStatus('synced');
+      } else {
+        setSyncStatus('synced');
       }
     } catch (e) {
       console.warn('Could not flush pending sync on CMS login:', e);
+      setSyncStatus('error');
     }
   };
 
@@ -3707,10 +3831,12 @@ export default function App() {
             onNavigateHighlights={() => setCurrentView('highlights')}
             onNavigateArchives={() => setCurrentView('archives')}
             onNavigateManageHomepage={() => {
+              setManageSection('homepage');
               if (cmsUser) {
                 setIsCmsMode(true);
                 setCurrentView('manage');
               } else {
+                setCurrentView('manage');
                 setAuthModal({ open: true, tab: 'cms' });
               }
             }}

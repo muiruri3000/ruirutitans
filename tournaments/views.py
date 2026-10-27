@@ -131,12 +131,24 @@ class ReloadCanonicalScheduleAPIView(views.APIView):
     def post(self, request):
         from .services import import_state_to_db, export_state_from_db
         import json
+        current_db_state = export_state_from_db()
         seed_path = "tournaments/initial_tournament_state.json"
         with open(seed_path, "r", encoding="utf-8") as f:
             state_dict = json.load(f)
         settings_obj = GlobalSettings.objects.first()
         if settings_obj and settings_obj.homepage_data:
             state_dict["homepage"] = settings_obj.homepage_data
+        for cat_key, cat_data in state_dict.get("categories", {}).items():
+            db_cat = (current_db_state.get("categories") or {}).get(cat_key)
+            if db_cat and "fixtures" in db_cat and "fixtures" in cat_data:
+                db_played_by_id = {
+                    fx["id"]: fx
+                    for fx in db_cat["fixtures"]
+                    if fx.get("played") or fx.get("walkover") or (fx.get("events") and len(fx["events"]) > 0)
+                }
+                cat_data["fixtures"] = [
+                    db_played_by_id.get(fx["id"], fx) for fx in cat_data["fixtures"]
+                ]
         import_state_to_db(state_dict, soft_delete_missing=False)
         updated_state = export_state_from_db()
         return Response({
@@ -153,29 +165,77 @@ class HomepageAPIView(views.APIView):
     permission_classes = [ReadOnlyOrCMSAdmin]
 
     def get(self, request):
-        from .services import build_default_homepage_data
+        from .services import build_default_homepage_data, persist_homepage_images_to_media
         settings, _ = GlobalSettings.objects.get_or_create(id=1)
         if not settings.homepage_data:
             settings.homepage_data = build_default_homepage_data()
             settings.save(update_fields=["homepage_data"])
+        else:
+            normalized_hp = persist_homepage_images_to_media(settings.homepage_data)
+            if normalized_hp != settings.homepage_data:
+                settings.homepage_data = normalized_hp
+                settings.save(update_fields=["homepage_data"])
         return Response(settings.homepage_data)
 
     def post(self, request):
-        from .services import build_default_homepage_data
+        from .services import build_default_homepage_data, persist_homepage_images_to_media
         payload = request.data
         if not isinstance(payload, dict):
             return Response({"error": "Invalid homepage payload."}, status=status.HTTP_400_BAD_REQUEST)
         settings, _ = GlobalSettings.objects.get_or_create(id=1)
-        current = settings.homepage_data or build_default_homepage_data()
+        current = dict(settings.homepage_data or build_default_homepage_data())
         if "carousel" in payload and isinstance(payload["carousel"], list):
             current["carousel"] = payload["carousel"]
         if "jerseys" in payload and isinstance(payload["jerseys"], dict):
             current["jerseys"] = payload["jerseys"]
         if "upcoming_fixtures" in payload and isinstance(payload["upcoming_fixtures"], list):
             current["upcoming_fixtures"] = payload["upcoming_fixtures"]
-        settings.homepage_data = current
+        settings.homepage_data = persist_homepage_images_to_media(current)
         settings.save(update_fields=["homepage_data"])
         return Response({"success": True, "homepage": settings.homepage_data})
+
+
+class HomepageImageUploadAPIView(views.APIView):
+    """
+    POST /api/homepage/upload-image/
+    Uploads a carousel or jersey image file (multipart/form-data 'file' or JSON 'image' data URL),
+    stores it in MEDIA_ROOT/homepage/, and returns the persistent '/media/homepage/<hash>.<ext>' URL.
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def post(self, request):
+        import hashlib
+        from pathlib import Path
+        from django.conf import settings
+        from .services import save_data_url_image_to_media
+
+        uploaded_file = request.FILES.get("file") or request.FILES.get("image")
+        if uploaded_file:
+            raw_bytes = uploaded_file.read()
+            if not raw_bytes:
+                return Response({"error": "Uploaded image file is empty."}, status=status.HTTP_400_BAD_REQUEST)
+            orig_ext = Path(uploaded_file.name or "photo.jpg").suffix.lower().lstrip(".")
+            if orig_ext not in ("jpg", "jpeg", "png", "webp", "gif", "svg"):
+                orig_ext = "jpg"
+            if orig_ext == "jpeg":
+                orig_ext = "jpg"
+            digest = hashlib.sha256(raw_bytes).hexdigest()[:24]
+            filename = f"{digest}.{orig_ext}"
+            media_dir = settings.MEDIA_ROOT / "homepage"
+            media_dir.mkdir(parents=True, exist_ok=True)
+            target_path = media_dir / filename
+            if not target_path.exists():
+                target_path.write_bytes(raw_bytes)
+            media_url = (getattr(settings, "MEDIA_URL", "/media/") or "/media/").rstrip("/")
+            url = f"{media_url}/homepage/{filename}"
+            return Response({"success": True, "url": url})
+
+        data_url = (request.data or {}).get("image") if isinstance(request.data, dict) else None
+        if data_url and isinstance(data_url, str):
+            url = save_data_url_image_to_media(data_url)
+            return Response({"success": True, "url": url})
+
+        return Response({"error": "No image file or data URL provided."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CategoryListCreateAPIView(views.APIView):
@@ -743,7 +803,13 @@ class AuthSessionAPIView(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        from .services import get_authenticated_cms_from_request, get_authenticated_player_from_request
+        from django.contrib.auth.models import User
+        from .services import (
+            get_authenticated_cms_from_request,
+            get_authenticated_player_from_request,
+            create_signed_token,
+            get_cms_user_credential_fingerprint,
+        )
         cms_user = get_authenticated_cms_from_request(request)
         player_user = get_authenticated_player_from_request(request)
 
@@ -752,9 +818,20 @@ class AuthSessionAPIView(views.APIView):
             request.session.pop("titans_player", None)
             player_user = None
 
+        cms_token = None
+        if cms_user:
+            cms_token = create_signed_token(cms_user, salt="titans-cms-auth")
+            if hasattr(request, "session"):
+                u_obj = User.objects.filter(username__iexact=cms_user.get("username", "")).first()
+                sess_payload = dict(cms_user)
+                if u_obj:
+                    sess_payload["_cv"] = get_cms_user_credential_fingerprint(u_obj)
+                request.session["titans_cms"] = sess_payload
+
         return Response({
             "cms_authenticated": bool(cms_user),
             "cms_user": cms_user,
+            "token": cms_token,
             "player_authenticated": bool(player_user),
             "player": player_user,
         })
@@ -774,6 +851,7 @@ class CMSLoginAPIView(views.APIView):
         from django.contrib.auth.models import User
         from .services import (
             create_signed_token,
+            get_cms_user_credential_fingerprint,
             get_client_ip,
             check_auth_rate_limit,
             record_auth_failure,
@@ -820,7 +898,10 @@ class CMSLoginAPIView(views.APIView):
             "email": user.email,
         }
         if hasattr(request, "session"):
-            request.session["titans_cms"] = cms_profile
+            request.session["titans_cms"] = {
+                **cms_profile,
+                "_cv": get_cms_user_credential_fingerprint(user),
+            }
         token = create_signed_token(cms_profile, salt="titans-cms-auth")
         return Response({
             "success": True,
@@ -1256,6 +1337,7 @@ class CMSChangePasswordAPIView(views.APIView):
         from .services import (
             get_authenticated_cms_from_request,
             create_signed_token,
+            get_cms_user_credential_fingerprint,
             get_client_ip,
             check_auth_rate_limit,
             record_auth_failure,
@@ -1321,7 +1403,10 @@ class CMSChangePasswordAPIView(views.APIView):
             "username": user.username,
             "email": user.email,
         }
-        request.session["titans_cms"] = cms_profile
+        request.session["titans_cms"] = {
+            **cms_profile,
+            "_cv": get_cms_user_credential_fingerprint(user),
+        }
         token = create_signed_token(cms_profile, salt="titans-cms-auth")
 
         return Response({

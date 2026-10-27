@@ -2428,3 +2428,82 @@ class TestFixtureReorganization(TestCase):
             h2h_tracker[get_key(h_id, a_id)] = k + 1
 
 
+class HomepageCarouselUploadAuthAndPersistenceTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.admin_user = User.objects.create_user(
+            username="carousel_admin",
+            email="admin@ruirutitans.com",
+            password="StrongAdminPassword123!",
+            is_staff=True,
+        )
+
+    def test_carousel_and_jersey_upload_with_large_image_and_session_fallback(self):
+        import base64
+
+        # 1. Login via /api/auth/cms-login/
+        login_res = self.client.post(
+            reverse("tournaments:api_auth_cms_login"),
+            data=json.dumps({"username": "carousel_admin", "password": "StrongAdminPassword123!"}),
+            content_type="application/json",
+        )
+        self.assertEqual(login_res.status_code, 200)
+        token = login_res.json()["token"]
+        self.assertTrue(token)
+
+        # 2. Verify /api/auth/session/ returns a fresh token when authenticated via session
+        sess_res = self.client.get(reverse("tournaments:api_auth_session"))
+        self.assertEqual(sess_res.status_code, 200)
+        self.assertTrue(sess_res.json()["cms_authenticated"])
+        self.assertTrue(sess_res.json().get("token"))
+
+        # 3. Create a >3 MB base64 JPEG payload (exceeding Django's old 2.5 MB default limit)
+        raw_jpeg_bytes = b"\xff\xd8\xff\xe0" + (b"A" * (3 * 1024 * 1024)) + b"\xff\xd9"
+        large_data_url = "data:image/jpeg;base64," + base64.b64encode(raw_jpeg_bytes).decode("ascii")
+
+        # 4. Even if the browser sends a stale/corrupted X-Titans-CMS-Token AND a stale X-Titans-Player-Token
+        # while the admin session is active, POST /api/homepage/ must succeed without 401!
+        homepage_payload = {
+            "carousel": [
+                {
+                    "id": "slide-test-upload",
+                    "title": "New Matchday Photo",
+                    "subtitle": "Uploaded by Admin",
+                    "tag": "CLUB GALLERY",
+                    "image": large_data_url,
+                }
+            ],
+            "jerseys": {
+                "u13": [
+                    {
+                        "id": "u13-test-kit",
+                        "title": "U13 New Kit",
+                        "subtitle": "2026 Home",
+                        "badge": "HOME KIT",
+                        "image": large_data_url,
+                    }
+                ]
+            },
+            "upcoming_fixtures": [],
+        }
+        hp_res = self.client.post(
+            reverse("tournaments:api_homepage"),
+            data=json.dumps(homepage_payload),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN="stale-invalid-cms-token",
+            HTTP_X_TITANS_PLAYER_TOKEN="stale-invalid-player-token",
+        )
+        self.assertEqual(hp_res.status_code, 200)
+        saved_hp = hp_res.json()["homepage"]
+        saved_slide_img = saved_hp["carousel"][0]["image"]
+        self.assertTrue(saved_slide_img.startswith("/media/homepage/"))
+        self.assertTrue(saved_slide_img.endswith(".jpg"))
+
+        # 5. Verify GET /api/homepage/ and GET /api/state/ return the persisted carousel & jersey URLs
+        get_hp = self.client.get(reverse("tournaments:api_homepage")).json()
+        self.assertEqual(get_hp["carousel"][0]["id"], "slide-test-upload")
+        self.assertEqual(get_hp["carousel"][0]["image"], saved_slide_img)
+        self.assertEqual(get_hp["jerseys"]["u13"][0]["image"], saved_slide_img)
+
+
+

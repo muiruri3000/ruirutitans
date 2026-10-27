@@ -458,6 +458,10 @@ if importlib.util.find_spec("whitenoise") is not None:
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Allow up to 50 MB request bodies and file uploads for high-resolution carousel and jersey photos
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("DATA_UPLOAD_MAX_MEMORY_SIZE", str(50 * 1024 * 1024)))
+FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("FILE_UPLOAD_MAX_MEMORY_SIZE", str(50 * 1024 * 1024)))
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
