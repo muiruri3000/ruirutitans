@@ -18,6 +18,7 @@ import ArchivesView from './components/ArchivesView';
 import MatchReportModal from './components/MatchReportModal';
 import AIWeeklyReportModal from './components/AIWeeklyReportModal';
 import TacticsView from './components/TacticsView';
+import DutyRosterView from './components/DutyRosterView';
 import { openCategoryFixturesResultsPDF } from './utils/pdfExport';
 import { api, sanitizeExMilitaryFixtures } from './api/client';
 import { DEFAULT_TITANS_STATE, CORE_FIVE_TEAMS } from './data/defaultState';
@@ -225,6 +226,9 @@ export default function App() {
       }
       if (localStorage.getItem('titans_tactics_dedicated_page') === 'true') {
         return 'tactics';
+      }
+      if (window.location.hash === '#duty' || window.location.hash === '#duty-roster' || window.location.pathname.includes('/duty-roster')) {
+        return 'duty';
       }
     }
     return 'home';
@@ -4285,6 +4289,20 @@ export default function App() {
             onSelectTeam={handleOpenTeamDetails}
             onReportSaved={(fId, reportData) => handleSaveFixtureReport(fId, reportData, effectiveCategoryKey)}
             onAddPlayers={handleAddPlayers}
+          />
+        )}
+
+        {/* =========================================================
+            3b. DEDICATED DUTY ROSTER VIEW
+           ========================================================= */}
+        {currentView === 'duty' && (
+          <DutyRosterView
+            cat={cat}
+            categories={data.categories}
+            activeCategoryKey={effectiveCategoryKey}
+            cmsUser={cmsUser}
+            isCmsMode={isCmsMode}
+            onNavigate={setCurrentView}
           />
         )}
 

@@ -809,5 +809,30 @@ export const api = {
     }
     return await res.json();
   },
+
+  async getDutyRoster(categoryKey) {
+    const url = categoryKey
+      ? `/api/categories/${encodeURIComponent(categoryKey)}/duty-roster/`
+      : `/api/duty-roster/`;
+    const res = await fetch(url, { headers: defaultHeaders() });
+    if (!res.ok) throw new Error(`Failed to load duty roster: ${res.status}`);
+    return await res.json();
+  },
+
+  async updateDutyRoster(categoryKey, payload) {
+    const url = categoryKey
+      ? `/api/categories/${encodeURIComponent(categoryKey)}/duty-roster/`
+      : `/api/duty-roster/`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to update duty roster: ${res.status}`);
+    }
+    return await res.json();
+  },
 };
 

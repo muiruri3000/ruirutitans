@@ -41,6 +41,7 @@ from .views import (
     HighlightDeleteAPIView,
     CategoryToggleArchiveAPIView,
     ReloadCanonicalScheduleAPIView,
+    DutyRosterAPIView,
 )
 
 app_name = "tournaments"
@@ -48,6 +49,7 @@ app_name = "tournaments"
 urlpatterns = [
     path("", home_view, name="home"),
     path("fixtures/", home_view, name="fixtures_home"),
+    path("duty-roster/", home_view, name="duty_roster_home"),
     path("categories/", home_view, name="categories_home"),
     path("fixtures/<str:fixture_id>/sheet/", match_sheet_view, name="fixture_match_sheet"),
     path("categories/<str:key>/fixtures-results/pdf/", category_fixtures_results_pdf_view, name="category_fixtures_results_pdf"),
@@ -91,6 +93,8 @@ urlpatterns = [
     path("api/categories/<str:key>/voting/submit/", VotingSubmitAPIView.as_view(), name="api_category_voting_submit"),
     path("api/categories/<str:key>/voting/tott/", VotingTOTTAPIView.as_view(), name="api_category_voting_tott"),
     path("api/categories/<str:key>/voting/admin/toggle/", VotingAdminToggleAPIView.as_view(), name="api_category_voting_admin_toggle"),
+    path("api/duty-roster/", DutyRosterAPIView.as_view(), name="api_duty_roster"),
+    path("api/categories/<str:key>/duty-roster/", DutyRosterAPIView.as_view(), name="api_category_duty_roster"),
     path("api/highlights/", HighlightListCreateAPIView.as_view(), name="api_highlights"),
     path("api/highlights/<int:pk>/", HighlightDeleteAPIView.as_view(), name="api_highlight_delete"),
 ]

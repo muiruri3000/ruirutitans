@@ -1147,10 +1147,14 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
         if start_date:
             schedule_days_data["startDate"] = str(start_date)
             schedule_days_data["start_date"] = str(start_date)
+
+        existing_cat = Category.objects.filter(key=cat_key).first()
+        duty_roster = cat_data.get("dutyRoster") or ((existing_cat.schedule_days or {}).get("duty_roster", {}) if existing_cat else {})
+        if duty_roster:
+            schedule_days_data["duty_roster"] = duty_roster
         schedule_days = schedule_days_data
 
         voting_cfg = cat_data.get("votingConfig") or {}
-        existing_cat = Category.objects.filter(key=cat_key).first()
         voting_team_size = int(
             voting_cfg.get("team_size", existing_cat.voting_team_size if existing_cat else 6)
         )
@@ -5123,5 +5127,309 @@ def get_category_fixtures_results_pdf_context(category):
         "venue": cat_venue,
         "referees": [r.name for r in category.referees.all().order_by("name")],
     }
+
+
+# ==============================================================================
+# DUTY ROSTER SERVICES
+# ==============================================================================
+
+def get_category_completed_duty_player_ids(duty_roster):
+    """Return set of permanent player IDs who have completed at least one duty."""
+    if not isinstance(duty_roster, dict):
+        return set()
+    completed = set()
+    assignments = duty_roster.get("assignments") or {}
+    for a in assignments.values():
+        h = a.get("homeDuty") or {}
+        if h.get("completed") and h.get("playerId"):
+            completed.add(str(h["playerId"]))
+        aw = a.get("awayDuty") or {}
+        if aw.get("completed") and aw.get("playerId"):
+            completed.add(str(aw["playerId"]))
+    return completed
+
+
+def get_category_duty_eligible_players(category, completed_player_ids=None):
+    """
+    Return dictionary mapping team_id to:
+      - 'available': players who have NOT completed duty yet (or all if all finished)
+      - 'completed': players who have completed duty
+      - 'all': all valid players
+    This directly enforces: 'if a player has been ticked remove from list'.
+    """
+    if completed_player_ids is None:
+        duty_roster = (category.schedule_days or {}).get("duty_roster") or {}
+        completed_player_ids = get_category_completed_duty_player_ids(duty_roster)
+
+    teams = list(category.teams.all().prefetch_related("players"))
+    eligible_map = {}
+    for t in teams:
+        all_players = [
+            p for p in t.players.all().order_by("id")
+            if not p.is_unknown and p.name != "Unrecorded scorer"
+        ]
+        completed_list = [p for p in all_players if p.player_id in completed_player_ids]
+        available_list = [p for p in all_players if p.player_id not in completed_player_ids]
+
+        eligible_map[t.team_id] = {
+            "team_id": t.team_id,
+            "team_name": t.name,
+            "available": [p.to_dict() for p in available_list],
+            "completed": [p.to_dict() for p in completed_list],
+            "all": [p.to_dict() for p in all_players],
+        }
+    return eligible_map
+
+
+def build_category_duty_roster(category, force_regenerate=False):
+    """
+    Build or refresh duty roster for the category.
+    Rules:
+      - Chronological order of calendar playing days.
+      - 1st match of the day: 2 opposing players assigned to wash team bibs.
+      - 2nd match of the day: 2 opposing players assigned to take side goalpost to the store.
+      - Ticked players have completed: True.
+      - Ticked players are excluded from selection lists for remaining duties.
+    """
+    from collections import defaultdict
+
+    existing_schedule_days = category.schedule_days if isinstance(category.schedule_days, dict) else {}
+    existing_roster = existing_schedule_days.get("duty_roster") or {}
+    existing_assignments = existing_roster.get("assignments") or {}
+
+    fixtures_list = list(category.fixtures.all())
+    fixtures_list.sort(key=fixture_sort_key)
+
+    days_map = defaultdict(list)
+    for f in fixtures_list:
+        raw_date = f.date or "TBD"
+        parts = raw_date.split(" · ")
+        day_str = parts[0].strip() if len(parts) > 1 else raw_date
+        days_map[day_str].append(f)
+
+    # Gather team players
+    teams = list(category.teams.all().prefetch_related("players"))
+    team_obj_map = {t.team_id: t for t in teams}
+    team_players_map = {}
+    for t in teams:
+        valid_players = [
+            p for p in t.players.all().order_by("id")
+            if not p.is_unknown and p.name != "Unrecorded scorer"
+        ]
+        team_players_map[t.team_id] = valid_players
+
+    # Track completed player IDs from existing assignments
+    completed_ids = set()
+    if not force_regenerate:
+        completed_ids = get_category_completed_duty_player_ids(existing_roster)
+
+    # Track assignments pointer for each team
+    team_assignment_ptrs = {t.team_id: 0 for t in teams}
+
+    new_assignments = {}
+    structured_days = []
+
+    for day_str, day_matches in days_map.items():
+        day_matches_structured = []
+        for order_idx, f in enumerate(day_matches, 1):
+            duty_type = "bibs" if order_idx == 1 else "goalpost"
+            duty_label = "Wash Team Bibs" if order_idx == 1 else "Take Side Goalpost to Store"
+
+            h_t = f.home_team
+            a_t = f.away_team
+            h_id = h_t.team_id if h_t else ""
+            a_id = a_t.team_id if a_t else ""
+            h_name = h_t.name if h_t else "Home Team"
+            a_name = a_t.name if a_t else "Away Team"
+
+            h_task = f"Wash {h_name} Bibs" if duty_type == "bibs" else f"Take {h_name} Side Goalpost to Store"
+            a_task = f"Wash {a_name} Bibs" if duty_type == "bibs" else f"Take {a_name} Side Goalpost to Store"
+
+            ex = existing_assignments.get(f.fixture_id) if not force_regenerate else None
+
+            # Resolve Home duty
+            h_duty = None
+            if ex and ex.get("homeDuty") and ex["homeDuty"].get("playerId"):
+                h_duty = dict(ex["homeDuty"])
+                h_duty["task"] = h_task  # ensure canonical task description
+            else:
+                # Pick next eligible unticked player for home team
+                h_players = team_players_map.get(h_id, [])
+                unticked_h = [p for p in h_players if p.player_id not in completed_ids]
+                pool = unticked_h if unticked_h else h_players
+                picked_p = pool[team_assignment_ptrs[h_id] % len(pool)] if pool else None
+                team_assignment_ptrs[h_id] += 1
+                is_comp = bool(f.played)
+                h_duty = {
+                    "playerId": picked_p.player_id if picked_p else None,
+                    "playerName": picked_p.name if picked_p else "",
+                    "task": h_task,
+                    "completed": is_comp,
+                    "completedAt": timezone.now().isoformat() if is_comp else None,
+                }
+                if is_comp and picked_p:
+                    completed_ids.add(str(picked_p.player_id))
+
+            # Resolve Away duty
+            a_duty = None
+            if ex and ex.get("awayDuty") and ex["awayDuty"].get("playerId"):
+                a_duty = dict(ex["awayDuty"])
+                a_duty["task"] = a_task  # ensure canonical task description
+            else:
+                # Pick next eligible unticked player for away team
+                a_players = team_players_map.get(a_id, [])
+                unticked_a = [p for p in a_players if p.player_id not in completed_ids]
+                pool = unticked_a if unticked_a else a_players
+                picked_p = pool[team_assignment_ptrs[a_id] % len(pool)] if pool else None
+                team_assignment_ptrs[a_id] += 1
+                is_comp = bool(f.played)
+                a_duty = {
+                    "playerId": picked_p.player_id if picked_p else None,
+                    "playerName": picked_p.name if picked_p else "",
+                    "task": a_task,
+                    "completed": is_comp,
+                    "completedAt": timezone.now().isoformat() if is_comp else None,
+                }
+                if is_comp and picked_p:
+                    completed_ids.add(str(picked_p.player_id))
+
+            assignment_entry = {
+                "fixtureId": f.fixture_id,
+                "date": f.date,
+                "dayString": day_str,
+                "orderOfDay": order_idx,
+                "dutyType": duty_type,
+                "dutyLabel": duty_label,
+                "homeTeamId": h_id,
+                "homeTeamName": h_name,
+                "homeDuty": h_duty,
+                "awayTeamId": a_id,
+                "awayTeamName": a_name,
+                "awayDuty": a_duty,
+            }
+            new_assignments[f.fixture_id] = assignment_entry
+
+            day_matches_structured.append({
+                "fixtureId": f.fixture_id,
+                "date": f.date,
+                "orderOfDay": order_idx,
+                "dutyType": duty_type,
+                "dutyLabel": duty_label,
+                "homeTeam": {
+                    "id": h_id,
+                    "name": h_name,
+                    "duty": h_duty,
+                },
+                "awayTeam": {
+                    "id": a_id,
+                    "name": a_name,
+                    "duty": a_duty,
+                },
+            })
+
+        structured_days.append({
+            "dayString": day_str,
+            "matches": day_matches_structured,
+        })
+
+    # Summary metrics
+    final_completed_ids = sorted(list(get_category_completed_duty_player_ids({"assignments": new_assignments})))
+    total_duties = len(new_assignments) * 2
+    comp_count = sum(
+        (1 if a["homeDuty"].get("completed") else 0) + (1 if a["awayDuty"].get("completed") else 0)
+        for a in new_assignments.values()
+    )
+
+    roster_data = {
+        "categoryKey": category.key,
+        "updatedAt": timezone.now().isoformat(),
+        "days": structured_days,
+        "assignments": new_assignments,
+        "completedPlayerIds": final_completed_ids,
+        "summary": {
+            "totalDuties": total_duties,
+            "completedDuties": comp_count,
+            "pendingDuties": max(0, total_duties - comp_count),
+        },
+    }
+
+    # Save to category.schedule_days
+    existing_schedule_days["duty_roster"] = roster_data
+    category.schedule_days = existing_schedule_days
+    category.save(update_fields=["schedule_days"])
+    return roster_data
+
+
+def update_duty_roster_assignment(category, fixture_id, side, player_id=None, player_name=None, completed=None):
+    """
+    Update or tick a specific duty assignment in the category duty roster.
+    side must be 'home' or 'away'.
+    completed: bool (if True, marks done and removes player from selectable list).
+    """
+    if side not in ("home", "away"):
+        raise ValueError(f"Invalid side '{side}'; must be 'home' or 'away'.")
+
+    # Ensure roster exists
+    roster_data = build_category_duty_roster(category, force_regenerate=False)
+    assignments = roster_data.get("assignments") or {}
+    if fixture_id not in assignments:
+        raise ValueError(f"Fixture '{fixture_id}' not found in duty roster.")
+
+    entry = assignments[fixture_id]
+    target_key = "homeDuty" if side == "home" else "awayDuty"
+    target_duty = entry.get(target_key) or {}
+
+    if player_id is not None:
+        target_duty["playerId"] = str(player_id) if player_id else None
+        if player_name is not None:
+            target_duty["playerName"] = str(player_name)
+        elif player_id:
+            p_obj = Player.objects.filter(category=category, player_id=player_id).first()
+            if p_obj:
+                target_duty["playerName"] = p_obj.name
+
+    if completed is not None:
+        is_done = bool(completed)
+        target_duty["completed"] = is_done
+        target_duty["completedAt"] = timezone.now().isoformat() if is_done else None
+
+    entry[target_key] = target_duty
+    assignments[fixture_id] = entry
+
+    # Rebuild days structure and recalculate completedPlayerIds
+    final_completed_ids = sorted(list(get_category_completed_duty_player_ids({"assignments": assignments})))
+    total_duties = len(assignments) * 2
+    comp_count = sum(
+        (1 if a.get("homeDuty", {}).get("completed") else 0) + (1 if a.get("awayDuty", {}).get("completed") else 0)
+        for a in assignments.values()
+    )
+
+    # Sync back into structured days
+    days = roster_data.get("days") or []
+    for d in days:
+        for m in d.get("matches", []):
+            if m.get("fixtureId") == fixture_id:
+                if side == "home":
+                    m["homeTeam"]["duty"] = target_duty
+                else:
+                    m["awayTeam"]["duty"] = target_duty
+
+    roster_data["updatedAt"] = timezone.now().isoformat()
+    roster_data["assignments"] = assignments
+    roster_data["days"] = days
+    roster_data["completedPlayerIds"] = final_completed_ids
+    roster_data["summary"] = {
+        "totalDuties": total_duties,
+        "completedDuties": comp_count,
+        "pendingDuties": max(0, total_duties - comp_count),
+    }
+
+    # Save to category.schedule_days
+    schedule_days = category.schedule_days if isinstance(category.schedule_days, dict) else {}
+    schedule_days["duty_roster"] = roster_data
+    category.schedule_days = schedule_days
+    category.save(update_fields=["schedule_days"])
+    return roster_data
+
 
 

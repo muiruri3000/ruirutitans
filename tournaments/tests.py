@@ -2506,4 +2506,114 @@ class HomepageCarouselUploadAuthAndPersistenceTests(TestCase):
         self.assertEqual(get_hp["jerseys"]["u13"][0]["image"], saved_slide_img)
 
 
+class DutyRosterTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.client = Client()
+        self.admin_user = User.objects.create_superuser("admin_duty", "admin@titans.test", "adminpass123")
+        self.client.force_login(self.admin_user)
+
+        self.category = Category.objects.create(
+            key="test-league-duty",
+            label="Test League Duty",
+            mode="league",
+            format="double",
+        )
+        self.t1 = Team.objects.create(category=self.category, team_id="T1", name="Titans Alpha", color="#C9A227")
+        self.t2 = Team.objects.create(category=self.category, team_id="T2", name="Titans Beta", color="#B23A2E")
+        self.t3 = Team.objects.create(category=self.category, team_id="T3", name="Titans Gamma", color="#3F7A4E")
+        self.t4 = Team.objects.create(category=self.category, team_id="T4", name="Titans Delta", color="#2E5A8F")
+
+        self.p1_t1 = Player.objects.create(team=self.t1, player_id="T1-P1", name="Alpha Player 1")
+        self.p2_t1 = Player.objects.create(team=self.t1, player_id="T1-P2", name="Alpha Player 2")
+        self.p1_t2 = Player.objects.create(team=self.t2, player_id="T2-P1", name="Beta Player 1")
+        self.p2_t2 = Player.objects.create(team=self.t2, player_id="T2-P2", name="Beta Player 2")
+        self.p1_t3 = Player.objects.create(team=self.t3, player_id="T3-P1", name="Gamma Player 1")
+        self.p2_t3 = Player.objects.create(team=self.t3, player_id="T3-P2", name="Gamma Player 2")
+        self.p1_t4 = Player.objects.create(team=self.t4, player_id="T4-P1", name="Delta Player 1")
+        self.p2_t4 = Player.objects.create(team=self.t4, player_id="T4-P2", name="Delta Player 2")
+
+        # 2 fixtures on day 1
+        self.f1 = Fixture.objects.create(
+            category=self.category,
+            fixture_id="FX-1",
+            date="Wed, 28 Oct · 17:10",
+            home_team=self.t1,
+            away_team=self.t2,
+            played=False,
+        )
+        self.f2 = Fixture.objects.create(
+            category=self.category,
+            fixture_id="FX-2",
+            date="Wed, 28 Oct · 18:10",
+            home_team=self.t3,
+            away_team=self.t4,
+            played=False,
+        )
+
+    def test_duty_roster_generation_and_rules(self):
+        # GET duty roster
+        res = self.client.get(f"/api/categories/{self.category.key}/duty-roster/")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["status"], "success")
+        days = data["dutyRoster"]["days"]
+        self.assertEqual(len(days), 1)
+        self.assertEqual(days[0]["dayString"], "Wed, 28 Oct")
+        matches = days[0]["matches"]
+        self.assertEqual(len(matches), 2)
+
+        # Match 1 of day: Wash team bibs
+        m1 = matches[0]
+        self.assertEqual(m1["orderOfDay"], 1)
+        self.assertEqual(m1["dutyType"], "bibs")
+        self.assertEqual(m1["dutyLabel"], "Wash Team Bibs")
+        self.assertEqual(m1["homeTeam"]["duty"]["task"], "Wash Titans Alpha Bibs")
+        self.assertEqual(m1["awayTeam"]["duty"]["task"], "Wash Titans Beta Bibs")
+
+        # Match 2 of day: Take side goalpost to store
+        m2 = matches[1]
+        self.assertEqual(m2["orderOfDay"], 2)
+        self.assertEqual(m2["dutyType"], "goalpost")
+        self.assertEqual(m2["dutyLabel"], "Take Side Goalpost to Store")
+        self.assertEqual(m2["homeTeam"]["duty"]["task"], "Take Titans Gamma Side Goalpost to Store")
+        self.assertEqual(m2["awayTeam"]["duty"]["task"], "Take Titans Delta Side Goalpost to Store")
+
+    def test_tick_completed_removes_player_from_eligible_list(self):
+        # Admin ticks work done for T1 in FX-1
+        tick_res = self.client.post(
+            f"/api/categories/{self.category.key}/duty-roster/",
+            data=json.dumps({
+                "action": "toggle_completion",
+                "fixtureId": "FX-1",
+                "side": "home",
+                "completed": True,
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(tick_res.status_code, 200)
+        res_data = tick_res.json()
+        f1_home = res_data["dutyRoster"]["assignments"]["FX-1"]["homeDuty"]
+        self.assertTrue(f1_home["completed"])
+        self.assertIsNotNone(f1_home["completedAt"])
+
+        # Check eligible players for T1: ticked player should be in completed, NOT available!
+        t1_eligible = res_data["eligiblePlayers"]["T1"]
+        ticked_id = f1_home["playerId"]
+        available_ids = [p["id"] for p in t1_eligible["available"]]
+        completed_ids = [p["id"] for p in t1_eligible["completed"]]
+        self.assertNotIn(ticked_id, available_ids)
+        self.assertIn(ticked_id, completed_ids)
+
+    def test_unauthenticated_post_rejected(self):
+        unauth_client = Client()
+        res = unauth_client.post(
+            f"/api/categories/{self.category.key}/duty-roster/",
+            data=json.dumps({"action": "toggle_completion", "fixtureId": "FX-1", "side": "home", "completed": True}),
+            content_type="application/json",
+        )
+        self.assertIn(res.status_code, [401, 403])
+
+
+
 

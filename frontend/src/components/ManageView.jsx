@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TeamBalancerView from './TeamBalancerView';
+import DutyRosterView from './DutyRosterView';
 import { api } from '../api/client';
 import PasswordInput from './PasswordInput';
 
@@ -895,6 +896,23 @@ export default function ManageView({
           }}
         >
           ⚽ Championship Teams, Squad Rosters &amp; Referees
+        </button>
+        <button
+          type="button"
+          onClick={() => setAdminSection('duty')}
+          style={{
+            flex: 1,
+            padding: '10px 14px',
+            borderRadius: '8px',
+            border: 'none',
+            background: adminSection === 'duty' ? '#FF9500' : '#1C1C1E',
+            color: adminSection === 'duty' ? '#16201B' : '#EBEBF5',
+            fontWeight: 800,
+            fontSize: '12.5px',
+            cursor: 'pointer',
+          }}
+        >
+          🧹 Matchday Duty Roster
         </button>
         <button
           type="button"
@@ -3486,6 +3504,17 @@ export default function ManageView({
             </div>
           </div>
         </div>
+      )}
+
+      {/* SECTION: MATCHDAY DUTY ROSTER */}
+      {adminSection === 'duty' && (
+        <DutyRosterView
+          cat={cat}
+          categories={categories}
+          activeCategoryKey={activeCategoryKey}
+          cmsUser={cmsUser}
+          isCmsMode={true}
+        />
       )}
 
       {/* SECTION 5: MANAGER ACCOUNT & SECURITY */}

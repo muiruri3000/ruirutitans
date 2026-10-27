@@ -19,6 +19,10 @@ from .services import (
     import_state_to_db,
     export_state_from_db,
     build_real_open_season_dict,
+    build_category_duty_roster,
+    update_duty_roster_assignment,
+    get_category_duty_eligible_players,
+    get_category_completed_duty_player_ids,
 )
 
 
@@ -1734,3 +1738,115 @@ class CategoryToggleArchiveAPIView(views.APIView):
             "championTeam": category.champion_team,
             "category": category.to_state_dict(),
         })
+
+
+class DutyRosterAPIView(views.APIView):
+    """
+    Endpoint for Duty Roster management and viewing.
+    GET: Returns the duty roster and eligible/completed player pools.
+    POST: Updates an assignment, toggles completion status, or triggers auto-assignment (CMS admin only).
+    """
+    permission_classes = [ReadOnlyOrCMSAdmin]
+
+    def get_category(self, key=None):
+        if key:
+            cat = Category.objects.filter(key=key).first()
+            if cat:
+                return cat
+        # Fallback to active league category
+        cat = Category.objects.filter(is_deleted=False, is_ended=False, mode="league").order_by("-created_at").first()
+        if not cat:
+            cat = Category.objects.filter(is_deleted=False).order_by("-created_at").first()
+        return cat
+
+    def get(self, request, key=None):
+        cat = self.get_category(key or request.query_params.get("key"))
+        if not cat:
+            return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        roster = build_category_duty_roster(cat, force_regenerate=False)
+        eligible_players = get_category_duty_eligible_players(cat)
+
+        return Response({
+            "status": "success",
+            "categoryKey": cat.key,
+            "categoryLabel": cat.label,
+            "dutyRoster": roster,
+            "eligiblePlayers": eligible_players,
+        })
+
+    def post(self, request, key=None):
+        cat = self.get_category(key or request.data.get("categoryKey") or request.query_params.get("key"))
+        if not cat:
+            return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        action = request.data.get("action", "update_assignment")
+
+        if action == "regenerate":
+            roster = build_category_duty_roster(cat, force_regenerate=True)
+            eligible_players = get_category_duty_eligible_players(cat)
+            return Response({
+                "status": "success",
+                "message": "Duty roster regenerated successfully.",
+                "dutyRoster": roster,
+                "eligiblePlayers": eligible_players,
+            })
+
+        elif action in ("update_assignment", "toggle_completion"):
+            fixture_id = request.data.get("fixtureId") or request.data.get("fixture_id")
+            side = request.data.get("side")
+            player_id = request.data.get("playerId") or request.data.get("player_id")
+            player_name = request.data.get("playerName") or request.data.get("player_name")
+            completed = request.data.get("completed")
+
+            if not fixture_id or side not in ("home", "away"):
+                return Response(
+                    {"error": "Both fixtureId and side ('home' or 'away') are required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            roster = update_duty_roster_assignment(
+                category=cat,
+                fixture_id=fixture_id,
+                side=side,
+                player_id=player_id,
+                player_name=player_name,
+                completed=completed,
+            )
+            eligible_players = get_category_duty_eligible_players(cat)
+            return Response({
+                "status": "success",
+                "message": "Assignment updated.",
+                "dutyRoster": roster,
+                "eligiblePlayers": eligible_players,
+            })
+
+        elif action == "save_all":
+            assignments = request.data.get("assignments")
+            if isinstance(assignments, dict):
+                sched = cat.schedule_days if isinstance(cat.schedule_days, dict) else {}
+                roster = sched.get("duty_roster") or build_category_duty_roster(cat)
+                roster["assignments"] = assignments
+                roster["completedPlayerIds"] = sorted(list(get_category_completed_duty_player_ids({"assignments": assignments})))
+                total = len(assignments) * 2
+                comp = sum(
+                    (1 if a.get("homeDuty", {}).get("completed") else 0) + (1 if a.get("awayDuty", {}).get("completed") else 0)
+                    for a in assignments.values()
+                )
+                roster["summary"] = {
+                    "totalDuties": total,
+                    "completedDuties": comp,
+                    "pendingDuties": max(0, total - comp),
+                }
+                sched["duty_roster"] = roster
+                cat.schedule_days = sched
+                cat.save(update_fields=["schedule_days"])
+                eligible_players = get_category_duty_eligible_players(cat)
+                return Response({
+                    "status": "success",
+                    "dutyRoster": roster,
+                    "eligiblePlayers": eligible_players,
+                })
+
+        return Response({"error": f"Unknown action '{action}'"}, status=status.HTTP_400_BAD_REQUEST)
+

@@ -47,6 +47,7 @@ export default function TopNav({
     { key: 'championship', label: '🏆 Championship' },
     { key: 'table', label: '📊 Table' },
     { key: 'fixtures', label: '⚽ Fixtures & Results' },
+    { key: 'duty', label: '🧹 Duty Roster' },
     { key: 'cup', label: '🏆 Cup' },
     ...(isAdmin ? [{ key: 'tactics', label: '📋 Tactics' }] : []),
     { key: 'stats', label: '📈 Stats' },

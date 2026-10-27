@@ -171,6 +171,13 @@ class Category(models.Model):
             if start_date:
                 data["startDate"] = str(start_date)
                 data["start_date"] = str(start_date)
+            # Preserve existing duty_roster if not explicitly provided
+            if isinstance(self.schedule_days, dict) and "duty_roster" in self.schedule_days:
+                data["duty_roster"] = self.schedule_days["duty_roster"]
+            if "duty_roster" in val:
+                data["duty_roster"] = val["duty_roster"]
+            elif "dutyRoster" in val:
+                data["duty_roster"] = val["dutyRoster"]
             self.schedule_days = data
 
     def __str__(self):
@@ -183,6 +190,7 @@ class Category(models.Model):
         referees_list = [r.name for r in self.referees.all().order_by("id")]
 
         schedule = self.schedule
+        duty_roster = (self.schedule_days or {}).get("duty_roster", {})
         voting_config = {
             "team_size": self.voting_team_size or 6,
             "max_picks_per_position": self.voting_max_picks or 2,
@@ -201,6 +209,7 @@ class Category(models.Model):
                 "teams": teams_data,
                 "fixtures": fixtures_data,
                 "schedule": schedule,
+                "dutyRoster": duty_roster,
                 "referees": referees_list,
                 "votingConfig": voting_config,
                 "isEnded": bool(self.is_ended),
@@ -232,6 +241,7 @@ class Category(models.Model):
                 "groupFixtures": group_fixtures,
                 "rounds": self.rounds_data or None,
                 "schedule": schedule,
+                "dutyRoster": duty_roster,
                 "referees": referees_list,
                 "note": self.note,
                 "votingConfig": voting_config,
