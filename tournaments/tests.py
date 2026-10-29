@@ -1,4 +1,5 @@
 import json
+from django.contrib.auth.models import User
 from django.test import TestCase, Client
 from django.urls import reverse
 from tournaments.models import Category, Team, Player, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote
@@ -2671,6 +2672,133 @@ class DutyRosterTests(TestCase):
         self.assertEqual(len(data2["dutyRoster"].get("exemptions", [])), 0)
         t1_avail2 = [p["id"] for p in data2["eligiblePlayers"]["T1"]["available"]]
         self.assertIn("T1-P1", t1_avail2)
+
+
+class VisitorCommentAndUsernameEditingTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(label="Open League", key="open", mode="league")
+        self.team = Team.objects.create(category=self.category, team_id="T1", name="Ruiru Titans FC", color="#FF9500")
+        self.player = Player.objects.create(
+            team=self.team,
+            name="Kelvin Kimani",
+            player_id="T1-P1",
+            username="kelvin_k",
+            position="CM",
+            jersey_number=8,
+        )
+        self.cms_user = User.objects.create_superuser(
+            username="cms_moderator",
+            email="moderator@ruirutitans.com",
+            password="admin_password_123",
+        )
+
+    def test_visitor_comments_submission_and_moderation(self):
+        # 1. Public GET returns initial approved comments
+        res = self.client.get("/api/comments/")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("comments", data)
+        self.assertTrue(all(c["isApproved"] for c in data["comments"]))
+
+        # 2. Public submission of new comment
+        post_res = self.client.post(
+            "/api/comments/",
+            data=json.dumps({
+                "name": "Jane Supporter",
+                "reaction": "🔥 Match On Fire",
+                "comment": "Awesome performance by the team yesterday! Titans to the moon!",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(post_res.status_code, 201)
+        post_data = post_res.json()
+        self.assertTrue(post_data["requiresModeration"])
+        new_comment_id = post_data["comment"]["id"]
+
+        # 3. Verify public GET does NOT show the unapproved comment yet
+        pub_res = self.client.get("/api/comments/")
+        comment_ids = [c["id"] for c in pub_res.json()["comments"]]
+        self.assertNotIn(new_comment_id, comment_ids)
+
+        # 4. Non-admin trying to moderate fails with 403
+        mod_fail = self.client.post(
+            "/api/comments/",
+            data=json.dumps({"action": "approve", "commentId": new_comment_id}),
+            content_type="application/json",
+        )
+        self.assertEqual(mod_fail.status_code, 403)
+
+        # 5. CMS Admin approves the comment
+        session = self.client.session
+        session["cms_authenticated"] = True
+        session["cms_user"] = {"username": "cms_moderator"}
+        session.save()
+
+        app_res = self.client.post(
+            "/api/comments/",
+            data=json.dumps({"action": "approve", "commentId": new_comment_id}),
+            content_type="application/json",
+            HTTP_X_CMS_TOKEN="cms-token-moderator",
+        )
+        self.assertEqual(app_res.status_code, 200)
+        self.assertTrue(app_res.json()["comment"]["isApproved"])
+
+        # 6. Verify comment now appears in public GET
+        pub_res2 = self.client.get("/api/comments/")
+        comment_ids2 = [c["id"] for c in pub_res2.json()["comments"]]
+        self.assertIn(new_comment_id, comment_ids2)
+
+    def test_admin_update_player_username(self):
+        # 1. Non-admin cannot update username
+        fail_res = self.client.post(
+            "/api/admin/players/update-username/",
+            data=json.dumps({
+                "player_id": "T1-P1",
+                "new_username": "kelvin_legend",
+            }),
+            content_type="application/json",
+        )
+        self.assertIn(fail_res.status_code, [401, 403])
+
+        # 2. CMS Admin updates username
+        self.client.force_login(self.cms_user)
+
+        succ_res = self.client.post(
+            "/api/admin/players/update-username/",
+            data=json.dumps({
+                "player_id": "T1-P1",
+                "new_username": "kelvin_legend",
+                "category_key": self.category.key,
+            }),
+            content_type="application/json",
+            HTTP_X_CMS_TOKEN="cms-token-moderator",
+        )
+        self.assertEqual(succ_res.status_code, 200)
+        self.assertEqual(succ_res.json()["username"], "kelvin_legend")
+
+        self.player.refresh_from_db()
+        self.assertEqual(self.player.username, "kelvin_legend")
+
+        # 3. Duplicate username validation
+        Player.objects.create(
+            team=self.team,
+            name="Another Player",
+            player_id="T1-P2",
+            username="another_p",
+            position="ST",
+        )
+        dup_res = self.client.post(
+            "/api/admin/players/update-username/",
+            data=json.dumps({
+                "player_id": "T1-P2",
+                "new_username": "kelvin_legend",
+            }),
+            content_type="application/json",
+            HTTP_X_CMS_TOKEN="cms-token-moderator",
+        )
+        self.assertEqual(dup_res.status_code, 400)
+        self.assertIn("already in use", dup_res.json()["error"].lower())
+
 
 
 

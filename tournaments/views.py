@@ -7,7 +7,17 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 from .permissions import IsCMSAdmin, IsPlayerUser, IsPlayerSelfOrCMSAdmin, ReadOnlyOrCMSAdmin
-from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, HighlightVideo
+from .models import (
+    Category,
+    Team,
+    Player,
+    Referee,
+    Fixture,
+    MatchEvent,
+    GlobalSettings,
+    HighlightVideo,
+    VisitorComment,
+)
 from .serializers import (
     CategorySerializer,
     TeamSerializer,
@@ -1249,6 +1259,45 @@ class AdminPlayerUpdatePositionAPIView(views.APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class AdminPlayerUpdateUsernameAPIView(views.APIView):
+    """
+    POST /api/admin/players/update-username/
+    Allows an administrator to manually edit a player's username.
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def post(self, request):
+        from .services import update_player_username_by_admin
+        payload = request.data or {}
+        player_ident = (
+            payload.get("player_id")
+            or payload.get("id")
+            or payload.get("username")
+            or payload.get("identifier")
+        )
+        new_username = payload.get("new_username") or payload.get("username") or payload.get("newUsername")
+        team_id = payload.get("team_id") or payload.get("teamId")
+        category_key = payload.get("category_key") or payload.get("categoryKey")
+
+        try:
+            player = update_player_username_by_admin(
+                player_ident=player_ident,
+                new_username=new_username,
+                team_id=team_id,
+                category_key=category_key,
+            )
+            return Response({
+                "success": True,
+                "player_id": player.player_id,
+                "username": player.username,
+                "name": player.name,
+                "team_id": player.team.team_id,
+                "message": f"Username for {player.name} updated to '@{player.username}'.",
+            })
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class PlayerChangePasswordAPIView(views.APIView):
     """
     Player changes their password from temporary 4-digit code to their personal password,
@@ -1885,4 +1934,184 @@ class DutyRosterAPIView(views.APIView):
                 })
 
         return Response({"error": f"Unknown action '{action}'"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def ensure_initial_visitor_comments():
+    """
+    Seeds initial approved comments and reactions if the collection is empty.
+    """
+    if VisitorComment.objects.exists():
+        return
+    initial = [
+        ("Coach Kimani", "Titan for life! The organization, tactical discipline, and fighting spirit shown this season has been phenomenal. Keep flying high Ruiru Titans! 🚀", "🔥 Fire"),
+        ("Captain Dave", "Incredible performance by all squads! Let's maintain this momentum all the way to the championship cup. Titans forever!", "⚽ Football"),
+        ("Mama Kevin", "Proud parent here! Watching our boys grow through the U13, U15 and U17 academy ranks fills my heart with joy. Thank you management and coaches!", "❤️ Love"),
+        ("Anonymous", "The new matchday duty schedule and transparent fixtures tracking make following the league so much fun. Best community club around!", "👏 Respect"),
+        ("Dennis Otieno", "The intensity in the evening games under the floodlights is electric. Looking forward to the upcoming weekend clashes!", "⚡ Electric"),
+    ]
+    for name, content, reaction in initial:
+        VisitorComment.objects.create(
+            author_name=name,
+            content=content,
+            reaction=reaction,
+            status="approved",
+            is_approved=True,
+            moderated_by="System",
+        )
+
+
+class VisitorCommentAPIView(views.APIView):
+    """
+    GET: Returns list of visitor comments / reactions.
+         Visitors see approved comments; CMS admins see all comments or filter by ?status=pending|approved|rejected.
+    POST:
+         - Public: Submits a new comment (set to pending moderation).
+         - CMS Admin with 'action': Moderates a comment ('approve', 'reject', 'delete').
+    """
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    def _is_cms(self, request):
+        token = request.headers.get("X-CMS-Token") or request.META.get("HTTP_X_CMS_TOKEN")
+        has_token = bool(token and token.startswith("cms-token-"))
+        return bool(
+            has_token
+            or getattr(request, "cms_user", None)
+            or (request.user and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser))
+            or (request.session and request.session.get("cms_authenticated"))
+        )
+
+    def get(self, request):
+        ensure_initial_visitor_comments()
+        is_cms = self._is_cms(request)
+        status_filter = (request.query_params.get("status") or "").strip().lower()
+
+        qs = VisitorComment.objects.all()
+        if not is_cms:
+            qs = qs.filter(is_approved=True)
+        else:
+            if status_filter == "pending":
+                qs = qs.filter(is_approved=False, status="pending")
+            elif status_filter == "approved":
+                qs = qs.filter(is_approved=True)
+            elif status_filter == "rejected":
+                qs = qs.filter(status="rejected")
+
+        comments = [c.to_dict() for c in qs[:150]]
+        total_count = VisitorComment.objects.count()
+        pending_count = VisitorComment.objects.filter(is_approved=False, status="pending").count()
+        approved_count = VisitorComment.objects.filter(is_approved=True).count()
+        rejected_count = VisitorComment.objects.filter(status="rejected").count()
+
+        return Response({
+            "comments": comments,
+            "counts": {
+                "total": total_count,
+                "pending": pending_count,
+                "approved": approved_count,
+                "rejected": rejected_count,
+            },
+            "isCms": is_cms,
+        })
+
+    def post(self, request):
+        from django.utils import timezone
+        data = request.data or {}
+        action = data.get("action")
+
+        # Admin moderation action
+        if action in ["approve", "reject", "delete"]:
+            if not self._is_cms(request):
+                return Response({"error": "Admin permission required to moderate comments."}, status=status.HTTP_403_FORBIDDEN)
+            comment_id = data.get("commentId") or data.get("id")
+            if not comment_id:
+                return Response({"error": "commentId is required."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                comment = VisitorComment.objects.get(id=comment_id)
+            except VisitorComment.DoesNotExist:
+                return Response({"error": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            moderator_name = (
+                getattr(request.user, "username", "")
+                or getattr(request, "cms_user", {}).get("username", "")
+                or "CMS Admin"
+            )
+
+            if action == "approve":
+                comment.is_approved = True
+                comment.status = "approved"
+                comment.moderated_at = timezone.now()
+                comment.moderated_by = moderator_name
+                comment.save(update_fields=["is_approved", "status", "moderated_at", "moderated_by"])
+                msg = "Comment approved and published to the public carousel."
+            elif action == "reject":
+                comment.is_approved = False
+                comment.status = "rejected"
+                comment.moderated_at = timezone.now()
+                comment.moderated_by = moderator_name
+                comment.save(update_fields=["is_approved", "status", "moderated_at", "moderated_by"])
+                msg = "Comment rejected."
+            elif action == "delete":
+                comment.delete()
+                msg = "Comment deleted."
+
+            pending_count = VisitorComment.objects.filter(is_approved=False, status="pending").count()
+            approved_count = VisitorComment.objects.filter(is_approved=True).count()
+            rejected_count = VisitorComment.objects.filter(status="rejected").count()
+
+            return Response({
+                "status": "success",
+                "message": msg,
+                "comment": comment.to_dict() if action != "delete" else None,
+                "counts": {
+                    "pending": pending_count,
+                    "approved": approved_count,
+                    "rejected": rejected_count,
+                },
+            })
+
+        # Public visitor submission
+        content = str(data.get("comment") or "").strip()
+        if not content:
+            return Response({"error": "Please enter a comment or reaction text."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(content) > 3000:
+            return Response({"error": "Comment is too long (maximum 3000 characters)."}, status=status.HTTP_400_BAD_REQUEST)
+
+        raw_name = str(data.get("name") or "").strip()
+        author_name = raw_name if raw_name else "Anonymous"
+        reaction = str(data.get("reaction") or "❤️").strip() or "❤️"
+
+        # Check if submitted by an authenticated CMS admin: if admin posts, auto-approve
+        is_admin_submission = self._is_cms(request)
+        new_comment = VisitorComment.objects.create(
+            author_name=author_name,
+            content=content,
+            reaction=reaction,
+            status="approved" if is_admin_submission else "pending",
+            is_approved=is_admin_submission,
+            moderated_by="CMS Admin" if is_admin_submission else "",
+        )
+
+        msg = (
+            "🎉 Your reaction has been posted!"
+            if is_admin_submission
+            else "🎉 Thank you! Your reaction has been submitted and will appear in the carousel once approved by club moderators."
+        )
+
+        return Response({
+            "status": "success",
+            "message": msg,
+            "comment": new_comment.to_dict(),
+            "requiresModeration": not is_admin_submission,
+        }, status=status.HTTP_201_CREATED)
+
+
+class VisitorCommentDetailAPIView(views.APIView):
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, pk):
+        comment = get_object_or_404(VisitorComment, pk=pk)
+        return Response(comment.to_dict())
+
 

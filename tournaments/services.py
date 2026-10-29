@@ -3769,6 +3769,80 @@ def update_player_position_by_admin(player_ident, position="", team_id=None, cat
     return player
 
 
+def update_player_username_by_admin(player_ident, new_username, team_id=None, category_key=None):
+    """
+    Allows an administrator to manually edit a player's username (e.g. from generated slug to a custom username).
+    Validates formatting and uniqueness across all registered players.
+    """
+    ident = str(player_ident or "").strip()
+    if not ident:
+        raise ValueError("Please provide a player ID, username, or name.")
+
+    raw_uname = str(new_username or "").strip().lower()
+    if not raw_uname:
+        raise ValueError("Username cannot be empty.")
+
+    clean_uname = re.sub(r'[^a-z0-9_]', '_', raw_uname).strip('_')
+    if len(clean_uname) < 2:
+        raise ValueError("Username must be at least 2 characters long and contain only letters, numbers, and underscores.")
+    if len(clean_uname) > 64:
+        raise ValueError("Username cannot exceed 64 characters.")
+
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
+    if category_key:
+        base_qs = base_qs.filter(team__category__key=category_key)
+    if team_id:
+        base_qs = base_qs.filter(Q(team__team_id=team_id) | Q(team__name__iexact=team_id))
+
+    clean_num = ident.lstrip("#").strip()
+    norm_slug = slugify(ident).replace("-", "_")
+
+    player = (
+        base_qs.filter(
+            Q(player_id__iexact=ident)
+            | Q(username__iexact=ident)
+            | Q(username__iexact=norm_slug)
+            | Q(name__iexact=ident)
+        ).first()
+    )
+
+    if not player and clean_num.isdigit():
+        num_matches = list(base_qs.filter(jersey_number=int(clean_num)))
+        if len(num_matches) == 1:
+            player = num_matches[0]
+        elif len(num_matches) > 1:
+            options_str = ", ".join(f"{p.name} ({p.team.name})" for p in num_matches[:4])
+            raise ValueError(f"Multiple players have jersey #{clean_num}: {options_str}. Please specify player ID or team.")
+
+    if not player and ident.isdigit():
+        player = base_qs.filter(id=int(ident)).first()
+
+    if not player:
+        raise ValueError(f"Player '{ident}' was not found.")
+
+    # Check for uniqueness against other players with a different player_id
+    duplicate = (
+        Player.objects.filter(username__iexact=clean_uname)
+        .exclude(Q(id=player.id) | Q(player_id=player.player_id))
+        .first()
+    )
+    if duplicate:
+        raise ValueError(
+            f"Username '@{clean_uname}' is already in use by player '{duplicate.name}' (ID: {duplicate.player_id}). Please choose a different username."
+        )
+
+    p_id = player.player_id
+    player.username = clean_uname
+    player.save(update_fields=["username"])
+
+    # Update all linked player records with the same permanent ID
+    if p_id:
+        Player.objects.filter(player_id=p_id).update(username=clean_uname)
+
+    player.refresh_from_db()
+    return player
+
+
 def change_player_password(player_or_ident, new_password, current_code=None):
     """
     Sets a player's new permanent password, clears the 4-digit temp code,

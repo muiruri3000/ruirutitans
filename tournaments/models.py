@@ -909,3 +909,47 @@ class HighlightVideo(models.Model):
             "createdAt": self.created_at.isoformat() if self.created_at else None,
         }
 
+
+class VisitorComment(models.Model):
+    """
+    Visitor & User comments / matchday reactions displayed in the Home page community carousel.
+    Requires moderation (is_approved=True) before appearing in the public carousel.
+    """
+    STATUS_CHOICES = [
+        ("pending", "Pending Moderation"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    ]
+
+    author_name = models.CharField(max_length=120, blank=True, default="Anonymous")
+    content = models.TextField()
+    reaction = models.CharField(max_length=48, blank=True, default="❤️")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending", db_index=True)
+    is_approved = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    moderated_at = models.DateTimeField(null=True, blank=True)
+    moderated_by = models.CharField(max_length=120, blank=True, default="")
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Visitor Comment"
+        verbose_name_plural = "Visitor Comments"
+
+    def __str__(self):
+        status_label = "Approved" if self.is_approved else "Pending"
+        return f"[{status_label}] {self.author_name}: {self.content[:40]}"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "authorName": self.author_name or "Anonymous",
+            "content": self.content,
+            "reaction": self.reaction or "❤️",
+            "status": self.status,
+            "isApproved": bool(self.is_approved),
+            "createdAt": self.created_at.isoformat() if self.created_at else None,
+            "moderatedAt": self.moderated_at.isoformat() if self.moderated_at else None,
+            "moderatedBy": self.moderated_by or "",
+        }
+
+

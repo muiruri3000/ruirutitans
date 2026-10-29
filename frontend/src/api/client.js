@@ -554,6 +554,19 @@ export const api = {
     return await res.json();
   },
 
+  async updatePlayerUsername(payload) {
+    const res = await fetch("/api/admin/players/update-username/", {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to update player username (${res.status})`);
+    }
+    return await res.json();
+  },
+
   async changePlayerPassword(payload) {
     const res = await fetch("/api/auth/player-change-password/", {
       method: "POST",
@@ -831,6 +844,39 @@ export const api = {
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       throw new Error(errData.error || `Failed to update duty roster: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async getComments(status = '') {
+    const url = status ? `/api/comments/?status=${encodeURIComponent(status)}` : `/api/comments/`;
+    const res = await fetch(url, { headers: defaultHeaders() });
+    if (!res.ok) throw new Error(`Failed to load comments: ${res.status}`);
+    return await res.json();
+  },
+
+  async submitComment(payload) {
+    const res = await fetch(`/api/comments/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to post comment: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async moderateComment(commentId, action) {
+    const res = await fetch(`/api/comments/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify({ commentId, action }),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to moderate comment: ${res.status}`);
     }
     return await res.json();
   },

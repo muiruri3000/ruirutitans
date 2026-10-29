@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { compareFixturesByDate } from './FixturesView';
+import VisitorReactionsSection from './VisitorReactionsSection';
 
 const JERSEY_ROWS = [
   {
@@ -616,6 +617,7 @@ export default function ClubHomeView({
   categoriesData,
   isCmsMode,
   cmsUser,
+  playerUser = null,
   onNavigateChampionship,
   onNavigateHighlights,
   onNavigateArchives,
@@ -1391,6 +1393,13 @@ export default function ClubHomeView({
               onNavigateManageHomepage={onNavigateManageHomepage}
             />
           ))}
+
+          {/* 3. VISITOR REACTIONS & COMMUNITY VOICES CAROUSEL (JUST AFTER WAZAE CAROUSEL) */}
+          <VisitorReactionsSection
+            cmsUser={cmsUser}
+            isCmsMode={isCmsMode}
+            playerUser={playerUser}
+          />
         </div>
 
         {/* MATCHDAY FIXTURES SECTION: POSITIONED BELOW CAROUSELS WITH FULL WIDTH (100%) */}

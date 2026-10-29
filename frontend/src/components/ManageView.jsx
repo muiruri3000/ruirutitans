@@ -52,6 +52,7 @@ export default function ManageView({
   onAddPlayers,
   onRemovePlayer,
   onUpdatePlayerPosition,
+  onUpdatePlayerUsername = null,
   onTogglePlayerStatus,
   onReleasePlayerJersey,
   onAddReferee,
@@ -119,6 +120,41 @@ export default function ManageView({
   const [newRefName, setNewRefName] = useState('');
   const [refTargetCategoryKey, setRefTargetCategoryKey] = useState(activeCategoryKey || 'open');
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Editable Player Username in Teams List
+  const [editingUsernamePlayerId, setEditingUsernamePlayerId] = useState(null);
+  const [editingUsernameVal, setEditingUsernameVal] = useState('');
+  const [savingUsernameId, setSavingUsernameId] = useState(null);
+  const [usernameActionMsg, setUsernameActionMsg] = useState(null);
+
+  const handleSaveUsername = async (teamId, player) => {
+    const rawVal = (editingUsernameVal || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    if (!rawVal) {
+      alert('Username cannot be empty.');
+      return;
+    }
+    try {
+      setSavingUsernameId(player.id);
+      if (onUpdatePlayerUsername) {
+        await onUpdatePlayerUsername(teamId, player.id, rawVal);
+      } else {
+        await api.updatePlayerUsername({
+          player_id: player.id,
+          new_username: rawVal,
+          team_id: teamId,
+          category_key: activeCategoryKey,
+        });
+      }
+      setUsernameActionMsg({ type: 'success', text: `✓ Updated username for ${player.name} to @${rawVal}` });
+      setEditingUsernamePlayerId(null);
+      setTimeout(() => setUsernameActionMsg(null), 3500);
+    } catch (err) {
+      console.error('Failed to update username:', err);
+      alert(err.message || 'Failed to update username.');
+    } finally {
+      setSavingUsernameId(null);
+    }
+  };
 
   // Carousel upload state
   const [slideTitle, setSlideTitle] = useState('');
@@ -2931,8 +2967,15 @@ export default function ManageView({
 
           {/* Teams & Squad Management */}
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginBottom: '10px' }}>
-              Teams ({cat.teams.length})
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>
+                Teams ({cat.teams.length})
+              </div>
+              {usernameActionMsg && (
+                <div style={{ fontSize: '11.5px', color: '#6CE5A0', fontWeight: 700, background: 'rgba(108, 229, 160, 0.15)', padding: '2px 8px', borderRadius: '4px', border: '1px solid #6CE5A0' }}>
+                  {usernameActionMsg.text}
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
@@ -3025,15 +3068,105 @@ export default function ManageView({
                                   >
                                     ID: {p.id}
                                   </span>
-                                  <span
-                                    title="Player Login Username"
-                                    style={{
-                                      fontSize: '10px',
-                                      color: '#8E8E93',
-                                    }}
-                                  >
-                                    @{uname}
-                                  </span>
+                                  {/* Editable Player Username */}
+                                  {editingUsernamePlayerId === p.id ? (
+                                    <span
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '3px',
+                                        background: '#2C2C2E',
+                                        padding: '2px 5px',
+                                        borderRadius: '5px',
+                                        border: '1px solid #FF9500',
+                                      }}
+                                    >
+                                      <span style={{ fontSize: '10px', color: '#FF9500', fontWeight: 800 }}>@</span>
+                                      <input
+                                        type="text"
+                                        value={editingUsernameVal}
+                                        onChange={(e) => setEditingUsernameVal(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'))}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') handleSaveUsername(t.id, p);
+                                          else if (e.key === 'Escape') setEditingUsernamePlayerId(null);
+                                        }}
+                                        autoFocus
+                                        maxLength={64}
+                                        style={{
+                                          background: '#1C1C1E',
+                                          color: '#FFFFFF',
+                                          border: 'none',
+                                          fontSize: '11px',
+                                          fontWeight: 700,
+                                          padding: '1px 4px',
+                                          width: '100px',
+                                          outline: 'none',
+                                          borderRadius: '3px',
+                                        }}
+                                        placeholder="new_username"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => handleSaveUsername(t.id, p)}
+                                        disabled={savingUsernameId === p.id}
+                                        style={{
+                                          background: '#30D158',
+                                          color: '#000000',
+                                          border: 'none',
+                                          borderRadius: '3px',
+                                          fontSize: '10px',
+                                          fontWeight: 800,
+                                          cursor: 'pointer',
+                                          padding: '2px 5px',
+                                        }}
+                                        title="Save username"
+                                      >
+                                        {savingUsernameId === p.id ? '…' : '✓'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditingUsernamePlayerId(null)}
+                                        style={{
+                                          background: 'rgba(255, 69, 58, 0.25)',
+                                          color: '#FF453A',
+                                          border: 'none',
+                                          borderRadius: '3px',
+                                          fontSize: '10px',
+                                          cursor: 'pointer',
+                                          padding: '2px 4px',
+                                        }}
+                                        title="Cancel editing"
+                                      >
+                                        ✕
+                                      </button>
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingUsernamePlayerId(p.id);
+                                        setEditingUsernameVal(uname);
+                                      }}
+                                      title="Click to edit player username"
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '3px',
+                                        background: 'rgba(255, 255, 255, 0.05)',
+                                        border: '1px dashed rgba(255, 255, 255, 0.2)',
+                                        borderRadius: '4px',
+                                        padding: '1px 5px',
+                                        fontSize: '10px',
+                                        color: '#D1D1D6',
+                                        cursor: 'pointer',
+                                        outline: 'none',
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      <span>@{uname}</span>
+                                      <span style={{ fontSize: '9px', opacity: 0.7 }} title="Edit username">✏️</span>
+                                    </button>
+                                  )}
 
                                   {/* Jersey Number & Release Button */}
                                   {(p.jerseyNumber != null || p.jersey_number != null) ? (

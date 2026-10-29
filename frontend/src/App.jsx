@@ -1249,6 +1249,35 @@ export default function App() {
     });
   };
 
+  const handleUpdatePlayerUsername = async (teamId, playerId, newUsername) => {
+    const cleanUname = (newUsername || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    if (!cleanUname) {
+      throw new Error('Username cannot be empty.');
+    }
+    const res = await api.updatePlayerUsername({
+      team_id: teamId,
+      player_id: playerId,
+      new_username: cleanUname,
+      category_key: activeCategoryKey,
+    });
+    const finalUname = res.username || cleanUname;
+    updateActiveCat((c) => {
+      const teams = c.teams.map((t) => {
+        if (t.id === teamId) {
+          return {
+            ...t,
+            players: t.players.map((p) =>
+              p.id === playerId ? { ...p, username: finalUname } : p
+            ),
+          };
+        }
+        return t;
+      });
+      return { ...c, teams };
+    });
+    return res;
+  };
+
   const handleTogglePlayerStatus = (teamId, playerId, newStatus) => {
     updateActiveCat((c) => {
       const teams = c.teams.map((t) => {
@@ -3877,6 +3906,7 @@ export default function App() {
             categoriesData={data.categories}
             isCmsMode={isCmsMode}
             cmsUser={cmsUser}
+            playerUser={playerUser}
             onNavigateChampionship={() => setCurrentView('championship')}
             onNavigateHighlights={() => setCurrentView('highlights')}
             onNavigateArchives={() => setCurrentView('archives')}
@@ -4708,6 +4738,7 @@ export default function App() {
               onAddPlayers={handleAddPlayers}
               onRemovePlayer={handleRemovePlayer}
               onUpdatePlayerPosition={handleUpdatePlayerPosition}
+              onUpdatePlayerUsername={handleUpdatePlayerUsername}
               onTogglePlayerStatus={handleTogglePlayerStatus}
               onReleasePlayerJersey={handleReleasePlayerJersey}
               onAddReferee={handleAddReferee}

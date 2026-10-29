@@ -31,6 +31,7 @@ from .views import (
     AdminPlayerToggleStatusAPIView,
     AdminPlayerReleaseNumberAPIView,
     AdminPlayerUpdatePositionAPIView,
+    AdminPlayerUpdateUsernameAPIView,
     PlayerChangePasswordAPIView,
     PlayerUpdateProfileAPIView,
     PlayerLookupAPIView,
@@ -42,6 +43,8 @@ from .views import (
     CategoryToggleArchiveAPIView,
     ReloadCanonicalScheduleAPIView,
     DutyRosterAPIView,
+    VisitorCommentAPIView,
+    VisitorCommentDetailAPIView,
 )
 
 app_name = "tournaments"
@@ -76,6 +79,7 @@ urlpatterns = [
     path("api/admin/players/toggle-status/", AdminPlayerToggleStatusAPIView.as_view(), name="api_admin_players_toggle_status"),
     path("api/admin/players/release-number/", AdminPlayerReleaseNumberAPIView.as_view(), name="api_admin_players_release_number"),
     path("api/admin/players/update-position/", AdminPlayerUpdatePositionAPIView.as_view(), name="api_admin_players_update_position"),
+    path("api/admin/players/update-username/", AdminPlayerUpdateUsernameAPIView.as_view(), name="api_admin_players_update_username"),
     path("api/auth/logout/", AuthLogoutAPIView.as_view(), name="api_auth_logout"),
     path("api/categories/", CategoryListCreateAPIView.as_view(), name="api_categories"),
     path("api/categories/<str:key>/", CategoryDetailAPIView.as_view(), name="api_category_detail"),
@@ -97,6 +101,8 @@ urlpatterns = [
     path("api/categories/<str:key>/duty-roster/", DutyRosterAPIView.as_view(), name="api_category_duty_roster"),
     path("api/highlights/", HighlightListCreateAPIView.as_view(), name="api_highlights"),
     path("api/highlights/<int:pk>/", HighlightDeleteAPIView.as_view(), name="api_highlight_delete"),
+    path("api/comments/", VisitorCommentAPIView.as_view(), name="api_visitor_comments"),
+    path("api/comments/<int:pk>/", VisitorCommentDetailAPIView.as_view(), name="api_visitor_comment_detail"),
 ]
 
 
