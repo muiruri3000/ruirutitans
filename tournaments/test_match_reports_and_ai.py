@@ -21,8 +21,8 @@ class MatchReportAndAIReportTests(TestCase):
         )
 
         self.category = Category.objects.create(
-            key="test-league-2026",
-            label="Test League 2026",
+            key="match-reports-league",
+            label="Match Reports League",
             mode="league",
             format="double",
         )
