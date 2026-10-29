@@ -1287,33 +1287,74 @@ body[data-theme="light"],
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
 }
 
-/* Light Mode Navigation Buttons & Pills */
+/* Light Mode Navigation Buttons & Pills - White text by default, Black on hover */
 [data-theme="light"] .top-nav-pill,
 [data-theme="light"] .club-nav-tab,
-[data-theme="light"] .cat-switcher-chip {
-  background: #FFFFFF !important;
-  color: #1C1C1E !important;
-  border: 1px solid rgba(0, 0, 0, 0.14) !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+[data-theme="light"] .cat-switcher-chip,
+[data-theme="light"] .manage-section-btn,
+[data-theme="light"] .tab-btn {
+  background: #1C1C1E !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  transition: all 0.16s ease;
+}
+
+[data-theme="light"] .top-nav-pill span,
+[data-theme="light"] .club-nav-tab span,
+[data-theme="light"] .cat-switcher-chip span,
+[data-theme="light"] .manage-section-btn span,
+[data-theme="light"] .tab-btn span {
+  color: #FFFFFF !important;
 }
 
 [data-theme="light"] .top-nav-pill:hover,
 [data-theme="light"] .club-nav-tab:hover,
-[data-theme="light"] .cat-switcher-chip:hover {
-  background: #F2F2F7 !important;
+[data-theme="light"] .cat-switcher-chip:hover,
+[data-theme="light"] .manage-section-btn:hover,
+[data-theme="light"] .tab-btn:hover,
+[data-theme="light"] .top-nav-pill.active:hover,
+[data-theme="light"] .club-nav-tab.active:hover,
+[data-theme="light"] .cat-switcher-chip.active:hover,
+[data-theme="light"] .manage-section-btn.active:hover,
+[data-theme="light"] .tab-btn.active:hover {
+  background: #FFFFFF !important;
   color: #000000 !important;
   border-color: #FF9500 !important;
-  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="light"] .top-nav-pill:hover span,
+[data-theme="light"] .club-nav-tab:hover span,
+[data-theme="light"] .cat-switcher-chip:hover span,
+[data-theme="light"] .manage-section-btn:hover span,
+[data-theme="light"] .tab-btn:hover span,
+[data-theme="light"] .top-nav-pill.active:hover span,
+[data-theme="light"] .club-nav-tab.active:hover span,
+[data-theme="light"] .cat-switcher-chip.active:hover span,
+[data-theme="light"] .manage-section-btn.active:hover span,
+[data-theme="light"] .tab-btn.active:hover span {
+  color: #000000 !important;
 }
 
 [data-theme="light"] .top-nav-pill.active,
 [data-theme="light"] .club-nav-tab.active,
-[data-theme="light"] .cat-switcher-chip.active {
+[data-theme="light"] .cat-switcher-chip.active,
+[data-theme="light"] .manage-section-btn.active,
+[data-theme="light"] .tab-btn.active {
   background: #FF9500 !important;
-  color: #16201B !important;
+  color: #000000 !important;
   border-color: #FF9500 !important;
   font-weight: 800;
   box-shadow: 0 2px 10px rgba(255, 149, 0, 0.35) !important;
+}
+
+[data-theme="light"] .top-nav-pill.active span,
+[data-theme="light"] .club-nav-tab.active span,
+[data-theme="light"] .cat-switcher-chip.active span,
+[data-theme="light"] .manage-section-btn.active span,
+[data-theme="light"] .tab-btn.active span {
+  color: #000000 !important;
 }
 
 [data-theme="light"] .sync-badge {
@@ -1517,5 +1558,172 @@ body[data-theme="light"],
 [data-theme="light"] [style*="background: #FF453A"],
 [data-theme="light"] [style*="background:#FF453A"] {
   color: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   Navigation Items Light Mode Text & Hover Styling:
+   - Text color on nav items in light mode: WHITE
+   - Background on nav items in light mode: #1C1C1E
+   - On hover: Text color BLACK, Background WHITE
+   ========================================================================== */
+html[data-theme="light"] .top-nav-pill,
+html[data-theme="light"] .club-nav-tab,
+html[data-theme="light"] .cat-switcher-chip,
+html[data-theme="light"] .manage-section-btn,
+html[data-theme="light"] .tab-btn,
+body[data-theme="light"] .top-nav-pill,
+body[data-theme="light"] .club-nav-tab,
+body[data-theme="light"] .cat-switcher-chip,
+body[data-theme="light"] .manage-section-btn,
+body[data-theme="light"] .tab-btn,
+[data-theme="light"] .top-nav-pill,
+[data-theme="light"] .club-nav-tab,
+[data-theme="light"] .cat-switcher-chip,
+[data-theme="light"] .manage-section-btn,
+[data-theme="light"] .tab-btn {
+  background: #1C1C1E !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
+  transition: all 0.16s ease !important;
+}
+
+html[data-theme="light"] .top-nav-pill *,
+html[data-theme="light"] .club-nav-tab *,
+html[data-theme="light"] .cat-switcher-chip *,
+html[data-theme="light"] .manage-section-btn *,
+html[data-theme="light"] .tab-btn *,
+body[data-theme="light"] .top-nav-pill *,
+body[data-theme="light"] .club-nav-tab *,
+body[data-theme="light"] .cat-switcher-chip *,
+body[data-theme="light"] .manage-section-btn *,
+body[data-theme="light"] .tab-btn *,
+[data-theme="light"] .top-nav-pill *,
+[data-theme="light"] .club-nav-tab *,
+[data-theme="light"] .cat-switcher-chip *,
+[data-theme="light"] .manage-section-btn *,
+[data-theme="light"] .tab-btn * {
+  color: #FFFFFF !important;
+}
+
+/* Hover: background white, text color black */
+html[data-theme="light"] .top-nav-pill:hover,
+html[data-theme="light"] .club-nav-tab:hover,
+html[data-theme="light"] .cat-switcher-chip:hover,
+html[data-theme="light"] .manage-section-btn:hover,
+html[data-theme="light"] .tab-btn:hover,
+body[data-theme="light"] .top-nav-pill:hover,
+body[data-theme="light"] .club-nav-tab:hover,
+body[data-theme="light"] .cat-switcher-chip:hover,
+body[data-theme="light"] .manage-section-btn:hover,
+body[data-theme="light"] .tab-btn:hover,
+[data-theme="light"] .top-nav-pill:hover,
+[data-theme="light"] .club-nav-tab:hover,
+[data-theme="light"] .cat-switcher-chip:hover,
+[data-theme="light"] .manage-section-btn:hover,
+[data-theme="light"] .tab-btn:hover {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+  border-color: #FF9500 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18) !important;
+}
+
+html[data-theme="light"] .top-nav-pill:hover *,
+html[data-theme="light"] .club-nav-tab:hover *,
+html[data-theme="light"] .cat-switcher-chip:hover *,
+html[data-theme="light"] .manage-section-btn:hover *,
+html[data-theme="light"] .tab-btn:hover *,
+body[data-theme="light"] .top-nav-pill:hover *,
+body[data-theme="light"] .club-nav-tab:hover *,
+body[data-theme="light"] .cat-switcher-chip:hover *,
+body[data-theme="light"] .manage-section-btn:hover *,
+body[data-theme="light"] .tab-btn:hover *,
+[data-theme="light"] .top-nav-pill:hover *,
+[data-theme="light"] .club-nav-tab:hover *,
+[data-theme="light"] .cat-switcher-chip:hover *,
+[data-theme="light"] .manage-section-btn:hover *,
+[data-theme="light"] .tab-btn:hover * {
+  color: #000000 !important;
+}
+
+/* Active state: background #FF9500, text black */
+html[data-theme="light"] .top-nav-pill.active,
+html[data-theme="light"] .club-nav-tab.active,
+html[data-theme="light"] .cat-switcher-chip.active,
+html[data-theme="light"] .manage-section-btn.active,
+html[data-theme="light"] .tab-btn.active,
+body[data-theme="light"] .top-nav-pill.active,
+body[data-theme="light"] .club-nav-tab.active,
+body[data-theme="light"] .cat-switcher-chip.active,
+body[data-theme="light"] .manage-section-btn.active,
+body[data-theme="light"] .tab-btn.active,
+[data-theme="light"] .top-nav-pill.active,
+[data-theme="light"] .club-nav-tab.active,
+[data-theme="light"] .cat-switcher-chip.active,
+[data-theme="light"] .manage-section-btn.active,
+[data-theme="light"] .tab-btn.active {
+  background: #FF9500 !important;
+  color: #000000 !important;
+  border-color: #FF9500 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 10px rgba(255, 149, 0, 0.35) !important;
+}
+
+html[data-theme="light"] .top-nav-pill.active *,
+html[data-theme="light"] .club-nav-tab.active *,
+html[data-theme="light"] .cat-switcher-chip.active *,
+html[data-theme="light"] .manage-section-btn.active *,
+html[data-theme="light"] .tab-btn.active *,
+body[data-theme="light"] .top-nav-pill.active *,
+body[data-theme="light"] .club-nav-tab.active *,
+body[data-theme="light"] .cat-switcher-chip.active *,
+body[data-theme="light"] .manage-section-btn.active *,
+body[data-theme="light"] .tab-btn.active *,
+[data-theme="light"] .top-nav-pill.active *,
+[data-theme="light"] .club-nav-tab.active *,
+[data-theme="light"] .cat-switcher-chip.active *,
+[data-theme="light"] .manage-section-btn.active *,
+[data-theme="light"] .tab-btn.active * {
+  color: #000000 !important;
+}
+
+/* Active item on hover: turns white background with black text */
+html[data-theme="light"] .top-nav-pill.active:hover,
+html[data-theme="light"] .club-nav-tab.active:hover,
+html[data-theme="light"] .cat-switcher-chip.active:hover,
+html[data-theme="light"] .manage-section-btn.active:hover,
+html[data-theme="light"] .tab-btn.active:hover,
+body[data-theme="light"] .top-nav-pill.active:hover,
+body[data-theme="light"] .club-nav-tab.active:hover,
+body[data-theme="light"] .cat-switcher-chip.active:hover,
+body[data-theme="light"] .manage-section-btn.active:hover,
+body[data-theme="light"] .tab-btn.active:hover,
+[data-theme="light"] .top-nav-pill.active:hover,
+[data-theme="light"] .club-nav-tab.active:hover,
+[data-theme="light"] .cat-switcher-chip.active:hover,
+[data-theme="light"] .manage-section-btn.active:hover,
+[data-theme="light"] .tab-btn.active:hover {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+  border-color: #FF9500 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+html[data-theme="light"] .top-nav-pill.active:hover *,
+html[data-theme="light"] .club-nav-tab.active:hover *,
+html[data-theme="light"] .cat-switcher-chip.active:hover *,
+html[data-theme="light"] .manage-section-btn.active:hover *,
+html[data-theme="light"] .tab-btn.active:hover *,
+body[data-theme="light"] .top-nav-pill.active:hover *,
+body[data-theme="light"] .club-nav-tab.active:hover *,
+body[data-theme="light"] .cat-switcher-chip.active:hover *,
+body[data-theme="light"] .manage-section-btn.active:hover *,
+body[data-theme="light"] .tab-btn.active:hover *,
+[data-theme="light"] .top-nav-pill.active:hover *,
+[data-theme="light"] .club-nav-tab.active:hover *,
+[data-theme="light"] .cat-switcher-chip.active:hover *,
+[data-theme="light"] .manage-section-btn.active:hover *,
+[data-theme="light"] .tab-btn.active:hover * {
+  color: #000000 !important;
 }
 
