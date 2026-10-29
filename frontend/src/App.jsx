@@ -19,6 +19,7 @@ import MatchReportModal from './components/MatchReportModal';
 import AIWeeklyReportModal from './components/AIWeeklyReportModal';
 import TacticsView from './components/TacticsView';
 import DutyRosterView from './components/DutyRosterView';
+import ThemeFloatingToggle from './components/ThemeFloatingToggle';
 import { openCategoryFixturesResultsPDF } from './utils/pdfExport';
 import { api, sanitizeExMilitaryFixtures } from './api/client';
 import { DEFAULT_TITANS_STATE, CORE_FIVE_TEAMS } from './data/defaultState';
@@ -207,6 +208,41 @@ function computeCategorySuspensions(catObj) {
 export default function App() {
   const [data, setData] = useState(() => DEFAULT_TITANS_STATE);
   const [syncStatus, setSyncStatus] = useState('synced'); // 'synced' | 'saving' | 'error'
+
+  // Theme appearance state: 'dark' (current & default) or 'light'
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('titans_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    }
+    return 'dark'; // Dark mode is default
+  });
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-theme', theme);
+      document.documentElement.style.colorScheme = theme;
+      if (theme === 'light') {
+        document.documentElement.classList.add('light-mode');
+        document.body.classList.add('light-mode');
+      } else {
+        document.documentElement.classList.remove('light-mode');
+        document.body.classList.remove('light-mode');
+      }
+      try {
+        localStorage.setItem('titans_theme', theme);
+      } catch {}
+    }
+  }, [theme]);
+
+  const handleToggleTheme = (nextVal) => {
+    setTheme((prev) => {
+      const target = typeof nextVal === 'string' ? nextVal : prev === 'dark' ? 'light' : 'dark';
+      return target;
+    });
+  };
+
   const [isStandaloneTactics, setIsStandaloneTactics] = useState(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -3067,7 +3103,17 @@ export default function App() {
   const isDedicatedTacticsMode = isStandaloneTactics && currentView === 'tactics';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000000', fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--bg-canvas)',
+        color: 'var(--text-primary)',
+        fontFamily: 'Inter, sans-serif',
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'background-color 0.25s ease, color 0.25s ease',
+      }}
+    >
       {/* Top Bar with Sign In to Manager Dashboard Link & Player Auth OR Dedicated Tactics Header */}
       {!isDedicatedTacticsMode ? (
         <TopNav
@@ -4889,6 +4935,9 @@ export default function App() {
           onClose={() => setAppShowAIReport(false)}
         />
       )}
+
+      {/* Floating Appearance Toggle Switch (Dark Mode default <-> Light Mode) */}
+      <ThemeFloatingToggle theme={theme} onToggle={handleToggleTheme} />
     </div>
   );
 }

@@ -968,3 +968,310 @@ button {
     font-size: 11px !important;
   }
 }
+
+/* ==========================================================================
+   Floating Theme Appearance Toggle Switch
+   ========================================================================== */
+.theme-floating-container {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.theme-floating-container:hover {
+  transform: translateY(-2px);
+}
+
+.theme-mode-btn {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.theme-mode-btn:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 480px) {
+  .theme-btn-label {
+    display: none !important;
+  }
+  .theme-mode-btn {
+    padding: 8px 10px !important;
+    min-width: 38px !important;
+  }
+}
+
+/* ==========================================================================
+   Apple HIG Light Mode System Styling
+   ========================================================================== */
+:root[data-theme="light"],
+html[data-theme="light"],
+body[data-theme="light"],
+[data-theme="light"] {
+  --bg-canvas: #F2F2F7;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #FFFFFF;
+  --bg-surface-active: #E5E5EA;
+  --bg-surface-glass: rgba(255, 255, 255, 0.88);
+
+  --text-primary: #1C1C1E;
+  --text-secondary: #3C3C43;
+  --text-tertiary: #6C6C70;
+  --text-quaternary: #8E8E93;
+
+  --accent-orange: #FF9500;
+  --accent-orange-vibrant: #F28500;
+  --accent-orange-hover: #D97700;
+  --accent-orange-soft: rgba(255, 149, 0, 0.12);
+  --accent-orange-border: rgba(255, 149, 0, 0.35);
+
+  --hairline-border: 1px solid rgba(0, 0, 0, 0.12);
+  --hairline-border-subtle: 1px solid rgba(0, 0, 0, 0.06);
+
+  color-scheme: light;
+}
+
+/* Light mode smooth transitions */
+html, body, #root, .top-nav-bar, .club-section-navbar, .apple-card, .fixture-card, .tie-card {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+/* Light Mode Root & Surfaces */
+html[data-theme="light"],
+body[data-theme="light"],
+[data-theme="light"] #root {
+  background-color: var(--bg-canvas) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Light Mode Navigation */
+[data-theme="light"] .top-nav-bar {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .brand-title {
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] .club-section-navbar {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .top-nav-pill {
+  color: #3C3C43 !important;
+}
+
+[data-theme="light"] .top-nav-pill:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: #000000 !important;
+}
+
+[data-theme="light"] .top-nav-pill.active {
+  background: #FF9500 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .sync-badge {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] .login-dropdown-btn {
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] .hamburger-btn {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] .hamburger-dropdown {
+  background: rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="light"] .hamburger-dropdown-content {
+  background: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16) !important;
+}
+
+[data-theme="light"] .hamburger-menu-item {
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] .hamburger-menu-item:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Light Mode Cards, Fixtures, Modals */
+[data-theme="light"] .apple-card,
+[data-theme="light"] .fixture-card,
+[data-theme="light"] .tie-card,
+[data-theme="light"] .duty-side-card,
+[data-theme="light"] .duty-fixture-card {
+  background: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .modal-overlay,
+[data-theme="light"] .h2h-overlay {
+  background: rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="light"] .h2h-modal,
+[data-theme="light"] .team-modal,
+[data-theme="light"] .apple-modal-content {
+  background: #FFFFFF !important;
+  color: #1C1C1E !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* Light mode tables */
+[data-theme="light"] table {
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] table thead tr {
+  background: #E5E5EA !important;
+  color: #3C3C43 !important;
+}
+
+[data-theme="light"] table tbody tr {
+  border-top-color: rgba(0, 0, 0, 0.08) !important;
+  color: #1C1C1E !important;
+}
+
+/* Light mode inputs, selects, textareas */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background-color: #FFFFFF !important;
+  color: #1C1C1E !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #8E8E93 !important;
+}
+
+/* Duty Roster light mode */
+[data-theme="light"] .duty-hero-card {
+  background: linear-gradient(135deg, #FFFFFF, #F8F8FA) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06) !important;
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] .duty-hero-card h1,
+[data-theme="light"] .duty-hero-card p {
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] .duty-segmented-tabs {
+  background: #E5E5EA !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .duty-segmented-tab-btn {
+  color: #3C3C43 !important;
+}
+
+/* Light mode inline styles overrides */
+[data-theme="light"] [style*="background: #121212"],
+[data-theme="light"] [style*="background: rgb(18, 18, 18)"],
+[data-theme="light"] [style*="background:#121212"],
+[data-theme="light"] [style*="background: #1C1C1E"],
+[data-theme="light"] [style*="background: rgb(28, 28, 30)"],
+[data-theme="light"] [style*="background:#1C1C1E"] {
+  background: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] [style*="background: #2C2C2E"],
+[data-theme="light"] [style*="background: rgb(44, 44, 46)"],
+[data-theme="light"] [style*="background:#2C2C2E"] {
+  background: #F2F2F7 !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] [style*="background: #000000"],
+[data-theme="light"] [style*="background: rgb(0, 0, 0)"],
+[data-theme="light"] [style*="background:#000000"] {
+  background: #F2F2F7 !important;
+}
+
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.02)"],
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.03)"],
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.05)"],
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.08)"],
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.06)"],
+[data-theme="light"] [style*="background: rgba(255,255,255,0.02)"],
+[data-theme="light"] [style*="background: rgba(255,255,255,0.03)"],
+[data-theme="light"] [style*="background: rgba(255,255,255,0.05)"],
+[data-theme="light"] [style*="background: rgba(255,255,255,0.08)"],
+[data-theme="light"] [style*="background: rgba(0, 0, 0, 0.25)"],
+[data-theme="light"] [style*="background: rgba(0,0,0,0.25)"],
+[data-theme="light"] [style*="background: rgba(0,0,0,0.3)"] {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] [style*="color: #FFFFFF"],
+[data-theme="light"] [style*="color: #ffffff"],
+[data-theme="light"] [style*="color: #F2F2F7"],
+[data-theme="light"] [style*="color:#FFFFFF"] {
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] [style*="color: #EBEBF5"],
+[data-theme="light"] [style*="color:#EBEBF5"] {
+  color: #3C3C43 !important;
+}
+
+[data-theme="light"] [style*="color: #AEAEB2"],
+[data-theme="light"] [style*="color: #D1D1D6"],
+[data-theme="light"] [style*="color:#AEAEB2"] {
+  color: #6C6C70 !important;
+}
+
+[data-theme="light"] [style*="border: 1px solid rgba(255, 255, 255,"],
+[data-theme="light"] [style*="border: 1px solid rgba(255,255,255,"] {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] [style*="border-bottom: 1px solid rgba(255, 255, 255,"],
+[data-theme="light"] [style*="border-bottom: 1px solid rgba(255,255,255,"] {
+  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] [style*="border-top: 1px solid rgba(255, 255, 255,"],
+[data-theme="light"] [style*="border-top: 1px solid rgba(255,255,255,"] {
+  border-top-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Semantic badges text contrast preservation */
+[data-theme="light"] [style*="background: #30D158"],
+[data-theme="light"] [style*="background:#30D158"] {
+  color: #000000 !important;
+}
+[data-theme="light"] [style*="background: #FF9500"],
+[data-theme="light"] [style*="background:#FF9500"] {
+  color: #16201B !important;
+}
+[data-theme="light"] [style*="background: #BF5AF2"],
+[data-theme="light"] [style*="background:#BF5AF2"] {
+  color: #FFFFFF !important;
+}
+[data-theme="light"] [style*="background: #FF453A"],
+[data-theme="light"] [style*="background:#FF453A"] {
+  color: #FFFFFF !important;
+}
+
