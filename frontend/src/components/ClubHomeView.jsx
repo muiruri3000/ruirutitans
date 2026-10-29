@@ -1323,6 +1323,7 @@ export default function ClubHomeView({
                     type="button"
                     aria-label="Previous slide"
                     onClick={handlePrevMain}
+                    className="carousel-nav-btn"
                     style={{
                       width: '34px',
                       height: '34px',
@@ -1362,6 +1363,7 @@ export default function ClubHomeView({
                     type="button"
                     aria-label="Next slide"
                     onClick={handleNextMain}
+                    className="carousel-nav-btn"
                     style={{
                       width: '34px',
                       height: '34px',

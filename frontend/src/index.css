@@ -1051,6 +1051,127 @@ button {
     min-height: 44px !important;
     font-size: 14px !important;
   }
+
+  /* Apple HIG: Hero Banner Responsive Alignment */
+  .hero-banner {
+    padding: 16px 14px !important;
+    border-radius: 14px !important;
+    margin-bottom: 14px !important;
+  }
+  .hero-banner-inner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+  .hero-club-identity {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 12px !important;
+  }
+  .hero-crest-box {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    min-height: 64px !important;
+    border-radius: 14px !important;
+  }
+  .hero-club-text {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+  .hero-main-title {
+    font-size: clamp(24px, 6.5vw, 36px) !important;
+  }
+  .hero-action-ctas {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .hero-action-ctas button {
+    width: 100% !important;
+    min-height: 44px !important;
+    justify-content: center !important;
+  }
+
+  /* Apple HIG: Carousel Controls & Navigation Buttons */
+  .carousel-nav-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Apple HIG: Gallery & Kit Carousels */
+  .main-card-hover {
+    height: clamp(260px, 60vw, 360px) !important;
+    min-height: 240px !important;
+  }
+  .jersey-slide-card {
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+  }
+
+  /* Apple HIG: Fan Wall & Visitor Reactions Cards */
+  .visitor-reactions-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .apple-card {
+    padding: 16px 14px !important;
+    border-radius: 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Apple HIG: Admin Management Section Navigation Bar */
+  .manage-section-navbar {
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    scrollbar-width: none !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .manage-section-navbar::-webkit-scrollbar {
+    display: none !important;
+  }
+  .manage-section-btn {
+    flex: 0 0 auto !important;
+    min-height: 44px !important;
+    white-space: nowrap !important;
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Apple HIG: Knockout Bracket & Progression Tree Horizontal Container */
+  .cup-progression-bracket,
+  .bracket-tree-container,
+  .knockout-bracket {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Apple HIG: Parent & Children Universal Stretch Alignment */
+  .club-home-grid,
+  .club-home-carousels,
+  .club-home-sidebar {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1065,6 +1186,15 @@ button {
   .login-dropdown-btn {
     padding: 5px 10px !important;
     font-size: 11px !important;
+  }
+  .hero-crest-box {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    min-height: 52px !important;
+  }
+  .apple-card {
+    padding: 14px 12px !important;
   }
 }
 

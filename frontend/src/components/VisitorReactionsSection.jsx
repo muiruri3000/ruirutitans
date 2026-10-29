@@ -514,6 +514,7 @@ export default function VisitorReactionsSection({
                 type="button"
                 onClick={() => setActiveSlide((prev) => (prev > 0 ? prev - 1 : totalSlides - 1))}
                 aria-label="Previous reactions slide"
+                className="carousel-nav-btn"
                 style={{
                   width: '36px',
                   height: '36px',
@@ -539,6 +540,7 @@ export default function VisitorReactionsSection({
                 type="button"
                 onClick={() => setActiveSlide((prev) => (prev + 1) % totalSlides)}
                 aria-label="Next reactions slide"
+                className="carousel-nav-btn"
                 style={{
                   width: '36px',
                   height: '36px',

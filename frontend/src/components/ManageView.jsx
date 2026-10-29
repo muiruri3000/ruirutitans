@@ -838,6 +838,7 @@ export default function ManageView({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
       {/* Admin Section Switcher */}
       <div
+        className="manage-section-navbar"
         style={{
           background: '#121212',
           border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -851,6 +852,7 @@ export default function ManageView({
         <button
           type="button"
           onClick={() => setAdminSection('players')}
+          className={`manage-section-btn ${adminSection === 'players' ? 'active' : ''}`}
           style={{
             flex: 1,
             padding: '10px 14px',
@@ -868,6 +870,7 @@ export default function ManageView({
         <button
           type="button"
           onClick={() => setAdminSection('balancer')}
+          className={`manage-section-btn ${adminSection === 'balancer' ? 'active' : ''}`}
           style={{
             flex: 1,
             padding: '10px 14px',
@@ -885,6 +888,7 @@ export default function ManageView({
         <button
           type="button"
           onClick={() => setAdminSection('homepage')}
+          className={`manage-section-btn ${adminSection === 'homepage' ? 'active' : ''}`}
           style={{
             flex: 1,
             padding: '10px 14px',
@@ -902,6 +906,7 @@ export default function ManageView({
         <button
           type="button"
           onClick={() => setAdminSection('voting')}
+          className={`manage-section-btn ${adminSection === 'voting' ? 'active' : ''}`}
           style={{
             flex: 1,
             padding: '10px 14px',
@@ -919,6 +924,7 @@ export default function ManageView({
         <button
           type="button"
           onClick={() => setAdminSection('teams')}
+          className={`manage-section-btn ${adminSection === 'teams' ? 'active' : ''}`}
           style={{
             flex: 1,
             padding: '10px 14px',
@@ -936,6 +942,7 @@ export default function ManageView({
         <button
           type="button"
           onClick={() => setAdminSection('duty')}
+          className={`manage-section-btn ${adminSection === 'duty' ? 'active' : ''}`}
           style={{
             flex: 1,
             padding: '10px 14px',
@@ -953,6 +960,7 @@ export default function ManageView({
         <button
           type="button"
           onClick={() => setAdminSection('security')}
+          className={`manage-section-btn ${adminSection === 'security' ? 'active' : ''}`}
           style={{
             flex: 1,
             padding: '10px 14px',

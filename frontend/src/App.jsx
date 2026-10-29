@@ -3306,10 +3306,11 @@ export default function App() {
               overflow: 'hidden',
             }}
           >
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
+          <div className="hero-banner-inner" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
             {/* Club Identity */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flex: '1 1 460px' }}>
+            <div className="hero-club-identity" style={{ display: 'flex', alignItems: 'center', gap: '18px', flex: '1 1 460px' }}>
               <div
+                className="hero-crest-box"
                 style={{
                   width: '84px',
                   height: '84px',
@@ -3331,7 +3332,7 @@ export default function App() {
                 />
               </div>
 
-              <div>
+              <div className="hero-club-text">
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                   <span
                     style={{
@@ -3356,7 +3357,7 @@ export default function App() {
                 </div>
 
                 <h1
-                  className="scoreboard"
+                  className="scoreboard hero-main-title"
                   style={{
                     color: '#FFFFFF',
                     fontSize: 'clamp(32px, 5vw, 48px)',
@@ -3376,7 +3377,7 @@ export default function App() {
 
             {/* Hero Action CTAs (Shown when logged in) */}
             {(cmsUser || playerUser) && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+              <div className="hero-action-ctas" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                 {cmsUser && isCmsMode && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                     <button
