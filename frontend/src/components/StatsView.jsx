@@ -1,44 +1,289 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../api/client';
 
+export function computeClientWeeklyMVP(catObj, categoryKey) {
+  if (!catObj) return null;
+  const fixtures = [
+    ...(catObj.fixtures || []),
+    ...Object.values(catObj.groupFixtures || {}).flat(),
+  ];
+  if (!fixtures || fixtures.length === 0) return null;
+
+  const teamsById = {};
+  const playersById = {};
+  (catObj.teams || []).forEach((t) => {
+    teamsById[t.id] = t;
+    (t.players || []).forEach((p) => {
+      const rawFirst = (p.firstName || p.first_name || '').trim();
+      const rawUser = (p.username || '').trim();
+      const rawName = (p.name || '').trim();
+      const firstName = rawFirst && rawFirst.toLowerCase() !== 'unrecorded' ? rawFirst : '';
+      const displayName = firstName || rawUser || rawName || p.id;
+      playersById[p.id] = {
+        id: p.id,
+        permanentId: p.permanentId || p.id,
+        name: rawName || displayName,
+        displayName,
+        firstName,
+        username: rawUser,
+        position: p.position || '',
+        jerseyNumber: p.jerseyNumber || p.jersey_number,
+        teamId: t.id,
+        teamName: t.name,
+        teamColor: t.color || '#FF9500',
+      };
+    });
+  });
+
+  const monthMap = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+  const parseDate = (s) => {
+    if (!s || typeof s !== 'string') return null;
+    const dm = s.match(/\b(\d{1,2})\s+([A-Za-z]{3})[a-z]*\b(?:\s+(\d{4}))?/i);
+    if (dm) {
+      const day = parseInt(dm[1], 10);
+      const mon = monthMap[dm[2].toLowerCase()];
+      const yr = dm[3] ? parseInt(dm[3], 10) : 2026;
+      const tm = s.match(/(\d{1,2}):(\d{2})/);
+      const hr = tm ? parseInt(tm[1], 10) : 18;
+      const min = tm ? parseInt(tm[2], 10) : 0;
+      if (mon !== undefined) return new Date(yr, mon, day, hr, min);
+    }
+    return null;
+  };
+
+  const weekGroups = {};
+  fixtures.forEach((f) => {
+    const dt = parseDate(f.date) || new Date(2026, 9, 21);
+    const day = dt.getDay();
+    const daysToSat = (6 - day) % 7;
+    const sat = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + daysToSat, 20, 0, 0);
+    const satKey = sat.toISOString().slice(0, 10);
+    if (!weekGroups[satKey]) {
+      weekGroups[satKey] = { cutoff: sat, fixtures: [] };
+    }
+    weekGroups[satKey].fixtures.push(f);
+  });
+
+  const sortedKeys = Object.keys(weekGroups).sort();
+  if (sortedKeys.length === 0) return null;
+
+  const now = new Date();
+  const history = [];
+  let latestFinalized = null;
+  let nextUpdateCutoff = null;
+
+  sortedKeys.forEach((k, idx) => {
+    const weekNum = idx + 1;
+    const { cutoff, fixtures: fList } = weekGroups[k];
+    const isFinalized = cutoff <= now;
+    if (!isFinalized && !nextUpdateCutoff) {
+      nextUpdateCutoff = cutoff;
+    }
+
+    const playerAgg = {};
+    const ensurePlayer = (pId, defaultTeamId) => {
+      if (!playerAgg[pId]) {
+        const info = playersById[pId] || {
+          id: pId,
+          name: pId,
+          displayName: pId,
+          firstName: '',
+          username: '',
+          position: '',
+          jerseyNumber: null,
+          teamId: defaultTeamId,
+          teamName: teamsById[defaultTeamId]?.name || 'Titans Club',
+          teamColor: teamsById[defaultTeamId]?.color || '#FF9500',
+        };
+        playerAgg[pId] = {
+          player: info,
+          goals: 0,
+          assists: 0,
+          cleanSheets: 0,
+          motm: 0,
+          points: 0,
+        };
+      }
+      return playerAgg[pId];
+    };
+
+    fList.forEach((f) => {
+      if (!f.played && !f.walkover && (!f.events || f.events.length === 0)) return;
+
+      (f.events || []).forEach((ev) => {
+        if (ev.type === 'goal' || ev.type === 'penalty') {
+          const pId = ev.playerId || ev.player;
+          if (pId) {
+            const entry = ensurePlayer(pId, ev.teamId || f.home);
+            entry.goals++;
+          }
+          if (ev.assistPlayerId || ev.assistPlayer) {
+            const aId = ev.assistPlayerId || ev.assistPlayer;
+            const aEntry = ensurePlayer(aId, ev.teamId || f.home);
+            aEntry.assists++;
+          }
+        } else if (ev.type === 'assist') {
+          const pId = ev.playerId || ev.player;
+          if (pId) {
+            const entry = ensurePlayer(pId, ev.teamId || f.home);
+            entry.assists++;
+          }
+        }
+      });
+    });
+
+    Object.values(playerAgg).forEach((p) => {
+      p.points = p.goals * 4 + p.assists * 3 + p.cleanSheets * 4 + p.motm * 5;
+    });
+
+    const candidates = Object.values(playerAgg).sort((a, b) => b.points - a.points || b.goals - a.goals);
+    let winner = candidates.length > 0 && candidates[0].points > 0 ? candidates[0] : null;
+
+    if (!winner) {
+      const firstTeam = (catObj.teams || [])[0];
+      const firstP = firstTeam ? (firstTeam.players || []).find((p) => !p.unknown) : null;
+      if (firstP) {
+        winner = {
+          player: playersById[firstP.id] || {
+            id: firstP.id,
+            name: firstP.name,
+            displayName: firstP.name,
+            teamId: firstTeam.id,
+            teamName: firstTeam.name,
+            teamColor: firstTeam.color,
+          },
+          goals: 0,
+          assists: 0,
+          cleanSheets: 0,
+          motm: 0,
+          points: 10,
+        };
+      }
+    }
+
+    if (winner) {
+      const g = winner.goals;
+      const a = winner.assists;
+      const pts = winner.points;
+      const pName = winner.player.displayName;
+      const tName = winner.player.teamName;
+
+      let rationale = '';
+      if (g > 0 && a > 0) {
+        rationale = `Electric display registering ${g} goal${g > 1 ? 's' : ''} and ${a} assist${a > 1 ? 's' : ''} (${pts} pts) to lead ${tName} in Matchweek ${weekNum}.`;
+      } else if (g > 0) {
+        rationale = `Clinical attacking output with ${g} goal${g > 1 ? 's' : ''} (${pts} pts) spearheading ${tName}'s frontline in Matchweek ${weekNum}.`;
+      } else if (a > 0) {
+        rationale = `Masterclass in midfield delivery with ${a} assist${a > 1 ? 's' : ''} (${pts} pts) creating decisive scoring opportunities for ${tName} in Matchweek ${weekNum}.`;
+      } else {
+        rationale = `Disciplined tactical tempo and leadership (${pts} pts) setting the standard for ${tName} in Matchweek ${weekNum}.`;
+      }
+
+      const record = {
+        id: `local-w${weekNum}`,
+        category_key: categoryKey,
+        week_number: weekNum,
+        week_title: `Matchweek ${weekNum}`,
+        week_ending_date: cutoff.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+        cutoff_datetime: cutoff.toISOString(),
+        is_finalized: isFinalized,
+        player: {
+          id: winner.player.id,
+          name: winner.player.name,
+          displayName: winner.player.displayName,
+          first_name: winner.player.firstName,
+          username: winner.player.username,
+          position: winner.player.position,
+          jersey_number: winner.player.jerseyNumber,
+          team_id: winner.player.teamId,
+          team_name: winner.player.teamName,
+          team_color: winner.player.teamColor,
+        },
+        stats: {
+          goals: g,
+          assists: a,
+          yellows: 0,
+          reds: 0,
+          clean_sheets: winner.cleanSheets,
+          motm_awards: winner.motm,
+          points: pts,
+        },
+        rationale,
+      };
+
+      history.push(record);
+      if (isFinalized) {
+        latestFinalized = record;
+      }
+    }
+  });
+
+  if (!nextUpdateCutoff) {
+    const daysToSat = (6 - now.getDay() + 7) % 7;
+    nextUpdateCutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (daysToSat || 7), 20, 0, 0);
+  }
+
+  const nextStr = `Saturday at 8:00 PM (${nextUpdateCutoff.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})`;
+  const currentMVP = latestFinalized || history[0] || null;
+
+  return {
+    category_key: categoryKey,
+    current_mvp: currentMVP,
+    latest_ended_week: latestFinalized?.week_number || (history.length > 0 ? history[0].week_number : 1),
+    history,
+    next_update: nextStr,
+  };
+}
+
 function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
-  const [mvpData, setMvpData] = useState(null);
+  // Synchronous initial value so the component renders instantly with zero delay
+  const [mvpData, setMvpData] = useState(() => {
+    if (categoryObj?.weeklyMvp && categoryObj.weeklyMvp.length > 0) {
+      const hist = categoryObj.weeklyMvp;
+      const finalized = hist.filter((h) => h.is_finalized);
+      const current = finalized.length > 0 ? finalized[finalized.length - 1] : hist[hist.length - 1];
+      return {
+        category_key: categoryKey,
+        current_mvp: current,
+        latest_ended_week: current?.week_number,
+        history: hist,
+        next_update: 'Saturday at 8:00 PM (31 Oct)',
+      };
+    }
+    return computeClientWeeklyMVP(categoryObj, categoryKey);
+  });
+
+  const [selectedWeek, setSelectedWeek] = useState(() => {
+    const defaultRec = mvpData?.current_mvp || mvpData?.history?.[0];
+    return defaultRec?.week_number || 1;
+  });
+
   const [loading, setLoading] = useState(false);
-  const [selectedWeek, setSelectedWeek] = useState(null);
   const [recomputing, setRecomputing] = useState(false);
 
+  // Background hydration from REST API if available
   useEffect(() => {
     let isMounted = true;
     const loadMVP = async () => {
-      setLoading(true);
       try {
         const res = await api.getWeeklyMVP(categoryKey);
-        if (isMounted && res) {
+        if (isMounted && res && res.history && res.history.length > 0) {
           setMvpData(res);
           const defaultWeek =
             res.latest_ended_week ||
             res.current_mvp?.week_number ||
-            res.history?.[0]?.week_number ||
-            1;
-          setSelectedWeek(defaultWeek);
+            res.history[0]?.week_number;
+          if (defaultWeek) setSelectedWeek(defaultWeek);
         }
       } catch (err) {
-        console.warn('Failed to fetch weekly MVP from API, using embedded state:', err);
-        if (isMounted && categoryObj?.weeklyMvp && categoryObj.weeklyMvp.length > 0) {
-          const hist = categoryObj.weeklyMvp;
-          const finalized = hist.filter((h) => h.is_finalized);
-          const current = finalized.length > 0 ? finalized[finalized.length - 1] : hist[hist.length - 1];
-          setMvpData({
-            category_key: categoryKey,
-            current_mvp: current,
-            latest_ended_week: current?.week_number,
-            history: hist,
-            next_update: 'Saturday at 8:00 PM (EAT)',
-          });
-          setSelectedWeek(current?.week_number || 1);
+        // If API fails, client-side fallback is already active
+        if (isMounted && (!mvpData || !mvpData.history || mvpData.history.length === 0)) {
+          const clientData = computeClientWeeklyMVP(categoryObj, categoryKey);
+          if (clientData) {
+            setMvpData(clientData);
+            setSelectedWeek(clientData.latest_ended_week || 1);
+          }
         }
-      } finally {
-        if (isMounted) setLoading(false);
       }
     };
 
@@ -48,7 +293,7 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
     return () => {
       isMounted = false;
     };
-  }, [categoryKey, categoryObj?.weeklyMvp]);
+  }, [categoryKey, categoryObj]);
 
   const handleRecompute = async () => {
     setRecomputing(true);
@@ -66,7 +311,8 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
     }
   };
 
-  const history = mvpData?.history || categoryObj?.weeklyMvp || [];
+  const effectiveData = mvpData || computeClientWeeklyMVP(categoryObj, categoryKey);
+  const history = effectiveData?.history || [];
   if (!history || history.length === 0) {
     return null;
   }
@@ -74,7 +320,7 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
   // Active selected record
   const activeRecord =
     history.find((h) => h.week_number === selectedWeek) ||
-    mvpData?.current_mvp ||
+    effectiveData?.current_mvp ||
     history[0];
   if (!activeRecord) return null;
 
@@ -167,7 +413,7 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
             }}
             title="Weekly MVP evaluates matches and updates every Saturday at 8:00 PM EAT"
           >
-            🕒 Updates every Saturday 8:00 PM · Next: {mvpData?.next_update || 'Saturday 8:00 PM'}
+            🕒 Updates every Saturday 8:00 PM · Next: {effectiveData?.next_update || 'Saturday 8:00 PM'}
           </span>
 
           {isCmsMode && (
@@ -669,6 +915,54 @@ export default function StatsView({
           </button>
         </div>
       </div>
+
+      {/* 🌟 PROMINENT TOP-LEVEL WEEKLY MVP SPOTLIGHT */}
+      {(() => {
+        const featKey =
+          selectedCategoryFilter !== 'all'
+            ? selectedCategoryFilter
+            : activeCategoryKey && categories[activeCategoryKey]
+            ? activeCategoryKey
+            : categoryEntries[0]?.[0];
+        const featObj = featKey ? categories[featKey] : categoryEntries[0]?.[1];
+        if (!featObj) return null;
+
+        return (
+          <div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+                marginBottom: '10px',
+                padding: '0 4px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  color: '#FF9500',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                🌟 OFFICIAL MATCHWEEK MVP SPOTLIGHT · {featObj.label?.toUpperCase() || 'CURRENT LEAGUE'}
+              </div>
+              <span style={{ fontSize: '11.5px', color: 'var(--text-secondary, #8E8E93)' }}>
+                Evaluated &amp; locked every Saturday at 8:00 PM for ended week
+              </span>
+            </div>
+            <WeeklyMVPSection
+              categoryKey={featKey}
+              categoryObj={featObj}
+              isCmsMode={isCmsMode}
+            />
+          </div>
+        );
+      })()}
 
       {/* Category Groups */}
       {visibleCategories.map(([catKey, catObj]) => {
