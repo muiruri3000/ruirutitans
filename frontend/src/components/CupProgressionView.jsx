@@ -1618,13 +1618,13 @@ export default function CupProgressionView({
                                   e.stopPropagation();
                                   onSelectTeam(tie.home, cupCategoryKey);
                                 }}
-                                style={{ fontWeight: 700, fontSize: '13.5px', color: '#FFFFFF' }}
+                                style={{ fontWeight: 700, fontSize: '13.5px', color: 'var(--text-primary)' }}
                                 title={`Click to view ${homeTeam.name} profile, cup trajectory & odds`}
                               >
                                 {homeTeam.name}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#FFFFFF' }}>
+                              <span style={{ fontWeight: 700, fontSize: '13.5px', color: 'var(--text-primary)' }}>
                                 {homeTeam?.name || 'TBD (Qualifier)'}
                               </span>
                             )}
@@ -1668,13 +1668,13 @@ export default function CupProgressionView({
                                   e.stopPropagation();
                                   onSelectTeam(tie.away, cupCategoryKey);
                                 }}
-                                style={{ fontWeight: 700, fontSize: '13.5px', color: '#FFFFFF' }}
+                                style={{ fontWeight: 700, fontSize: '13.5px', color: 'var(--text-primary)' }}
                                 title={`Click to view ${awayTeam.name} profile, cup trajectory & odds`}
                               >
                                 {awayTeam.name}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#FFFFFF' }}>
+                              <span style={{ fontWeight: 700, fontSize: '13.5px', color: 'var(--text-primary)' }}>
                                 {awayTeam?.name || 'Winner SF2 (TBD)'}
                               </span>
                             )}
@@ -2333,13 +2333,13 @@ export default function CupProgressionView({
                                     e.stopPropagation();
                                     onSelectTeam(f.home, cupCategoryKey);
                                   }}
-                                  style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
+                                  style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}
                                   title={`Click to view ${home?.name || f.home} profile, cup trajectory & odds`}
                                 >
                                   {home?.name || f.home}
                                 </button>
                               ) : (
-                                <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{home?.name || f.home}</span>
+                                <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{home?.name || f.home}</span>
                               )}
                             </div>
                             <div className="scoreboard" style={{ fontSize: '20px', color: f.played ? '#FF9500' : '#8E8E93', padding: '0 10px' }}>
@@ -2354,13 +2354,13 @@ export default function CupProgressionView({
                                     e.stopPropagation();
                                     onSelectTeam(f.away, cupCategoryKey);
                                   }}
-                                  style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
+                                  style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}
                                   title={`Click to view ${away?.name || f.away} profile, cup trajectory & odds`}
                                 >
                                   {away?.name || f.away}
                                 </button>
                               ) : (
-                                <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{away?.name || f.away}</span>
+                                <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{away?.name || f.away}</span>
                               )}
                               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: away?.color }} />
                             </div>

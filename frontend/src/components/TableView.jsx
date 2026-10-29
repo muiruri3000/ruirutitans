@@ -171,7 +171,7 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
       </div>
 
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', color: '#FFFFFF', fontSize: '13px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--text-primary)', fontSize: '13px' }}>
           <thead>
             <tr style={{ color: '#8E8E93', textAlign: 'left', background: 'rgba(10, 36, 28, 0.5)' }}>
               <th style={{ padding: '10px 14px', fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Club</th>
@@ -231,13 +231,13 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
                         type="button"
                         className="team-link-btn"
                         onClick={() => onSelectTeam(r.id, activeCategoryKey)}
-                        style={{ fontWeight: 800, fontSize: '13.5px', color: '#FFFFFF' }}
+                        style={{ fontWeight: 800, fontSize: '13.5px', color: 'var(--text-primary)' }}
                         title={`Click to view ${r.name} performance analysis, history & tournament odds`}
                       >
                         {r.name}
                       </button>
                     ) : (
-                      <strong style={{ color: '#FFFFFF', fontSize: '13.5px' }}>{r.name}</strong>
+                      <strong style={{ color: 'var(--text-primary)', fontSize: '13.5px' }}>{r.name}</strong>
                     )}
                     {isLeader && (
                       <span

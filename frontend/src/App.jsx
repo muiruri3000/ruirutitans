@@ -4047,13 +4047,13 @@ export default function App() {
                                 type="button"
                                 className="team-link-btn"
                                 onClick={() => handleOpenTeamDetails(f.home, leagueCategoryKey)}
-                                style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
+                                style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}
                                 title={`Click to view ${home?.name || f.home} profile & odds`}
                               >
                                 {home?.name || f.home}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{home?.name || f.home}</span>
+                              <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{home?.name || f.home}</span>
                             )}
                           </div>
                           <div
@@ -4091,13 +4091,13 @@ export default function App() {
                                 type="button"
                                 className="team-link-btn"
                                 onClick={() => handleOpenTeamDetails(f.away, leagueCategoryKey)}
-                                style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
+                                style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}
                                 title={`Click to view ${away?.name || f.away} profile & odds`}
                               >
                                 {away?.name || f.away}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{away?.name || f.away}</span>
+                              <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{away?.name || f.away}</span>
                             )}
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: away?.color || '#2E5A8F' }} />
                           </div>
@@ -4187,13 +4187,13 @@ export default function App() {
                                 type="button"
                                 className="team-link-btn"
                                 onClick={() => handleOpenTeamDetails(f.home, leagueCategoryKey)}
-                                style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
+                                style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}
                                 title={`Click to view ${home?.name || f.home} profile & odds`}
                               >
                                 {home?.name || f.home}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{home?.name || f.home}</span>
+                              <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{home?.name || f.home}</span>
                             )}
                           </div>
                           <div
@@ -4231,13 +4231,13 @@ export default function App() {
                                 type="button"
                                 className="team-link-btn"
                                 onClick={() => handleOpenTeamDetails(f.away, leagueCategoryKey)}
-                                style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}
+                                style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}
                                 title={`Click to view ${away?.name || f.away} profile & odds`}
                               >
                                 {away?.name || f.away}
                               </button>
                             ) : (
-                              <span style={{ fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>{away?.name || f.away}</span>
+                              <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{away?.name || f.away}</span>
                             )}
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: away?.color || '#2E5A8F' }} />
                           </div>

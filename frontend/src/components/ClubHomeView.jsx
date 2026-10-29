@@ -1561,13 +1561,13 @@ export default function ClubHomeView({
                           type="button"
                           className="team-link-btn"
                           onClick={() => onSelectTeam(fix.homeTeamId, fix.categoryKey)}
-                          style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', textAlign: 'left', flex: 1 }}
+                          style={{ fontSize: '12.5px', fontWeight: 800, color: 'var(--text-primary)', textAlign: 'left', flex: 1 }}
                           title={`Click to view ${fix.home} profile & tournament odds`}
                         >
                           {fix.home}
                         </button>
                       ) : (
-                        <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', flex: 1 }}>
+                        <span style={{ fontSize: '12.5px', fontWeight: 800, color: 'var(--text-primary)', flex: 1 }}>
                           {fix.home}
                         </span>
                       )}
@@ -1588,13 +1588,13 @@ export default function ClubHomeView({
                           type="button"
                           className="team-link-btn"
                           onClick={() => onSelectTeam(fix.awayTeamId, fix.categoryKey)}
-                          style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', textAlign: 'right', justifyContent: 'flex-end', flex: 1 }}
+                          style={{ fontSize: '12.5px', fontWeight: 800, color: 'var(--text-primary)', textAlign: 'right', justifyContent: 'flex-end', flex: 1 }}
                           title={`Click to view ${fix.away} profile & tournament odds`}
                         >
                           {fix.away}
                         </button>
                       ) : (
-                        <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', flex: 1, textAlign: 'right' }}>
+                        <span style={{ fontSize: '12.5px', fontWeight: 800, color: 'var(--text-primary)', flex: 1, textAlign: 'right' }}>
                           {fix.away}
                         </span>
                       )}

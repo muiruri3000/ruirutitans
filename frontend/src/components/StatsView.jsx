@@ -59,7 +59,7 @@ function LeaderboardCard({ title, list, countKey }) {
                     display: 'inline-block',
                   }}
                 />
-                <span style={{ fontWeight: 700, color: '#FFFFFF' }} title={tooltip}>{displayName}</span>
+                <span style={{ fontWeight: 700, color: 'var(--text-primary)' }} title={tooltip}>{displayName}</span>
                 {p.position && (
                   <span
                     style={{
@@ -297,7 +297,7 @@ export default function StatsView({
                 >
                   {catObj.mode === 'cup' ? '🏆 Cup Category' : '📊 League Category'}
                 </span>
-                <h3 className="scoreboard" style={{ margin: 0, fontSize: '24px', color: '#FFFFFF', letterSpacing: '0.04em' }}>
+                <h3 className="scoreboard" style={{ margin: 0, fontSize: '24px', color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
                   {catObj.label}
                 </h3>
                 <span style={{ fontSize: '12px', color: '#8E8E93' }}>

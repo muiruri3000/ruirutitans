@@ -1188,7 +1188,7 @@ export default function DutyRosterView({
                                   flexShrink: 0,
                                 }}
                               />
-                              <span style={{ fontSize: '12px', fontWeight: 800, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.4px', wordBreak: 'break-word' }}>
+                              <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.4px', wordBreak: 'break-word' }}>
                                 {m.homeTeam?.name} (Home)
                               </span>
                             </div>
@@ -1236,7 +1236,7 @@ export default function DutyRosterView({
                           </div>
 
                           {/* Player Name & Task */}
-                          <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF', marginBottom: '2px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                          <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '2px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                             <span>👤 {hDuty.playerName || 'Unassigned'}</span>
                             {hDuty.playerId && exemptedPlayerIds.has(String(hDuty.playerId)) && (
                               <span style={{ fontSize: '10.5px', background: 'rgba(191,90,242,0.2)', color: '#BF5AF2', border: '1px solid #BF5AF2', padding: '1px 6px', borderRadius: '4px' }}>
@@ -1244,7 +1244,7 @@ export default function DutyRosterView({
                               </span>
                             )}
                           </div>
-                          <div style={{ fontSize: '12px', color: '#AEAEB2' }}>
+                          <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
                             {hDuty.task || (isFirst ? `Wash ${m.homeTeam?.name} Bibs` : `Take ${m.homeTeam?.name} Side Goalpost from and back to the Store`)}
                           </div>
                           {hCompleted && hDuty.completedAt && (
@@ -1372,7 +1372,7 @@ export default function DutyRosterView({
                                   flexShrink: 0,
                                 }}
                               />
-                              <span style={{ fontSize: '12px', fontWeight: 800, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.4px', wordBreak: 'break-word' }}>
+                              <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.4px', wordBreak: 'break-word' }}>
                                 {m.awayTeam?.name} (Away)
                               </span>
                             </div>
@@ -1420,7 +1420,7 @@ export default function DutyRosterView({
                           </div>
 
                           {/* Player Name & Task */}
-                          <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF', marginBottom: '2px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                          <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '2px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                             <span>👤 {aDuty.playerName || 'Unassigned'}</span>
                             {aDuty.playerId && exemptedPlayerIds.has(String(aDuty.playerId)) && (
                               <span style={{ fontSize: '10.5px', background: 'rgba(191,90,242,0.2)', color: '#BF5AF2', border: '1px solid #BF5AF2', padding: '1px 6px', borderRadius: '4px' }}>
@@ -1428,7 +1428,7 @@ export default function DutyRosterView({
                               </span>
                             )}
                           </div>
-                          <div style={{ fontSize: '12px', color: '#AEAEB2' }}>
+                          <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
                             {aDuty.task || (isFirst ? `Wash ${m.awayTeam?.name} Bibs` : `Take ${m.awayTeam?.name} Side Goalpost from and back to the Store`)}
                           </div>
                           {aCompleted && aDuty.completedAt && (

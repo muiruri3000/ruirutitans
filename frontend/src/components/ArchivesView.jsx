@@ -908,7 +908,7 @@ export default function ArchivesView({
                             style={{
                               fontWeight: isHomeWinner ? 800 : 600,
                               fontSize: '14px',
-                              color: isHomeWinner ? '#FF9500' : '#FFFFFF',
+                              color: isHomeWinner ? '#FF9500' : 'var(--text-primary)',
                               background: 'none',
                               border: 'none',
                               cursor: 'pointer',
@@ -958,7 +958,7 @@ export default function ArchivesView({
                             style={{
                               fontWeight: isAwayWinner ? 800 : 600,
                               fontSize: '14px',
-                              color: isAwayWinner ? '#FF9500' : '#FFFFFF',
+                              color: isAwayWinner ? '#FF9500' : 'var(--text-primary)',
                               background: 'none',
                               border: 'none',
                               cursor: 'pointer',

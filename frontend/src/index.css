@@ -1570,17 +1570,14 @@ html[data-theme="light"] .top-nav-pill,
 html[data-theme="light"] .club-nav-tab,
 html[data-theme="light"] .cat-switcher-chip,
 html[data-theme="light"] .manage-section-btn,
-html[data-theme="light"] .tab-btn,
 body[data-theme="light"] .top-nav-pill,
 body[data-theme="light"] .club-nav-tab,
 body[data-theme="light"] .cat-switcher-chip,
 body[data-theme="light"] .manage-section-btn,
-body[data-theme="light"] .tab-btn,
 [data-theme="light"] .top-nav-pill,
 [data-theme="light"] .club-nav-tab,
 [data-theme="light"] .cat-switcher-chip,
-[data-theme="light"] .manage-section-btn,
-[data-theme="light"] .tab-btn {
+[data-theme="light"] .manage-section-btn {
   background: #1C1C1E !important;
   color: #FFFFFF !important;
   border: 1px solid rgba(0, 0, 0, 0.25) !important;
@@ -1592,17 +1589,14 @@ html[data-theme="light"] .top-nav-pill *,
 html[data-theme="light"] .club-nav-tab *,
 html[data-theme="light"] .cat-switcher-chip *,
 html[data-theme="light"] .manage-section-btn *,
-html[data-theme="light"] .tab-btn *,
 body[data-theme="light"] .top-nav-pill *,
 body[data-theme="light"] .club-nav-tab *,
 body[data-theme="light"] .cat-switcher-chip *,
 body[data-theme="light"] .manage-section-btn *,
-body[data-theme="light"] .tab-btn *,
 [data-theme="light"] .top-nav-pill *,
 [data-theme="light"] .club-nav-tab *,
 [data-theme="light"] .cat-switcher-chip *,
-[data-theme="light"] .manage-section-btn *,
-[data-theme="light"] .tab-btn * {
+[data-theme="light"] .manage-section-btn * {
   color: #FFFFFF !important;
 }
 
@@ -1611,17 +1605,14 @@ html[data-theme="light"] .top-nav-pill:hover,
 html[data-theme="light"] .club-nav-tab:hover,
 html[data-theme="light"] .cat-switcher-chip:hover,
 html[data-theme="light"] .manage-section-btn:hover,
-html[data-theme="light"] .tab-btn:hover,
 body[data-theme="light"] .top-nav-pill:hover,
 body[data-theme="light"] .club-nav-tab:hover,
 body[data-theme="light"] .cat-switcher-chip:hover,
 body[data-theme="light"] .manage-section-btn:hover,
-body[data-theme="light"] .tab-btn:hover,
 [data-theme="light"] .top-nav-pill:hover,
 [data-theme="light"] .club-nav-tab:hover,
 [data-theme="light"] .cat-switcher-chip:hover,
-[data-theme="light"] .manage-section-btn:hover,
-[data-theme="light"] .tab-btn:hover {
+[data-theme="light"] .manage-section-btn:hover {
   background: #FFFFFF !important;
   color: #000000 !important;
   border-color: #FF9500 !important;
@@ -1632,17 +1623,14 @@ html[data-theme="light"] .top-nav-pill:hover *,
 html[data-theme="light"] .club-nav-tab:hover *,
 html[data-theme="light"] .cat-switcher-chip:hover *,
 html[data-theme="light"] .manage-section-btn:hover *,
-html[data-theme="light"] .tab-btn:hover *,
 body[data-theme="light"] .top-nav-pill:hover *,
 body[data-theme="light"] .club-nav-tab:hover *,
 body[data-theme="light"] .cat-switcher-chip:hover *,
 body[data-theme="light"] .manage-section-btn:hover *,
-body[data-theme="light"] .tab-btn:hover *,
 [data-theme="light"] .top-nav-pill:hover *,
 [data-theme="light"] .club-nav-tab:hover *,
 [data-theme="light"] .cat-switcher-chip:hover *,
-[data-theme="light"] .manage-section-btn:hover *,
-[data-theme="light"] .tab-btn:hover * {
+[data-theme="light"] .manage-section-btn:hover * {
   color: #000000 !important;
 }
 
@@ -1651,17 +1639,14 @@ html[data-theme="light"] .top-nav-pill.active,
 html[data-theme="light"] .club-nav-tab.active,
 html[data-theme="light"] .cat-switcher-chip.active,
 html[data-theme="light"] .manage-section-btn.active,
-html[data-theme="light"] .tab-btn.active,
 body[data-theme="light"] .top-nav-pill.active,
 body[data-theme="light"] .club-nav-tab.active,
 body[data-theme="light"] .cat-switcher-chip.active,
 body[data-theme="light"] .manage-section-btn.active,
-body[data-theme="light"] .tab-btn.active,
 [data-theme="light"] .top-nav-pill.active,
 [data-theme="light"] .club-nav-tab.active,
 [data-theme="light"] .cat-switcher-chip.active,
-[data-theme="light"] .manage-section-btn.active,
-[data-theme="light"] .tab-btn.active {
+[data-theme="light"] .manage-section-btn.active {
   background: #FF9500 !important;
   color: #000000 !important;
   border-color: #FF9500 !important;
@@ -1673,17 +1658,14 @@ html[data-theme="light"] .top-nav-pill.active *,
 html[data-theme="light"] .club-nav-tab.active *,
 html[data-theme="light"] .cat-switcher-chip.active *,
 html[data-theme="light"] .manage-section-btn.active *,
-html[data-theme="light"] .tab-btn.active *,
 body[data-theme="light"] .top-nav-pill.active *,
 body[data-theme="light"] .club-nav-tab.active *,
 body[data-theme="light"] .cat-switcher-chip.active *,
 body[data-theme="light"] .manage-section-btn.active *,
-body[data-theme="light"] .tab-btn.active *,
 [data-theme="light"] .top-nav-pill.active *,
 [data-theme="light"] .club-nav-tab.active *,
 [data-theme="light"] .cat-switcher-chip.active *,
-[data-theme="light"] .manage-section-btn.active *,
-[data-theme="light"] .tab-btn.active * {
+[data-theme="light"] .manage-section-btn.active * {
   color: #000000 !important;
 }
 
@@ -1692,17 +1674,14 @@ html[data-theme="light"] .top-nav-pill.active:hover,
 html[data-theme="light"] .club-nav-tab.active:hover,
 html[data-theme="light"] .cat-switcher-chip.active:hover,
 html[data-theme="light"] .manage-section-btn.active:hover,
-html[data-theme="light"] .tab-btn.active:hover,
 body[data-theme="light"] .top-nav-pill.active:hover,
 body[data-theme="light"] .club-nav-tab.active:hover,
 body[data-theme="light"] .cat-switcher-chip.active:hover,
 body[data-theme="light"] .manage-section-btn.active:hover,
-body[data-theme="light"] .tab-btn.active:hover,
 [data-theme="light"] .top-nav-pill.active:hover,
 [data-theme="light"] .club-nav-tab.active:hover,
 [data-theme="light"] .cat-switcher-chip.active:hover,
-[data-theme="light"] .manage-section-btn.active:hover,
-[data-theme="light"] .tab-btn.active:hover {
+[data-theme="light"] .manage-section-btn.active:hover {
   background: #FFFFFF !important;
   color: #000000 !important;
   border-color: #FF9500 !important;
@@ -1713,17 +1692,119 @@ html[data-theme="light"] .top-nav-pill.active:hover *,
 html[data-theme="light"] .club-nav-tab.active:hover *,
 html[data-theme="light"] .cat-switcher-chip.active:hover *,
 html[data-theme="light"] .manage-section-btn.active:hover *,
-html[data-theme="light"] .tab-btn.active:hover *,
 body[data-theme="light"] .top-nav-pill.active:hover *,
 body[data-theme="light"] .club-nav-tab.active:hover *,
 body[data-theme="light"] .cat-switcher-chip.active:hover *,
 body[data-theme="light"] .manage-section-btn.active:hover *,
-body[data-theme="light"] .tab-btn.active:hover *,
 [data-theme="light"] .top-nav-pill.active:hover *,
 [data-theme="light"] .club-nav-tab.active:hover *,
 [data-theme="light"] .cat-switcher-chip.active:hover *,
-[data-theme="light"] .manage-section-btn.active:hover *,
-[data-theme="light"] .tab-btn.active:hover * {
+[data-theme="light"] .manage-section-btn.active:hover * {
   color: #000000 !important;
+}
+
+/* ==========================================================================
+   Apple HIG Color Audit: Team Names, Headings, Tables & Cards in Light Mode
+   ========================================================================== */
+
+/* Team names: Always high contrast #1C1C1E in light mode across all cards & tables */
+[data-theme="light"] .team-link-btn,
+[data-theme="light"] button.team-link-btn,
+[data-theme="light"] a.team-link-btn,
+[data-theme="light"] .fixture-card .team-link-btn,
+[data-theme="light"] .tie-card .team-link-btn,
+[data-theme="light"] .duty-side-card .team-link-btn,
+[data-theme="light"] table .team-link-btn,
+[data-theme="light"] .team-modal .team-link-btn,
+[data-theme="light"] .h2h-modal .team-link-btn {
+  color: #1C1C1E !important;
+  font-weight: 800 !important;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 149, 0, 0.5);
+}
+
+[data-theme="light"] .team-link-btn:hover,
+[data-theme="light"] button.team-link-btn:hover,
+[data-theme="light"] a.team-link-btn:hover,
+[data-theme="light"] .fixture-card .team-link-btn:hover,
+[data-theme="light"] .tie-card .team-link-btn:hover,
+[data-theme="light"] table .team-link-btn:hover {
+  color: #D97700 !important;
+  text-decoration-color: #D97700 !important;
+}
+
+/* Fixture cards & Tie cards team names and text */
+[data-theme="light"] .fixture-card,
+[data-theme="light"] .tie-card {
+  background: #FFFFFF !important;
+  color: #1C1C1E !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .fixture-card span:not(.scoreboard):not(.cat-switcher-chip):not(.form-badge),
+[data-theme="light"] .tie-card span:not(.scoreboard) {
+  color: #1C1C1E;
+}
+
+[data-theme="light"] .fixture-card .scoreboard,
+[data-theme="light"] .tie-card .scoreboard {
+  background: #F2F2F7 !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #D97700 !important;
+}
+
+/* Standings table in light mode */
+[data-theme="light"] table {
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] table thead tr {
+  background: #E5E5EA !important;
+}
+
+[data-theme="light"] table th {
+  color: #3C3C43 !important;
+}
+
+[data-theme="light"] table td,
+[data-theme="light"] table strong {
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] table tbody tr {
+  border-top-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Duty roster team names, player names and tasks */
+[data-theme="light"] .duty-side-card {
+  background: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] .duty-header-row span {
+  color: #3C3C43 !important;
+}
+
+/* General RGB-normalized white text on light surfaces */
+[data-theme="light"] [style*="rgb(255, 255, 255)"]:not(.top-nav-pill):not(.club-nav-tab):not(.cat-switcher-chip):not(.manage-section-btn):not(.theme-mode-btn):not(.btn-pill-action),
+[data-theme="light"] [style*="rgb(255,255,255)"]:not(.top-nav-pill):not(.club-nav-tab):not(.cat-switcher-chip):not(.manage-section-btn):not(.theme-mode-btn):not(.btn-pill-action),
+[data-theme="light"] [style*="color: #FFFFFF"]:not(.top-nav-pill):not(.club-nav-tab):not(.cat-switcher-chip):not(.manage-section-btn):not(.theme-mode-btn):not(.btn-pill-action),
+[data-theme="light"] [style*="color:#FFFFFF"]:not(.top-nav-pill):not(.club-nav-tab):not(.cat-switcher-chip):not(.manage-section-btn):not(.theme-mode-btn):not(.btn-pill-action) {
+  color: #1C1C1E !important;
+}
+
+/* Subtle labels light mode contrast */
+[data-theme="light"] [style*="rgb(235, 235, 245)"],
+[data-theme="light"] [style*="rgb(235,235,245)"],
+[data-theme="light"] [style*="color: #EBEBF5"],
+[data-theme="light"] [style*="color:#EBEBF5"] {
+  color: #3C3C43 !important;
+}
+
+[data-theme="light"] [style*="rgb(174, 174, 178)"],
+[data-theme="light"] [style*="rgb(174,174,178)"],
+[data-theme="light"] [style*="color: #AEAEB2"],
+[data-theme="light"] [style*="color:#AEAEB2"] {
+  color: #6C6C70 !important;
 }
 

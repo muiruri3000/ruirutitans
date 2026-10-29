@@ -1803,13 +1803,13 @@ export default function FixturesView({
                         e.stopPropagation();
                         onSelectTeam(f.home, activeCategoryKey);
                       }}
-                      style={{ fontWeight: 800, color: '#FFFFFF', fontSize: '15px' }}
+                      style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '15px' }}
                       title={`Click to view ${home?.name || f.home} profile, statistics & odds`}
                     >
                       {home?.name || 'TBD'}
                     </button>
                   ) : (
-                    <span style={{ fontWeight: 800, color: '#FFFFFF', fontSize: '15px' }}>{home?.name || 'TBD'}</span>
+                    <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '15px' }}>{home?.name || 'TBD'}</span>
                   )}
                 </div>
 
@@ -1853,13 +1853,13 @@ export default function FixturesView({
                         e.stopPropagation();
                         onSelectTeam(f.away, activeCategoryKey);
                       }}
-                      style={{ fontWeight: 800, color: '#FFFFFF', fontSize: '15px' }}
+                      style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '15px' }}
                       title={`Click to view ${away?.name || f.away} profile, statistics & odds`}
                     >
                       {away?.name || 'TBD'}
                     </button>
                   ) : (
-                    <span style={{ fontWeight: 800, color: '#FFFFFF', fontSize: '15px' }}>{away?.name || 'TBD'}</span>
+                    <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '15px' }}>{away?.name || 'TBD'}</span>
                   )}
                   <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: away?.color || '#2E5A8F', flexShrink: 0 }} />
                 </div>
@@ -2110,7 +2110,7 @@ export default function FixturesView({
                   >
                     {/* Home Team quick score */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontWeight: 800, fontSize: '13px', color: '#FFFFFF' }}>{home?.name || f.home}</span>
+                      <span style={{ fontWeight: 800, fontSize: '13px', color: 'var(--text-primary)' }}>{home?.name || f.home}</span>
                       <span style={{ fontSize: '20px', fontWeight: 900, color: '#FF9500', minWidth: '24px', textAlign: 'center' }}>{hs}</span>
                       <div style={{ display: 'flex', gap: '4px' }}>
                         <button
@@ -2214,7 +2214,7 @@ export default function FixturesView({
                         </button>
                       </div>
                       <span style={{ fontSize: '20px', fontWeight: 900, color: '#FF9500', minWidth: '24px', textAlign: 'center' }}>{as}</span>
-                      <span style={{ fontWeight: 800, fontSize: '13px', color: '#FFFFFF' }}>{away?.name || f.away}</span>
+                      <span style={{ fontWeight: 800, fontSize: '13px', color: 'var(--text-primary)' }}>{away?.name || f.away}</span>
                     </div>
                   </div>
 
