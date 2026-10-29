@@ -99,7 +99,58 @@ const defaultHeaders = (includeContentType = true) => {
 };
 
 export function sanitizeExMilitaryFixtures(state) {
-  return state;
+  if (!state) return state;
+  const isTestKey = (k = "", label = "") => {
+    const s = `${k} ${label}`.toLowerCase();
+    return (
+      s.includes("test-league") ||
+      s.includes("test league") ||
+      s.includes("test_league") ||
+      s.includes("test 2026") ||
+      k === "test"
+    );
+  };
+
+  const nextState = { ...state };
+
+  if (nextState.categories) {
+    const filteredCategories = {};
+    Object.entries(nextState.categories).forEach(([k, cat]) => {
+      if (!isTestKey(k, cat?.label)) {
+        filteredCategories[k] = cat;
+      }
+    });
+    nextState.categories = filteredCategories;
+  }
+
+  if (nextState.deletedCategories) {
+    const filteredDeleted = {};
+    Object.entries(nextState.deletedCategories).forEach(([k, cat]) => {
+      if (!isTestKey(k, cat?.label)) {
+        filteredDeleted[k] = cat;
+      }
+    });
+    nextState.deletedCategories = filteredDeleted;
+  }
+
+  if (isTestKey(nextState.activeCategory)) {
+    nextState.activeCategory = "ruiru-titans-league-oct-nov-2026";
+  }
+
+  if (typeof window !== "undefined" && window.localStorage) {
+    try {
+      const activeStored = localStorage.getItem("ruiru_titans_active_category");
+      if (activeStored && isTestKey(activeStored)) {
+        localStorage.removeItem("ruiru_titans_active_category");
+      }
+      const pendingStored = localStorage.getItem("ruiru_titans_pending_sync");
+      if (pendingStored && isTestKey(pendingStored)) {
+        localStorage.removeItem("ruiru_titans_pending_sync");
+      }
+    } catch {}
+  }
+
+  return nextState;
 }
 
 export const api = {

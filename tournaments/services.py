@@ -1809,12 +1809,21 @@ def export_state_from_db():
             settings.homepage_data = normalized_hp
             settings.save(update_fields=["homepage_data"])
 
+    def _is_test_cat(c):
+        k = (c.key or "").lower()
+        lbl = (c.label or "").lower()
+        return "test-league" in k or "test_league" in k or k == "test" or "test league" in lbl or "test 2026" in lbl
+
     categories = {}
     for cat in Category.objects.filter(is_deleted=False).order_by("key"):
+        if _is_test_cat(cat):
+            continue
         categories[cat.key] = cat.to_state_dict()
 
     deleted_categories = {}
     for cat in Category.objects.filter(is_deleted=True).order_by("-deleted_at", "key"):
+        if _is_test_cat(cat):
+            continue
         deleted_categories[cat.key] = cat.to_state_dict()
 
     if categories:

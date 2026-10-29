@@ -274,10 +274,16 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
             res.current_mvp?.week_number ||
             res.history[0]?.week_number;
           if (defaultWeek) setSelectedWeek(defaultWeek);
+        } else if (isMounted) {
+          const clientData = computeClientWeeklyMVP(categoryObj, categoryKey);
+          if (clientData) {
+            setMvpData(clientData);
+            setSelectedWeek(clientData.latest_ended_week || 1);
+          }
         }
       } catch (err) {
         // If API fails, client-side fallback is already active
-        if (isMounted && (!mvpData || !mvpData.history || mvpData.history.length === 0)) {
+        if (isMounted) {
           const clientData = computeClientWeeklyMVP(categoryObj, categoryKey);
           if (clientData) {
             setMvpData(clientData);
@@ -811,7 +817,7 @@ export default function StatsView({
             📥 Export Player Stats CSV
           </a>
         </div>
-        <WeeklyMVPSection categoryKey={activeCategoryKey} isCmsMode={isCmsMode} />
+        <WeeklyMVPSection categoryKey={activeCategoryKey} categoryObj={categories?.[activeCategoryKey]} isCmsMode={isCmsMode} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
           <LeaderboardCard title="Top Scorers (Golden Boot)" list={leaderboards?.scorers} countKey="goal" />
           <LeaderboardCard title="Top Assists (Playmaker)" list={leaderboards?.assists} countKey="assist" />

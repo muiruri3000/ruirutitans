@@ -341,6 +341,18 @@ export default function App() {
   useEffect(() => {
     async function init() {
       try {
+        // Proactively purge any stale test league keys from localStorage
+        try {
+          const storedCat = localStorage.getItem('ruiru_titans_active_category');
+          if (storedCat && (storedCat.includes('test-league') || storedCat.includes('test league') || storedCat === 'test')) {
+            localStorage.removeItem('ruiru_titans_active_category');
+          }
+          const storedSync = localStorage.getItem('ruiru_titans_pending_sync');
+          if (storedSync && (storedSync.includes('test-league') || storedSync.includes('test league') || storedSync.includes('Test League'))) {
+            localStorage.removeItem('ruiru_titans_pending_sync');
+          }
+        } catch {}
+
         const [serverState, sessionInfo] = await Promise.all([
           api.getState(),
           api.getAuthSession().catch(() => ({ cms: null, player: null })),
