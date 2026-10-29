@@ -24,59 +24,68 @@ function LeaderboardCard({ title, list, countKey }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        {(list || []).map((p, i) => (
-          <div
-            key={p.id}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 10px',
-              borderRadius: '8px',
-              background: i === 0 ? 'rgba(255, 149, 0, 0.12)' : '#1C1C1E',
-              border: i === 0 ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)',
-              fontSize: '13px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '11px', color: '#8E8E93', width: '16px', textAlign: 'right', fontWeight: 700 }}>
-                {i + 1}
-              </span>
-              <span
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: p.teamColor || '#FF9500',
-                  display: 'inline-block',
-                }}
-              />
-              <span style={{ fontWeight: 700, color: '#FFFFFF' }}>{p.name}</span>
-              {p.position && (
+        {(list || []).map((p, i) => {
+          const rawFirst = (p.firstName || p.first_name || '').trim();
+          const rawUser = (p.username || '').trim();
+          const firstName = (rawFirst && rawFirst.toLowerCase() !== 'unrecorded') ? rawFirst : '';
+          // Stats should show first name when available; if not, show username
+          const displayName = p.displayName || firstName || rawUser || p.name || p.id;
+          const tooltip = p.fullName && p.fullName !== displayName ? `${p.fullName} (@${rawUser || p.username || ''})` : displayName;
+
+          return (
+            <div
+              key={p.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 10px',
+                borderRadius: '8px',
+                background: i === 0 ? 'rgba(255, 149, 0, 0.12)' : '#1C1C1E',
+                border: i === 0 ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)',
+                fontSize: '13px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '11px', color: '#8E8E93', width: '16px', textAlign: 'right', fontWeight: 700 }}>
+                  {i + 1}
+                </span>
                 <span
                   style={{
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    background: 'rgba(255, 149, 0, 0.15)',
-                    color: '#FF9F0A',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid rgba(255, 149, 0, 0.3)',
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: p.teamColor || '#FF9500',
+                    display: 'inline-block',
                   }}
-                >
-                  {p.position}
-                </span>
-              )}
-              <span style={{ fontSize: '11.5px', color: '#8E8E93' }}>({p.teamName})</span>
+                />
+                <span style={{ fontWeight: 700, color: '#FFFFFF' }} title={tooltip}>{displayName}</span>
+                {p.position && (
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      background: 'rgba(255, 149, 0, 0.15)',
+                      color: '#FF9F0A',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      border: '1px solid rgba(255, 149, 0, 0.3)',
+                    }}
+                  >
+                    {p.position}
+                  </span>
+                )}
+                <span style={{ fontSize: '11.5px', color: '#8E8E93' }}>({p.teamName})</span>
+              </div>
+              <div
+                className="scoreboard"
+                style={{ fontSize: '20px', color: '#FF9500', fontWeight: 800 }}
+              >
+                {p[countKey]}
+              </div>
             </div>
-            <div
-              className="scoreboard"
-              style={{ fontSize: '20px', color: '#FF9500', fontWeight: 800 }}
-            >
-              {p[countKey]}
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {(!list || list.length === 0) && (
           <div style={{ fontSize: '12px', color: '#8E8E93', textAlign: 'center', padding: '16px 0' }}>

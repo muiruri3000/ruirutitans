@@ -620,10 +620,20 @@ export default function App() {
       (catObj.teams || []).forEach((t) =>
         (t.players || []).forEach((p) => {
           if (!p.unknown) {
+            const rawFirst = (p.firstName || p.first_name || '').trim();
+            const rawUser = (p.username || '').trim();
+            const rawName = (p.name || '').trim();
+            const firstName = (rawFirst && rawFirst.toLowerCase() !== 'unrecorded') ? rawFirst : '';
+            // Stats should show first name when available; if not, show username
+            const displayName = firstName || rawUser || rawName || p.id;
             meta[p.id] = {
               id: p.id,
               permanentId: p.permanentId || p.id,
-              name: p.name,
+              name: displayName,
+              displayName,
+              fullName: rawName,
+              firstName,
+              username: rawUser,
               position: p.position || '',
               teamName: t.name,
               teamColor: t.color,
