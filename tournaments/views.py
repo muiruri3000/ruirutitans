@@ -701,6 +701,39 @@ class FixtureReportAPIView(views.APIView):
         })
 
 
+class WeeklyMVPAPIView(views.APIView):
+    """
+    Weekly MVP API endpoint:
+    - GET: Returns the latest finalized Weekly MVP (updated every Saturday at 8:00 PM),
+           provisional in-progress week, upcoming update schedule, and all past weeks.
+    - POST: Allows CMS administrators to force recalculation or sync.
+    """
+    def get_permissions(self):
+        if self.request.method in ("GET", "HEAD", "OPTIONS"):
+            return [permissions.AllowAny()]
+        return [IsCMSAdmin()]
+
+    def get(self, request, key):
+        category = Category.objects.filter(key=key).first() or Category.objects.filter(key__iexact=key).first()
+        if not category:
+            return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+        from .services import get_weekly_mvp_summary
+        data = get_weekly_mvp_summary(category)
+        return Response(data)
+
+    def post(self, request, key):
+        category = Category.objects.filter(key=key).first() or Category.objects.filter(key__iexact=key).first()
+        if not category:
+            return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+        from .services import compute_weekly_mvps
+        force = bool(request.data.get("force", True))
+        data = compute_weekly_mvps(category, force=force)
+        return Response({
+            "success": True,
+            "message": f"Weekly MVPs for {category.label} recomputed successfully.",
+            "data": data,
+        })
+
 
 class VotingCurrentAPIView(views.APIView):
     """

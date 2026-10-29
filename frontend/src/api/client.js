@@ -892,5 +892,29 @@ export const api = {
     }
     return await res.json();
   },
+
+  async getWeeklyMVP(categoryKey) {
+    const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/weekly-mvp/`, {
+      headers: defaultHeaders(),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to load weekly MVP: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async recomputeWeeklyMVP(categoryKey, force = true) {
+    const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/weekly-mvp/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify({ force }),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to recompute weekly MVP: ${res.status}`);
+    }
+    return await res.json();
+  },
 };
 

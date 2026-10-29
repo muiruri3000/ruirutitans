@@ -197,6 +197,8 @@ class Category(models.Model):
             "include_gk": bool(self.voting_include_gk),
         }
 
+        weekly_mvps_data = [m.to_dict() for m in self.weekly_mvps.all().order_by("week_number")]
+
         if self.mode == "league":
             league_fixtures = list(self.fixtures.filter(phase="league"))
             league_fixtures.sort(key=fixture_sort_key)
@@ -212,6 +214,7 @@ class Category(models.Model):
                 "dutyRoster": duty_roster,
                 "referees": referees_list,
                 "votingConfig": voting_config,
+                "weeklyMvp": weekly_mvps_data,
                 "isEnded": bool(self.is_ended),
                 "endedAt": self.ended_at.isoformat() if self.ended_at else None,
                 "championTeam": self.champion_team or "",
@@ -245,6 +248,7 @@ class Category(models.Model):
                 "referees": referees_list,
                 "note": self.note,
                 "votingConfig": voting_config,
+                "weeklyMvp": weekly_mvps_data,
                 "isEnded": bool(self.is_ended),
                 "endedAt": self.ended_at.isoformat() if self.ended_at else None,
                 "championTeam": self.champion_team or "",
@@ -951,5 +955,80 @@ class VisitorComment(models.Model):
             "moderatedAt": self.moderated_at.isoformat() if self.moderated_at else None,
             "moderatedBy": self.moderated_by or "",
         }
+
+
+class WeeklyMVP(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="weekly_mvps")
+    week_number = models.PositiveIntegerField(default=1)
+    week_title = models.CharField(max_length=128, default="Matchweek 1")
+    week_ending_date = models.DateField(null=True, blank=True)
+    cutoff_datetime = models.DateTimeField(null=True, blank=True)
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="weekly_mvps")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="weekly_mvps")
+
+    goals = models.PositiveSmallIntegerField(default=0)
+    assists = models.PositiveSmallIntegerField(default=0)
+    clean_sheets = models.PositiveSmallIntegerField(default=0)
+    yellows = models.PositiveSmallIntegerField(default=0)
+    reds = models.PositiveSmallIntegerField(default=0)
+    motm_awards = models.PositiveSmallIntegerField(default=0)
+    points = models.FloatField(default=0.0)
+    rationale = models.TextField(blank=True, default="")
+
+    is_finalized = models.BooleanField(default=True)
+    is_manual_override = models.BooleanField(default=False)
+    computed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-week_number", "-id"]
+        unique_together = ("category", "week_number")
+        verbose_name = "Weekly MVP"
+        verbose_name_plural = "Weekly MVPs"
+
+    def __str__(self):
+        status = "Finalized" if self.is_finalized else "Provisional"
+        return f"{self.category.label} - Week {self.week_number} MVP: {self.player.name} ({status})"
+
+    def to_dict(self):
+        raw_first = (self.player.first_name or "").strip()
+        raw_user = (self.player.username or "").strip()
+        first_name = raw_first if raw_first.lower() != "unrecorded" else ""
+        display_name = first_name or raw_user or self.player.name
+
+        return {
+            "id": self.id,
+            "category_key": self.category.key,
+            "week_number": self.week_number,
+            "week_title": self.week_title or f"Matchweek {self.week_number}",
+            "week_ending_date": self.week_ending_date.isoformat() if self.week_ending_date else None,
+            "cutoff_datetime": self.cutoff_datetime.isoformat() if self.cutoff_datetime else None,
+            "is_finalized": bool(self.is_finalized),
+            "is_manual_override": bool(self.is_manual_override),
+            "player": {
+                "id": self.player.player_id,
+                "name": self.player.name,
+                "displayName": display_name,
+                "first_name": self.player.first_name,
+                "username": self.player.username,
+                "position": self.player.position,
+                "jersey_number": self.player.jersey_number,
+                "team_id": self.team.team_id if self.team else None,
+                "team_name": self.team.name if self.team else "",
+                "team_color": self.team.color if self.team else "#FF9500",
+            },
+            "stats": {
+                "goals": self.goals,
+                "assists": self.assists,
+                "yellows": self.yellows,
+                "reds": self.reds,
+                "clean_sheets": self.clean_sheets,
+                "motm_awards": self.motm_awards,
+                "points": self.points,
+            },
+            "rationale": self.rationale,
+            "computed_at": self.computed_at.isoformat() if self.computed_at else None,
+        }
+
 
 

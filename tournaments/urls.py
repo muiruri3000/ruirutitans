@@ -45,6 +45,7 @@ from .views import (
     DutyRosterAPIView,
     VisitorCommentAPIView,
     VisitorCommentDetailAPIView,
+    WeeklyMVPAPIView,
 )
 
 app_name = "tournaments"
@@ -93,6 +94,7 @@ urlpatterns = [
     path("download/league-fixtures.json", ExportFixturesJSONView.as_view(), name="download_league_fixtures_json"),
     path("api/export/league-fixtures-json/", ExportFixturesJSONView.as_view(), name="api_export_league_fixtures_json"),
     path("api/categories/<str:key>/export/players-csv/", ExportPlayersCSVView.as_view(), name="api_export_players_csv"),
+    path("api/categories/<str:key>/weekly-mvp/", WeeklyMVPAPIView.as_view(), name="api_category_weekly_mvp"),
     path("api/categories/<str:key>/voting/", VotingCurrentAPIView.as_view(), name="api_category_voting"),
     path("api/categories/<str:key>/voting/submit/", VotingSubmitAPIView.as_view(), name="api_category_voting_submit"),
     path("api/categories/<str:key>/voting/tott/", VotingTOTTAPIView.as_view(), name="api_category_voting_tott"),

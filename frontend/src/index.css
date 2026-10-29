@@ -1808,3 +1808,34 @@ body[data-theme="light"] .manage-section-btn.active:hover *,
   color: #6C6C70 !important;
 }
 
+/* Weekly MVP Card - High Contrast & Apple HIG Alignment in Light Mode */
+[data-theme="light"] .weekly-mvp-card {
+  background: linear-gradient(135deg, rgba(217, 119, 0, 0.08) 0%, #FFFFFF 100%) !important;
+  border: 1px solid rgba(217, 119, 0, 0.35) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08) !important;
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] .weekly-mvp-card div[style*="background: #1C1C1E"],
+[data-theme="light"] .weekly-mvp-card div[style*="background: rgb(28, 28, 30)"],
+[data-theme="light"] .weekly-mvp-card div[style*="background:#1C1C1E"] {
+  background: #F2F2F7 !important;
+  border-color: #E5E5EA !important;
+}
+
+[data-theme="light"] .weekly-mvp-card div[style*="color: #8E8E93"],
+[data-theme="light"] .weekly-mvp-card span[style*="color: #8E8E93"] {
+  color: #3C3C43 !important;
+}
+
+[data-theme="light"] .weekly-mvp-card div[style*="color: #D1D5DB"] {
+  color: #1C1C1E !important;
+}
+
+[data-theme="light"] .weekly-mvp-card button[style*="background: rgba(255, 255, 255, 0.05)"] {
+  background: #E5E5EA !important;
+  color: #1C1C1E !important;
+  border-color: #D1D1D6 !important;
+}
+
+

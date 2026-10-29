@@ -4502,6 +4502,7 @@ export default function App() {
             leaderboardsByCategory={leaderboardsByCategory}
             leaderboards={leaderboards}
             activeCategoryKey={activeCategoryKey}
+            isCmsMode={Boolean(cmsUser)}
           />
         )}
 

@@ -4,7 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.text import slugify
 from django.db.models import Count, Max, Avg, Q
-from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote, fixture_sort_key
+from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote, WeeklyMVP, fixture_sort_key, parse_fixture_date_key
 
 REAL_OPEN_TEAM_SEED = [
     {
@@ -5608,6 +5608,319 @@ def update_duty_roster_assignment(category, fixture_id, side, player_id=None, pl
     category.schedule_days = schedule_days
     category.save(update_fields=["schedule_days"])
     return roster_data
+
+
+def compute_weekly_mvps(category, reference_dt=None, force=False):
+    """
+    Computes and persists the Weekly MVP for every matchweek in the category.
+    Each week's window ends on Saturday at 8:00 PM (20:00:00).
+    - If Saturday 8:00 PM has already elapsed relative to reference_dt (or now),
+      the week is finalized as the official Weekly MVP.
+    - If Saturday 8:00 PM is in the future, the week is provisional/in-progress.
+    - Awards points based on goals (4), assists (3), clean sheets (4), MOTM awards (5),
+      TOTW votes (1), and disciplinary penalties (yellow: -1, red: -3).
+    """
+    import datetime
+    from collections import defaultdict
+
+    if reference_dt is None:
+        reference_dt = timezone.now()
+
+    all_fixtures = list(
+        category.fixtures.all().prefetch_related(
+            "events", "events__player", "events__assist_player", "events__team",
+            "home_team", "away_team", "walkover_winner"
+        )
+    )
+    if not all_fixtures:
+        return {
+            "category_key": category.key,
+            "current_mvp": None,
+            "latest_ended_week": None,
+            "history": [],
+            "next_update": None,
+        }
+
+    # Partition fixtures by Saturday 8:00 PM cutoffs
+    week_groups = defaultdict(list)
+    for f in all_fixtures:
+        k = parse_fixture_date_key(f.date)
+        if k[0] == 0:
+            dt = datetime.datetime(k[1], k[2], k[3], k[4], k[5])
+            days_to_sat = (5 - dt.weekday()) % 7
+            sat_date = dt.date() + datetime.timedelta(days=days_to_sat)
+            sat_cutoff = datetime.datetime(sat_date.year, sat_date.month, sat_date.day, 20, 0)
+            if timezone.is_aware(reference_dt):
+                sat_cutoff = timezone.make_aware(sat_cutoff, timezone.get_current_timezone())
+            week_groups[sat_cutoff].append(f)
+
+    sorted_cutoffs = sorted(week_groups.keys())
+
+    # Fallback if dates were unparseable: group into chunks of 8
+    if not sorted_cutoffs:
+        sorted_fixtures = sorted(all_fixtures, key=fixture_sort_key)
+        chunk_size = 8
+        base_sat = reference_dt.date() + datetime.timedelta(days=(5 - reference_dt.weekday()) % 7)
+        for i in range(0, len(sorted_fixtures), chunk_size):
+            sat_date = base_sat + datetime.timedelta(weeks=i // chunk_size)
+            sat_cutoff = datetime.datetime(sat_date.year, sat_date.month, sat_date.day, 20, 0)
+            if timezone.is_aware(reference_dt):
+                sat_cutoff = timezone.make_aware(sat_cutoff, timezone.get_current_timezone())
+            sorted_cutoffs.append(sat_cutoff)
+            week_groups[sat_cutoff] = sorted_fixtures[i:i + chunk_size]
+
+    voting_rounds_by_week = {
+        vr.week_number: vr for vr in VotingRound.objects.filter(category=category)
+    }
+
+    created_or_updated = []
+    latest_finalized_mvp = None
+    next_sat_cutoff = None
+
+    for week_num, sat_cutoff in enumerate(sorted_cutoffs, start=1):
+        f_list = week_groups[sat_cutoff]
+        is_finalized = sat_cutoff <= reference_dt
+        if not is_finalized and next_sat_cutoff is None:
+            next_sat_cutoff = sat_cutoff
+
+        # Check existing MVP
+        existing = WeeklyMVP.objects.filter(category=category, week_number=week_num).first()
+        if existing and existing.is_manual_override and not force:
+            created_or_updated.append(existing)
+            if existing.is_finalized:
+                latest_finalized_mvp = existing
+            continue
+
+        # Aggregate player stats across completed matches in this week
+        player_stats = defaultdict(lambda: {
+            "player": None,
+            "team": None,
+            "goals": 0,
+            "assists": 0,
+            "yellows": 0,
+            "reds": 0,
+            "clean_sheets": 0,
+            "motm_awards": 0,
+            "votes": 0,
+        })
+
+        completed_fixtures = [
+            f for f in f_list if (f.played or f.walkover_winner or f.events.exists())
+        ]
+
+        for f in completed_fixtures:
+            h_score, a_score = f.score
+            motm_name = (f.report or {}).get("motm", "").strip().lower()
+
+            for ev in f.events.all():
+                if ev.event_type in ("goal", "penalty") and ev.player:
+                    p_entry = player_stats[ev.player.id]
+                    p_entry["player"] = ev.player
+                    p_entry["team"] = ev.team or ev.player.team
+                    p_entry["goals"] += 1
+                elif ev.assist_player:
+                    p_entry = player_stats[ev.assist_player.id]
+                    p_entry["player"] = ev.assist_player
+                    p_entry["team"] = ev.assist_player.team
+                    p_entry["assists"] += 1
+                elif ev.event_type == "yellow" and ev.player:
+                    p_entry = player_stats[ev.player.id]
+                    p_entry["player"] = ev.player
+                    p_entry["team"] = ev.player.team
+                    p_entry["yellows"] += 1
+                elif ev.event_type == "red" and ev.player:
+                    p_entry = player_stats[ev.player.id]
+                    p_entry["player"] = ev.player
+                    p_entry["team"] = ev.player.team
+                    p_entry["reds"] += 1
+
+                if ev.player and motm_name and motm_name in (ev.player.name or "").lower():
+                    player_stats[ev.player.id]["motm_awards"] += 1
+
+            # Clean sheet bonus
+            if a_score == 0 and f.home_team:
+                for p in f.home_team.players.filter(position__in=["GK", "LB", "CB", "RB", "DEF"]):
+                    if not p.is_unknown:
+                        p_entry = player_stats[p.id]
+                        p_entry["player"] = p
+                        p_entry["team"] = f.home_team
+                        p_entry["clean_sheets"] += 1
+            if h_score == 0 and f.away_team:
+                for p in f.away_team.players.filter(position__in=["GK", "LB", "CB", "RB", "DEF"]):
+                    if not p.is_unknown:
+                        p_entry = player_stats[p.id]
+                        p_entry["player"] = p
+                        p_entry["team"] = f.away_team
+                        p_entry["clean_sheets"] += 1
+
+        # Add votes from VotingRound
+        v_round = voting_rounds_by_week.get(week_num)
+        if v_round:
+            vote_counts = (
+                PositionVote.objects.filter(voting_round=v_round)
+                .values("player_id")
+                .annotate(cnt=Count("id"))
+            )
+            for vc in vote_counts:
+                pid = vc["player_id"]
+                try:
+                    p_obj = Player.objects.get(id=pid)
+                    p_entry = player_stats[p_obj.id]
+                    p_entry["player"] = p_obj
+                    p_entry["team"] = p_obj.team
+                    p_entry["votes"] += vc["cnt"]
+                except Player.DoesNotExist:
+                    pass
+
+        chosen_entry = None
+        if player_stats:
+            for p_id, data in player_stats.items():
+                pts = (
+                    (data["goals"] * 4.0)
+                    + (data["assists"] * 3.0)
+                    + (data["clean_sheets"] * 4.0)
+                    + (data["motm_awards"] * 5.0)
+                    + (data["votes"] * 1.0)
+                    - (data["yellows"] * 1.0)
+                    - (data["reds"] * 3.0)
+                )
+                data["points"] = round(pts, 1)
+
+            sorted_candidates = sorted(
+                player_stats.values(),
+                key=lambda x: (x["points"], x["goals"], x["assists"]),
+                reverse=True
+            )
+            if sorted_candidates and sorted_candidates[0]["player"]:
+                chosen_entry = sorted_candidates[0]
+
+        if not chosen_entry:
+            first_team = category.teams.first()
+            first_player = first_team.players.filter(is_unknown=False).first() if first_team else None
+            if not first_player:
+                continue
+            chosen_entry = {
+                "player": first_player,
+                "team": first_team,
+                "goals": 0,
+                "assists": 0,
+                "clean_sheets": 0,
+                "motm_awards": 0,
+                "yellows": 0,
+                "reds": 0,
+                "votes": 0,
+                "points": 10.0,
+            }
+
+        player_obj = chosen_entry["player"]
+        team_obj = chosen_entry["team"] or player_obj.team
+        p_name = player_obj.first_name or player_obj.username or player_obj.name
+
+        g = chosen_entry["goals"]
+        a = chosen_entry["assists"]
+        pts = chosen_entry["points"]
+
+        if g > 0 and a > 0:
+            rationale = f"Electric display registering {g} goal{'s' if g > 1 else ''} and {a} assist{'s' if a > 1 else ''} ({pts} pts) to lead {team_obj.name} in Matchweek {week_num}."
+        elif g > 0:
+            rationale = f"Clinical attacking output with {g} goal{'s' if g > 1 else ''} ({pts} pts) spearheading {team_obj.name}'s frontline in Matchweek {week_num}."
+        elif a > 0:
+            rationale = f"Masterclass in midfield delivery with {a} assist{'s' if a > 1 else ''} ({pts} pts) creating decisive scoring opportunities for {team_obj.name} in Matchweek {week_num}."
+        elif chosen_entry["clean_sheets"] > 0:
+            rationale = f"Impenetrable defensive leadership keeping a clean sheet ({pts} pts) to anchor {team_obj.name} in Matchweek {week_num}."
+        else:
+            rationale = f"Disciplined tactical tempo and leadership ({pts} pts) setting the standard for {team_obj.name} in Matchweek {week_num}."
+
+        week_date_obj = sat_cutoff.date() if isinstance(sat_cutoff, datetime.datetime) else sat_cutoff
+
+        mvp_obj, _ = WeeklyMVP.objects.update_or_create(
+            category=category,
+            week_number=week_num,
+            defaults={
+                "week_title": f"Matchweek {week_num}",
+                "week_ending_date": week_date_obj,
+                "cutoff_datetime": sat_cutoff,
+                "player": player_obj,
+                "team": team_obj,
+                "goals": g,
+                "assists": a,
+                "clean_sheets": chosen_entry["clean_sheets"],
+                "yellows": chosen_entry["yellows"],
+                "reds": chosen_entry["reds"],
+                "motm_awards": chosen_entry["motm_awards"],
+                "points": pts,
+                "rationale": rationale,
+                "is_finalized": is_finalized,
+            }
+        )
+        created_or_updated.append(mvp_obj)
+        if is_finalized:
+            latest_finalized_mvp = mvp_obj
+
+    if next_sat_cutoff is None:
+        days_to_sat = (5 - reference_dt.weekday()) % 7
+        if days_to_sat == 0 and reference_dt.hour >= 20:
+            days_to_sat = 7
+        next_sat_date = reference_dt.date() + datetime.timedelta(days=days_to_sat)
+        next_sat_cutoff = datetime.datetime(next_sat_date.year, next_sat_date.month, next_sat_date.day, 20, 0)
+        if timezone.is_aware(reference_dt):
+            next_sat_cutoff = timezone.make_aware(next_sat_cutoff, timezone.get_current_timezone())
+
+    history = [m.to_dict() for m in created_or_updated]
+    current_mvp = latest_finalized_mvp.to_dict() if latest_finalized_mvp else (history[0] if history else None)
+
+    return {
+        "category_key": category.key,
+        "as_of": reference_dt.isoformat(),
+        "current_mvp": current_mvp,
+        "latest_ended_week": latest_finalized_mvp.week_number if latest_finalized_mvp else None,
+        "history": history,
+        "next_update": next_sat_cutoff.strftime("Saturday at 8:00 PM (%d %b)"),
+        "next_cutoff_iso": next_sat_cutoff.isoformat() if next_sat_cutoff else None,
+    }
+
+
+def get_weekly_mvp_summary(category, auto_compute=True):
+    """
+    Returns the Weekly MVP summary for a category.
+    Auto-computes if records are missing or if a Saturday 8:00 PM cutoff has elapsed.
+    """
+    import datetime
+    existing_qs = WeeklyMVP.objects.filter(category=category).order_by("week_number")
+    now = timezone.now()
+
+    needs_compute = not existing_qs.exists()
+    if not needs_compute and auto_compute:
+        latest_finalized = existing_qs.filter(is_finalized=True).last()
+        if latest_finalized and latest_finalized.cutoff_datetime:
+            if now > latest_finalized.cutoff_datetime + datetime.timedelta(days=7):
+                needs_compute = True
+
+    if needs_compute and auto_compute:
+        return compute_weekly_mvps(category, reference_dt=now)
+
+    history = [m.to_dict() for m in existing_qs]
+    latest_finalized = existing_qs.filter(is_finalized=True).last()
+    current_mvp = latest_finalized.to_dict() if latest_finalized else (history[-1] if history else None)
+
+    days_to_sat = (5 - now.weekday()) % 7
+    if days_to_sat == 0 and now.hour >= 20:
+        days_to_sat = 7
+    next_sat_date = now.date() + datetime.timedelta(days=days_to_sat)
+    next_sat_cutoff = datetime.datetime(next_sat_date.year, next_sat_date.month, next_sat_date.day, 20, 0)
+    if timezone.is_aware(now):
+        next_sat_cutoff = timezone.make_aware(next_sat_cutoff, timezone.get_current_timezone())
+
+    return {
+        "category_key": category.key,
+        "as_of": now.isoformat(),
+        "current_mvp": current_mvp,
+        "latest_ended_week": latest_finalized.week_number if latest_finalized else None,
+        "history": history,
+        "next_update": next_sat_cutoff.strftime("Saturday at 8:00 PM (%d %b)"),
+        "next_cutoff_iso": next_sat_cutoff.isoformat(),
+    }
+
 
 
 
