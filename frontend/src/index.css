@@ -856,6 +856,102 @@ button {
     border-radius: 14px;
     border: var(--hairline-border);
   }
+
+  /* Apple HIG Duty Roster Mobile Optimization */
+  .duty-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .duty-side-card {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .duty-header-row {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .duty-hero-card {
+    padding: 18px 14px !important;
+    border-radius: 16px !important;
+  }
+
+  .duty-stat-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    width: 100% !important;
+    gap: 10px !important;
+    margin-top: 12px !important;
+  }
+
+  .duty-filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .duty-segmented-tabs {
+    width: 100% !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+
+  .duty-segmented-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .duty-segmented-tab-btn {
+    flex: 1 0 auto !important;
+    min-height: 44px !important;
+    padding: 8px 12px !important;
+    text-align: center !important;
+    font-size: 13px !important;
+  }
+
+  .duty-search-group {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .duty-search-group select,
+  .duty-search-group input {
+    width: 100% !important;
+    min-height: 44px !important;
+    font-size: 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .duty-fixture-card {
+    padding: 12px 10px !important;
+  }
+
+  .duty-admin-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .duty-admin-row label {
+    min-height: 44px !important;
+  }
+
+  .duty-admin-row select {
+    width: 100% !important;
+    min-height: 44px !important;
+    font-size: 14px !important;
+  }
 }
 
 @media (max-width: 480px) {

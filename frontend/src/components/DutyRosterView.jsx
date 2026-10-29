@@ -393,6 +393,7 @@ export default function DutyRosterView({
 
       {/* Hero Header */}
       <div
+        className="duty-hero-card"
         style={{
           background: 'linear-gradient(135deg, rgba(28,28,30,0.95), rgba(44,44,46,0.95))',
           borderRadius: '20px',
@@ -401,6 +402,8 @@ export default function DutyRosterView({
           backdropFilter: 'blur(20px)',
           boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4)',
           marginBottom: '24px',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
@@ -433,7 +436,7 @@ export default function DutyRosterView({
           </div>
 
           {/* Quick Metrics */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="duty-stat-grid" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <div
               style={{
                 background: 'rgba(255,255,255,0.05)',
@@ -442,6 +445,7 @@ export default function DutyRosterView({
                 border: '1px solid rgba(255,255,255,0.08)',
                 textAlign: 'center',
                 minWidth: '85px',
+                flex: '1 1 auto',
               }}
             >
               <div style={{ fontSize: '20px', fontWeight: 800, color: '#FFFFFF' }}>{summary.totalDuties}</div>
@@ -455,6 +459,7 @@ export default function DutyRosterView({
                 border: '1px solid rgba(48, 209, 88, 0.3)',
                 textAlign: 'center',
                 minWidth: '85px',
+                flex: '1 1 auto',
               }}
             >
               <div style={{ fontSize: '20px', fontWeight: 800, color: '#30D158' }}>{summary.completedDuties}</div>
@@ -468,6 +473,7 @@ export default function DutyRosterView({
                 border: '1px solid rgba(255, 149, 0, 0.3)',
                 textAlign: 'center',
                 minWidth: '85px',
+                flex: '1 1 auto',
               }}
             >
               <div style={{ fontSize: '20px', fontWeight: 800, color: '#FF9500' }}>{summary.pendingDuties}</div>
@@ -482,6 +488,7 @@ export default function DutyRosterView({
                 textAlign: 'center',
                 minWidth: '85px',
                 cursor: 'pointer',
+                flex: '1 1 auto',
               }}
               onClick={() => setShowExemptionsSection((v) => !v)}
               title="Click to view/manage duty exemptions"
@@ -860,6 +867,7 @@ export default function DutyRosterView({
 
       {/* Control Bar: Filters & Search */}
       <div
+        className="duty-filter-bar"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -867,16 +875,21 @@ export default function DutyRosterView({
           flexWrap: 'wrap',
           gap: '12px',
           marginBottom: '20px',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
         {/* Segmented Filter Control */}
         <div
+          className="duty-segmented-tabs"
           style={{
             display: 'flex',
             background: '#1C1C1E',
             padding: '3px',
             borderRadius: '10px',
             border: '1px solid rgba(255,255,255,0.08)',
+            maxWidth: '100%',
+            overflowX: 'auto',
           }}
         >
           {[
@@ -887,6 +900,7 @@ export default function DutyRosterView({
             <button
               key={tab.key}
               type="button"
+              className="duty-segmented-tab-btn"
               onClick={() => setActiveFilterTab(tab.key)}
               style={{
                 padding: '8px 14px',
@@ -898,6 +912,8 @@ export default function DutyRosterView({
                 color: activeFilterTab === tab.key ? '#16201B' : '#8E8E93',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
+                minHeight: '38px',
+                whiteSpace: 'nowrap',
               }}
             >
               {tab.label}
@@ -906,7 +922,7 @@ export default function DutyRosterView({
         </div>
 
         {/* Team Filter & Search */}
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="duty-search-group" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           <select
             value={selectedTeamFilter}
             onChange={(e) => setSelectedTeamFilter(e.target.value)}
@@ -918,6 +934,7 @@ export default function DutyRosterView({
               color: '#F2F2F7',
               fontSize: '12.5px',
               fontWeight: 600,
+              minHeight: '38px',
             }}
           >
             <option value="all">All Teams</option>
@@ -942,6 +959,7 @@ export default function DutyRosterView({
               fontSize: '12.5px',
               width: '200px',
               outline: 'none',
+              minHeight: '38px',
             }}
           />
         </div>
@@ -1052,11 +1070,14 @@ export default function DutyRosterView({
                 return (
                   <div
                     key={m.fixtureId}
+                    className="duty-fixture-card"
                     style={{
                       background: 'rgba(255,255,255,0.02)',
                       borderRadius: '12px',
                       border: '1px solid rgba(255,255,255,0.06)',
                       padding: '16px',
+                      width: '100%',
+                      boxSizing: 'border-box',
                     }}
                   >
                     {/* Fixture Top Bar */}
@@ -1070,9 +1091,11 @@ export default function DutyRosterView({
                         marginBottom: '14px',
                         paddingBottom: '10px',
                         borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        width: '100%',
+                        boxSizing: 'border-box',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flexWrap: 'wrap' }}>
                         <span
                           style={{
                             fontSize: '11px',
@@ -1091,7 +1114,7 @@ export default function DutyRosterView({
                           {m.homeTeam?.name} <span style={{ color: '#8E8E93', fontWeight: 400 }}>vs</span> {m.awayTeam?.name}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '12px', color: '#AEAEB2', fontWeight: 600 }}>
                           ⏰ {m.date.split(' · ')[1] || m.date}
                         </span>
@@ -1112,17 +1135,21 @@ export default function DutyRosterView({
 
                     {/* Opposing Sides Duties Grid: Home Side & Away Side */}
                     <div
+                      className="duty-grid"
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
                         gap: '14px',
+                        width: '100%',
+                        boxSizing: 'border-box',
                       }}
                     >
                       {/* HOME TEAM DUTY CARD */}
                       <div
+                        className="duty-side-card"
                         style={{
                           background: hCompleted ? 'rgba(48, 209, 88, 0.05)' : 'rgba(0,0,0,0.25)',
-                          borderRadius: '10px',
+                          borderRadius: '12px',
                           padding: '14px',
                           border: hCompleted
                             ? '1px solid rgba(48, 209, 88, 0.3)'
@@ -1131,11 +1158,26 @@ export default function DutyRosterView({
                           flexDirection: 'column',
                           justifyContent: 'space-between',
                           gap: '10px',
+                          width: '100%',
+                          boxSizing: 'border-box',
                         }}
                       >
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: '100%', boxSizing: 'border-box' }}>
+                          {/* Div holding team name, pending work / completed badge (stretched 100%) */}
+                          <div
+                            className="duty-header-row"
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              width: '100%',
+                              boxSizing: 'border-box',
+                              marginBottom: '8px',
+                              gap: '8px',
+                              flexWrap: 'wrap',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: '1 1 auto' }}>
                               <span
                                 style={{
                                   width: '10px',
@@ -1143,45 +1185,54 @@ export default function DutyRosterView({
                                   borderRadius: '50%',
                                   background: hTeamObj?.color || '#FF9500',
                                   display: 'inline-block',
+                                  flexShrink: 0,
                                 }}
                               />
-                              <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', textTransform: 'uppercase' }}>
+                              <span style={{ fontSize: '12px', fontWeight: 800, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.4px', wordBreak: 'break-word' }}>
                                 {m.homeTeam?.name} (Home)
                               </span>
                             </div>
 
                             {/* Status Badge */}
-                            {hCompleted ? (
-                              <span
-                                style={{
-                                  background: '#30D158',
-                                  color: '#000000',
-                                  fontSize: '11px',
-                                  fontWeight: 800,
-                                  padding: '2px 8px',
-                                  borderRadius: '6px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                }}
-                              >
-                                ✅ COMPLETED
-                              </span>
-                            ) : (
-                              <span
-                                style={{
-                                  background: 'rgba(255, 149, 0, 0.2)',
-                                  color: '#FF9500',
-                                  border: '1px solid #FF9500',
-                                  fontSize: '11px',
-                                  fontWeight: 700,
-                                  padding: '2px 8px',
-                                  borderRadius: '6px',
-                                }}
-                              >
-                                ⏳ PENDING WORK
-                              </span>
-                            )}
+                            <div style={{ flexShrink: 0, marginLeft: 'auto' }}>
+                              {hCompleted ? (
+                                <span
+                                  style={{
+                                    background: '#30D158',
+                                    color: '#000000',
+                                    fontSize: '11px',
+                                    fontWeight: 800,
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    whiteSpace: 'nowrap',
+                                    letterSpacing: '0.2px',
+                                  }}
+                                >
+                                  ✅ COMPLETED
+                                </span>
+                              ) : (
+                                <span
+                                  style={{
+                                    background: 'rgba(255, 149, 0, 0.2)',
+                                    color: '#FF9500',
+                                    border: '1px solid #FF9500',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    whiteSpace: 'nowrap',
+                                    letterSpacing: '0.2px',
+                                  }}
+                                >
+                                  ⏳ PENDING WORK
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           {/* Player Name & Task */}
@@ -1206,26 +1257,32 @@ export default function DutyRosterView({
                         {/* Admin Controls */}
                         {isAdmin && (
                           <div
+                            className="duty-admin-row"
                             style={{
-                              marginTop: '8px',
-                              paddingTop: '8px',
+                              marginTop: '10px',
+                              paddingTop: '10px',
                               borderTop: '1px solid rgba(255,255,255,0.06)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'space-between',
                               gap: '8px',
                               flexWrap: 'wrap',
+                              width: '100%',
+                              boxSizing: 'border-box',
                             }}
                           >
                             <label
                               style={{
-                                display: 'flex',
+                                display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '8px',
                                 cursor: 'pointer',
                                 fontSize: '12.5px',
                                 fontWeight: 700,
                                 color: hCompleted ? '#30D158' : '#FF9500',
+                                minHeight: '44px',
+                                padding: '2px 0',
+                                userSelect: 'none',
                               }}
                             >
                               <input
@@ -1233,9 +1290,9 @@ export default function DutyRosterView({
                                 checked={hCompleted}
                                 disabled={savingKey === `${m.fixtureId}-home`}
                                 onChange={() => handleToggleCompletion(m.fixtureId, 'home', hCompleted)}
-                                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#30D158', flexShrink: 0 }}
                               />
-                              {hCompleted ? 'Work Completed' : 'Tick When Done'}
+                              <span>{hCompleted ? 'Work Completed' : 'Tick When Done'}</span>
                             </label>
 
                             {/* Reassign Dropdown (excludes players who have already completed duty!) */}
@@ -1248,12 +1305,15 @@ export default function DutyRosterView({
                                   handleAssignPlayer(m.fixtureId, 'home', pId, pObj?.name || '');
                                 }}
                                 style={{
-                                  fontSize: '11.5px',
-                                  padding: '4px 8px',
-                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  padding: '6px 10px',
+                                  borderRadius: '8px',
                                   background: '#1C1C1E',
                                   color: '#EBEBF5',
-                                  border: '1px solid rgba(255,255,255,0.15)',
+                                  border: '1px solid rgba(255,255,255,0.18)',
+                                  minHeight: '40px',
+                                  maxWidth: '100%',
+                                  cursor: 'pointer',
                                 }}
                               >
                                 <option value="">-- Change Player --</option>
@@ -1270,9 +1330,10 @@ export default function DutyRosterView({
 
                       {/* AWAY TEAM DUTY CARD */}
                       <div
+                        className="duty-side-card"
                         style={{
                           background: aCompleted ? 'rgba(48, 209, 88, 0.05)' : 'rgba(0,0,0,0.25)',
-                          borderRadius: '10px',
+                          borderRadius: '12px',
                           padding: '14px',
                           border: aCompleted
                             ? '1px solid rgba(48, 209, 88, 0.3)'
@@ -1281,11 +1342,26 @@ export default function DutyRosterView({
                           flexDirection: 'column',
                           justifyContent: 'space-between',
                           gap: '10px',
+                          width: '100%',
+                          boxSizing: 'border-box',
                         }}
                       >
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: '100%', boxSizing: 'border-box' }}>
+                          {/* Div holding team name, pending work / completed badge (stretched 100%) */}
+                          <div
+                            className="duty-header-row"
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              width: '100%',
+                              boxSizing: 'border-box',
+                              marginBottom: '8px',
+                              gap: '8px',
+                              flexWrap: 'wrap',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: '1 1 auto' }}>
                               <span
                                 style={{
                                   width: '10px',
@@ -1293,45 +1369,54 @@ export default function DutyRosterView({
                                   borderRadius: '50%',
                                   background: aTeamObj?.color || '#3F7A4E',
                                   display: 'inline-block',
+                                  flexShrink: 0,
                                 }}
                               />
-                              <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', textTransform: 'uppercase' }}>
+                              <span style={{ fontSize: '12px', fontWeight: 800, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.4px', wordBreak: 'break-word' }}>
                                 {m.awayTeam?.name} (Away)
                               </span>
                             </div>
 
                             {/* Status Badge */}
-                            {aCompleted ? (
-                              <span
-                                style={{
-                                  background: '#30D158',
-                                  color: '#000000',
-                                  fontSize: '11px',
-                                  fontWeight: 800,
-                                  padding: '2px 8px',
-                                  borderRadius: '6px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                }}
-                              >
-                                ✅ COMPLETED
-                              </span>
-                            ) : (
-                              <span
-                                style={{
-                                  background: 'rgba(255, 149, 0, 0.2)',
-                                  color: '#FF9500',
-                                  border: '1px solid #FF9500',
-                                  fontSize: '11px',
-                                  fontWeight: 700,
-                                  padding: '2px 8px',
-                                  borderRadius: '6px',
-                                }}
-                              >
-                                ⏳ PENDING WORK
-                              </span>
-                            )}
+                            <div style={{ flexShrink: 0, marginLeft: 'auto' }}>
+                              {aCompleted ? (
+                                <span
+                                  style={{
+                                    background: '#30D158',
+                                    color: '#000000',
+                                    fontSize: '11px',
+                                    fontWeight: 800,
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    whiteSpace: 'nowrap',
+                                    letterSpacing: '0.2px',
+                                  }}
+                                >
+                                  ✅ COMPLETED
+                                </span>
+                              ) : (
+                                <span
+                                  style={{
+                                    background: 'rgba(255, 149, 0, 0.2)',
+                                    color: '#FF9500',
+                                    border: '1px solid #FF9500',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    whiteSpace: 'nowrap',
+                                    letterSpacing: '0.2px',
+                                  }}
+                                >
+                                  ⏳ PENDING WORK
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           {/* Player Name & Task */}
@@ -1356,26 +1441,32 @@ export default function DutyRosterView({
                         {/* Admin Controls */}
                         {isAdmin && (
                           <div
+                            className="duty-admin-row"
                             style={{
-                              marginTop: '8px',
-                              paddingTop: '8px',
+                              marginTop: '10px',
+                              paddingTop: '10px',
                               borderTop: '1px solid rgba(255,255,255,0.06)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'space-between',
                               gap: '8px',
                               flexWrap: 'wrap',
+                              width: '100%',
+                              boxSizing: 'border-box',
                             }}
                           >
                             <label
                               style={{
-                                display: 'flex',
+                                display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '8px',
                                 cursor: 'pointer',
                                 fontSize: '12.5px',
                                 fontWeight: 700,
                                 color: aCompleted ? '#30D158' : '#FF9500',
+                                minHeight: '44px',
+                                padding: '2px 0',
+                                userSelect: 'none',
                               }}
                             >
                               <input
@@ -1383,9 +1474,9 @@ export default function DutyRosterView({
                                 checked={aCompleted}
                                 disabled={savingKey === `${m.fixtureId}-away`}
                                 onChange={() => handleToggleCompletion(m.fixtureId, 'away', aCompleted)}
-                                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#30D158', flexShrink: 0 }}
                               />
-                              {aCompleted ? 'Work Completed' : 'Tick When Done'}
+                              <span>{aCompleted ? 'Work Completed' : 'Tick When Done'}</span>
                             </label>
 
                             {/* Reassign Dropdown (excludes players who have already completed duty!) */}
@@ -1398,12 +1489,15 @@ export default function DutyRosterView({
                                   handleAssignPlayer(m.fixtureId, 'away', pId, pObj?.name || '');
                                 }}
                                 style={{
-                                  fontSize: '11.5px',
-                                  padding: '4px 8px',
-                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  padding: '6px 10px',
+                                  borderRadius: '8px',
                                   background: '#1C1C1E',
                                   color: '#EBEBF5',
-                                  border: '1px solid rgba(255,255,255,0.15)',
+                                  border: '1px solid rgba(255,255,255,0.18)',
+                                  minHeight: '40px',
+                                  maxWidth: '100%',
+                                  cursor: 'pointer',
                                 }}
                               >
                                 <option value="">-- Change Player --</option>
