@@ -156,3 +156,25 @@ class WeeklyMVPTests(TestCase):
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertTrue(data["success"])
+
+    def test_unstarted_week_indicates_to_be_announced(self):
+        # Fixture scheduled in Week 3 (Nov 4) with NO played status and NO events
+        fixture_w3 = Fixture.objects.create(
+            category=self.category,
+            fixture_id="FX-3",
+            date="Wed, 04 Nov · 17:10",
+            home_team=self.team_alpha,
+            away_team=self.team_beta,
+            played=False,
+        )
+        ref_dt = datetime.datetime(2026, 10, 29, 12, 0, 0, tzinfo=datetime.timezone.utc)
+        summary = compute_weekly_mvps(self.category, reference_dt=ref_dt)
+
+        w3_record = next(h for h in summary["history"] if h["week_number"] == 2)
+        # Week that has not yet started MUST NOT indicate any player
+        self.assertIsNone(w3_record["player"])
+        self.assertIsNone(w3_record["stats"])
+        self.assertFalse(w3_record["is_started"])
+        self.assertFalse(w3_record["is_finalized"])
+        self.assertIn("not yet started", w3_record["rationale"].lower())
+        self.assertIn("announced", w3_record["rationale"].lower())

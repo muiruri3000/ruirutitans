@@ -137,48 +137,10 @@ export function computeClientWeeklyMVP(catObj, categoryKey) {
     });
 
     const candidates = Object.values(playerAgg).sort((a, b) => b.points - a.points || b.goals - a.goals);
-    let winner = candidates.length > 0 && candidates[0].points > 0 ? candidates[0] : null;
+    const winner = candidates.length > 0 && candidates[0].points > 0 ? candidates[0] : null;
 
     if (!winner) {
-      const firstTeam = (catObj.teams || [])[0];
-      const firstP = firstTeam ? (firstTeam.players || []).find((p) => !p.unknown) : null;
-      if (firstP) {
-        winner = {
-          player: playersById[firstP.id] || {
-            id: firstP.id,
-            name: firstP.name,
-            displayName: firstP.name,
-            teamId: firstTeam.id,
-            teamName: firstTeam.name,
-            teamColor: firstTeam.color,
-          },
-          goals: 0,
-          assists: 0,
-          cleanSheets: 0,
-          motm: 0,
-          points: 10,
-        };
-      }
-    }
-
-    if (winner) {
-      const g = winner.goals;
-      const a = winner.assists;
-      const pts = winner.points;
-      const pName = winner.player.displayName;
-      const tName = winner.player.teamName;
-
-      let rationale = '';
-      if (g > 0 && a > 0) {
-        rationale = `Electric display registering ${g} goal${g > 1 ? 's' : ''} and ${a} assist${a > 1 ? 's' : ''} (${pts} pts) to lead ${tName} in Matchweek ${weekNum}.`;
-      } else if (g > 0) {
-        rationale = `Clinical attacking output with ${g} goal${g > 1 ? 's' : ''} (${pts} pts) spearheading ${tName}'s frontline in Matchweek ${weekNum}.`;
-      } else if (a > 0) {
-        rationale = `Masterclass in midfield delivery with ${a} assist${a > 1 ? 's' : ''} (${pts} pts) creating decisive scoring opportunities for ${tName} in Matchweek ${weekNum}.`;
-      } else {
-        rationale = `Disciplined tactical tempo and leadership (${pts} pts) setting the standard for ${tName} in Matchweek ${weekNum}.`;
-      }
-
+      // Matchweek has not yet started or has no completed matches: MVP is To Be Announced
       const record = {
         id: `local-w${weekNum}`,
         category_key: categoryKey,
@@ -186,35 +148,70 @@ export function computeClientWeeklyMVP(catObj, categoryKey) {
         week_title: `Matchweek ${weekNum}`,
         week_ending_date: cutoff.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
         cutoff_datetime: cutoff.toISOString(),
-        is_finalized: isFinalized,
-        player: {
-          id: winner.player.id,
-          name: winner.player.name,
-          displayName: winner.player.displayName,
-          first_name: winner.player.firstName,
-          username: winner.player.username,
-          position: winner.player.position,
-          jersey_number: winner.player.jerseyNumber,
-          team_id: winner.player.teamId,
-          team_name: winner.player.teamName,
-          team_color: winner.player.teamColor,
-        },
-        stats: {
-          goals: g,
-          assists: a,
-          yellows: 0,
-          reds: 0,
-          clean_sheets: winner.cleanSheets,
-          motm_awards: winner.motm,
-          points: pts,
-        },
-        rationale,
+        is_finalized: false,
+        is_started: false,
+        status: 'upcoming',
+        player: null,
+        stats: null,
+        rationale: `Matchweek ${weekNum} fixtures have not yet started. The Weekly MVP will be announced on Saturday at 8:00 PM once matches are underway.`,
       };
-
       history.push(record);
-      if (isFinalized) {
-        latestFinalized = record;
-      }
+      return;
+    }
+
+    const g = winner.goals;
+    const a = winner.assists;
+    const pts = winner.points;
+    const pName = winner.player.displayName;
+    const tName = winner.player.teamName;
+
+    let rationale = '';
+    if (g > 0 && a > 0) {
+      rationale = `Electric display registering ${g} goal${g > 1 ? 's' : ''} and ${a} assist${a > 1 ? 's' : ''} (${pts} pts) to lead ${tName} in Matchweek ${weekNum}.`;
+    } else if (g > 0) {
+      rationale = `Clinical attacking output with ${g} goal${g > 1 ? 's' : ''} (${pts} pts) spearheading ${tName}'s frontline in Matchweek ${weekNum}.`;
+    } else if (a > 0) {
+      rationale = `Masterclass in midfield delivery with ${a} assist${a > 1 ? 's' : ''} (${pts} pts) creating decisive scoring opportunities for ${tName} in Matchweek ${weekNum}.`;
+    } else {
+      rationale = `Disciplined tactical tempo and leadership (${pts} pts) setting the standard for ${tName} in Matchweek ${weekNum}.`;
+    }
+
+    const record = {
+      id: `local-w${weekNum}`,
+      category_key: categoryKey,
+      week_number: weekNum,
+      week_title: `Matchweek ${weekNum}`,
+      week_ending_date: cutoff.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+      cutoff_datetime: cutoff.toISOString(),
+      is_finalized: isFinalized,
+      is_started: true,
+      player: {
+        id: winner.player.id,
+        name: winner.player.name,
+        displayName: winner.player.displayName,
+        first_name: winner.player.firstName,
+        username: winner.player.username,
+        position: winner.player.position,
+        jersey_number: winner.player.jerseyNumber,
+        team_id: winner.player.teamId,
+        team_name: winner.player.teamName,
+        team_color: winner.player.teamColor,
+      },
+      stats: {
+        goals: g,
+        assists: a,
+        yellows: 0,
+        reds: 0,
+        clean_sheets: winner.cleanSheets,
+        motm_awards: winner.motm,
+        points: pts,
+      },
+      rationale,
+    };
+
+    history.push(record);
+    if (isFinalized) {
+      latestFinalized = record;
     }
   });
 
@@ -224,7 +221,11 @@ export function computeClientWeeklyMVP(catObj, categoryKey) {
   }
 
   const nextStr = `Saturday at 8:00 PM (${nextUpdateCutoff.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})`;
-  const currentMVP = latestFinalized || history[0] || null;
+  const currentMVP =
+    latestFinalized ||
+    history.find((h) => h.player) ||
+    history[0] ||
+    null;
 
   return {
     category_key: categoryKey,
@@ -330,14 +331,15 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
     history[0];
   if (!activeRecord) return null;
 
-  const player = activeRecord.player || {};
+  const player = activeRecord.player;
+  const hasPlayer = Boolean(player && (player.name || player.displayName || player.id));
   const stats = activeRecord.stats || {};
-  const isFinalized = activeRecord.is_finalized;
-  const rawFirst = (player.first_name || player.firstName || '').trim();
-  const rawUser = (player.username || '').trim();
+  const isFinalized = Boolean(activeRecord.is_finalized);
+  const rawFirst = hasPlayer ? (player.first_name || player.firstName || '').trim() : '';
+  const rawUser = hasPlayer ? (player.username || '').trim() : '';
   const firstName = rawFirst && rawFirst.toLowerCase() !== 'unrecorded' ? rawFirst : '';
   // Rule: stats should show first name when available if not show username
-  const displayName = firstName || rawUser || player.name || 'Official MVP';
+  const displayName = hasPlayer ? (firstName || rawUser || player.name || 'Official MVP') : 'To Be Announced';
 
   return (
     <div
@@ -383,8 +385,13 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span
             style={{
-              background: isFinalized ? '#FF9500' : 'rgba(255, 149, 0, 0.2)',
-              color: isFinalized ? '#000000' : '#FF9F0A',
+              background: !hasPlayer
+                ? 'rgba(255, 149, 0, 0.15)'
+                : isFinalized
+                ? '#FF9500'
+                : 'rgba(255, 149, 0, 0.2)',
+              color: !hasPlayer ? '#FF9F0A' : isFinalized ? '#000000' : '#FF9F0A',
+              border: !hasPlayer ? '1px solid rgba(255, 149, 0, 0.35)' : 'none',
               fontWeight: 900,
               fontSize: '11px',
               padding: '4px 10px',
@@ -396,13 +403,20 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
               gap: '5px',
             }}
           >
-            <span>{isFinalized ? '🏆' : '⚡'}</span>
-            <span>{isFinalized ? 'OFFICIAL WEEKLY MVP' : 'PROVISIONAL MVP (IN PROGRESS)'}</span>
+            <span>{!hasPlayer ? '⏳' : isFinalized ? '🏆' : '⚡'}</span>
+            <span>
+              {!hasPlayer
+                ? 'TO BE ANNOUNCED'
+                : isFinalized
+                ? 'OFFICIAL WEEKLY MVP'
+                : 'PROVISIONAL MVP (IN PROGRESS)'}
+            </span>
           </span>
 
           <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary, #8E8E93)' }}>
             {activeRecord.week_title || `Matchweek ${activeRecord.week_number}`}
-            {activeRecord.week_ending_date && ` · Ended Sat, ${activeRecord.week_ending_date} 8:00 PM`}
+            {activeRecord.week_ending_date &&
+              ` · ${isFinalized ? 'Ended' : 'Cutoff'} Sat, ${activeRecord.week_ending_date} 8:00 PM`}
           </span>
         </div>
 
@@ -449,6 +463,7 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '14px' }}>
           {history.map((h) => {
             const isSel = h.week_number === selectedWeek;
+            const hasP = Boolean(h.player && (h.player.name || h.player.displayName || h.player.id));
             return (
               <button
                 key={h.week_number}
@@ -470,10 +485,14 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
                 }}
               >
                 <span>Week {h.week_number}</span>
-                {h.is_finalized ? (
-                  <span style={{ fontSize: '10px', opacity: 0.8 }}>✓</span>
+                {hasP ? (
+                  h.is_finalized ? (
+                    <span style={{ fontSize: '10px', opacity: 0.8 }}>✓</span>
+                  ) : (
+                    <span style={{ fontSize: '10px', opacity: 0.8 }}>⚡</span>
+                  )
                 ) : (
-                  <span style={{ fontSize: '10px', opacity: 0.8 }}>⏳</span>
+                  <span style={{ fontSize: '9.5px', opacity: 0.75, letterSpacing: '0.04em' }}>TBA</span>
                 )}
               </button>
             );
@@ -481,179 +500,304 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
         </div>
       )}
 
-      {/* MVP Player Hero Section */}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '20px',
-        }}
-      >
-        {/* Left: Player Profile & Identity */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: '1 1 320px' }}>
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, #FF9500 0%, #D97700 100%)',
-              color: '#000000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '28px',
-              boxShadow: '0 4px 14px rgba(255, 149, 0, 0.4)',
-              fontWeight: 900,
-              flexShrink: 0,
-            }}
-          >
-            ⭐
-          </div>
+      {/* MVP Content Area */}
+      {!hasPlayer ? (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '20px',
+            padding: '4px 0',
+          }}
+        >
+          {/* Left: TBA Announcement Identity */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: '1 1 320px' }}>
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.2) 0%, rgba(217, 119, 0, 0.08) 100%)',
+                border: '1px dashed rgba(255, 149, 0, 0.45)',
+                color: '#FF9500',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '28px',
+                fontWeight: 900,
+                flexShrink: 0,
+              }}
+            >
+              ⏳
+            </div>
 
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span
+            <div>
+              <div
                 style={{
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  background: player.team_color || '#FF9500',
-                  display: 'inline-block',
-                }}
-              />
-              <span
-                style={{
-                  fontSize: '12px',
+                  fontSize: '11.5px',
                   fontWeight: 800,
                   color: '#FF9500',
-                  letterSpacing: '0.06em',
+                  letterSpacing: '0.08em',
                   textTransform: 'uppercase',
+                  marginBottom: '2px',
                 }}
               >
-                {player.team_name || 'Titans Club'}
-              </span>
-              {player.position && (
+                {activeRecord.week_title || `Matchweek ${activeRecord.week_number}`} · UPCOMING MVP
+              </div>
+
+              <div
+                className="scoreboard"
+                style={{
+                  fontSize: '28px',
+                  color: 'var(--text-primary)',
+                  letterSpacing: '0.03em',
+                  lineHeight: 1.15,
+                  margin: '2px 0',
+                }}
+              >
+                To Be Announced
+              </div>
+
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary, #8E8E93)' }}>
+                Fixtures have not yet started · Evaluated after match kickoff
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Schedule & Rules Badges */}
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div
+              style={{
+                background: '#1C1C1E',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                textAlign: 'center',
+                minWidth: '100px',
+              }}
+            >
+              <div style={{ fontSize: '13px', fontWeight: 800, color: '#FF9500' }}>
+                Sat 8:00 PM
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>
+                Award Window
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: '#1C1C1E',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                textAlign: 'center',
+                minWidth: '100px',
+              }}
+            >
+              <div style={{ fontSize: '13px', fontWeight: 800, color: '#30D158' }}>
+                Pending Kickoff
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>
+                Match Status
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: 'rgba(255, 149, 0, 0.08)',
+                border: '1px solid rgba(255, 149, 0, 0.3)',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                textAlign: 'center',
+                minWidth: '110px',
+              }}
+            >
+              <div style={{ fontSize: '13px', fontWeight: 900, color: '#FF9F0A' }}>
+                Top Performer
+              </div>
+              <div style={{ fontSize: '10px', color: '#FF9500', fontWeight: 800, textTransform: 'uppercase', marginTop: '2px' }}>
+                MVP Formula
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* MVP Player Hero Section */
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '20px',
+          }}
+        >
+          {/* Left: Player Profile & Identity */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: '1 1 320px' }}>
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #FF9500 0%, #D97700 100%)',
+                color: '#000000',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '28px',
+                boxShadow: '0 4px 14px rgba(255, 149, 0, 0.4)',
+                fontWeight: 900,
+                flexShrink: 0,
+              }}
+            >
+              ⭐
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <span
                   style={{
-                    fontSize: '10px',
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    background: player.team_color || '#FF9500',
+                    display: 'inline-block',
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: '12px',
                     fontWeight: 800,
-                    background: 'rgba(255, 149, 0, 0.15)',
-                    color: '#FF9F0A',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    border: '1px solid rgba(255, 149, 0, 0.3)',
+                    color: '#FF9500',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
                   }}
                 >
-                  {player.position}
+                  {player.team_name || 'Titans Club'}
                 </span>
-              )}
+                {player.position && (
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      background: 'rgba(255, 149, 0, 0.15)',
+                      color: '#FF9F0A',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      border: '1px solid rgba(255, 149, 0, 0.3)',
+                    }}
+                  >
+                    {player.position}
+                  </span>
+                )}
+              </div>
+
+              <div
+                className="scoreboard"
+                style={{
+                  fontSize: '28px',
+                  color: 'var(--text-primary)',
+                  letterSpacing: '0.03em',
+                  lineHeight: 1.15,
+                  margin: '2px 0',
+                }}
+              >
+                {displayName}
+              </div>
+
+              <div style={{ fontSize: '11.5px', color: 'var(--text-secondary, #8E8E93)' }}>
+                {player.name} {rawUser && rawUser !== displayName ? `(@${rawUser})` : ''}
+                {player.jersey_number ? ` · #${player.jersey_number}` : ''}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Key Stats Pills */}
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div
+              style={{
+                background: '#1C1C1E',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                textAlign: 'center',
+                minWidth: '70px',
+              }}
+            >
+              <div className="scoreboard" style={{ fontSize: '22px', color: '#FF9500', fontWeight: 800 }}>
+                {stats.goals || 0}
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase' }}>
+                Goals
+              </div>
             </div>
 
             <div
-              className="scoreboard"
               style={{
-                fontSize: '28px',
-                color: 'var(--text-primary)',
-                letterSpacing: '0.03em',
-                lineHeight: 1.15,
-                margin: '2px 0',
+                background: '#1C1C1E',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                textAlign: 'center',
+                minWidth: '70px',
               }}
             >
-              {displayName}
+              <div className="scoreboard" style={{ fontSize: '22px', color: '#30D158', fontWeight: 800 }}>
+                {stats.assists || 0}
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase' }}>
+                Assists
+              </div>
             </div>
 
-            <div style={{ fontSize: '11.5px', color: 'var(--text-secondary, #8E8E93)' }}>
-              {player.name} {rawUser && rawUser !== displayName ? `(@${rawUser})` : ''}
-              {player.jersey_number ? ` · #${player.jersey_number}` : ''}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Key Stats Pills */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div
-            style={{
-              background: '#1C1C1E',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '10px',
-              padding: '10px 14px',
-              textAlign: 'center',
-              minWidth: '70px',
-            }}
-          >
-            <div className="scoreboard" style={{ fontSize: '22px', color: '#FF9500', fontWeight: 800 }}>
-              {stats.goals || 0}
-            </div>
-            <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase' }}>
-              Goals
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: '#1C1C1E',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '10px',
-              padding: '10px 14px',
-              textAlign: 'center',
-              minWidth: '70px',
-            }}
-          >
-            <div className="scoreboard" style={{ fontSize: '22px', color: '#30D158', fontWeight: 800 }}>
-              {stats.assists || 0}
-            </div>
-            <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase' }}>
-              Assists
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: '#1C1C1E',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '10px',
-              padding: '10px 14px',
-              textAlign: 'center',
-              minWidth: '70px',
-            }}
-          >
-            <div className="scoreboard" style={{ fontSize: '22px', color: '#5E5CE6', fontWeight: 800 }}>
-              {stats.clean_sheets || 0}
-            </div>
-            <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase' }}>
-              Clean Sheets
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: 'rgba(255, 149, 0, 0.12)',
-              border: '1px solid rgba(255, 149, 0, 0.4)',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              textAlign: 'center',
-              minWidth: '90px',
-            }}
-          >
-            <div className="scoreboard" style={{ fontSize: '24px', color: '#FF9F0A', fontWeight: 900 }}>
-              {stats.points || 0}
-            </div>
             <div
               style={{
-                fontSize: '10px',
-                color: '#FF9500',
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
+                background: '#1C1C1E',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                textAlign: 'center',
+                minWidth: '70px',
               }}
             >
-              MVP Rating
+              <div className="scoreboard" style={{ fontSize: '22px', color: '#5E5CE6', fontWeight: 800 }}>
+                {stats.clean_sheets || 0}
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase' }}>
+                Clean Sheets
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: 'rgba(255, 149, 0, 0.12)',
+                border: '1px solid rgba(255, 149, 0, 0.4)',
+                borderRadius: '10px',
+                padding: '10px 16px',
+                textAlign: 'center',
+                minWidth: '90px',
+              }}
+            >
+              <div className="scoreboard" style={{ fontSize: '24px', color: '#FF9F0A', fontWeight: 900 }}>
+                {stats.points || 0}
+              </div>
+              <div
+                style={{
+                  fontSize: '10px',
+                  color: '#FF9500',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                MVP Rating
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Editorial Rationale / Narrative */}
       {activeRecord.rationale && (

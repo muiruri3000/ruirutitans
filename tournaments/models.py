@@ -964,8 +964,8 @@ class WeeklyMVP(models.Model):
     week_ending_date = models.DateField(null=True, blank=True)
     cutoff_datetime = models.DateTimeField(null=True, blank=True)
 
-    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="weekly_mvps")
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="weekly_mvps")
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, null=True, blank=True, related_name="weekly_mvps")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, null=True, blank=True, related_name="weekly_mvps")
 
     goals = models.PositiveSmallIntegerField(default=0)
     assists = models.PositiveSmallIntegerField(default=0)
@@ -987,10 +987,28 @@ class WeeklyMVP(models.Model):
         verbose_name_plural = "Weekly MVPs"
 
     def __str__(self):
-        status = "Finalized" if self.is_finalized else "Provisional"
-        return f"{self.category.label} - Week {self.week_number} MVP: {self.player.name} ({status})"
+        status = "Finalized" if self.is_finalized else ("Provisional" if self.player else "TBA")
+        p_name = self.player.name if self.player else "To Be Announced"
+        return f"{self.category.label} - Week {self.week_number} MVP: {p_name} ({status})"
 
     def to_dict(self):
+        if not self.player:
+            return {
+                "id": self.id,
+                "category_key": self.category.key,
+                "week_number": self.week_number,
+                "week_title": self.week_title or f"Matchweek {self.week_number}",
+                "week_ending_date": self.week_ending_date.isoformat() if self.week_ending_date else None,
+                "cutoff_datetime": self.cutoff_datetime.isoformat() if self.cutoff_datetime else None,
+                "is_finalized": False,
+                "is_started": False,
+                "is_manual_override": bool(self.is_manual_override),
+                "player": None,
+                "stats": None,
+                "rationale": self.rationale or f"Matchweek {self.week_number} fixtures have not yet started. The Weekly MVP will be announced on Saturday at 8:00 PM once matches are underway.",
+                "computed_at": self.computed_at.isoformat() if self.computed_at else None,
+            }
+
         raw_first = (self.player.first_name or "").strip()
         raw_user = (self.player.username or "").strip()
         first_name = raw_first if raw_first.lower() != "unrecorded" else ""
@@ -1004,6 +1022,7 @@ class WeeklyMVP(models.Model):
             "week_ending_date": self.week_ending_date.isoformat() if self.week_ending_date else None,
             "cutoff_datetime": self.cutoff_datetime.isoformat() if self.cutoff_datetime else None,
             "is_finalized": bool(self.is_finalized),
+            "is_started": True,
             "is_manual_override": bool(self.is_manual_override),
             "player": {
                 "id": self.player.player_id,

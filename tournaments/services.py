@@ -5804,22 +5804,31 @@ def compute_weekly_mvps(category, reference_dt=None, force=False):
                 chosen_entry = sorted_candidates[0]
 
         if not chosen_entry:
-            first_team = category.teams.first()
-            first_player = first_team.players.filter(is_unknown=False).first() if first_team else None
-            if not first_player:
-                continue
-            chosen_entry = {
-                "player": first_player,
-                "team": first_team,
-                "goals": 0,
-                "assists": 0,
-                "clean_sheets": 0,
-                "motm_awards": 0,
-                "yellows": 0,
-                "reds": 0,
-                "votes": 0,
-                "points": 10.0,
-            }
+            # Week has not yet started or has no completed fixtures/points:
+            # Do NOT assign a player; indicate To Be Announced.
+            week_date_obj = sat_cutoff.date() if isinstance(sat_cutoff, datetime.datetime) else sat_cutoff
+            mvp_obj, _ = WeeklyMVP.objects.update_or_create(
+                category=category,
+                week_number=week_num,
+                defaults={
+                    "week_title": f"Matchweek {week_num}",
+                    "week_ending_date": week_date_obj,
+                    "cutoff_datetime": sat_cutoff,
+                    "player": None,
+                    "team": None,
+                    "goals": 0,
+                    "assists": 0,
+                    "clean_sheets": 0,
+                    "yellows": 0,
+                    "reds": 0,
+                    "motm_awards": 0,
+                    "points": 0.0,
+                    "rationale": f"Matchweek {week_num} fixtures have not yet started. The Weekly MVP will be announced on Saturday at 8:00 PM once matches are underway.",
+                    "is_finalized": False,
+                }
+            )
+            created_or_updated.append(mvp_obj)
+            continue
 
         player_obj = chosen_entry["player"]
         team_obj = chosen_entry["team"] or player_obj.team
@@ -5863,7 +5872,7 @@ def compute_weekly_mvps(category, reference_dt=None, force=False):
             }
         )
         created_or_updated.append(mvp_obj)
-        if is_finalized:
+        if is_finalized and player_obj is not None:
             latest_finalized_mvp = mvp_obj
 
     if next_sat_cutoff is None:
@@ -5876,13 +5885,28 @@ def compute_weekly_mvps(category, reference_dt=None, force=False):
             next_sat_cutoff = timezone.make_aware(next_sat_cutoff, timezone.get_current_timezone())
 
     history = [m.to_dict() for m in created_or_updated]
-    current_mvp = latest_finalized_mvp.to_dict() if latest_finalized_mvp else (history[0] if history else None)
+
+    # Current MVP selection:
+    # 1. Latest finalized week with an announced player
+    # 2. Otherwise in-progress week with an active candidate player
+    # 3. Otherwise Matchweek 1 TBA if no week has started yet
+    latest_announced = next((m for m in reversed(created_or_updated) if m.is_finalized and m.player_id), None)
+    in_progress = next((m for m in created_or_updated if not m.is_finalized and m.player_id), None)
+
+    if latest_announced:
+        current_mvp = latest_announced.to_dict()
+    elif in_progress:
+        current_mvp = in_progress.to_dict()
+    elif history:
+        current_mvp = history[0]
+    else:
+        current_mvp = None
 
     return {
         "category_key": category.key,
         "as_of": reference_dt.isoformat(),
         "current_mvp": current_mvp,
-        "latest_ended_week": latest_finalized_mvp.week_number if latest_finalized_mvp else None,
+        "latest_ended_week": latest_announced.week_number if latest_announced else None,
         "history": history,
         "next_update": next_sat_cutoff.strftime("Saturday at 8:00 PM (%d %b)"),
         "next_cutoff_iso": next_sat_cutoff.isoformat() if next_sat_cutoff else None,
@@ -5909,8 +5933,16 @@ def get_weekly_mvp_summary(category, auto_compute=True):
         return compute_weekly_mvps(category, reference_dt=now)
 
     history = [m.to_dict() for m in existing_qs]
-    latest_finalized = existing_qs.filter(is_finalized=True).last()
-    current_mvp = latest_finalized.to_dict() if latest_finalized else (history[-1] if history else None)
+    latest_finalized = existing_qs.filter(is_finalized=True, player__isnull=False).last()
+    in_progress = existing_qs.filter(is_finalized=False, player__isnull=False).first()
+    if latest_finalized:
+        current_mvp = latest_finalized.to_dict()
+    elif in_progress:
+        current_mvp = in_progress.to_dict()
+    elif history:
+        current_mvp = history[0]
+    else:
+        current_mvp = None
 
     days_to_sat = (5 - now.weekday()) % 7
     if days_to_sat == 0 and now.hour >= 20:
