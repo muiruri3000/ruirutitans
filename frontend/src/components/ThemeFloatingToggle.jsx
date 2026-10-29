@@ -48,28 +48,28 @@ export default function ThemeFloatingToggle({ theme = 'dark', onToggle }) {
           }}
           className={`theme-mode-btn ${isDark ? 'active' : ''}`}
           aria-pressed={isDark}
-          title="Switch to Dark Mode (Current default)"
+          title="Switch to Dark Mode"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '6px',
-            padding: '7px 12px',
+            padding: '8px 14px',
             borderRadius: '9999px',
             border: 'none',
             outline: 'none',
             cursor: isDark ? 'default' : 'pointer',
-            background: isDark ? 'rgba(255, 149, 0, 0.2)' : 'transparent',
-            color: isDark ? '#FF9500' : isDark ? '#8E8E93' : '#6C6C70',
+            background: isDark ? 'rgba(255, 149, 0, 0.22)' : 'transparent',
+            color: isDark ? '#FF9F0A' : '#6C6C70',
             fontWeight: isDark ? 800 : 600,
-            fontSize: '12px',
+            fontSize: '12.5px',
             letterSpacing: '0.2px',
-            minHeight: '36px',
+            minHeight: '40px',
             transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
             boxShadow: isDark ? 'inset 0 0 0 1px #FF9500' : 'none',
           }}
         >
-          <span style={{ fontSize: '14px', lineHeight: 1 }}>🌙</span>
+          <span style={{ fontSize: '15px', lineHeight: 1 }}>🌙</span>
           <span className="theme-btn-label">Dark</span>
         </button>
 
@@ -87,22 +87,22 @@ export default function ThemeFloatingToggle({ theme = 'dark', onToggle }) {
             alignItems: 'center',
             justifyContent: 'center',
             gap: '6px',
-            padding: '7px 12px',
+            padding: '8px 14px',
             borderRadius: '9999px',
             border: 'none',
             outline: 'none',
             cursor: !isDark ? 'default' : 'pointer',
             background: !isDark ? '#FF9500' : 'transparent',
-            color: !isDark ? '#FFFFFF' : '#8E8E93',
+            color: !isDark ? '#16201B' : '#8E8E93',
             fontWeight: !isDark ? 800 : 600,
-            fontSize: '12px',
+            fontSize: '12.5px',
             letterSpacing: '0.2px',
-            minHeight: '36px',
+            minHeight: '40px',
             transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-            boxShadow: !isDark ? '0 2px 8px rgba(255, 149, 0, 0.35)' : 'none',
+            boxShadow: !isDark ? '0 2px 10px rgba(255, 149, 0, 0.35)' : 'none',
           }}
         >
-          <span style={{ fontSize: '14px', lineHeight: 1 }}>☀️</span>
+          <span style={{ fontSize: '15px', lineHeight: 1 }}>☀️</span>
           <span className="theme-btn-label">Light</span>
         </button>
       </div>

@@ -209,14 +209,31 @@ export default function App() {
   const [data, setData] = useState(() => DEFAULT_TITANS_STATE);
   const [syncStatus, setSyncStatus] = useState('synced'); // 'synced' | 'saving' | 'error'
 
-  // Theme appearance state: 'dark' (current & default) or 'light'
+  // Theme appearance state: respects user saved choice or system preference ('dark' or 'light')
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('titans_theme');
       if (saved === 'light' || saved === 'dark') return saved;
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        return 'light';
+      }
     }
     return 'dark'; // Dark mode is default
   });
+
+  // Listen for system appearance preference changes when not explicitly overridden
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    const handleSystemThemeChange = (e) => {
+      const saved = localStorage.getItem('titans_theme');
+      if (!saved) {
+        setTheme(e.matches ? 'light' : 'dark');
+      }
+    };
+    mq.addEventListener('change', handleSystemThemeChange);
+    return () => mq.removeEventListener('change', handleSystemThemeChange);
+  }, []);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {

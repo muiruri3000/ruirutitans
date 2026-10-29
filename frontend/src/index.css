@@ -50,6 +50,24 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Apple HIG Accessible Focus Ring */
+:focus-visible {
+  outline: 2px solid #FF9500 !important;
+  outline-offset: 2px !important;
+}
+
+/* Apple HIG Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -368,9 +386,9 @@ button {
 
 .top-nav-pill {
   text-decoration: none;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
-  padding: 6px 15px;
+  padding: 8px 16px;
   border-radius: 999px;
   background: #1C1C1E;
   color: #F4F2EA;
@@ -378,10 +396,11 @@ button {
   white-space: nowrap;
   flex-shrink: 0;
   transition: all 0.16s ease;
-  min-height: 34px;
+  min-height: 38px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  box-sizing: border-box;
 }
 
 .top-nav-pill:hover {
@@ -401,7 +420,7 @@ button {
 /* Primary Section Navigation Tabs */
 .club-nav-tab {
   flex: 1;
-  padding: 9px 15px;
+  padding: 10px 16px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
@@ -411,11 +430,12 @@ button {
   font-size: 12.5px;
   white-space: nowrap;
   transition: all 0.16s ease;
-  min-height: 36px;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  box-sizing: border-box;
 }
 
 .club-nav-tab:hover {
@@ -438,14 +458,16 @@ button {
   color: #F4F2EA;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 11.5px;
+  padding: 8px 14px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   transition: all 0.15s ease;
+  min-height: 36px;
+  box-sizing: border-box;
 }
 
 .cat-switcher-chip:hover {
@@ -883,6 +905,18 @@ button {
     padding: 6px 8px 10px !important;
     margin-bottom: 12px !important;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7) !important;
+  }
+
+  /* Apple HIG 44pt touch target conformance for mobile nav & controls */
+  .club-nav-tab,
+  .top-nav-pill,
+  .cat-switcher-chip {
+    min-height: 44px !important;
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .desktop-nav-segments {
