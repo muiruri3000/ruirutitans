@@ -682,6 +682,24 @@ class FixtureReportAPIView(views.APIView):
             "message": f"Match report for {fixture.fixture_id} updated successfully.",
         })
 
+    def delete(self, request, key, fixture_id):
+        category = Category.objects.filter(key=key).first() or Category.objects.filter(key__iexact=key).first()
+        if not category:
+            return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+        fixture = category.fixtures.filter(fixture_id=fixture_id).first()
+        if not fixture:
+            return Response({"error": "Fixture not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        fixture.report = {}
+        fixture.save(update_fields=["report", "updated_at"])
+
+        return Response({
+            "success": True,
+            "fixture_id": fixture.fixture_id,
+            "report": {},
+            "message": f"Match report for {fixture.fixture_id} removed successfully.",
+        })
+
 
 
 class VotingCurrentAPIView(views.APIView):

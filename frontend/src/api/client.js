@@ -823,6 +823,18 @@ export const api = {
     return await res.json();
   },
 
+  async deleteMatchReport(categoryKey, fixtureId) {
+    const res = await fetch(`/api/categories/${categoryKey}/fixtures/${fixtureId}/report/`, {
+      method: "DELETE",
+      headers: defaultHeaders(),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to delete match report: ${res.status}`);
+    }
+    return await res.json();
+  },
+
   async getDutyRoster(categoryKey) {
     const url = categoryKey
       ? `/api/categories/${encodeURIComponent(categoryKey)}/duty-roster/`

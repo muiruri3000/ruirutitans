@@ -2430,17 +2430,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
         }
       ],
       "referee": "Ref Joseph",
-      "report": {
-        "motm": "John Doe",
-        "title": "Electric Clash",
-        "author": "admin",
-        "content": "An incredible opening encounter.",
-        "weather": "",
-        "motm_team": "Oxford",
-        "attendance": "",
-        "updated_at": "2026-10-22T12:59:43.172142+00:00",
-        "tactical_notes": ""
-      }
+      "report": {}
     },
     {
       "id": "F2",

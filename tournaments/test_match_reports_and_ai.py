@@ -154,6 +154,24 @@ class MatchReportAndAIReportTests(TestCase):
         self.assertEqual(self.fixture.report["content"], payload["content"])
         self.assertEqual(self.fixture.report["author"], self.admin.username)
 
+    def test_fixture_report_delete_as_admin_removes_report(self):
+        url = reverse("tournaments:api_category_fixture_report", kwargs={
+            "key": self.category.key,
+            "fixture_id": self.fixture.fixture_id,
+        })
+        # Set a report first
+        self.fixture.report = {"title": "To be deleted", "content": "Sample content"}
+        self.fixture.save()
+
+        res = self.client.delete(url, HTTP_X_TITANS_CMS_TOKEN=self.admin_token)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["report"], {})
+
+        self.fixture.refresh_from_db()
+        self.assertEqual(self.fixture.report, {})
+
     def test_compile_matchweek_json(self):
         json_data = compile_matchweek_json(self.category)
         self.assertEqual(json_data["competition"]["key"], self.category.key)

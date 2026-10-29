@@ -17,6 +17,7 @@ export default function MatchReportModal({
   const [isEditing, setIsEditing] = useState(!hasReport && isCmsMode);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -243,6 +244,34 @@ export default function MatchReportModal({
       setError(err.message || 'Failed to save match report.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to remove this match report? This cannot be undone.')) {
+      return;
+    }
+    setDeleting(true);
+    setError(null);
+    setSuccessMsg('');
+    try {
+      await api.deleteMatchReport(categoryKey, fixture.id);
+      setSuccessMsg('Match report removed successfully.');
+      setTitle('');
+      setContent('');
+      setMotm('');
+      setMotmTeam('');
+      setTacticalNotes('');
+      setAttendance('');
+      setWeather('');
+      setIsEditing(false);
+      if (onReportSaved) {
+        onReportSaved(fixture.id, {});
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to remove match report.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -824,9 +853,26 @@ export default function MatchReportModal({
                     </div>
                   )}
 
-                  {/* Admin Edit Trigger */}
+                  {/* Admin Edit & Delete Triggers */}
                   {isCmsMode && (
-                    <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.15)',
+                          border: '1px solid #EF4444',
+                          color: '#F87171',
+                          borderRadius: '8px',
+                          padding: '7px 16px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: deleting ? 'wait' : 'pointer',
+                        }}
+                      >
+                        {deleting ? 'Removing...' : '🗑️ Remove Report'}
+                      </button>
                       <button
                         type="button"
                         onClick={() => setIsEditing(true)}
