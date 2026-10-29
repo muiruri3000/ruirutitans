@@ -3717,57 +3717,52 @@ export default function App() {
               }
             }}
           >
-            {navTabs.map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                className="tab-btn"
-                onClick={() => {
-                  if (t.key === 'register-players') {
-                    setManageSection('players');
-                    if (cmsUser && isCmsMode) {
+            {navTabs.map((t) => {
+              const isActive = currentView === t.key;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  className={`tab-btn club-nav-tab ${isActive ? 'active' : ''}`}
+                  onClick={() => {
+                    if (t.key === 'register-players') {
+                      setManageSection('players');
+                      if (cmsUser && isCmsMode) {
+                        setCurrentView('manage');
+                      } else {
+                        setCurrentView('manage');
+                        setAuthModal({ open: true, tab: 'cms' });
+                      }
+                      return;
+                    }
+                    if (t.key === 'manage') {
+                      setManageSection('players');
+                      if (!cmsUser || !isCmsMode) {
+                        setAuthModal({ open: true, tab: 'cms' });
+                      }
                       setCurrentView('manage');
-                    } else {
-                      setCurrentView('manage');
-                      setAuthModal({ open: true, tab: 'cms' });
+                      return;
                     }
-                    return;
-                  }
-                  if (t.key === 'manage') {
-                    setManageSection('players');
-                    if (!cmsUser || !isCmsMode) {
-                      setAuthModal({ open: true, tab: 'cms' });
+                    if (t.key === 'table') {
+                      if (cat?.mode !== 'league' && data.activeCategory !== leagueCategoryKey) {
+                        handleSelectActiveCategory(leagueCategoryKey);
+                      }
+                    } else if (t.key === 'cup') {
+                      if (cat?.mode !== 'cup' && data.categories[cupCategoryKey] && data.activeCategory !== cupCategoryKey) {
+                        handleSelectActiveCategory(cupCategoryKey);
+                      }
                     }
-                    setCurrentView('manage');
-                    return;
-                  }
-                  if (t.key === 'table') {
-                    if (cat?.mode !== 'league' && data.activeCategory !== leagueCategoryKey) {
-                      handleSelectActiveCategory(leagueCategoryKey);
-                    }
-                  } else if (t.key === 'cup') {
-                    if (cat?.mode !== 'cup' && data.categories[cupCategoryKey] && data.activeCategory !== cupCategoryKey) {
-                      handleSelectActiveCategory(cupCategoryKey);
-                    }
-                  }
-                  setCurrentView(t.key);
-                }}
-                style={{
-                  flex: 1,
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: currentView === t.key ? '#FF9500' : 'transparent',
-                  color: currentView === t.key ? '#16201B' : '#8E8E93',
-                  fontWeight: 800,
-                  fontSize: '12.5px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
+                    setCurrentView(t.key);
+                  }}
+                  style={{
+                    flex: 1,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
           </nav>
         )}
 
@@ -3849,19 +3844,7 @@ export default function App() {
                     key={k}
                     type="button"
                     onClick={() => handleSelectActiveCategory(k)}
-                    style={{
-                      background: isActive ? '#FF9500' : '#1C1C1E',
-                      color: isActive ? '#16201B' : '#EBEBF5',
-                      border: isActive ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '999px',
-                      padding: '5px 12px',
-                      fontSize: '11.5px',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                    }}
+                    className={`cat-switcher-chip ${isActive ? 'active' : ''}`}
                   >
                     <span>{isCup ? '🏆' : '📊'}</span>
                     <span>{c.label}</span>

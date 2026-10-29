@@ -370,30 +370,95 @@ button {
   text-decoration: none;
   font-size: 12px;
   font-weight: 700;
-  padding: 6px 14px;
+  padding: 6px 15px;
   border-radius: 999px;
   background: #1C1C1E;
-  color: #8E8E93;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #F4F2EA;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   white-space: nowrap;
   flex-shrink: 0;
-  transition: all 0.15s ease;
+  transition: all 0.16s ease;
   min-height: 34px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .top-nav-pill:hover {
+  background: #2C2C2E;
   color: #FFFFFF;
-  border-color: rgba(255, 149, 0, 0.4);
+  border-color: rgba(255, 149, 0, 0.55);
 }
 
 .top-nav-pill.active {
   background: #FF9500 !important;
-  color: #000000 !important;
+  color: #16201B !important;
   border-color: #FF9500 !important;
   font-weight: 800;
+  box-shadow: 0 2px 10px rgba(255, 149, 0, 0.35);
+}
+
+/* Primary Section Navigation Tabs */
+.club-nav-tab {
+  flex: 1;
+  padding: 9px 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  background: #1C1C1E;
+  color: #F4F2EA;
+  font-weight: 700;
+  font-size: 12.5px;
+  white-space: nowrap;
+  transition: all 0.16s ease;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.club-nav-tab:hover {
+  background: #2C2C2E;
+  color: #FFFFFF;
+  border-color: rgba(255, 149, 0, 0.5);
+}
+
+.club-nav-tab.active {
+  background: #FF9500 !important;
+  color: #16201B !important;
+  border-color: #FF9500 !important;
+  font-weight: 800;
+  box-shadow: 0 2px 10px rgba(255, 149, 0, 0.35);
+}
+
+/* Competition Switcher Chips */
+.cat-switcher-chip {
+  background: #1C1C1E;
+  color: #F4F2EA;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.cat-switcher-chip:hover {
+  background: #2C2C2E;
+  color: #FFFFFF;
+  border-color: rgba(255, 149, 0, 0.5);
+}
+
+.cat-switcher-chip.active {
+  background: #FF9500 !important;
+  color: #16201B !important;
+  border-color: #FF9500 !important;
+  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
 }
 
 /* Primary Section Navigation Bar (Fixed / Sticky on Scroll) */
@@ -1053,23 +1118,38 @@ body[data-theme="light"],
 }
 
 [data-theme="light"] .club-section-navbar {
-  background: rgba(255, 255, 255, 0.92) !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
 }
 
-[data-theme="light"] .top-nav-pill {
-  color: #3C3C43 !important;
+/* Light Mode Navigation Buttons & Pills */
+[data-theme="light"] .top-nav-pill,
+[data-theme="light"] .club-nav-tab,
+[data-theme="light"] .cat-switcher-chip {
+  background: #FFFFFF !important;
+  color: #1C1C1E !important;
+  border: 1px solid rgba(0, 0, 0, 0.14) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
-[data-theme="light"] .top-nav-pill:hover {
-  background: rgba(0, 0, 0, 0.06) !important;
+[data-theme="light"] .top-nav-pill:hover,
+[data-theme="light"] .club-nav-tab:hover,
+[data-theme="light"] .cat-switcher-chip:hover {
+  background: #F2F2F7 !important;
   color: #000000 !important;
+  border-color: #FF9500 !important;
+  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.2);
 }
 
-[data-theme="light"] .top-nav-pill.active {
+[data-theme="light"] .top-nav-pill.active,
+[data-theme="light"] .club-nav-tab.active,
+[data-theme="light"] .cat-switcher-chip.active {
   background: #FF9500 !important;
-  color: #FFFFFF !important;
+  color: #16201B !important;
+  border-color: #FF9500 !important;
+  font-weight: 800;
+  box-shadow: 0 2px 10px rgba(255, 149, 0, 0.35) !important;
 }
 
 [data-theme="light"] .sync-badge {
