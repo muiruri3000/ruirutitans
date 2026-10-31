@@ -11,6 +11,7 @@ export function computeClientWeeklyMVP(catObj, categoryKey) {
 
   const teamsById = {};
   const playersById = {};
+  const playersByName = {};
   (catObj.teams || []).forEach((t) => {
     teamsById[t.id] = t;
     (t.players || []).forEach((p) => {
@@ -19,7 +20,7 @@ export function computeClientWeeklyMVP(catObj, categoryKey) {
       const rawName = (p.name || '').trim();
       const firstName = rawFirst && rawFirst.toLowerCase() !== 'unrecorded' ? rawFirst : '';
       const displayName = firstName || rawUser || rawName || p.id;
-      playersById[p.id] = {
+      const pInfo = {
         id: p.id,
         permanentId: p.permanentId || p.id,
         name: rawName || displayName,
@@ -32,6 +33,11 @@ export function computeClientWeeklyMVP(catObj, categoryKey) {
         teamName: t.name,
         teamColor: t.color || '#FF9500',
       };
+      playersById[p.id] = pInfo;
+      if (p.name) playersByName[p.name.toLowerCase().trim()] = pInfo;
+      if (displayName) playersByName[displayName.toLowerCase().trim()] = pInfo;
+      if (rawFirst) playersByName[rawFirst.toLowerCase()] = pInfo;
+      if (rawUser) playersByName[rawUser.toLowerCase()] = pInfo;
     });
   });
 
@@ -81,21 +87,23 @@ export function computeClientWeeklyMVP(catObj, categoryKey) {
     }
 
     const playerAgg = {};
-    const ensurePlayer = (pId, defaultTeamId) => {
-      if (!playerAgg[pId]) {
-        const info = playersById[pId] || {
-          id: pId,
-          name: pId,
-          displayName: pId,
-          firstName: '',
-          username: '',
-          position: '',
-          jerseyNumber: null,
-          teamId: defaultTeamId,
-          teamName: teamsById[defaultTeamId]?.name || 'Titans Club',
-          teamColor: teamsById[defaultTeamId]?.color || '#FF9500',
-        };
-        playerAgg[pId] = {
+    const ensurePlayer = (pIdOrName, defaultTeamId) => {
+      const keyStr = String(pIdOrName || '').trim();
+      const info = playersById[keyStr] || playersByName[keyStr.toLowerCase()] || {
+        id: keyStr,
+        name: keyStr,
+        displayName: keyStr,
+        firstName: '',
+        username: '',
+        position: '',
+        jerseyNumber: null,
+        teamId: defaultTeamId,
+        teamName: teamsById[defaultTeamId]?.name || 'Titans Club',
+        teamColor: teamsById[defaultTeamId]?.color || '#FF9500',
+      };
+      const canonicalId = info.id || keyStr;
+      if (!playerAgg[canonicalId]) {
+        playerAgg[canonicalId] = {
           player: info,
           goals: 0,
           assists: 0,
@@ -104,7 +112,7 @@ export function computeClientWeeklyMVP(catObj, categoryKey) {
           points: 0,
         };
       }
-      return playerAgg[pId];
+      return playerAgg[canonicalId];
     };
 
     fList.forEach((f) => {
@@ -117,19 +125,59 @@ export function computeClientWeeklyMVP(catObj, categoryKey) {
             const entry = ensurePlayer(pId, ev.teamId || f.home);
             entry.goals++;
           }
-          if (ev.assistPlayerId || ev.assistPlayer) {
-            const aId = ev.assistPlayerId || ev.assistPlayer;
+          if (ev.assistPlayerId || ev.assistPlayer || ev.assist) {
+            const aId = ev.assistPlayerId || ev.assistPlayer || ev.assist;
             const aEntry = ensurePlayer(aId, ev.teamId || f.home);
             aEntry.assists++;
           }
         } else if (ev.type === 'assist') {
-          const pId = ev.playerId || ev.player;
+          const pId = ev.playerId || ev.player || ev.assistPlayerId || ev.assistPlayer;
           if (pId) {
             const entry = ensurePlayer(pId, ev.teamId || f.home);
             entry.assists++;
           }
         }
       });
+
+      // Clean sheet calculation for client MVP
+      let homeScore = 0;
+      let awayScore = 0;
+      if (typeof f.homeScore === 'number' && typeof f.awayScore === 'number') {
+        homeScore = f.homeScore;
+        awayScore = f.awayScore;
+      } else if (Array.isArray(f.score) && f.score.length === 2) {
+        homeScore = parseInt(f.score[0], 10) || 0;
+        awayScore = parseInt(f.score[1], 10) || 0;
+      } else if (f.events) {
+        f.events.forEach((ev) => {
+          if (ev.type === 'goal' || ev.type === 'penalty') {
+            if (ev.teamId === f.home || ev.team === f.home) homeScore++;
+            else if (ev.teamId === f.away || ev.team === f.away) awayScore++;
+          }
+        });
+      }
+
+      const FORWARD_POSITIONS = new Set(['ST', 'CF', 'LW', 'RW', 'FWD', 'ATT', 'FORWARD', 'STRIKER']);
+      if (f.played || (f.events && f.events.length > 0)) {
+        if (awayScore === 0 && f.home && teamsById[f.home]) {
+          (teamsById[f.home].players || []).forEach((p) => {
+            const pos = String(p.position || '').trim().toUpperCase();
+            if (!p.unknown && !p.is_unknown && !FORWARD_POSITIONS.has(pos)) {
+              const entry = ensurePlayer(p.id, f.home);
+              entry.cleanSheets++;
+            }
+          });
+        }
+        if (homeScore === 0 && f.away && teamsById[f.away]) {
+          (teamsById[f.away].players || []).forEach((p) => {
+            const pos = String(p.position || '').trim().toUpperCase();
+            if (!p.unknown && !p.is_unknown && !FORWARD_POSITIONS.has(pos)) {
+              const entry = ensurePlayer(p.id, f.away);
+              entry.cleanSheets++;
+            }
+          });
+        }
+      }
     });
 
     Object.values(playerAgg).forEach((p) => {
@@ -161,17 +209,20 @@ export function computeClientWeeklyMVP(catObj, categoryKey) {
 
     const g = winner.goals;
     const a = winner.assists;
+    const cs = winner.cleanSheets;
     const pts = winner.points;
     const pName = winner.player.displayName;
     const tName = winner.player.teamName;
 
+    const parts = [];
+    if (g > 0) parts.push(`${g} goal${g > 1 ? 's' : ''}`);
+    if (a > 0) parts.push(`${a} assist${a > 1 ? 's' : ''}`);
+    if (cs > 0) parts.push(`${cs} clean sheet${cs > 1 ? 's' : ''}`);
+
     let rationale = '';
-    if (g > 0 && a > 0) {
-      rationale = `Electric display registering ${g} goal${g > 1 ? 's' : ''} and ${a} assist${a > 1 ? 's' : ''} (${pts} pts) to lead ${tName} in Matchweek ${weekNum}.`;
-    } else if (g > 0) {
-      rationale = `Clinical attacking output with ${g} goal${g > 1 ? 's' : ''} (${pts} pts) spearheading ${tName}'s frontline in Matchweek ${weekNum}.`;
-    } else if (a > 0) {
-      rationale = `Masterclass in midfield delivery with ${a} assist${a > 1 ? 's' : ''} (${pts} pts) creating decisive scoring opportunities for ${tName} in Matchweek ${weekNum}.`;
+    if (parts.length > 0) {
+      const joined = parts.length <= 2 ? parts.join(' and ') : `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
+      rationale = `Standout performance delivering ${joined} (${pts} pts) to lead ${tName} in Matchweek ${weekNum}.`;
     } else {
       rationale = `Disciplined tactical tempo and leadership (${pts} pts) setting the standard for ${tName} in Matchweek ${weekNum}.`;
     }

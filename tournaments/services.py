@@ -5727,12 +5727,20 @@ def compute_weekly_mvps(category, reference_dt=None, force=False):
                     p_entry["player"] = ev.player
                     p_entry["team"] = ev.team or ev.player.team
                     p_entry["goals"] += 1
-                elif ev.assist_player:
-                    p_entry = player_stats[ev.assist_player.id]
-                    p_entry["player"] = ev.assist_player
-                    p_entry["team"] = ev.assist_player.team
-                    p_entry["assists"] += 1
-                elif ev.event_type == "yellow" and ev.player:
+
+                # Goal assist or standalone assist event (must NOT be elif of goal)
+                if ev.assist_player:
+                    a_entry = player_stats[ev.assist_player.id]
+                    a_entry["player"] = ev.assist_player
+                    a_entry["team"] = ev.assist_player.team or ev.team
+                    a_entry["assists"] += 1
+                elif ev.event_type == "assist" and ev.player:
+                    a_entry = player_stats[ev.player.id]
+                    a_entry["player"] = ev.player
+                    a_entry["team"] = ev.team or ev.player.team
+                    a_entry["assists"] += 1
+
+                if ev.event_type == "yellow" and ev.player:
                     p_entry = player_stats[ev.player.id]
                     p_entry["player"] = ev.player
                     p_entry["team"] = ev.player.team
@@ -5746,17 +5754,20 @@ def compute_weekly_mvps(category, reference_dt=None, force=False):
                 if ev.player and motm_name and motm_name in (ev.player.name or "").lower():
                     player_stats[ev.player.id]["motm_awards"] += 1
 
-            # Clean sheet bonus
+            # Clean sheet bonus: all squad players (excluding explicit forwards/strikers) on a team that conceded 0 goals
+            FORWARD_POSITIONS = {"ST", "CF", "LW", "RW", "FWD", "ATT", "FORWARD", "STRIKER"}
             if a_score == 0 and f.home_team:
-                for p in f.home_team.players.filter(position__in=["GK", "LB", "CB", "RB", "DEF"]):
-                    if not p.is_unknown:
+                for p in f.home_team.players.all():
+                    pos = (p.position or "").strip().upper()
+                    if not p.is_unknown and pos not in FORWARD_POSITIONS:
                         p_entry = player_stats[p.id]
                         p_entry["player"] = p
                         p_entry["team"] = f.home_team
                         p_entry["clean_sheets"] += 1
             if h_score == 0 and f.away_team:
-                for p in f.away_team.players.filter(position__in=["GK", "LB", "CB", "RB", "DEF"]):
-                    if not p.is_unknown:
+                for p in f.away_team.players.all():
+                    pos = (p.position or "").strip().upper()
+                    if not p.is_unknown and pos not in FORWARD_POSITIONS:
                         p_entry = player_stats[p.id]
                         p_entry["player"] = p
                         p_entry["team"] = f.away_team
@@ -5795,12 +5806,15 @@ def compute_weekly_mvps(category, reference_dt=None, force=False):
                 )
                 data["points"] = round(pts, 1)
 
-            sorted_candidates = sorted(
-                player_stats.values(),
-                key=lambda x: (x["points"], x["goals"], x["assists"]),
-                reverse=True
-            )
-            if sorted_candidates and sorted_candidates[0]["player"]:
+            sorted_candidates = [
+                c for c in sorted(
+                    player_stats.values(),
+                    key=lambda x: (x["points"], x["goals"], x["assists"]),
+                    reverse=True
+                )
+                if c.get("player") and not c["player"].is_unknown and c.get("points", 0) > 0
+            ]
+            if sorted_candidates:
                 chosen_entry = sorted_candidates[0]
 
         if not chosen_entry:
@@ -5838,14 +5852,18 @@ def compute_weekly_mvps(category, reference_dt=None, force=False):
         a = chosen_entry["assists"]
         pts = chosen_entry["points"]
 
-        if g > 0 and a > 0:
-            rationale = f"Electric display registering {g} goal{'s' if g > 1 else ''} and {a} assist{'s' if a > 1 else ''} ({pts} pts) to lead {team_obj.name} in Matchweek {week_num}."
-        elif g > 0:
-            rationale = f"Clinical attacking output with {g} goal{'s' if g > 1 else ''} ({pts} pts) spearheading {team_obj.name}'s frontline in Matchweek {week_num}."
-        elif a > 0:
-            rationale = f"Masterclass in midfield delivery with {a} assist{'s' if a > 1 else ''} ({pts} pts) creating decisive scoring opportunities for {team_obj.name} in Matchweek {week_num}."
-        elif chosen_entry["clean_sheets"] > 0:
-            rationale = f"Impenetrable defensive leadership keeping a clean sheet ({pts} pts) to anchor {team_obj.name} in Matchweek {week_num}."
+        cs = chosen_entry["clean_sheets"]
+        parts = []
+        if g > 0:
+            parts.append(f"{g} goal{'s' if g > 1 else ''}")
+        if a > 0:
+            parts.append(f"{a} assist{'s' if a > 1 else ''}")
+        if cs > 0:
+            parts.append(f"{cs} clean sheet{'s' if cs > 1 else ''}")
+
+        if parts:
+            joined = " and ".join(parts) if len(parts) <= 2 else f"{', '.join(parts[:-1])}, and {parts[-1]}"
+            rationale = f"Standout performance delivering {joined} ({pts} pts) to lead {team_obj.name} in Matchweek {week_num}."
         else:
             rationale = f"Disciplined tactical tempo and leadership ({pts} pts) setting the standard for {team_obj.name} in Matchweek {week_num}."
 
