@@ -16,7 +16,7 @@ export default function VisitorReactionsSection({
   isCmsMode = false,
   playerUser = null,
 }) {
-  const isAdmin = Boolean(cmsUser && isCmsMode);
+  const isAdmin = Boolean((cmsUser && isCmsMode) || (api.getCmsToken() && isCmsMode) || (cmsUser && !playerUser));
 
   // Comments state
   const [comments, setComments] = useState([]);
@@ -132,17 +132,30 @@ export default function VisitorReactionsSection({
     }
   };
 
-  // Admin moderation actions: approve, reject, delete
+  // Admin moderation actions: approve, reject, unpublish, delete
   const handleModerate = async (commentId, action) => {
     try {
       const res = await api.moderateComment(commentId, action);
       if (res?.counts) {
         setCounts(res.counts);
       }
+      const actionLabels = {
+        approve: 'approved and published to carousel',
+        unpublish: 'unpublished and moved to pending',
+        reject: 'rejected',
+        delete: 'deleted permanently',
+      };
       setFeedback({
         type: 'success',
-        message: res.message || `Comment ${action}d successfully.`,
+        message: res.message || `Comment ${actionLabels[action] || `${action}d`} successfully.`,
       });
+      if (fullModalComment && fullModalComment.id === commentId) {
+        if (action === 'delete') {
+          setFullModalComment(null);
+        } else if (res?.comment) {
+          setFullModalComment(res.comment);
+        }
+      }
       // Refresh current tab
       await loadComments(adminTab);
     } catch (err) {
@@ -776,7 +789,7 @@ export default function VisitorReactionsSection({
                       {item.isApproved && (
                         <button
                           type="button"
-                          onClick={() => handleModerate(item.id, 'reject')}
+                          onClick={() => handleModerate(item.id, 'unpublish')}
                           style={{
                             background: 'rgba(255, 149, 0, 0.15)',
                             color: '#FF9500',
@@ -787,7 +800,7 @@ export default function VisitorReactionsSection({
                             fontWeight: 700,
                             cursor: 'pointer',
                           }}
-                          title="Unpublish from public carousel"
+                          title="Unpublish from public carousel (move back to pending)"
                         >
                           Unpublish
                         </button>
@@ -819,17 +832,22 @@ export default function VisitorReactionsSection({
                           }
                         }}
                         style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#8E8E93',
+                          background: 'rgba(255, 69, 58, 0.12)',
+                          border: '1px solid rgba(255, 69, 58, 0.3)',
+                          borderRadius: '6px',
+                          color: '#FF453A',
                           fontSize: '11px',
+                          fontWeight: 700,
                           cursor: 'pointer',
                           marginLeft: 'auto',
-                          padding: '4px',
+                          padding: '4px 8px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
                         }}
                         title="Delete permanently"
                       >
-                        🗑️
+                        🗑️ Delete
                       </button>
                     </div>
                   )}
@@ -982,7 +1000,88 @@ export default function VisitorReactionsSection({
             </div>
 
             {/* Modal Footer */}
-            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              {isAdmin && fullModalComment && (
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {!fullModalComment.isApproved && (
+                    <button
+                      type="button"
+                      onClick={() => handleModerate(fullModalComment.id, 'approve')}
+                      style={{
+                        background: '#30D158',
+                        color: '#000000',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ✓ Approve
+                    </button>
+                  )}
+                  {fullModalComment.isApproved && (
+                    <button
+                      type="button"
+                      onClick={() => handleModerate(fullModalComment.id, 'unpublish')}
+                      style={{
+                        background: 'rgba(255, 149, 0, 0.15)',
+                        color: '#FF9500',
+                        border: '1px solid #FF9500',
+                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Unpublish
+                    </button>
+                  )}
+                  {fullModalComment.status !== 'rejected' && (
+                    <button
+                      type="button"
+                      onClick={() => handleModerate(fullModalComment.id, 'reject')}
+                      style={{
+                        background: 'rgba(255, 69, 58, 0.15)',
+                        color: '#FF453A',
+                        border: '1px solid #FF453A',
+                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ✕ Reject
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Permanently delete comment from "${fullModalComment.authorName}"?`)) {
+                        handleModerate(fullModalComment.id, 'delete');
+                      }
+                    }}
+                    style={{
+                      background: 'rgba(255, 69, 58, 0.12)',
+                      border: '1px solid rgba(255, 69, 58, 0.3)',
+                      borderRadius: '6px',
+                      color: '#FF453A',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      padding: '6px 12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => setFullModalComment(null)}
@@ -995,6 +1094,7 @@ export default function VisitorReactionsSection({
                   fontSize: '13px',
                   fontWeight: 800,
                   cursor: 'pointer',
+                  marginLeft: 'auto',
                 }}
               >
                 Close

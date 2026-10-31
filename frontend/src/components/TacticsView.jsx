@@ -487,6 +487,135 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
   // 11. Pitch Zoom / Content Scale (0.5 to 2.0)
   const [pitchScale, setPitchScale] = useState(1.0);
 
+  // 11B. Fullscreen Landscape State for Mobile Devices & Tactical Boards
+  const [isPitchFullscreen, setIsPitchFullscreen] = useState(false);
+  const [showFullscreenBench, setShowFullscreenBench] = useState(false);
+  const [pitchFitMode, setPitchFitMode] = useState('cover'); // 'cover' (fills screen) | 'fit' (entire pitch in bounds)
+  const fullscreenWrapperRef = useRef(null);
+  const previousOrientationRef = useRef(false);
+  const userExitedFullscreenRef = useRef(false);
+
+  // Keep a ref to pitchScale for zero-teardown touch pinch gestures
+  const pitchScaleRef = useRef(pitchScale);
+  pitchScaleRef.current = pitchScale;
+
+  const [isPinchZooming, setIsPinchZooming] = useState(false);
+  const pinchZoomTimeoutRef = useRef(null);
+
+  const [windowDimensions, setWindowDimensions] = useState(() => ({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1200,
+    height: typeof window !== 'undefined' ? window.innerHeight : 800,
+  }));
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
+  const handleToggleFullscreen = async (forceState = null) => {
+    const shouldExit = forceState !== null ? !forceState : isPitchFullscreen;
+
+    if (shouldExit) {
+      if (forceState === null) {
+        // User explicitly tapped exit button
+        userExitedFullscreenRef.current = true;
+      }
+      setIsPitchFullscreen(false);
+      setShowFullscreenBench(false);
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            await document.webkitExitFullscreen();
+          }
+        }
+      } catch (e) {}
+      try {
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+      } catch (e) {}
+      setIsLandscape(previousOrientationRef.current);
+    } else {
+      userExitedFullscreenRef.current = false;
+      previousOrientationRef.current = isLandscape;
+      setIsPitchFullscreen(true);
+      setIsLandscape(true); // Switch to horizontal landscape view
+      try {
+        const el = fullscreenWrapperRef.current;
+        if (el) {
+          if (el.requestFullscreen) {
+            await el.requestFullscreen();
+          } else if (el.webkitRequestFullscreen) {
+            await el.webkitRequestFullscreen();
+          }
+        }
+      } catch (e) {}
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock('landscape');
+        }
+      } catch (e) {}
+      showStatusNotice('⛶ Pitch Covering Screen (Landscape) · Tap ✕ to exit');
+    }
+  };
+
+  // Auto-cover screen when mobile device screen is landscape and pitch is tilted at landscape
+  useEffect(() => {
+    const isMobileDevice = windowDimensions.width <= 1024;
+    const isScreenLandscape = windowDimensions.width > windowDimensions.height;
+
+    if (isMobileDevice && isScreenLandscape && isLandscape) {
+      if (!isPitchFullscreen && !userExitedFullscreenRef.current) {
+        handleToggleFullscreen(true);
+      }
+    } else if (isMobileDevice && !isScreenLandscape) {
+      // Returned to portrait: reset user exit override so next landscape turn auto-covers
+      userExitedFullscreenRef.current = false;
+      if (isPitchFullscreen) {
+        handleToggleFullscreen(false);
+      }
+    }
+  }, [windowDimensions.width, windowDimensions.height, isLandscape, isPitchFullscreen]);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      if (!isFs && isPitchFullscreen) {
+        setIsPitchFullscreen(false);
+        setShowFullscreenBench(false);
+        setIsLandscape(previousOrientationRef.current);
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    document.addEventListener('webkitfullscreenchange', handleFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      document.removeEventListener('webkitfullscreenchange', handleFsChange);
+    };
+  }, [isPitchFullscreen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isPitchFullscreen) {
+        handleToggleFullscreen();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPitchFullscreen]);
+
   // 12. Drawing Tools, Annotations, Ball & Custom Player Colors
   const [activeTool, setActiveTool] = useState('select'); // 'select' | 'curve' | 'line' | 'pass' | 'paint'
   const [drawColor, setDrawColor] = useState('#FF9F0A'); // Active color for drawing and painting
@@ -674,6 +803,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
     if (!draggingSlotId) return;
 
     const handlePointerMove = (e) => {
+      if (e.touches && e.touches.length > 1) return;
       if (!pitchRef.current) return;
       const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
       const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
@@ -773,53 +903,69 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
     };
   }, [draggingSlotId, pitchNodes, opponentNodes, selectedOpponentTeamId, isLandscape, activeTool, drawColor]);
 
-  // Multi-Touch Pinch to Stretch Pitch on Touch Screens
+  // Multi-Touch Pinch to Resize Pitch (0.4x to 2.5x) on Mobile Screens
   useEffect(() => {
-    const pitchEl = pitchRef.current;
-    if (!pitchEl) return;
+    const targetEl = fullscreenWrapperRef.current;
+    if (!targetEl) return;
 
-    let initialDist = null;
+    let initialDistance = 0;
     let initialScale = 1.0;
+    let isPinching = false;
+
+    const getDistance = (t1, t2) => {
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.hypot(dx, dy);
+    };
 
     const handleTouchStart = (e) => {
-      if (e.touches.length === 2) {
-        const t1 = e.touches[0];
-        const t2 = e.touches[1];
-        initialDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-        initialScale = pitchScale;
+      if (e.touches && e.touches.length === 2) {
+        initialDistance = getDistance(e.touches[0], e.touches[1]);
+        initialScale = pitchScaleRef.current;
+        isPinching = true;
+        setIsPinchZooming(true);
+        if (pinchZoomTimeoutRef.current) clearTimeout(pinchZoomTimeoutRef.current);
       }
     };
 
     const handleTouchMove = (e) => {
-      if (e.touches.length === 2 && initialDist) {
-        e.preventDefault();
-        const t1 = e.touches[0];
-        const t2 = e.touches[1];
-        const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-        const ratio = currentDist / initialDist;
-        const nextScale = Math.min(2.0, Math.max(0.5, Math.round(initialScale * ratio * 100) / 100));
+      if (e.touches && e.touches.length === 2 && isPinching && initialDistance > 0) {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+        const currentDistance = getDistance(e.touches[0], e.touches[1]);
+        const scaleFactor = currentDistance / initialDistance;
+        const rawScale = initialScale * scaleFactor;
+        const nextScale = Math.min(2.5, Math.max(0.4, Math.round(rawScale * 100) / 100));
+        pitchScaleRef.current = nextScale;
         setPitchScale(nextScale);
       }
     };
 
     const handleTouchEnd = (e) => {
-      if (e.touches.length < 2) {
-        initialDist = null;
+      if ((!e.touches || e.touches.length < 2) && isPinching) {
+        isPinching = false;
+        initialDistance = 0;
+        if (pinchZoomTimeoutRef.current) clearTimeout(pinchZoomTimeoutRef.current);
+        pinchZoomTimeoutRef.current = setTimeout(() => {
+          setIsPinchZooming(false);
+        }, 750);
       }
     };
 
-    pitchEl.addEventListener('touchstart', handleTouchStart, { passive: true });
-    pitchEl.addEventListener('touchmove', handleTouchMove, { passive: false });
-    pitchEl.addEventListener('touchend', handleTouchEnd, { passive: true });
-    pitchEl.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    targetEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+    targetEl.addEventListener('touchmove', handleTouchMove, { passive: false });
+    targetEl.addEventListener('touchend', handleTouchEnd, { passive: true });
+    targetEl.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
     return () => {
-      pitchEl.removeEventListener('touchstart', handleTouchStart);
-      pitchEl.removeEventListener('touchmove', handleTouchMove);
-      pitchEl.removeEventListener('touchend', handleTouchEnd);
-      pitchEl.removeEventListener('touchcancel', handleTouchEnd);
+      targetEl.removeEventListener('touchstart', handleTouchStart);
+      targetEl.removeEventListener('touchmove', handleTouchMove);
+      targetEl.removeEventListener('touchend', handleTouchEnd);
+      targetEl.removeEventListener('touchcancel', handleTouchEnd);
+      if (pinchZoomTimeoutRef.current) clearTimeout(pinchZoomTimeoutRef.current);
     };
-  }, [pitchScale]);
+  }, [isPitchFullscreen]);
 
   // Handle Dragging Ball on Pitch
   const handleBallPointerDown = (e) => {
@@ -839,6 +985,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
     if (!isDraggingBall) return;
 
     const handleBallMove = (e) => {
+      if (e.touches && e.touches.length > 1) return;
       if (!pitchRef.current) return;
       const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
       const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
@@ -907,6 +1054,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
     if (!isDrawing) return;
 
     const handleDrawingMove = (e) => {
+      if (e.touches && e.touches.length > 1) return;
       if (!pitchRef.current) return;
       const rect = pitchRef.current.getBoundingClientRect();
       const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
@@ -1455,93 +1603,514 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
         </div>
       </div>
 
+      {/* Mobile-Friendly Fullscreen Landscape Launcher Banner */}
+      {windowDimensions.width <= 768 && !isPitchFullscreen && (
+        <button
+          type="button"
+          onClick={handleToggleFullscreen}
+          style={{
+            width: '100%',
+            background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.22), rgba(255, 149, 0, 0.08))',
+            border: '1.5px solid #FF9500',
+            borderRadius: '10px',
+            color: '#FF9F0A',
+            padding: '10px 14px',
+            fontSize: '12.5px',
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '10px',
+            boxShadow: '0 4px 14px rgba(255, 149, 0, 0.25)',
+            letterSpacing: '0.02em',
+          }}
+          title="Open Pitch in Fullscreen Landscape View"
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '16px' }}>⛶</span>
+            <span>FULLSCREEN PITCH (LANDSCAPE)</span>
+          </span>
+          <span
+            style={{
+              fontSize: '10px',
+              background: '#FF9500',
+              color: '#16201B',
+              padding: '3px 8px',
+              borderRadius: '6px',
+              fontWeight: 900,
+            }}
+          >
+            TAP TO EXPAND
+          </span>
+        </button>
+      )}
+
       {/* Main Tactical Pitch & Sidebar Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: isLandscape ? 'minmax(320px, 1fr) 280px' : 'minmax(280px, 1fr) 280px', gap: '18px', alignItems: 'start' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns:
+            (isLandscape && windowDimensions.width > 1024)
+              ? 'minmax(320px, 1fr) 280px'
+              : (windowDimensions.width > 1024 ? 'minmax(280px, 1fr) 280px' : '1fr'),
+          gap: '18px',
+          alignItems: 'start',
+        }}
+      >
         {/* =========================================================================
             TACTICAL SOCCER PITCH (User Scalable + 90deg Rotatable)
            ========================================================================= */}
         <div
-          style={{
-            background: '#121212',
-            border: '2px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '14px',
-            padding: '12px',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
-            position: 'relative',
-            maxWidth: isLandscape ? `${Math.round(760 * pitchScale)}px` : `${Math.round(540 * pitchScale)}px`,
-            width: '100%',
-            margin: '0 auto',
-            transition: 'max-width 0.25s ease',
-          }}
-        >
-          {/* Pitch Header info & Controls */}
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '10px',
-              paddingBottom: '8px',
-              borderBottom: '1px solid #16382B',
-              gap: '8px',
-            }}
-          >
-            {/* Formation & Status Tags */}
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 800, color: '#FF9F0A' }}>
-                {activeFormation.name}
-              </span>
-              <span style={{ fontSize: '11px', color: '#7AA392' }}>
-                ({currentAssignedCount} / {effectiveMaxPlayers} Selected)
-              </span>
-              {includeGoalkeeper && (selectedFormat === '5-aside' || selectedFormat === '7-aside') && (
-                <span style={{ fontSize: '10px', background: '#14382B', color: '#6CE5A0', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
-                  {selectedFormat === '5-aside' ? '5 + 1 (GK)' : '7 + 1 (GK)'}
-                </span>
-              )}
-              {!includeGoalkeeper && (
-                <span style={{ fontSize: '10px', background: '#732228', color: '#FFAAAA', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
-                  No GK ({activeFormatData.outfieldCount || effectiveMaxPlayers} Outfield)
-                </span>
-              )}
-              {showOpponents && (
-                <span style={{ fontSize: '10px', background: '#3A0D15', color: '#FDA4AF', border: '1px solid #E11D48', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
-                  Opponents ({visibleOpponentNodes.length})
-                </span>
-              )}
-            </div>
-
-            {/* Tactical Pitch Controls: Rotate 90deg + Pitch Size Adjustment */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              {/* Rotate 90deg Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !isLandscape;
-                  setIsLandscape(next);
-                  showStatusNotice(next ? '🔄 Pitch rotated 90° (Landscape View)' : '📱 Pitch rotated back to Portrait View');
-                }}
-                style={{
-                  background: isLandscape ? '#FF9500' : '#14382B',
-                  color: isLandscape ? '#16201B' : '#FF9F0A',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '6px',
-                  padding: '4px 9px',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
+          ref={fullscreenWrapperRef}
+          className={`tactics-pitch-card ${isPitchFullscreen ? 'tactics-pitch-fullscreen' : ''}`}
+          style={
+            isPitchFullscreen
+              ? {
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: '100vw',
+                  height: '100dvh',
+                  zIndex: 9999,
+                  background: '#040906',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.15s ease',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-                }}
-                title="Rotate pitch between Portrait (0°) and Landscape (90°)"
-              >
-                <span>🔄</span>
-                <span>{isLandscape ? '90° Landscape' : 'Rotate 90°'}</span>
-              </button>
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                  paddingTop: 'max(env(safe-area-inset-top, 0px), 6px)',
+                  paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 6px)',
+                  paddingLeft: 'max(env(safe-area-inset-left, 0px), 10px)',
+                  paddingRight: 'max(env(safe-area-inset-right, 0px), 10px)',
+                  boxSizing: 'border-box',
+                }
+              : {
+                  background: '#121212',
+                  border: '2px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '14px',
+                  padding: '12px',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
+                  position: 'relative',
+                  maxWidth:
+                    (windowDimensions.width > windowDimensions.height && windowDimensions.width <= 1024 && isLandscape)
+                      ? '100%'
+                      : isLandscape
+                        ? `${Math.round(760 * pitchScale)}px`
+                        : `${Math.round(540 * pitchScale)}px`,
+                  width: '100%',
+                  margin: '0 auto',
+                  transition: isPinchZooming ? 'none' : 'max-width 0.25s ease',
+                }
+          }
+        >
+          {/* Fullscreen Landscape HUD (visible only in Fullscreen Mode) */}
+          {isPitchFullscreen && (
+            <div className="tactics-fullscreen-hud">
+              {/* Left: Exit button & Formation info */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={handleToggleFullscreen}
+                  style={{
+                    background: '#FF9500',
+                    color: '#16201B',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '5px 12px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 8px rgba(255, 149, 0, 0.4)',
+                  }}
+                  title="Exit Fullscreen Mode"
+                >
+                  <span style={{ fontSize: '13px', fontWeight: 900 }}>✕</span>
+                  <span>Exit Fullscreen</span>
+                </button>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF9F0A' }}>
+                  {activeFormation.name}
+                </span>
+                <span style={{ fontSize: '11px', color: '#7AA392' }}>
+                  ({currentAssignedCount}/{effectiveMaxPlayers})
+                </span>
+              </div>
+
+              {/* Center: Tools & Scaling Controls in horizontally scrollable HUD */}
+              <div className="tactics-hud-scroll">
+                {/* Cover / Fit Mode Toggle */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = pitchFitMode === 'cover' ? 'fit' : 'cover';
+                    setPitchFitMode(next);
+                    setPitchScale(1.0);
+                    showStatusNotice(next === 'cover' ? '⛶ Pitch Covering Screen (Landscape)' : '⊡ Pitch Fit to Viewport Bounds');
+                  }}
+                  style={{
+                    background: pitchFitMode === 'cover' ? 'linear-gradient(135deg, rgba(255, 149, 0, 0.32), rgba(255, 149, 0, 0.12))' : 'rgba(255, 255, 255, 0.08)',
+                    color: '#FF9F0A',
+                    border: pitchFitMode === 'cover' ? '1.5px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                  title={pitchFitMode === 'cover' ? 'Currently Covering Screen. Tap to Fit Pitch to screen bounds.' : 'Currently Fitting Screen. Tap to Cover Screen edge-to-edge.'}
+                >
+                  <span>{pitchFitMode === 'cover' ? '⛶ Cover' : '⊡ Fit'}</span>
+                </button>
+
+                {/* Pitch Zoom % (Pinch or Tap to Reset) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPitchScale(1.0);
+                    showStatusNotice('🔍 Pitch zoom reset to 100%');
+                  }}
+                  style={{
+                    background: pitchScale !== 1.0 ? '#14382B' : 'rgba(255, 255, 255, 0.08)',
+                    color: pitchScale !== 1.0 ? '#6CE5A0' : '#8E8E93',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 7px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                  }}
+                  title="Pinch screen to resize. Tap to reset zoom to 100%."
+                >
+                  <span>🔍</span>
+                  <span>{Math.round(pitchScale * 100)}%</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTool('select')}
+                  style={{
+                    background: activeTool === 'select' ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
+                    color: activeTool === 'select' ? '#16201B' : '#E2E8F0',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="Move / Drag positions and ball"
+                >
+                  ✋ Move
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTool('curve')}
+                  style={{
+                    background: activeTool === 'curve' ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
+                    color: activeTool === 'curve' ? '#16201B' : '#E2E8F0',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="Draw freehand curve"
+                >
+                  ✏️ Curve
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTool('line')}
+                  style={{
+                    background: activeTool === 'line' ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
+                    color: activeTool === 'line' ? '#16201B' : '#E2E8F0',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="Draw movement arrow"
+                >
+                  ➔ Run
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTool('pass')}
+                  style={{
+                    background: activeTool === 'pass' ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
+                    color: activeTool === 'pass' ? '#16201B' : '#E2E8F0',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="Draw pass arrow"
+                >
+                  ⇢ Pass
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTool('paint')}
+                  style={{
+                    background: activeTool === 'paint' ? drawColor : 'rgba(255, 255, 255, 0.08)',
+                    color: activeTool === 'paint' ? (['#FFFFFF', '#FF9F0A', '#10B981', '#06B6D4'].includes(drawColor) ? '#16201B' : '#FFFFFF') : '#FF9F0A',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="Paint player colors"
+                >
+                  🎨 Paint
+                </button>
+
+                {/* Swatches */}
+                {['#FF9F0A', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF'].map((c) => (
+                  <div
+                    key={c}
+                    onClick={() => setDrawColor(c)}
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      borderRadius: '50%',
+                      background: c,
+                      border: drawColor === c ? '2px solid #FFFFFF' : '1px solid rgba(0,0,0,0.6)',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      transform: drawColor === c ? 'scale(1.2)' : 'scale(1)',
+                    }}
+                    title={`Color ${c}`}
+                  />
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !showBall;
+                    setShowBall(next);
+                    if (next) setBallPos({ x: 50, y: 50 });
+                  }}
+                  style={{
+                    background: showBall ? '#14382B' : 'rgba(255, 255, 255, 0.08)',
+                    color: showBall ? '#FF9F0A' : '#8E8E93',
+                    border: showBall ? '1px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="Toggle soccer ball on pitch"
+                >
+                  ⚽ Ball
+                </button>
+
+                {drawings.length > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setDrawings((prev) => prev.slice(0, -1))}
+                      style={{
+                        background: '#16382B',
+                        color: '#FFFFFF',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '6px',
+                        padding: '4px 7px',
+                        fontSize: '10.5px',
+                        cursor: 'pointer',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                      }}
+                      title="Undo drawing"
+                    >
+                      ↩ Undo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDrawings([])}
+                      style={{
+                        background: '#231518',
+                        color: '#FF8A8A',
+                        border: '1px solid #732228',
+                        borderRadius: '6px',
+                        padding: '4px 7px',
+                        fontSize: '10.5px',
+                        cursor: 'pointer',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                      }}
+                      title="Clear all drawings"
+                    >
+                      🗑️ Clear
+                    </button>
+                  </>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleResetPositions}
+                  style={{
+                    background: '#1F2937',
+                    color: '#9CA3AF',
+                    border: '1px solid #374151',
+                    borderRadius: '6px',
+                    padding: '4px 7px',
+                    fontSize: '10.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="Reset positions to default formation"
+                >
+                  ↺ Reset
+                </button>
+              </div>
+
+              {/* Right: Bench Drawer Toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowFullscreenBench((prev) => !prev)}
+                  style={{
+                    background: showFullscreenBench ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
+                    color: showFullscreenBench ? '#16201B' : '#E2E8F0',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '8px',
+                    padding: '5px 10px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="View bench substitutes"
+                >
+                  <span>🪑</span>
+                  <span>Bench ({benchPlayers.length})</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Normal Pitch Header info & Controls (visible when NOT in Fullscreen) */}
+          {!isPitchFullscreen && (
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '10px',
+                paddingBottom: '8px',
+                borderBottom: '1px solid #16382B',
+                gap: '8px',
+              }}
+            >
+              {/* Formation & Status Tags */}
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 800, color: '#FF9F0A' }}>
+                  {activeFormation.name}
+                </span>
+                <span style={{ fontSize: '11px', color: '#7AA392' }}>
+                  ({currentAssignedCount} / {effectiveMaxPlayers} Selected)
+                </span>
+                {includeGoalkeeper && (selectedFormat === '5-aside' || selectedFormat === '7-aside') && (
+                  <span style={{ fontSize: '10px', background: '#14382B', color: '#6CE5A0', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
+                    {selectedFormat === '5-aside' ? '5 + 1 (GK)' : '7 + 1 (GK)'}
+                  </span>
+                )}
+                {!includeGoalkeeper && (
+                  <span style={{ fontSize: '10px', background: '#732228', color: '#FFAAAA', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                    No GK ({activeFormatData.outfieldCount || effectiveMaxPlayers} Outfield)
+                  </span>
+                )}
+                {showOpponents && (
+                  <span style={{ fontSize: '10px', background: '#3A0D15', color: '#FDA4AF', border: '1px solid #E11D48', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
+                    Opponents ({visibleOpponentNodes.length})
+                  </span>
+                )}
+              </div>
+
+              {/* Tactical Pitch Controls: Landscape Fullscreen + Rotate 90deg + Pitch Size Adjustment */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {/* Fullscreen Landscape Button */}
+                <button
+                  type="button"
+                  onClick={handleToggleFullscreen}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.22), rgba(255, 149, 0, 0.08))',
+                    color: '#FF9F0A',
+                    border: '1.5px solid #FF9500',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                  }}
+                  title="Fullscreen Pitch in Landscape View (optimized for mobile devices & tactical boards)"
+                >
+                  <span style={{ fontSize: '13px' }}>⛶</span>
+                  <span>Landscape Fullscreen</span>
+                </button>
+
+                {/* Rotate 90deg Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !isLandscape;
+                    setIsLandscape(next);
+                    showStatusNotice(next ? '🔄 Pitch rotated 90° (Landscape View)' : '📱 Pitch rotated back to Portrait View');
+                  }}
+                  style={{
+                    background: isLandscape ? '#FF9500' : '#14382B',
+                    color: isLandscape ? '#16201B' : '#FF9F0A',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '6px',
+                    padding: '4px 9px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                  }}
+                  title="Rotate pitch between Portrait (0°) and Landscape (90°)"
+                >
+                  <span>🔄</span>
+                  <span>{isLandscape ? '90° Landscape' : 'Rotate 90°'}</span>
+                </button>
 
               {/* Pitch & Content Size Adjuster with Manually Editable % */}
               <div
@@ -1648,22 +2217,24 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               </div>
             </div>
           </div>
+          )}
 
-          {/* Tactical Drawing, Arrows, Ball & Color Changer Toolbar */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: '#000000',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              padding: '6px 10px',
-              marginBottom: '10px',
-              flexWrap: 'wrap',
-            }}
-          >
-            {/* Tool Selectors */}
+          {/* Tactical Drawing, Arrows, Ball & Color Changer Toolbar (Normal View) */}
+          {!isPitchFullscreen && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: '#000000',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '6px 10px',
+                marginBottom: '10px',
+                flexWrap: 'wrap',
+              }}
+            >
+              {/* Tool Selectors */}
             <div style={{ display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 type="button"
@@ -1927,10 +2498,56 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               )}
             </div>
           </div>
+          )}
 
-          {/* Realistic Green Soccer Turf with Pitch Markings & Dropzone Support */}
-          <div
-            ref={pitchRef}
+          {/* Pitch Viewport Container */}
+          <div className={isPitchFullscreen ? 'tactics-pitch-viewport' : ''}>
+            {/* Floating Pinch-to-Zoom Indicator Pill */}
+            {isPinchZooming && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: isPitchFullscreen ? '12px' : '16px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'rgba(0, 0, 0, 0.92)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1.5px solid #FF9500',
+                  color: '#FFFFFF',
+                  padding: '7px 20px',
+                  borderRadius: '30px',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  zIndex: 200,
+                  pointerEvents: 'none',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.8)',
+                }}
+              >
+                <span style={{ color: '#FF9500', fontSize: '15px' }}>🔍</span>
+                <span>Pitch Zoom: {Math.round(pitchScale * 100)}%</span>
+              </div>
+            )}
+
+            <div
+              style={{
+                width: isPitchFullscreen
+                  ? (pitchFitMode === 'cover' || (windowDimensions.width > windowDimensions.height && windowDimensions.width <= 1024))
+                    ? `calc(max(calc(100vw - 12px), calc((100dvh - 50px) * 1.4706)) * ${pitchScale})`
+                    : `calc(min(calc(100vw - 20px), calc((100dvh - 56px) * 1.4705)) * ${pitchScale})`
+                  : `calc(100% * ${pitchScale})`,
+                maxWidth: isPitchFullscreen ? 'none' : '100%',
+                position: 'relative',
+                margin: '0 auto',
+                transition: isPinchZooming ? 'none' : 'width 0.2s ease',
+              }}
+            >
+              {/* Realistic Green Soccer Turf with Pitch Markings & Dropzone Support */}
+              <div
+                ref={pitchRef}
             onDragOver={(e) => {
               e.preventDefault();
               e.dataTransfer.dropEffect = 'copy';
@@ -2561,9 +3178,12 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   </div>
                 );
               })}
+            </div>
           </div>
+        </div>
 
-          {/* Quick Pitch Footer */}
+        {/* Quick Pitch Footer (Normal View) */}
+        {!isPitchFullscreen && (
           <div
             style={{
               marginTop: '10px',
@@ -2577,7 +3197,110 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
             <span>🏟️ Thoome Pri. Ground · Tactical Blueprint</span>
             <span>{activeFormation.description}</span>
           </div>
-        </div>
+        )}
+
+        {/* Fullscreen Mobile Portrait Rotation Advice */}
+        {isPitchFullscreen && windowDimensions.width < windowDimensions.height && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '12px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(0, 0, 0, 0.82)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 149, 0, 0.4)',
+              color: '#FF9500',
+              padding: '5px 14px',
+              borderRadius: '20px',
+              fontSize: '11px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              zIndex: 40,
+              pointerEvents: 'none',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+            }}
+          >
+            <span>🔄</span>
+            <span>Rotate phone sideways for wide landscape view</span>
+          </div>
+        )}
+
+        {/* Fullscreen Bench Drawer */}
+        {isPitchFullscreen && showFullscreenBench && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '10px',
+              left: '12px',
+              right: '12px',
+              maxHeight: '160px',
+              background: 'rgba(18, 18, 18, 0.95)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid #FF9500',
+              borderRadius: '14px',
+              padding: '10px',
+              zIndex: 60,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.7)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500' }}>
+                🪑 BENCH SUBSTITUTES ({benchPlayers.length}) · TAP TO PLACE IN EMPTY POSITION
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowFullscreenBench(false)}
+                style={{ background: 'none', border: 'none', color: '#8E8E93', cursor: 'pointer', fontSize: '13px', fontWeight: 800 }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+              {benchPlayers.map((player) => (
+                <div
+                  key={player.id}
+                  onClick={() => {
+                    const emptySlot = visiblePitchNodes.find((n) => !n.player);
+                    if (emptySlot) {
+                      assignPlayerToSlot(emptySlot.id, player);
+                    } else if (visiblePitchNodes.length > 0) {
+                      setActiveSlotModal(visiblePitchNodes[0]);
+                    }
+                  }}
+                  style={{
+                    flexShrink: 0,
+                    background: '#0B221B',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '6px',
+                    padding: '5px 10px',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <span style={{ color: '#FF9500', fontWeight: 900 }}>{player.jersey_number ? `#${player.jersey_number}` : '•'}</span>
+                  <span style={{ fontWeight: 700, color: '#FFFFFF' }}>{player.name}</span>
+                  <span style={{ color: '#8E8E93', fontSize: '9.5px' }}>({player.position || 'Sub'})</span>
+                </div>
+              ))}
+              {benchPlayers.length === 0 && (
+                <span style={{ fontSize: '11px', color: '#8E8E93' }}>All available squad players are on the pitch!</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
         {/* =========================================================================
             TACTICAL SIDEBAR: ROSTER & DRAGGABLE BENCH
@@ -2869,7 +3592,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
+            zIndex: 100000,
             padding: '16px',
           }}
           onClick={() => setActiveSlotModal(null)}

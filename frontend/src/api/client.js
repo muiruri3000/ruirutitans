@@ -94,7 +94,11 @@ const defaultHeaders = (includeContentType = true) => {
   const pToken = getPlayerToken();
   if (pToken) headers["X-Titans-Player-Token"] = pToken;
   const cToken = getCmsToken();
-  if (cToken) headers["X-Titans-CMS-Token"] = cToken;
+  if (cToken) {
+    headers["X-Titans-CMS-Token"] = cToken;
+    headers["X-CMS-Token"] = cToken;
+    headers["Authorization"] = `Bearer ${cToken}`;
+  }
   return headers;
 };
 
@@ -942,6 +946,10 @@ export const api = {
       throw new Error(errData.error || `Failed to moderate comment: ${res.status}`);
     }
     return await res.json();
+  },
+
+  async deleteComment(commentId) {
+    return this.moderateComment(commentId, 'delete');
   },
 
   async getWeeklyMVP(categoryKey) {

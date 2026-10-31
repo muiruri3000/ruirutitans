@@ -2,7 +2,7 @@ import json
 from django.contrib.auth.models import User
 from django.test import TestCase, Client
 from django.urls import reverse
-from tournaments.models import Category, Team, Player, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote
+from tournaments.models import Category, Team, Player, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote, VisitorComment
 from tournaments.services import (
     build_real_open_season_dict,
     import_state_to_db,
@@ -2747,6 +2747,59 @@ class VisitorCommentAndUsernameEditingTests(TestCase):
         pub_res2 = self.client.get("/api/comments/")
         comment_ids2 = [c["id"] for c in pub_res2.json()["comments"]]
         self.assertIn(new_comment_id, comment_ids2)
+
+        # 7. Unpublish the comment with signed X-Titans-CMS-Token
+        from tournaments.services import create_signed_token
+        cms_signed_token = create_signed_token(
+            {"role": "cms", "username": self.cms_user.username, "email": self.cms_user.email},
+            salt="titans-cms-auth",
+        )
+        unpub_res = self.client.post(
+            "/api/comments/",
+            data=json.dumps({"action": "unpublish", "commentId": new_comment_id}),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=cms_signed_token,
+        )
+        self.assertEqual(unpub_res.status_code, 200)
+        self.assertFalse(unpub_res.json()["comment"]["isApproved"])
+        self.assertEqual(unpub_res.json()["comment"]["status"], "pending")
+
+        # Verify comment is no longer in public GET (logout to act as anonymous visitor)
+        self.client.logout()
+        pub_res3 = self.client.get("/api/comments/")
+        comment_ids3 = [c["id"] for c in pub_res3.json()["comments"]]
+        self.assertNotIn(new_comment_id, comment_ids3)
+
+        # 8. Reject the comment with signed token
+        rej_res = self.client.post(
+            "/api/comments/",
+            data=json.dumps({"action": "reject", "commentId": new_comment_id}),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=cms_signed_token,
+        )
+        self.assertEqual(rej_res.status_code, 200)
+        self.assertFalse(rej_res.json()["comment"]["isApproved"])
+        self.assertEqual(rej_res.json()["comment"]["status"], "rejected")
+
+        # 9. Delete the comment with signed token
+        del_res = self.client.post(
+            "/api/comments/",
+            data=json.dumps({"action": "delete", "commentId": new_comment_id}),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=cms_signed_token,
+        )
+        self.assertEqual(del_res.status_code, 200)
+        self.assertEqual(del_res.json()["message"], "Comment deleted.")
+        self.assertFalse(VisitorComment.objects.filter(id=new_comment_id).exists())
+
+        # 10. Also test DELETE via /api/comments/<pk>/
+        c_temp = VisitorComment.objects.create(author_name="Temp", content="To be deleted", is_approved=True)
+        del_endpoint_res = self.client.delete(
+            f"/api/comments/{c_temp.id}/",
+            HTTP_X_TITANS_CMS_TOKEN=cms_signed_token,
+        )
+        self.assertEqual(del_endpoint_res.status_code, 200)
+        self.assertFalse(VisitorComment.objects.filter(id=c_temp.id).exists())
 
     def test_admin_update_player_username(self):
         # 1. Non-admin cannot update username

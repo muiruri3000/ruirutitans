@@ -2017,19 +2017,29 @@ class VisitorCommentAPIView(views.APIView):
          Visitors see approved comments; CMS admins see all comments or filter by ?status=pending|approved|rejected.
     POST:
          - Public: Submits a new comment (set to pending moderation).
-         - CMS Admin with 'action': Moderates a comment ('approve', 'reject', 'delete').
+         - CMS Admin with 'action': Moderates a comment ('approve', 'reject', 'unpublish', 'delete').
     """
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
 
     def _is_cms(self, request):
-        token = request.headers.get("X-CMS-Token") or request.META.get("HTTP_X_CMS_TOKEN")
-        has_token = bool(token and token.startswith("cms-token-"))
+        from .services import get_authenticated_cms_from_request
+        cms = get_authenticated_cms_from_request(request)
+        if cms:
+            return True
+        token = (
+            request.headers.get("X-Titans-CMS-Token")
+            or request.headers.get("X-CMS-Token")
+            or request.META.get("HTTP_X_TITANS_CMS_TOKEN")
+            or request.META.get("HTTP_X_CMS_TOKEN")
+            or ""
+        )
+        if token and (token.startswith("cms-token-") or token.startswith("titans-cms-")):
+            return True
         return bool(
-            has_token
-            or getattr(request, "cms_user", None)
-            or (request.user and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser))
-            or (request.session and request.session.get("cms_authenticated"))
+            getattr(request, "cms_user", None)
+            or (getattr(request, "user", None) and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser))
+            or (hasattr(request, "session") and (request.session.get("cms_authenticated") or request.session.get("titans_cms")))
         )
 
     def get(self, request):
@@ -2071,20 +2081,24 @@ class VisitorCommentAPIView(views.APIView):
         action = data.get("action")
 
         # Admin moderation action
-        if action in ["approve", "reject", "delete"]:
+        if action in ["approve", "reject", "unpublish", "delete"]:
             if not self._is_cms(request):
                 return Response({"error": "Admin permission required to moderate comments."}, status=status.HTTP_403_FORBIDDEN)
             comment_id = data.get("commentId") or data.get("id")
             if not comment_id:
                 return Response({"error": "commentId is required."}, status=status.HTTP_400_BAD_REQUEST)
             try:
-                comment = VisitorComment.objects.get(id=comment_id)
-            except VisitorComment.DoesNotExist:
+                comment = VisitorComment.objects.get(id=int(comment_id))
+            except (ValueError, TypeError, VisitorComment.DoesNotExist):
                 return Response({"error": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)
 
+            from .services import get_authenticated_cms_from_request
+            cms_info = get_authenticated_cms_from_request(request)
             moderator_name = (
-                getattr(request.user, "username", "")
+                (cms_info.get("username") if isinstance(cms_info, dict) else "")
+                or getattr(request.user, "username", "")
                 or getattr(request, "cms_user", {}).get("username", "")
+                or (request.session.get("cms_user", {}).get("username", "") if hasattr(request, "session") else "")
                 or "CMS Admin"
             )
 
@@ -2102,10 +2116,18 @@ class VisitorCommentAPIView(views.APIView):
                 comment.moderated_by = moderator_name
                 comment.save(update_fields=["is_approved", "status", "moderated_at", "moderated_by"])
                 msg = "Comment rejected."
+            elif action == "unpublish":
+                comment.is_approved = False
+                comment.status = "pending"
+                comment.moderated_at = timezone.now()
+                comment.moderated_by = moderator_name
+                comment.save(update_fields=["is_approved", "status", "moderated_at", "moderated_by"])
+                msg = "Comment unpublished and returned to pending moderation."
             elif action == "delete":
                 comment.delete()
                 msg = "Comment deleted."
 
+            total_count = VisitorComment.objects.count()
             pending_count = VisitorComment.objects.filter(is_approved=False, status="pending").count()
             approved_count = VisitorComment.objects.filter(is_approved=True).count()
             rejected_count = VisitorComment.objects.filter(status="rejected").count()
@@ -2115,6 +2137,7 @@ class VisitorCommentAPIView(views.APIView):
                 "message": msg,
                 "comment": comment.to_dict() if action != "delete" else None,
                 "counts": {
+                    "total": total_count,
                     "pending": pending_count,
                     "approved": approved_count,
                     "rejected": rejected_count,
@@ -2161,8 +2184,48 @@ class VisitorCommentDetailAPIView(views.APIView):
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
 
+    def _is_cms(self, request):
+        from .services import get_authenticated_cms_from_request
+        cms = get_authenticated_cms_from_request(request)
+        if cms:
+            return True
+        token = (
+            request.headers.get("X-Titans-CMS-Token")
+            or request.headers.get("X-CMS-Token")
+            or request.META.get("HTTP_X_TITANS_CMS_TOKEN")
+            or request.META.get("HTTP_X_CMS_TOKEN")
+            or ""
+        )
+        if token and (token.startswith("cms-token-") or token.startswith("titans-cms-")):
+            return True
+        return bool(
+            getattr(request, "cms_user", None)
+            or (getattr(request, "user", None) and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser))
+            or (hasattr(request, "session") and (request.session.get("cms_authenticated") or request.session.get("titans_cms")))
+        )
+
     def get(self, request, pk):
         comment = get_object_or_404(VisitorComment, pk=pk)
         return Response(comment.to_dict())
+
+    def delete(self, request, pk):
+        if not self._is_cms(request):
+            return Response({"error": "Admin permission required to delete comments."}, status=status.HTTP_403_FORBIDDEN)
+        comment = get_object_or_404(VisitorComment, pk=pk)
+        comment.delete()
+        total_count = VisitorComment.objects.count()
+        pending_count = VisitorComment.objects.filter(is_approved=False, status="pending").count()
+        approved_count = VisitorComment.objects.filter(is_approved=True).count()
+        rejected_count = VisitorComment.objects.filter(status="rejected").count()
+        return Response({
+            "status": "success",
+            "message": "Comment deleted.",
+            "counts": {
+                "total": total_count,
+                "pending": pending_count,
+                "approved": approved_count,
+                "rejected": rejected_count,
+            },
+        })
 
 
