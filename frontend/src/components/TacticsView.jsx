@@ -445,6 +445,10 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
   const [customPlayerName, setCustomPlayerName] = useState('');
   const [customPlayerNumber, setCustomPlayerNumber] = useState('');
 
+  // 5b. Substitute Free Placement & Position Picker Modal
+  const [selectedSubForPlacement, setSelectedSubForPlacement] = useState(null);
+  const [showSubPositionPickerModal, setShowSubPositionPickerModal] = useState(false);
+
   // 6. Drag State (Dragging position nodes around pitch)
   const pitchRef = useRef(null);
   const [draggingSlotId, setDraggingSlotId] = useState(null);
@@ -489,6 +493,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
   // 11B. Fullscreen Landscape State for Mobile Devices & Tactical Boards
   const [isPitchFullscreen, setIsPitchFullscreen] = useState(false);
+  const [isFullscreenMenuHidden, setIsFullscreenMenuHidden] = useState(false);
   const [showFullscreenBench, setShowFullscreenBench] = useState(false);
   const [pitchFitMode, setPitchFitMode] = useState('cover'); // 'cover' (fills screen) | 'fit' (entire pitch in bounds)
   const fullscreenWrapperRef = useRef(null);
@@ -614,6 +619,13 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPitchFullscreen]);
+
+  // Reset menu hidden state whenever fullscreen is toggled or exited
+  useEffect(() => {
+    if (!isPitchFullscreen) {
+      setIsFullscreenMenuHidden(false);
+    }
   }, [isPitchFullscreen]);
 
   // 12. Drawing Tools, Annotations, Ball & Custom Player Colors
@@ -856,6 +868,14 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
       setDraggingSlotId(null);
 
       if (isTap) {
+        // Direct pitch tap placement for bench substitute
+        if (selectedSubForPlacement && !isOpp) {
+          assignPlayerToSlot(slotId, selectedSubForPlacement);
+          setSelectedSubForPlacement(null);
+          setShowSubPositionPickerModal(false);
+          return;
+        }
+
         const slotNode = (isOpp ? opponentNodes : pitchNodes).find((n) => n.id === slotId);
         if (slotNode) {
           if (activeTool === 'paint') {
@@ -903,7 +923,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
     };
   }, [draggingSlotId, pitchNodes, opponentNodes, selectedOpponentTeamId, isLandscape, activeTool, drawColor]);
 
-  // Multi-Touch Pinch to Resize Pitch (0.4x to 2.5x) on Mobile Screens
+  // Multi-Touch Pinch to Resize Pitch (0.4x to 2.5x) & Swipe Gesture to Restore Menu
   useEffect(() => {
     const targetEl = fullscreenWrapperRef.current;
     if (!targetEl) return;
@@ -911,6 +931,18 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
     let initialDistance = 0;
     let initialScale = 1.0;
     let isPinching = false;
+
+    // Single-touch swipe tracking
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let isSingleTouch = false;
+
+    // Desktop pointer drag swipe tracking
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let pointerStartTime = 0;
+    let isPointerDragging = false;
 
     const getDistance = (t1, t2) => {
       const dx = t1.clientX - t2.clientX;
@@ -920,11 +952,17 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
     const handleTouchStart = (e) => {
       if (e.touches && e.touches.length === 2) {
+        isSingleTouch = false;
         initialDistance = getDistance(e.touches[0], e.touches[1]);
         initialScale = pitchScaleRef.current;
         isPinching = true;
         setIsPinchZooming(true);
         if (pinchZoomTimeoutRef.current) clearTimeout(pinchZoomTimeoutRef.current);
+      } else if (e.touches && e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+        isSingleTouch = true;
       }
     };
 
@@ -951,18 +989,61 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
           setIsPinchZooming(false);
         }, 750);
       }
+
+      // Swiping detection: any movement > 25px restores the menu
+      if (isSingleTouch && (!e.touches || e.touches.length === 0)) {
+        isSingleTouch = false;
+        const touch = e.changedTouches && e.changedTouches[0];
+        if (touch) {
+          const deltaX = touch.clientX - touchStartX;
+          const deltaY = touch.clientY - touchStartY;
+          const dist = Math.hypot(deltaX, deltaY);
+          const elapsed = Date.now() - touchStartTime;
+          if (dist > 25 && elapsed < 800) {
+            setIsFullscreenMenuHidden(false);
+            showStatusNotice('📋 Menu bar restored');
+          }
+        }
+      }
+    };
+
+    const handlePointerDown = (e) => {
+      if (e.pointerType === 'mouse') {
+        pointerStartX = e.clientX;
+        pointerStartY = e.clientY;
+        pointerStartTime = Date.now();
+        isPointerDragging = true;
+      }
+    };
+
+    const handlePointerUp = (e) => {
+      if (isPointerDragging && e.pointerType === 'mouse') {
+        isPointerDragging = false;
+        const deltaX = e.clientX - pointerStartX;
+        const deltaY = e.clientY - pointerStartY;
+        const dist = Math.hypot(deltaX, deltaY);
+        const elapsed = Date.now() - pointerStartTime;
+        if (dist > 35 && elapsed < 800) {
+          setIsFullscreenMenuHidden(false);
+          showStatusNotice('📋 Menu bar restored');
+        }
+      }
     };
 
     targetEl.addEventListener('touchstart', handleTouchStart, { passive: true });
     targetEl.addEventListener('touchmove', handleTouchMove, { passive: false });
     targetEl.addEventListener('touchend', handleTouchEnd, { passive: true });
     targetEl.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    targetEl.addEventListener('pointerdown', handlePointerDown, { passive: true });
+    targetEl.addEventListener('pointerup', handlePointerUp, { passive: true });
 
     return () => {
       targetEl.removeEventListener('touchstart', handleTouchStart);
       targetEl.removeEventListener('touchmove', handleTouchMove);
       targetEl.removeEventListener('touchend', handleTouchEnd);
       targetEl.removeEventListener('touchcancel', handleTouchEnd);
+      targetEl.removeEventListener('pointerdown', handlePointerDown);
+      targetEl.removeEventListener('pointerup', handlePointerUp);
       if (pinchZoomTimeoutRef.current) clearTimeout(pinchZoomTimeoutRef.current);
     };
   }, [isPitchFullscreen]);
@@ -1706,7 +1787,20 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
         >
           {/* Fullscreen Landscape HUD (visible only in Fullscreen Mode) */}
           {isPitchFullscreen && (
-            <div className="tactics-fullscreen-hud">
+            <div
+              className="tactics-fullscreen-hud"
+              style={{
+                transform: isFullscreenMenuHidden ? 'translateY(-130%)' : 'translateY(0)',
+                opacity: isFullscreenMenuHidden ? 0 : 1,
+                maxHeight: isFullscreenMenuHidden ? '0px' : '65px',
+                paddingTop: isFullscreenMenuHidden ? '0px' : undefined,
+                paddingBottom: isFullscreenMenuHidden ? '0px' : undefined,
+                marginBottom: isFullscreenMenuHidden ? '0px' : '6px',
+                overflow: isFullscreenMenuHidden ? 'hidden' : 'visible',
+                pointerEvents: isFullscreenMenuHidden ? 'none' : 'auto',
+                transition: 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, max-height 0.28s ease, margin 0.28s ease, padding 0.28s ease',
+              }}
+            >
               {/* Left: Exit button & Formation info */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button
@@ -1928,6 +2022,63 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   ⚽ Ball
                 </button>
 
+                {/* Opponents Squad Toggle Button in Fullscreen Mode */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !showOpponents;
+                    setShowOpponents(next);
+                    showStatusNotice(next ? '⚔️ Opponent Team Enabled on Pitch' : '👥 Opponents Hidden');
+                  }}
+                  style={{
+                    background: showOpponents ? 'linear-gradient(135deg, rgba(225, 29, 72, 0.4), rgba(225, 29, 72, 0.2))' : 'rgba(255, 255, 255, 0.08)',
+                    color: showOpponents ? '#FDA4AF' : '#8E8E93',
+                    border: showOpponents ? '1.5px solid #E11D48' : '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: showOpponents ? '0 0 10px rgba(225, 29, 72, 0.4)' : 'none',
+                  }}
+                  title="Toggle opponent squad markers on pitch"
+                >
+                  <span>⚔️</span>
+                  <span>{showOpponents ? 'Opponents: ON' : 'Opponents: OFF'}</span>
+                </button>
+
+                {/* Opponents Club Selector (if ON in fullscreen) */}
+                {showOpponents && (
+                  <select
+                    value={selectedOpponentTeamId}
+                    onChange={(e) => setSelectedOpponentTeamId(e.target.value)}
+                    style={{
+                      background: '#230B12',
+                      border: '1px solid #E11D48',
+                      color: '#FDA4AF',
+                      borderRadius: '6px',
+                      padding: '3px 6px',
+                      fontSize: '10.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      outline: 'none',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title="Select opponent club"
+                  >
+                    <option value="auto-red">🔴 Red Team</option>
+                    {teamsList.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        🛡️ {t.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
                 {drawings.length > 0 && (
                   <>
                     <button
@@ -2014,6 +2165,45 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   <span>Bench ({benchPlayers.length})</span>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Fullscreen Floating Pill to restore menu if hidden */}
+          {isPitchFullscreen && isFullscreenMenuHidden && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsFullscreenMenuHidden(false);
+                showStatusNotice('📋 Menu bar restored');
+              }}
+              style={{
+                position: 'absolute',
+                top: 'max(env(safe-area-inset-top, 0px), 8px)',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 90,
+                background: 'rgba(18, 18, 18, 0.85)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 149, 0, 0.6)',
+                color: '#FF9500',
+                borderRadius: '30px',
+                padding: '5px 16px',
+                fontSize: '11px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
+                transition: 'all 0.2s ease',
+                userSelect: 'none',
+                touchAction: 'manipulation',
+              }}
+              title="Tap or swipe anywhere on screen to show menu bar"
+            >
+              <span style={{ fontSize: '11px' }}>▼</span>
+              <span>Swipe or tap for Controls</span>
             </div>
           )}
 
@@ -2501,7 +2691,21 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
           )}
 
           {/* Pitch Viewport Container */}
-          <div className={isPitchFullscreen ? 'tactics-pitch-viewport' : ''}>
+          <div
+            className={isPitchFullscreen ? 'tactics-pitch-viewport' : ''}
+            onClick={(e) => {
+              if (!isPitchFullscreen) return;
+              if (activeTool !== 'select') return;
+              if (selectedSubForPlacement) return;
+              if (dragStartPosRef.current?.moved || isDraggingBall) return;
+              if (e.target.closest('button') || e.target.closest('.tactics-hud-scroll') || e.target.closest('.tactics-fullscreen-hud')) return;
+              if (!isFullscreenMenuHidden) {
+                setIsFullscreenMenuHidden(true);
+                if (showFullscreenBench) setShowFullscreenBench(false);
+                showStatusNotice('Pitch fullscreen mode · Swipe screen or tap top to restore menu');
+              }
+            }}
+          >
             {/* Floating Pinch-to-Zoom Indicator Pill */}
             {isPinchZooming && (
               <div
@@ -2536,8 +2740,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               style={{
                 width: isPitchFullscreen
                   ? (pitchFitMode === 'cover' || (windowDimensions.width > windowDimensions.height && windowDimensions.width <= 1024))
-                    ? `calc(max(calc(100vw - 12px), calc((100dvh - 50px) * 1.4706)) * ${pitchScale})`
-                    : `calc(min(calc(100vw - 20px), calc((100dvh - 56px) * 1.4705)) * ${pitchScale})`
+                    ? `calc(max(calc(100vw - 12px), calc((100dvh - ${isFullscreenMenuHidden ? '12px' : '50px'}) * 1.4706)) * ${pitchScale})`
+                    : `calc(min(calc(100vw - 20px), calc((100dvh - ${isFullscreenMenuHidden ? '16px' : '56px'}) * 1.4705)) * ${pitchScale})`
                   : `calc(100% * ${pitchScale})`,
                 maxWidth: isPitchFullscreen ? 'none' : '100%',
                 position: 'relative',
@@ -2548,6 +2752,18 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               {/* Realistic Green Soccer Turf with Pitch Markings & Dropzone Support */}
               <div
                 ref={pitchRef}
+                onClick={(e) => {
+                  if (!isPitchFullscreen) return;
+                  if (activeTool !== 'select') return;
+                  if (selectedSubForPlacement) return;
+                  if (dragStartPosRef.current?.moved || isDraggingBall) return;
+                  if (e.target.closest('button')) return;
+                  if (!isFullscreenMenuHidden) {
+                    setIsFullscreenMenuHidden(true);
+                    if (showFullscreenBench) setShowFullscreenBench(false);
+                    showStatusNotice('Pitch fullscreen mode · Swipe screen or tap top to restore menu');
+                  }
+                }}
             onDragOver={(e) => {
               e.preventDefault();
               e.dataTransfer.dropEffect = 'copy';
@@ -2598,6 +2814,92 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                 }}
               >
                 🎯 DROP TO ASSIGN TO NEAREST POSITION
+              </div>
+            )}
+
+            {/* Direct Pitch Tap Placement Banner when Sub is Selected */}
+            {selectedSubForPlacement && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '12px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'rgba(18, 18, 18, 0.95)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1.5px solid #FF9500',
+                  borderRadius: '30px',
+                  padding: '6px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  zIndex: 85,
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.8), 0 0 15px rgba(255, 149, 0, 0.4)',
+                  maxWidth: '92%',
+                }}
+              >
+                <span
+                  style={{
+                    background: '#FF9500',
+                    color: '#000000',
+                    fontSize: '10px',
+                    fontWeight: 900,
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                  }}
+                >
+                  #{selectedSubForPlacement.jersey_number || selectedSubForPlacement.jerseyNumber || '•'}
+                </span>
+                <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  Placing {selectedSubForPlacement.name}: Tap any pitch position
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowSubPositionPickerModal(true);
+                  }}
+                  style={{
+                    background: 'rgba(255, 149, 0, 0.25)',
+                    border: '1px solid #FF9500',
+                    color: '#FF9500',
+                    borderRadius: '12px',
+                    padding: '2px 8px',
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  📋 List
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedSubForPlacement(null);
+                    setShowSubPositionPickerModal(false);
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    color: '#FFFFFF',
+                    width: '20px',
+                    height: '20px',
+                    cursor: 'pointer',
+                    fontWeight: 800,
+                    fontSize: '11px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                  title="Cancel position assignment"
+                >
+                  ✕
+                </button>
               </div>
             )}
 
@@ -2856,6 +3158,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
             {visiblePitchNodes.map((node) => {
               const isAssigned = Boolean(node.player);
               const isDragging = draggingSlotId === node.id;
+              const isPlacementTarget = Boolean(selectedSubForPlacement);
               const playerObj = node.player;
 
               // Use custom painted color, assigned player's own club color, or fallback to default gold
@@ -2869,10 +3172,28 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               return (
                 <div
                   key={node.id}
-                  onMouseDown={(e) => handlePointerDown(e, node.id)}
-                  onTouchStart={(e) => handlePointerDown(e, node.id)}
+                  onMouseDown={(e) => {
+                    if (selectedSubForPlacement) {
+                      e.stopPropagation();
+                      return;
+                    }
+                    handlePointerDown(e, node.id);
+                  }}
+                  onTouchStart={(e) => {
+                    if (selectedSubForPlacement) {
+                      e.stopPropagation();
+                      return;
+                    }
+                    handlePointerDown(e, node.id);
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (selectedSubForPlacement) {
+                      assignPlayerToSlot(node.id, selectedSubForPlacement);
+                      setSelectedSubForPlacement(null);
+                      setShowSubPositionPickerModal(false);
+                      return;
+                    }
                     if (activeTool === 'paint') {
                       if (drawColor === 'reset') {
                         setPlayerCustomColors((prev) => {
@@ -2903,13 +3224,13 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                     position: 'absolute',
                     left: nodeLeft,
                     top: nodeTop,
-                    transform: `translate(-50%, -50%) scale(${isDragging ? 1.15 : 1})`,
-                    zIndex: isDragging ? 100 : 10,
-                    cursor: isDragging ? 'grabbing' : activeTool === 'paint' ? 'crosshair' : 'grab',
+                    transform: `translate(-50%, -50%) scale(${isDragging ? 1.15 : isPlacementTarget ? 1.08 : 1})`,
+                    zIndex: isDragging ? 100 : isPlacementTarget ? 40 : 10,
+                    cursor: isPlacementTarget ? 'pointer' : isDragging ? 'grabbing' : activeTool === 'paint' ? 'crosshair' : 'grab',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    touchAction: 'none',
+                    touchAction: isPlacementTarget ? 'auto' : 'none',
                     transition: isDragging ? 'none' : 'transform 0.15s ease, left 0.3s ease, top 0.3s ease',
                   }}
                 >
@@ -2926,12 +3247,16 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                           ? 'radial-gradient(circle, #EAB308 0%, #854D0E 100%)'
                           : `radial-gradient(circle, ${playerTeamColor} 0%, #0F172A 100%)`
                         : '#0D2B20',
-                      border: isDragging
+                      border: isPlacementTarget
+                        ? '2.5px solid #FF9500'
+                        : isDragging
                         ? '2.5px solid #FF9F0A'
                         : isAssigned
                         ? '2px solid #F8FAFC'
                         : '1.5px dashed #48BB78',
-                      boxShadow: isDragging
+                      boxShadow: isPlacementTarget
+                        ? '0 0 0 3px rgba(255, 149, 0, 0.4), 0 0 20px rgba(255, 149, 0, 0.8), 0 4px 12px rgba(0,0,0,0.7)'
+                        : isDragging
                         ? '0 0 16px rgba(252, 211, 77, 0.8), 0 6px 14px rgba(0,0,0,0.6)'
                         : '0 3px 8px rgba(0,0,0,0.5)',
                       display: 'flex',
@@ -2987,13 +3312,13 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                   <div
                     style={{
                       marginTop: '2px',
-                      background: isAssigned ? '#0B1D16' : 'rgba(11, 29, 22, 0.75)',
-                      border: isAssigned ? `1px solid ${playerTeamColor}` : '1px solid rgba(255, 255, 255, 0.1)',
+                      background: isPlacementTarget ? 'rgba(255, 149, 0, 0.25)' : isAssigned ? '#0B1D16' : 'rgba(11, 29, 22, 0.75)',
+                      border: isPlacementTarget ? '1px solid #FF9500' : isAssigned ? `1px solid ${playerTeamColor}` : '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '4px',
                       padding: '1px 5px',
                       fontSize: `${pillFontSize}px`,
                       fontWeight: 800,
-                      color: isAssigned ? '#FF9F0A' : '#8E8E93',
+                      color: isPlacementTarget ? '#FFB340' : isAssigned ? '#FF9F0A' : '#8E8E93',
                       whiteSpace: 'nowrap',
                       maxWidth: `${pillMaxWidth}px`,
                       overflow: 'hidden',
@@ -3001,9 +3326,11 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                       textAlign: 'center',
                       boxShadow: '0 2px 5px rgba(0,0,0,0.4)',
                     }}
-                    title={isAssigned ? `${playerObj.name} (${playerObj.teamName || 'Squad'})` : node.label}
+                    title={isPlacementTarget ? (isAssigned ? `Tap to swap ${node.label || node.role} with ${playerObj.name}` : `Tap to place at ${node.label || node.role}`) : (isAssigned ? `${playerObj.name} (${playerObj.teamName || 'Squad'})` : node.label)}
                   >
-                    {isAssigned ? (
+                    {isPlacementTarget ? (
+                      <span>{isAssigned ? `🔄 Swap ${node.role}` : `🟢 Place ${node.role}`}</span>
+                    ) : isAssigned ? (
                       <span>
                         {playerObj.name}
                         {playerObj.teamName && (
@@ -3254,7 +3581,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '11px', fontWeight: 800, color: '#FF9500' }}>
-                🪑 BENCH SUBSTITUTES ({benchPlayers.length}) · TAP TO PLACE IN EMPTY POSITION
+                🪑 BENCH SUBSTITUTES ({benchPlayers.length}) · TAP TO CHOOSE POSITION OR DRAG ONTO PITCH
               </span>
               <button
                 type="button"
@@ -3265,35 +3592,63 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
               </button>
             </div>
             <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
-              {benchPlayers.map((player) => (
-                <div
-                  key={player.id}
-                  onClick={() => {
-                    const emptySlot = visiblePitchNodes.find((n) => !n.player);
-                    if (emptySlot) {
-                      assignPlayerToSlot(emptySlot.id, player);
-                    } else if (visiblePitchNodes.length > 0) {
-                      setActiveSlotModal(visiblePitchNodes[0]);
-                    }
-                  }}
-                  style={{
-                    flexShrink: 0,
-                    background: '#0B221B',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '6px',
-                    padding: '5px 10px',
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                  }}
-                >
-                  <span style={{ color: '#FF9500', fontWeight: 900 }}>{player.jersey_number ? `#${player.jersey_number}` : '•'}</span>
-                  <span style={{ fontWeight: 700, color: '#FFFFFF' }}>{player.name}</span>
-                  <span style={{ color: '#8E8E93', fontSize: '9.5px' }}>({player.position || 'Sub'})</span>
-                </div>
-              ))}
+              {benchPlayers.map((player) => {
+                const isSelected = selectedSubForPlacement?.id === player.id;
+                return (
+                  <div
+                    key={player.id}
+                    draggable={true}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('application/json', JSON.stringify(player));
+                      e.dataTransfer.setData('text/plain', JSON.stringify(player));
+                      e.dataTransfer.effectAllowed = 'copy';
+                    }}
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedSubForPlacement(null);
+                        setShowSubPositionPickerModal(false);
+                      } else {
+                        setSelectedSubForPlacement(player);
+                        setShowSubPositionPickerModal(true);
+                        showStatusNotice(`Selected ${player.name} — choose a position on pitch`);
+                      }
+                    }}
+                    style={{
+                      flexShrink: 0,
+                      background: isSelected ? 'rgba(255, 149, 0, 0.25)' : '#0B221B',
+                      border: isSelected ? '2px solid #FF9500' : '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      padding: '6px 10px',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: isSelected ? '0 0 12px rgba(255, 149, 0, 0.6)' : 'none',
+                      touchAction: 'manipulation',
+                    }}
+                    title="Tap to select position or drag and drop onto pitch"
+                  >
+                    <span style={{ color: '#FF9500', fontWeight: 900 }}>
+                      {player.jersey_number || player.jerseyNumber ? `#${player.jersey_number || player.jerseyNumber}` : '•'}
+                    </span>
+                    <span style={{ fontWeight: 700, color: '#FFFFFF' }}>{player.name}</span>
+                    <span style={{ color: '#8E8E93', fontSize: '9.5px' }}>({player.position || 'Sub'})</span>
+                    <span
+                      style={{
+                        fontSize: '9px',
+                        background: isSelected ? '#FF9500' : 'rgba(255, 255, 255, 0.1)',
+                        color: isSelected ? '#000000' : '#8E8E93',
+                        borderRadius: '4px',
+                        padding: '1px 5px',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {isSelected ? 'ACTIVE' : 'SELECT ➔'}
+                    </span>
+                  </div>
+                );
+              })}
               {benchPlayers.length === 0 && (
                 <span style={{ fontSize: '11px', color: '#8E8E93' }}>All available squad players are on the pitch!</span>
               )}
@@ -3461,14 +3816,9 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                         e.dataTransfer.effectAllowed = 'copy';
                       }}
                       onClick={() => {
-                        const emptySlot = visiblePitchNodes.find((n) => !n.player);
-                        if (emptySlot) {
-                          assignPlayerToSlot(emptySlot.id, player);
-                          showStatusNotice(`✅ Placed ${player.name} on ${emptySlot.label || emptySlot.role}`);
-                        } else if (visiblePitchNodes.length > 0) {
-                          setActiveSlotModal(visiblePitchNodes[0]);
-                          showStatusNotice(`Select which slot to assign ${player.name}`);
-                        }
+                        setSelectedSubForPlacement(player);
+                        setShowSubPositionPickerModal(true);
+                        showStatusNotice(`Selected ${player.name} — choose a position`);
                       }}
                       style={{
                         display: 'flex',
@@ -3476,8 +3826,8 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                         justifyContent: 'space-between',
                         padding: '7px 8px',
                         borderRadius: '6px',
-                        background: '#000000',
-                        border: '1px solid #1A3E30',
+                        background: selectedSubForPlacement?.id === player.id ? 'rgba(255, 149, 0, 0.2)' : '#000000',
+                        border: selectedSubForPlacement?.id === player.id ? '1px solid #FF9500' : '1px solid #1A3E30',
                         fontSize: '11px',
                         cursor: 'pointer',
                         transition: 'background 0.15s ease, border-color 0.15s ease',
@@ -3515,18 +3865,14 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          const emptySlot = visiblePitchNodes.find((n) => !n.player);
-                          if (emptySlot) {
-                            assignPlayerToSlot(emptySlot.id, player);
-                            showStatusNotice(`✅ Placed ${player.name} on ${emptySlot.label || emptySlot.role}`);
-                          } else if (visiblePitchNodes.length > 0) {
-                            setActiveSlotModal(visiblePitchNodes[0]);
-                          }
+                          setSelectedSubForPlacement(player);
+                          setShowSubPositionPickerModal(true);
+                          showStatusNotice(`Selected ${player.name} — choose a position`);
                         }}
                         style={{
                           background: '#1C1C1E',
-                          color: '#6CE5A0',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#FF9500',
+                          border: '1px solid rgba(255, 149, 0, 0.4)',
                           borderRadius: '4px',
                           padding: '3px 8px',
                           fontSize: '10.5px',
@@ -3534,7 +3880,7 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
                           cursor: 'pointer',
                         }}
                       >
-                        + Place
+                        Assign ➔
                       </button>
                     </div>
                   );
@@ -3576,6 +3922,219 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
           </div>
         </div>
       </div>
+
+      {/* =========================================================================
+          BENCH SUBSTITUTE POSITION ASSIGNMENT MODAL
+         ========================================================================= */}
+      {showSubPositionPickerModal && selectedSubForPlacement && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100005,
+            padding: '12px',
+          }}
+          onClick={() => setShowSubPositionPickerModal(false)}
+        >
+          <div
+            style={{
+              background: '#121212',
+              border: '2px solid #FF9500',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '560px',
+              maxHeight: 'calc(100dvh - 24px)',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 16px 50px rgba(0, 0, 0, 0.85)',
+              color: '#FFFFFF',
+              overflow: 'hidden',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(255, 149, 0, 0.08)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                <span
+                  style={{
+                    background: '#FF9500',
+                    color: '#000000',
+                    fontSize: '11px',
+                    fontWeight: 900,
+                    padding: '2px 7px',
+                    borderRadius: '4px',
+                    flexShrink: 0,
+                  }}
+                >
+                  #{selectedSubForPlacement.jersey_number || selectedSubForPlacement.jerseyNumber || '•'}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    Place {selectedSubForPlacement.name}
+                  </div>
+                  <div style={{ fontSize: '10.5px', color: '#8E8E93' }}>
+                    Select target position on the pitch ({selectedSubForPlacement.position || 'Sub'})
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowSubPositionPickerModal(false)}
+                  style={{
+                    background: 'rgba(255, 149, 0, 0.2)',
+                    border: '1px solid #FF9500',
+                    color: '#FF9500',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                  title="Close list and tap directly on pitch turf"
+                >
+                  📍 Pitch Tap Mode
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSubPositionPickerModal(false);
+                    setSelectedSubForPlacement(null);
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: 'none',
+                    color: '#8E8E93',
+                    borderRadius: '50%',
+                    width: '26px',
+                    height: '26px',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Position List / Grid */}
+            <div
+              style={{
+                padding: '12px 16px',
+                overflowY: 'auto',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                gap: '8px',
+                maxHeight: 'calc(100dvh - 120px)',
+              }}
+            >
+              {visiblePitchNodes.map((node) => {
+                const isOccupied = Boolean(node.player);
+                const occupant = node.player;
+                const isGk = node.role === 'GK';
+
+                return (
+                  <button
+                    key={node.id}
+                    type="button"
+                    onClick={() => {
+                      assignPlayerToSlot(node.id, selectedSubForPlacement);
+                      setSelectedSubForPlacement(null);
+                      setShowSubPositionPickerModal(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 12px',
+                      borderRadius: '10px',
+                      background: isOccupied ? '#1C1C1E' : '#0B221B',
+                      border: isOccupied ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #34C759',
+                      color: '#FFFFFF',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      minHeight: '44px',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                      <span
+                        style={{
+                          background: isGk ? '#EAB308' : '#FF9500',
+                          color: '#000000',
+                          fontWeight: 900,
+                          fontSize: '11px',
+                          padding: '3px 7px',
+                          borderRadius: '6px',
+                          minWidth: '28px',
+                          textAlign: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {node.role}
+                      </span>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {node.label || node.role}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '10px',
+                            color: isOccupied ? '#FF9500' : '#34C759',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {isOccupied ? `🔄 Swap: ${occupant.name}` : '🟢 Empty Position'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <span
+                      style={{
+                        fontSize: '10.5px',
+                        fontWeight: 800,
+                        color: isOccupied ? '#FF9500' : '#34C759',
+                        background: isOccupied ? 'rgba(255, 149, 0, 0.15)' : 'rgba(52, 199, 89, 0.15)',
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        flexShrink: 0,
+                        marginLeft: '6px',
+                      }}
+                    >
+                      {isOccupied ? 'Swap' : 'Place'} ➔
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* =========================================================================
           PLAYER ASSIGNMENT MODAL (Cross-Team Selection Support)
