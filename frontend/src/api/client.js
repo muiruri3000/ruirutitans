@@ -511,6 +511,19 @@ export const api = {
     return await res.json();
   },
 
+  async updateVotingFormation(catKey, payload) {
+    const res = await fetch(`/api/categories/${catKey}/voting/admin/formation/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Updating formation failed (${res.status})`);
+    }
+    return await res.json();
+  },
+
   async teamBalancer(payload) {
     const res = await fetch("/api/team-balancer/", {
       method: "POST",

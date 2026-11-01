@@ -2498,6 +2498,23 @@ def compute_team_of_tournament(category):
     team_size = max(1, int(category.voting_team_size or 6))
     include_gk = bool(category.voting_include_gk)
 
+    if category.tots_custom_lineup and isinstance(category.tots_custom_lineup, list) and len(category.tots_custom_lineup) > 0:
+        from .models import assign_pitch_coordinates
+        custom_list = []
+        for item in category.tots_custom_lineup:
+            entry = dict(item)
+            if not include_gk and entry.get("position") == "GK":
+                continue
+            custom_list.append(entry)
+        if custom_list:
+            return {
+                "total_rounds": total_rounds,
+                "team_size": team_size,
+                "include_gk": include_gk,
+                "formation": category.tots_formation or "Custom",
+                "lineup": assign_pitch_coordinates(custom_list[:team_size], team_size=team_size, include_gk=include_gk, formation_name=category.tots_formation),
+            }
+
     pos_names = dict(PositionVote.POSITION_CHOICES)
     line_map = {
         "GK": "GK",
@@ -2693,10 +2710,14 @@ def compute_team_of_tournament(category):
     }
     active_players.sort(key=lambda p: (pos_sort_order.get(p["position"], 99), 0 if p["player_id"] else 1))
 
+    from .models import assign_pitch_coordinates
+    active_players = assign_pitch_coordinates(active_players[:team_size], team_size=team_size, include_gk=include_gk, formation_name=category.tots_formation)
+
     return {
         "total_rounds": total_rounds,
         "team_size": team_size,
         "include_gk": include_gk,
+        "formation": category.tots_formation or ("2-2-1" if team_size == 6 else ("4-3-3" if team_size == 11 else "1-2-1")),
         "lineup": active_players[:team_size],
     }
 
@@ -2756,6 +2777,7 @@ def get_category_voting_data(category, voter_id=None, round_id=None):
             "id": target_round.id,
             "week_number": target_round.week_number,
             "title": target_round.title,
+            "formation": target_round.formation,
             "is_open": target_round.is_open,
             "opened_at": target_round.opened_at.isoformat() if target_round.opened_at else None,
             "closed_at": target_round.closed_at.isoformat() if target_round.closed_at else None,
@@ -2824,7 +2846,9 @@ def get_category_voting_data(category, voter_id=None, round_id=None):
         "voter_has_voted": voter_has_voted,
         "voted_round_ids": voted_round_ids,
         "totw": totw,
+        "totw_formation": target_round.formation if target_round else "",
         "tott": tott,
+        "tots_formation": category.tots_formation or "",
         "candidates": candidates,
         "all_players": all_players,
         "voting_config": {
@@ -3033,6 +3057,98 @@ def admin_toggle_voting_round(
         active.closed_at = None if is_open else timezone.now()
         active.save()
     return active
+
+
+def update_voting_formation(category, target="totw", round_id=None, formation="", lineup=None, reset=False):
+    """
+    Updates formation and custom position lineup coordinates for either TOTW (Team of the Week)
+    or TOTS/TOTT (Team of the Season / Tournament).
+    """
+    target = str(target or "totw").lower().strip()
+
+    if target in ("totw", "round"):
+        if round_id:
+            target_round = VotingRound.objects.filter(category=category, id=round_id).first()
+        else:
+            target_round = get_or_create_active_voting_round(category)
+
+        if not target_round:
+            raise ValueError("Voting round not found.")
+
+        if reset:
+            target_round.formation = ""
+            target_round.custom_lineup = []
+            target_round.save(update_fields=["formation", "custom_lineup"])
+        else:
+            if formation is not None:
+                target_round.formation = str(formation).strip()
+            if lineup is not None:
+                cleaned_lineup = []
+                for item in lineup:
+                    if not isinstance(item, dict):
+                        continue
+                    cleaned_lineup.append({
+                        "player_id": item.get("player_id"),
+                        "player_name": item.get("player_name") or "Pending player",
+                        "team_id": item.get("team_id"),
+                        "team_name": item.get("team_name", ""),
+                        "team_color": item.get("team_color", "#2B4E40"),
+                        "position": item.get("position", "CM"),
+                        "position_name": item.get("position_name", item.get("position", "CM")),
+                        "slot_label": item.get("slot_label", item.get("position", "CM")),
+                        "votes": item.get("votes", 0),
+                        "x": float(item.get("x", 50.0)),
+                        "y": float(item.get("y", 50.0)),
+                    })
+                target_round.custom_lineup = cleaned_lineup
+            target_round.save(update_fields=["formation", "custom_lineup"])
+
+        return {
+            "target": "totw",
+            "round_id": target_round.id,
+            "formation": target_round.formation,
+            "totw": target_round.get_totw(),
+        }
+
+    elif target in ("tott", "tots", "season"):
+        if reset:
+            category.tots_formation = ""
+            category.tots_custom_lineup = []
+            category.save(update_fields=["tots_formation", "tots_custom_lineup"])
+        else:
+            if formation is not None:
+                category.tots_formation = str(formation).strip()
+            if lineup is not None:
+                cleaned_lineup = []
+                for item in lineup:
+                    if not isinstance(item, dict):
+                        continue
+                    cleaned_lineup.append({
+                        "player_id": item.get("player_id"),
+                        "player_name": item.get("player_name") or "Pending player",
+                        "team_id": item.get("team_id"),
+                        "team_name": item.get("team_name", ""),
+                        "team_color": item.get("team_color", "#2B4E40"),
+                        "position": item.get("position", "CM"),
+                        "position_name": item.get("position_name", item.get("position", "CM")),
+                        "slot_label": item.get("slot_label", item.get("position", "CM")),
+                        "total_votes": item.get("total_votes", item.get("votes", 0)),
+                        "average_votes": item.get("average_votes", 0.0),
+                        "rankings": item.get("rankings", []),
+                        "x": float(item.get("x", 50.0)),
+                        "y": float(item.get("y", 50.0)),
+                    })
+                category.tots_custom_lineup = cleaned_lineup
+            category.save(update_fields=["tots_formation", "tots_custom_lineup"])
+
+        tott = compute_team_of_tournament(category)
+        return {
+            "target": "tott",
+            "formation": category.tots_formation,
+            "tott": tott,
+        }
+    else:
+        raise ValueError(f"Unknown target: '{target}'. Expected 'totw' or 'tott'.")
 
 
 def seed_default_honours_votes(category=None):

@@ -862,6 +862,47 @@ class VotingAdminToggleAPIView(views.APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class VotingFormationUpdateAPIView(views.APIView):
+    """
+    Admin control endpoint to update the formation and player positions/coordinates
+    for Team of the Week (TOTW) or Team of the Season (TOTS/TOTT).
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def post(self, request, key):
+        category = get_object_or_404(Category, key=key)
+        payload = request.data or {}
+        target = payload.get("target", "totw")
+        round_id = payload.get("round_id")
+        formation = payload.get("formation")
+        lineup = payload.get("lineup")
+        reset = bool(payload.get("reset", False))
+
+        from .services import update_voting_formation, get_category_voting_data
+        try:
+            result = update_voting_formation(
+                category=category,
+                target=target,
+                round_id=round_id,
+                formation=formation,
+                lineup=lineup,
+                reset=reset,
+            )
+            data = get_category_voting_data(category, round_id=round_id)
+            return Response({
+                "success": True,
+                "target": target,
+                "formation": result.get("formation"),
+                "round": data["round"],
+                "totw": data["totw"],
+                "totw_formation": data.get("totw_formation", ""),
+                "tott": data["tott"],
+                "tots_formation": data.get("tots_formation", ""),
+            })
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class AuthSessionAPIView(views.APIView):
     """
     Returns current authentication status for CMS Admin and Club Player.

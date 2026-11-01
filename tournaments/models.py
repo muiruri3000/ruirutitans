@@ -112,6 +112,8 @@ class Category(models.Model):
     voting_team_size = models.PositiveSmallIntegerField(default=6)
     voting_max_picks = models.PositiveSmallIntegerField(default=2)
     voting_include_gk = models.BooleanField(default=True)
+    tots_formation = models.CharField(max_length=64, blank=True, default="")
+    tots_custom_lineup = models.JSONField(default=list, blank=True)
     is_ended = models.BooleanField(default=False)
     ended_at = models.DateTimeField(null=True, blank=True)
     champion_team = models.CharField(max_length=128, blank=True, default="")
@@ -632,6 +634,106 @@ class MatchEvent(models.Model):
         return data
 
 
+def assign_pitch_coordinates(lineup, team_size=6, include_gk=True, formation_name=None):
+    """
+    Ensures every player in a TOTW or TOTS lineup has valid virtual pitch coordinates (x, y).
+    x: 0-100% (horizontal), y: 0-100% (vertical, where GK is at bottom ~88-91%).
+    """
+    if not lineup:
+        return lineup
+
+    standard_layouts = {
+        5: [
+            {"role": "GK", "x": 50.0, "y": 88.0},
+            {"role": "DEF", "x": 50.0, "y": 66.0},
+            {"role": "MID", "x": 28.0, "y": 42.0},
+            {"role": "MID", "x": 72.0, "y": 42.0},
+            {"role": "ST", "x": 50.0, "y": 18.0},
+        ],
+        6: [
+            {"role": "GK", "x": 50.0, "y": 88.0},
+            {"role": "DEF", "x": 28.0, "y": 68.0},
+            {"role": "DEF", "x": 72.0, "y": 68.0},
+            {"role": "MID", "x": 28.0, "y": 44.0},
+            {"role": "MID", "x": 72.0, "y": 44.0},
+            {"role": "ST", "x": 50.0, "y": 18.0},
+        ],
+        7: [
+            {"role": "GK", "x": 50.0, "y": 88.0},
+            {"role": "DEF", "x": 30.0, "y": 70.0},
+            {"role": "DEF", "x": 70.0, "y": 70.0},
+            {"role": "MID", "x": 20.0, "y": 46.0},
+            {"role": "MID", "x": 50.0, "y": 48.0},
+            {"role": "MID", "x": 80.0, "y": 46.0},
+            {"role": "ST", "x": 50.0, "y": 18.0},
+        ],
+        8: [
+            {"role": "GK", "x": 50.0, "y": 88.0},
+            {"role": "DEF", "x": 30.0, "y": 72.0},
+            {"role": "DEF", "x": 70.0, "y": 72.0},
+            {"role": "MID", "x": 18.0, "y": 46.0},
+            {"role": "MID", "x": 38.0, "y": 48.0},
+            {"role": "MID", "x": 62.0, "y": 48.0},
+            {"role": "MID", "x": 82.0, "y": 46.0},
+            {"role": "ST", "x": 50.0, "y": 18.0},
+        ],
+        11: [
+            {"role": "GK", "x": 50.0, "y": 91.0},
+            {"role": "DEF", "x": 18.0, "y": 74.0},
+            {"role": "DEF", "x": 38.0, "y": 76.0},
+            {"role": "DEF", "x": 62.0, "y": 76.0},
+            {"role": "DEF", "x": 82.0, "y": 74.0},
+            {"role": "MID", "x": 50.0, "y": 56.0},
+            {"role": "MID", "x": 32.0, "y": 44.0},
+            {"role": "MID", "x": 68.0, "y": 44.0},
+            {"role": "ST", "x": 20.0, "y": 22.0},
+            {"role": "ST", "x": 50.0, "y": 16.0},
+            {"role": "ST", "x": 80.0, "y": 22.0},
+        ],
+    }
+
+    pos_coords_map = {
+        "GK": {"x": 50.0, "y": 88.0},
+        "LB": {"x": 22.0, "y": 70.0},
+        "CB": {"x": 50.0, "y": 72.0},
+        "RB": {"x": 78.0, "y": 70.0},
+        "DEF": {"x": 50.0, "y": 70.0},
+        "CDM": {"x": 50.0, "y": 56.0},
+        "CM": {"x": 50.0, "y": 46.0},
+        "MID": {"x": 50.0, "y": 46.0},
+        "CAM": {"x": 50.0, "y": 36.0},
+        "LM": {"x": 24.0, "y": 44.0},
+        "RM": {"x": 76.0, "y": 44.0},
+        "LW": {"x": 24.0, "y": 20.0},
+        "RW": {"x": 76.0, "y": 20.0},
+        "WING": {"x": 25.0, "y": 20.0},
+        "ST": {"x": 50.0, "y": 18.0},
+    }
+
+    n = len(lineup)
+    layout = standard_layouts.get(n)
+
+    used_coords = set()
+    for idx, player in enumerate(lineup):
+        if "x" in player and "y" in player and player["x"] is not None and player["y"] is not None:
+            continue
+        pos = player.get("position", "CM")
+        base = pos_coords_map.get(pos)
+        if base and (base["x"], base["y"]) not in used_coords:
+            player["x"] = base["x"]
+            player["y"] = base["y"]
+            used_coords.add((base["x"], base["y"]))
+        elif layout and idx < len(layout):
+            player["x"] = layout[idx]["x"]
+            player["y"] = layout[idx]["y"]
+            used_coords.add((layout[idx]["x"], layout[idx]["y"]))
+        else:
+            player["x"] = round(18.0 + ((idx % 4) * 22.0), 1)
+            player["y"] = round(20.0 + ((idx // 4) * 26.0), 1)
+
+    return lineup
+
+
 class VotingRound(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="voting_rounds")
     week_number = models.PositiveIntegerField(default=1)
@@ -639,6 +741,8 @@ class VotingRound(models.Model):
     is_open = models.BooleanField(default=True)
     opened_at = models.DateTimeField(auto_now_add=True)
     closed_at = models.DateTimeField(null=True, blank=True)
+    formation = models.CharField(max_length=64, blank=True, default="")
+    custom_lineup = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ["-week_number", "-id"]
@@ -660,6 +764,16 @@ class VotingRound(models.Model):
         pos_names = dict(PositionVote.POSITION_CHOICES)
         team_size = max(1, int(self.category.voting_team_size or 6))
         include_gk = bool(self.category.voting_include_gk)
+
+        if self.custom_lineup and isinstance(self.custom_lineup, list) and len(self.custom_lineup) > 0:
+            custom_list = []
+            for item in self.custom_lineup:
+                entry = dict(item)
+                if not include_gk and entry.get("position") == "GK":
+                    continue
+                custom_list.append(entry)
+            if custom_list:
+                return assign_pitch_coordinates(custom_list[:team_size], team_size=team_size, include_gk=include_gk, formation_name=self.formation)
 
         # Aggregate votes per player across this round
         tallies = (
@@ -832,7 +946,7 @@ class VotingRound(models.Model):
         }
         active_players.sort(key=lambda p: (pos_sort_order.get(p["position"], 99), 0 if p["player_id"] else 1))
 
-        return active_players[:team_size]
+        return assign_pitch_coordinates(active_players[:team_size], team_size=team_size, include_gk=include_gk, formation_name=self.formation)
 
 
 class PositionVote(models.Model):

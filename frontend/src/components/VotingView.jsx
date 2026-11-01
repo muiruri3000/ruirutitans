@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { DEFAULT_VOTING_DATA } from '../data/defaultState';
+import InteractivePitchFormation from './InteractivePitchFormation';
 
 const POSITIONS = [
   { key: 'GK', name: 'Goalkeeper (GK)', icon: '🧤', pitchRow: 'gk', optional: true },
@@ -31,6 +32,7 @@ export default function VotingView({
   const [feedback, setFeedback] = useState(null);
   const [votingData, setVotingData] = useState(() => DEFAULT_VOTING_DATA);
   const [selectedRoundId, setSelectedRoundId] = useState(() => DEFAULT_VOTING_DATA?.round?.id || null);
+  const [tottViewMode, setTottViewMode] = useState('pitch'); // 'pitch' | 'cards'
 
   // Determine which competition(s) the logged-in player belongs to
   const playerCompetitions = React.useMemo(() => {
@@ -302,6 +304,68 @@ export default function VotingView({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveTotwFormation = async (formationName, updatedLineup) => {
+    const payload = {
+      target: 'totw',
+      round_id: votingData?.round?.id,
+      formation: formationName,
+      lineup: updatedLineup,
+    };
+    const res = await api.updateVotingFormation(activeCategoryKey, payload);
+    setVotingData((prev) => ({
+      ...prev,
+      totw: res.totw || updatedLineup,
+      totw_formation: res.formation || formationName,
+      round: res.round ? { ...prev.round, ...res.round } : prev.round,
+    }));
+    if (onVotingDataUpdated) onVotingDataUpdated();
+  };
+
+  const handleResetTotwFormation = async () => {
+    const payload = {
+      target: 'totw',
+      round_id: votingData?.round?.id,
+      reset: true,
+    };
+    const res = await api.updateVotingFormation(activeCategoryKey, payload);
+    setVotingData((prev) => ({
+      ...prev,
+      totw: res.totw || prev.totw,
+      totw_formation: '',
+      round: res.round ? { ...prev.round, ...res.round } : prev.round,
+    }));
+    if (onVotingDataUpdated) onVotingDataUpdated();
+  };
+
+  const handleSaveTotsFormation = async (formationName, updatedLineup) => {
+    const payload = {
+      target: 'tott',
+      formation: formationName,
+      lineup: updatedLineup,
+    };
+    const res = await api.updateVotingFormation(activeCategoryKey, payload);
+    setVotingData((prev) => ({
+      ...prev,
+      tott: res.tott || prev.tott,
+      tots_formation: res.formation || formationName,
+    }));
+    if (onVotingDataUpdated) onVotingDataUpdated();
+  };
+
+  const handleResetTotsFormation = async () => {
+    const payload = {
+      target: 'tott',
+      reset: true,
+    };
+    const res = await api.updateVotingFormation(activeCategoryKey, payload);
+    setVotingData((prev) => ({
+      ...prev,
+      tott: res.tott || prev.tott,
+      tots_formation: '',
+    }));
+    if (onVotingDataUpdated) onVotingDataUpdated();
   };
 
   const activeCategoryObj = categories?.[activeCategoryKey] || null;
@@ -1532,68 +1596,19 @@ export default function VotingView({
             )}
           </div>
 
-          {/* Virtual Pitch Formation */}
-          <div
-            style={{
-              background: 'linear-gradient(180deg, #0D3328 0%, #082119 100%)',
-              border: '2px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '16px',
-              padding: '28px 18px',
-              position: 'relative',
-              boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '24px',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '140px',
-                height: '140px',
-                border: '1px dashed rgba(255,255,255,0.08)',
-                borderRadius: '50%',
-                pointerEvents: 'none',
-              }}
-            />
-
-            {/* Attacking Row (LW, ST, RW) */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-              {totw.filter((p) => ['LW', 'ST', 'RW', 'WING'].includes(p.position)).map((p, idx) => (
-                <PlayerCard
-                  key={p.player_id || `att_${idx}`}
-                  player={p}
-                  posIcon={p.position === 'ST' ? '🎯' : '⚡'}
-                />
-              ))}
-            </div>
-
-            {/* Midfielders Row (CDM, CM) */}
-            <div style={{ display: 'flex', justifyContent: 'space-around', gap: '16px', flexWrap: 'wrap' }}>
-              {totw.filter((p) => ['CDM', 'CM', 'MID'].includes(p.position)).map((p, idx) => (
-                <PlayerCard key={p.player_id || `mid_${idx}`} player={p} posIcon="⚙️" />
-              ))}
-            </div>
-
-            {/* Defenders Row (LB, CB, RB) */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-              {totw.filter((p) => ['LB', 'CB', 'RB', 'DEF'].includes(p.position)).map((p, idx) => (
-                <PlayerCard key={p.player_id || `def_${idx}`} player={p} posIcon="🛡️" />
-              ))}
-            </div>
-
-            {/* Goalkeeper Row (only if GK inclusion is enabled and present) */}
-            {includeGk && totw.some((p) => p.position === 'GK') && (
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                {totw.filter((p) => p.position === 'GK').map((p, idx) => (
-                  <PlayerCard key={p.player_id || `gk_${idx}`} player={p} posIcon="🧤" />
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Virtual Pitch Formation with Admin Drag & Position Controls */}
+          <InteractivePitchFormation
+            lineup={totw}
+            formation={votingData?.totw_formation || currentRound?.formation || ''}
+            teamSize={teamSize}
+            includeGk={includeGk}
+            isAdmin={Boolean(isCmsMode || cmsUser)}
+            allCandidates={allPlayers}
+            onSaveFormation={handleSaveTotwFormation}
+            onResetLineup={handleResetTotwFormation}
+            target="totw"
+            roundTitle={currentRound?.title || 'Week 1'}
+          />
         </div>
       )}
 
@@ -1618,8 +1633,70 @@ export default function VotingView({
             <div style={{ fontSize: '12px', color: '#8E8E93' }}>
               Features the top {teamSize} players with the <strong>highest average votes per round</strong> across all {tott.total_rounds} tournament rounds.
             </div>
+
+            {/* View Mode Toggle (Pitch vs Cards List) */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '12px' }}>
+              <button
+                type="button"
+                onClick={() => setTottViewMode('pitch')}
+                style={{
+                  background: tottViewMode === 'pitch' ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
+                  color: tottViewMode === 'pitch' ? '#16201B' : '#EBEBF5',
+                  border: '1px solid ' + (tottViewMode === 'pitch' ? '#FF9500' : 'rgba(255, 255, 255, 0.15)'),
+                  borderRadius: '20px',
+                  padding: '6px 14px',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                ⚽ Tactical Pitch Formation
+              </button>
+              <button
+                type="button"
+                onClick={() => setTottViewMode('cards')}
+                style={{
+                  background: tottViewMode === 'cards' ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
+                  color: tottViewMode === 'cards' ? '#16201B' : '#EBEBF5',
+                  border: '1px solid ' + (tottViewMode === 'cards' ? '#FF9500' : 'rgba(255, 255, 255, 0.15)'),
+                  borderRadius: '20px',
+                  padding: '6px 14px',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                📋 Season Averages &amp; Contenders
+              </button>
+            </div>
           </div>
 
+          {/* Interactive Formation Pitch for Team of the Season */}
+          {tottViewMode === 'pitch' && (
+            <InteractivePitchFormation
+              lineup={tottLineup}
+              formation={votingData?.tots_formation || tott?.formation || ''}
+              teamSize={teamSize}
+              includeGk={includeGk}
+              isAdmin={Boolean(isCmsMode || cmsUser)}
+              allCandidates={allPlayers}
+              onSaveFormation={handleSaveTotsFormation}
+              onResetLineup={handleResetTotsFormation}
+              target="tott"
+              roundTitle="Season Lineup"
+            />
+          )}
+
+          {/* Detailed Cards and Contenders Grid */}
+          {tottViewMode === 'cards' && (
           <div
             style={{
               display: 'grid',
@@ -1754,6 +1831,7 @@ export default function VotingView({
               );
             })}
           </div>
+          )}
         </div>
       )}
 
