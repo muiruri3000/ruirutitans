@@ -2270,3 +2270,267 @@ class VisitorCommentDetailAPIView(views.APIView):
         })
 
 
+class TransferListCreateAPIView(views.APIView):
+    """
+    Public and Admin view for transfers in a category.
+    GET:
+      - Public: returns completed transfers, transfer_window_open status
+      - If CMS Admin: returns pending_transfers, rejected_transfers, completed_transfers, transfer_window_open
+      - If authenticated Player: returns their pending transfer request (if any)
+    POST:
+      - Submits a transfer request (Player or CMS Admin).
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, key):
+        category = get_object_or_404(Category, key=key)
+        from .services import get_authenticated_cms_from_request, get_authenticated_player_from_request
+        cms_info = get_authenticated_cms_from_request(request)
+        player_info = get_authenticated_player_from_request(request)
+
+        completed_qs = category.transfers.filter(status="approved").select_related("player", "from_team", "to_team").order_by("-approved_at", "-created_at")
+        completed = [t.to_dict() for t in completed_qs]
+
+        data = {
+            "category_key": category.key,
+            "transfer_window_open": bool(category.transfer_window_open),
+            "completed_transfers": completed,
+        }
+
+        if cms_info:
+            pending_qs = category.transfers.filter(status="pending").select_related("player", "from_team", "to_team").order_by("-created_at")
+            rejected_qs = category.transfers.filter(status="rejected").select_related("player", "from_team", "to_team").order_by("-created_at")[:20]
+            data["pending_transfers"] = [t.to_dict() for t in pending_qs]
+            data["rejected_transfers"] = [t.to_dict() for t in rejected_qs]
+        elif player_info:
+            p_id = player_info.get("player_id") or player_info.get("id")
+            my_pending = category.transfers.filter(player__player_id=p_id, status="pending").first()
+            if my_pending:
+                data["my_pending_transfer"] = my_pending.to_dict()
+
+        return Response(data)
+
+    def post(self, request, key):
+        category = get_object_or_404(Category, key=key)
+        from .services import get_authenticated_cms_from_request, get_authenticated_player_from_request, submit_transfer_request
+
+        cms_info = get_authenticated_cms_from_request(request)
+        player_info = get_authenticated_player_from_request(request)
+
+        if not cms_info and not player_info:
+            return Response({"error": "Authentication required to submit transfer request."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        payload = request.data or {}
+        player_id = payload.get("player_id")
+        if not cms_info:
+            # Force player to only request transfer for themselves
+            p_id = player_info.get("player_id") or player_info.get("id")
+            player_id = p_id
+
+        to_team_id = payload.get("to_team_id")
+        reason = payload.get("reason", "")
+        transfer_type = payload.get("transfer_type", "permanent")
+
+        if not player_id or not to_team_id:
+            return Response({"error": "player_id and to_team_id are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            req = submit_transfer_request(
+                category=category,
+                player_id=player_id,
+                to_team_id=to_team_id,
+                reason=reason,
+                transfer_type=transfer_type,
+                requested_by_admin=bool(cms_info),
+            )
+            return Response({
+                "status": "success",
+                "message": "Transfer request submitted successfully. Awaiting admin review.",
+                "transfer": req.to_dict(),
+            }, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TransferActionAPIView(views.APIView):
+    """
+    Admin approval or rejection of transfer request.
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def post(self, request, key, pk):
+        category = get_object_or_404(Category, key=key)
+        payload = request.data or {}
+        action = payload.get("action", "")
+        admin_notes = payload.get("admin_notes", "")
+        effective_date = payload.get("effective_date", None)
+
+        from .services import action_transfer_request, get_authenticated_cms_from_request
+        cms = get_authenticated_cms_from_request(request)
+        admin_username = (cms.get("username") if cms else getattr(request.user, "username", "Admin")) or "Admin"
+
+        try:
+            req = action_transfer_request(
+                category=category,
+                transfer_id=pk,
+                action=action,
+                admin_notes=admin_notes,
+                effective_date=effective_date,
+                admin_username=admin_username,
+            )
+            return Response({
+                "status": "success",
+                "message": f"Transfer request {req.status}.",
+                "transfer": req.to_dict(),
+            })
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TransferToggleWindowAPIView(views.APIView):
+    """
+    Admin toggle for opening/closing the transfer window.
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def post(self, request, key):
+        category = get_object_or_404(Category, key=key)
+        payload = request.data or {}
+        is_open = payload.get("is_open")
+
+        from .services import toggle_transfer_window
+        new_val = toggle_transfer_window(category, is_open=is_open)
+        status_str = "open" if new_val else "closed"
+        return Response({
+            "status": "success",
+            "message": f"Transfer window is now {status_str}.",
+            "transfer_window_open": new_val,
+        })
+
+
+class TransferDirectAPIView(views.APIView):
+    """
+    Admin direct transfer without requiring player request.
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def post(self, request, key):
+        category = get_object_or_404(Category, key=key)
+        payload = request.data or {}
+        player_id = payload.get("player_id")
+        to_team_id = payload.get("to_team_id")
+        notes = payload.get("notes", "")
+        transfer_type = payload.get("transfer_type", "permanent")
+        effective_date = payload.get("effective_date", None)
+
+        from .services import direct_admin_transfer, get_authenticated_cms_from_request
+        cms = get_authenticated_cms_from_request(request)
+        admin_username = (cms.get("username") if cms else getattr(request.user, "username", "Admin")) or "Admin"
+
+        if not player_id or not to_team_id:
+            return Response({"error": "player_id and to_team_id are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            req = direct_admin_transfer(
+                category=category,
+                player_id=player_id,
+                to_team_id=to_team_id,
+                notes=notes,
+                transfer_type=transfer_type,
+                effective_date=effective_date,
+                admin_username=admin_username,
+            )
+            return Response({
+                "status": "success",
+                "message": f"Player {req.player.name} successfully transferred to {req.to_team.name}.",
+                "transfer": req.to_dict(),
+            })
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PlayerBanListCreateAPIView(views.APIView):
+    """
+    List active player disciplinary bans (public) and create new bans (admin).
+    """
+    permission_classes = [ReadOnlyOrCMSAdmin]
+
+    def get(self, request, key):
+        category = get_object_or_404(Category, key=key)
+        active_bans_qs = category.player_bans.filter(is_active=True).select_related("player", "team").order_by("-created_at")
+        active_bans = [b.to_dict() for b in active_bans_qs]
+
+        from .services import get_authenticated_cms_from_request
+        cms = get_authenticated_cms_from_request(request)
+        data = {
+            "category_key": category.key,
+            "active_bans": active_bans,
+        }
+        if cms:
+            history_qs = category.player_bans.filter(is_active=False).select_related("player", "team").order_by("-created_at")[:30]
+            data["ban_history"] = [b.to_dict() for b in history_qs]
+        return Response(data)
+
+    def post(self, request, key):
+        # Admin only
+        category = get_object_or_404(Category, key=key)
+        payload = request.data or {}
+        player_id = payload.get("player_id")
+        ban_type = payload.get("ban_type", "games")
+        games_banned = payload.get("games_banned", 1)
+        period_description = payload.get("period_description", "")
+        reason = payload.get("reason", "")
+        start_date = payload.get("start_date", None)
+        return_date = payload.get("return_date", None)
+        expected_fixture_return = payload.get("expected_fixture_return", "")
+
+        from .services import create_player_ban, get_authenticated_cms_from_request
+        cms = get_authenticated_cms_from_request(request)
+        imposed_by = (cms.get("username") if cms else getattr(request.user, "username", "Admin")) or "Admin"
+
+        if not player_id:
+            return Response({"error": "player_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            ban = create_player_ban(
+                category=category,
+                player_id=player_id,
+                ban_type=ban_type,
+                games_banned=games_banned,
+                period_description=period_description,
+                reason=reason,
+                start_date=start_date,
+                return_date=return_date,
+                expected_fixture_return=expected_fixture_return,
+                imposed_by=imposed_by,
+            )
+            return Response({
+                "status": "success",
+                "message": f"Disciplinary ban issued for {ban.player.name}.",
+                "ban": ban.to_dict(),
+            }, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PlayerBanLiftAPIView(views.APIView):
+    """
+    Lift a disciplinary ban for a player.
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def post(self, request, key, pk):
+        category = get_object_or_404(Category, key=key)
+        from .services import lift_player_ban
+        try:
+            ban = lift_player_ban(category, pk)
+            return Response({
+                "status": "success",
+                "message": f"Ban for {ban.player.name} has been lifted.",
+                "ban": ban.to_dict(),
+            })
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+

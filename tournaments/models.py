@@ -114,6 +114,7 @@ class Category(models.Model):
     voting_include_gk = models.BooleanField(default=True)
     tots_formation = models.CharField(max_length=64, blank=True, default="")
     tots_custom_lineup = models.JSONField(default=list, blank=True)
+    transfer_window_open = models.BooleanField(default=True)
     is_ended = models.BooleanField(default=False)
     ended_at = models.DateTimeField(null=True, blank=True)
     champion_team = models.CharField(max_length=128, blank=True, default="")
@@ -217,6 +218,9 @@ class Category(models.Model):
                 "referees": referees_list,
                 "votingConfig": voting_config,
                 "weeklyMvp": weekly_mvps_data,
+                "transferWindowOpen": bool(getattr(self, "transfer_window_open", True)),
+                "activeBans": [b.to_dict() for b in self.player_bans.filter(is_active=True)],
+                "completedTransfers": [t.to_dict() for t in self.transfers.filter(status="approved")],
                 "isEnded": bool(self.is_ended),
                 "endedAt": self.ended_at.isoformat() if self.ended_at else None,
                 "championTeam": self.champion_team or "",
@@ -251,6 +255,9 @@ class Category(models.Model):
                 "note": self.note,
                 "votingConfig": voting_config,
                 "weeklyMvp": weekly_mvps_data,
+                "transferWindowOpen": bool(getattr(self, "transfer_window_open", True)),
+                "activeBans": [b.to_dict() for b in self.player_bans.filter(is_active=True)],
+                "completedTransfers": [t.to_dict() for t in self.transfers.filter(status="approved")],
                 "isEnded": bool(self.is_ended),
                 "endedAt": self.ended_at.isoformat() if self.ended_at else None,
                 "championTeam": self.champion_team or "",
@@ -456,6 +463,16 @@ class Player(models.Model):
                 self.password = make_password(self.password)
         super().save(*args, **kwargs)
 
+    @property
+    def active_ban(self):
+        if not self.pk:
+            return None
+        return self.disciplinary_bans.filter(is_active=True).first()
+
+    @property
+    def is_banned(self):
+        return self.active_ban is not None
+
     def to_dict(self):
         default_uname = self.username or (
             slugify(self.name).replace("-", "_") if not self.is_unknown else ""
@@ -478,6 +495,9 @@ class Player(models.Model):
             "mustChangePassword": bool(self.must_change_password),
             "isActive": bool(self.is_active),
         }
+        active_b = self.active_ban
+        res["isBanned"] = bool(active_b)
+        res["activeBan"] = active_b.to_dict() if active_b else None
         if self.is_unknown:
             res["unknown"] = True
         return res
@@ -1162,6 +1182,148 @@ class WeeklyMVP(models.Model):
             "rationale": self.rationale,
             "computed_at": self.computed_at.isoformat() if self.computed_at else None,
         }
+
+
+class TransferRequest(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending Admin Approval"),
+        ("approved", "Approved / Completed"),
+        ("rejected", "Rejected"),
+    ]
+    TRANSFER_TYPE_CHOICES = [
+        ("permanent", "Permanent Transfer"),
+        ("loan", "Loan Move"),
+        ("free", "Free Transfer"),
+    ]
+
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="transfers")
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="transfers")
+    from_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="transfers_out")
+    to_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="transfers_in")
+    status = models.CharField(max_length=20, default="pending", choices=STATUS_CHOICES)
+    transfer_type = models.CharField(max_length=32, default="permanent", choices=TRANSFER_TYPE_CHOICES)
+    request_reason = models.TextField(blank=True, default="")
+    admin_notes = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    effective_date = models.DateField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.CharField(max_length=128, blank=True, default="")
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        verbose_name = "Transfer Request"
+        verbose_name_plural = "Transfer Requests"
+
+    def __str__(self):
+        return f"{self.player.name}: {self.from_team.name} -> {self.to_team.name} [{self.status}]"
+
+    def to_dict(self):
+        raw_first = (self.player.first_name or "").strip()
+        first_name = raw_first if raw_first.lower() != "unrecorded" else ""
+        display_name = first_name or self.player.username or self.player.name
+
+        return {
+            "id": self.id,
+            "category_key": self.category.key,
+            "player": {
+                "id": self.player.player_id,
+                "name": self.player.name,
+                "displayName": display_name,
+                "first_name": self.player.first_name,
+                "username": self.player.username,
+                "position": self.player.position,
+                "jersey_number": self.player.jersey_number,
+            },
+            "from_team": {
+                "id": self.from_team.team_id,
+                "name": self.from_team.name,
+                "color": self.from_team.color,
+            },
+            "to_team": {
+                "id": self.to_team.team_id,
+                "name": self.to_team.name,
+                "color": self.to_team.color,
+            },
+            "status": self.status,
+            "transfer_type": self.transfer_type,
+            "request_reason": self.request_reason,
+            "admin_notes": self.admin_notes,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "effective_date": self.effective_date.isoformat() if self.effective_date else (self.approved_at.date().isoformat() if self.approved_at else None),
+            "approved_at": self.approved_at.isoformat() if self.approved_at else None,
+            "approved_by": self.approved_by,
+        }
+
+
+class PlayerBan(models.Model):
+    BAN_TYPE_CHOICES = [
+        ("games", "Number of Games"),
+        ("period", "Time Period / Weeks / Months"),
+    ]
+
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="player_bans")
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="disciplinary_bans")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="team_bans")
+    ban_type = models.CharField(max_length=20, default="games", choices=BAN_TYPE_CHOICES)
+    games_banned = models.PositiveSmallIntegerField(default=1)
+    period_description = models.CharField(max_length=128, blank=True, default="")
+    reason = models.TextField(blank=True, default="")
+    start_date = models.DateField(null=True, blank=True)
+    return_date = models.DateField(null=True, blank=True)
+    expected_fixture_return = models.CharField(max_length=128, blank=True, default="")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    imposed_by = models.CharField(max_length=128, blank=True, default="")
+
+    class Meta:
+        ordering = ["-is_active", "-created_at"]
+        verbose_name = "Player Disciplinary Ban"
+        verbose_name_plural = "Player Disciplinary Bans"
+
+    def __str__(self):
+        duration = f"{self.games_banned} games" if self.ban_type == "games" else (self.period_description or "period")
+        return f"{self.player.name} ({self.team.name}) - {duration} [Active: {self.is_active}]"
+
+    def to_dict(self):
+        raw_first = (self.player.first_name or "").strip()
+        first_name = raw_first if raw_first.lower() != "unrecorded" else ""
+        display_name = first_name or self.player.username or self.player.name
+
+        duration_label = (
+            f"{self.games_banned} Match{'es' if self.games_banned != 1 else ''}"
+            if self.ban_type == "games"
+            else (self.period_description or "Period Suspension")
+        )
+        return {
+            "id": self.id,
+            "category_key": self.category.key,
+            "player": {
+                "id": self.player.player_id,
+                "name": self.player.name,
+                "displayName": display_name,
+                "first_name": self.player.first_name,
+                "username": self.player.username,
+                "position": self.player.position,
+                "jersey_number": self.player.jersey_number,
+            },
+            "team": {
+                "id": self.team.team_id,
+                "name": self.team.name,
+                "color": self.team.color,
+            },
+            "ban_type": self.ban_type,
+            "games_banned": self.games_banned,
+            "period_description": self.period_description,
+            "duration_label": duration_label,
+            "reason": self.reason,
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "return_date": self.return_date.isoformat() if self.return_date else None,
+            "expected_fixture_return": self.expected_fixture_return,
+            "is_active": bool(self.is_active),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "imposed_by": self.imposed_by,
+        }
+
 
 
 

@@ -47,6 +47,12 @@ from .views import (
     VisitorCommentAPIView,
     VisitorCommentDetailAPIView,
     WeeklyMVPAPIView,
+    TransferListCreateAPIView,
+    TransferActionAPIView,
+    TransferToggleWindowAPIView,
+    TransferDirectAPIView,
+    PlayerBanListCreateAPIView,
+    PlayerBanLiftAPIView,
 )
 
 app_name = "tournaments"
@@ -107,6 +113,13 @@ urlpatterns = [
     path("api/highlights/<int:pk>/", HighlightDeleteAPIView.as_view(), name="api_highlight_delete"),
     path("api/comments/", VisitorCommentAPIView.as_view(), name="api_visitor_comments"),
     path("api/comments/<int:pk>/", VisitorCommentDetailAPIView.as_view(), name="api_visitor_comment_detail"),
+    path("transfers/", home_view, name="transfers_home"),
+    path("api/categories/<str:key>/transfers/", TransferListCreateAPIView.as_view(), name="api_category_transfers"),
+    path("api/categories/<str:key>/transfers/<int:pk>/action/", TransferActionAPIView.as_view(), name="api_category_transfer_action"),
+    path("api/categories/<str:key>/transfers/toggle-window/", TransferToggleWindowAPIView.as_view(), name="api_category_transfer_toggle_window"),
+    path("api/categories/<str:key>/transfers/direct/", TransferDirectAPIView.as_view(), name="api_category_transfer_direct"),
+    path("api/categories/<str:key>/bans/", PlayerBanListCreateAPIView.as_view(), name="api_category_bans"),
+    path("api/categories/<str:key>/bans/<int:pk>/lift/", PlayerBanLiftAPIView.as_view(), name="api_category_ban_lift"),
 ]
 
 

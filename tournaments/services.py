@@ -3151,6 +3151,159 @@ def update_voting_formation(category, target="totw", round_id=None, formation=""
         raise ValueError(f"Unknown target: '{target}'. Expected 'totw' or 'tott'.")
 
 
+def submit_transfer_request(category, player_id, to_team_id, reason="", transfer_type="permanent", requested_by_admin=False):
+    from .models import Player, Team, TransferRequest
+    player = Player.objects.filter(team__category=category, player_id=player_id).first()
+    if not player:
+        raise ValueError(f"Player {player_id} not found in {category.label}.")
+
+    from_team = player.team
+    to_team = Team.objects.filter(category=category, team_id=to_team_id).first()
+    if not to_team:
+        to_team = Team.objects.filter(category=category, id=to_team_id).first() if str(to_team_id).isdigit() else None
+    if not to_team:
+        raise ValueError(f"Destination team not found in {category.label}.")
+
+    if from_team.id == to_team.id:
+        raise ValueError(f"Player is already a member of {to_team.name}.")
+
+    if not category.transfer_window_open and not requested_by_admin:
+        raise ValueError("The transfer window is currently closed. Transfer requests cannot be submitted at this time.")
+
+    pending = TransferRequest.objects.filter(category=category, player=player, status="pending").first()
+    if pending:
+        pending.to_team = to_team
+        pending.request_reason = reason.strip()
+        pending.transfer_type = transfer_type
+        pending.save()
+        return pending
+
+    req = TransferRequest.objects.create(
+        category=category,
+        player=player,
+        from_team=from_team,
+        to_team=to_team,
+        status="pending",
+        transfer_type=transfer_type,
+        request_reason=reason.strip(),
+    )
+    return req
+
+
+def action_transfer_request(category, transfer_id, action, admin_notes="", effective_date=None, admin_username="Admin"):
+    from .models import TransferRequest
+    from django.utils import timezone
+    transfer = TransferRequest.objects.filter(category=category, id=transfer_id).first()
+    if not transfer:
+        raise ValueError("Transfer request not found.")
+
+    act = str(action or "").lower().strip()
+    if act == "approve":
+        player = transfer.player
+        player.team = transfer.to_team
+        player.save(update_fields=["team"])
+        transfer.status = "approved"
+        transfer.approved_at = timezone.now()
+        transfer.approved_by = admin_username
+        if admin_notes:
+            transfer.admin_notes = admin_notes.strip()
+        if effective_date:
+            transfer.effective_date = effective_date
+        transfer.save()
+    elif act == "reject":
+        transfer.status = "rejected"
+        if admin_notes:
+            transfer.admin_notes = admin_notes.strip()
+        transfer.save()
+    else:
+        raise ValueError(f"Invalid transfer action: {action}. Expected 'approve' or 'reject'.")
+
+    return transfer
+
+
+def direct_admin_transfer(category, player_id, to_team_id, notes="", transfer_type="permanent", effective_date=None, admin_username="Admin"):
+    from .models import Player, Team, TransferRequest
+    from django.utils import timezone
+    player = Player.objects.filter(team__category=category, player_id=player_id).first()
+    if not player:
+        raise ValueError(f"Player {player_id} not found.")
+
+    from_team = player.team
+    to_team = Team.objects.filter(category=category, team_id=to_team_id).first()
+    if not to_team:
+        to_team = Team.objects.filter(category=category, id=to_team_id).first() if str(to_team_id).isdigit() else None
+    if not to_team:
+        raise ValueError(f"Destination team not found.")
+
+    if from_team.id == to_team.id:
+        raise ValueError("Player is already on this team.")
+
+    player.team = to_team
+    player.save(update_fields=["team"])
+
+    req = TransferRequest.objects.create(
+        category=category,
+        player=player,
+        from_team=from_team,
+        to_team=to_team,
+        status="approved",
+        transfer_type=transfer_type,
+        request_reason="Direct administrative squad transfer",
+        admin_notes=notes.strip(),
+        effective_date=effective_date,
+        approved_at=timezone.now(),
+        approved_by=admin_username,
+    )
+    return req
+
+
+def toggle_transfer_window(category, is_open=None):
+    if is_open is not None:
+        category.transfer_window_open = bool(is_open)
+    else:
+        category.transfer_window_open = not category.transfer_window_open
+    category.save(update_fields=["transfer_window_open"])
+    return category.transfer_window_open
+
+
+def create_player_ban(category, player_id, ban_type="games", games_banned=1, period_description="", reason="", start_date=None, return_date=None, expected_fixture_return="", imposed_by="Admin"):
+    from .models import Player, PlayerBan
+    from django.utils import timezone
+    player = Player.objects.filter(team__category=category, player_id=player_id).first()
+    if not player:
+        raise ValueError(f"Player {player_id} not found in this competition.")
+
+    team = player.team
+    if ban_type not in ("games", "period"):
+        ban_type = "games"
+
+    ban = PlayerBan.objects.create(
+        category=category,
+        player=player,
+        team=team,
+        ban_type=ban_type,
+        games_banned=int(games_banned or 1),
+        period_description=(period_description or "").strip(),
+        reason=(reason or "").strip(),
+        start_date=start_date or timezone.now().date(),
+        return_date=return_date,
+        expected_fixture_return=(expected_fixture_return or "").strip(),
+        is_active=True,
+        imposed_by=imposed_by,
+    )
+    return ban
+
+
+def lift_player_ban(category, ban_id):
+    from .models import PlayerBan
+    ban = PlayerBan.objects.filter(category=category, id=ban_id).first()
+    if not ban:
+        raise ValueError("Disciplinary ban record not found.")
+    ban.is_active = False
+    ban.save(update_fields=["is_active"])
+    return ban
+
+
 def seed_default_honours_votes(category=None):
     """
     Seeds initial TOTW and TOTT votes across 2 rounds for categories that have no votes yet,

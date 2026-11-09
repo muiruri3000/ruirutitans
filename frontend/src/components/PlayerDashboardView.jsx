@@ -9,6 +9,7 @@ export default function PlayerDashboardView({
   onOpenTeamModal,
   onLogoutPlayer,
   onPlayerUpdated,
+  onNavigate,
 }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
@@ -445,6 +446,63 @@ export default function PlayerDashboardView({
             onClick={onOpenVotingTab}
           >
             {hasVotedActiveRound ? '🏆 View Team of the Week (Vote Submitted)' : '🗳️ Cast Official Ballot for Team of the Week'}
+          </button>
+        </div>
+
+        {/* Squad Transfer Window Card */}
+        <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF9500', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                🔄 Squad Transfer Window
+              </span>
+              <span
+                style={{
+                  fontSize: '10.5px',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '999px',
+                  background: currentCategory?.transferWindowOpen !== false ? 'rgba(48, 209, 88, 0.15)' : 'rgba(255, 69, 58, 0.15)',
+                  color: currentCategory?.transferWindowOpen !== false ? '#30D158' : '#FF453A',
+                  border: `1px solid ${currentCategory?.transferWindowOpen !== false ? '#30D158' : '#FF453A'}`,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {currentCategory?.transferWindowOpen !== false ? 'Window Open' : 'Window Closed'}
+              </span>
+            </div>
+
+            <p style={{ margin: '0 0 14px', fontSize: '12.5px', color: '#8E8E93', lineHeight: 1.5 }}>
+              Looking to join a new squad? Registered players can submit official transfer requests to club administration during the active window. Once approved, your registration moves to the new team.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="stat-btn"
+            style={{
+              background: '#1C1C1E',
+              color: '#FF9500',
+              border: '1px solid rgba(255, 149, 0, 0.35)',
+              fontWeight: 800,
+              padding: '10px 16px',
+              width: '100%',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
+            onClick={() => {
+              if (onNavigate) {
+                onNavigate('transfers');
+              } else if (typeof window !== 'undefined') {
+                window.location.hash = '#transfers';
+              }
+            }}
+          >
+            <span>🔄 Go to Transfers Portal</span>
+            <span>➔</span>
           </button>
         </div>
       </div>

@@ -51,6 +51,7 @@ export default function TopNav({
     { key: 'cup', label: '🏆 Cup' },
     ...(isAdmin ? [{ key: 'tactics', label: '📋 Tactics' }] : []),
     { key: 'stats', label: '📈 Stats' },
+    { key: 'transfers', label: '🔄 Transfers' },
     ...(isLoggedIn ? [{ key: 'voting', label: '⭐ Voting' }] : []),
     { key: 'highlights', label: '🎥 Highlights' },
     { key: 'archives', label: '🏛️ Archives' },

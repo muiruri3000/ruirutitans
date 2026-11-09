@@ -873,99 +873,1010 @@ function WeeklyMVPSection({ categoryKey, categoryObj, isCmsMode = false }) {
   );
 }
 
-function LeaderboardCard({ title, list, countKey }) {
+function LeaderboardModal({ title, list, countKey, onClose }) {
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return list || [];
+    return (list || []).filter((p) => {
+      const name = (p.displayName || p.name || '').toLowerCase();
+      const user = (p.username || '').toLowerCase();
+      const team = (p.teamName || '').toLowerCase();
+      return name.includes(q) || user.includes(q) || team.includes(q);
+    });
+  }, [list, search]);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.82)',
+        backdropFilter: 'blur(6px)',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: '#161618',
+          border: '1px solid rgba(255, 149, 0, 0.35)',
+          borderRadius: '16px',
+          width: '100%',
+          maxWidth: '680px',
+          maxHeight: '88vh',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 24px 48px rgba(0, 0, 0, 0.7)',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: '18px 22px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: '#121212',
+          }}
+        >
+          <div>
+            <h3 className="scoreboard" style={{ margin: 0, fontSize: '20px', color: '#FF9500', letterSpacing: '0.04em' }}>
+              {title.toUpperCase()}
+            </h3>
+            <span style={{ fontSize: '12px', color: '#8E8E93' }}>
+              Complete Leaderboard Ranking · {list?.length || 0} Registered Entries
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#8E8E93',
+              fontSize: '24px',
+              cursor: 'pointer',
+              padding: '4px 8px',
+              borderRadius: '6px',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Search */}
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', background: '#141416' }}>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Search by player name, username, or club…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: '100%', fontSize: '13px', padding: '9px 12px' }}
+            autoFocus
+          />
+        </div>
+
+        {/* List Table */}
+        <div style={{ overflowY: 'auto', padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {filtered.map((p, i) => {
+            const rawFirst = (p.firstName || p.first_name || '').trim();
+            const rawUser = (p.username || '').trim();
+            const firstName = (rawFirst && rawFirst.toLowerCase() !== 'unrecorded') ? rawFirst : '';
+            const displayName = p.displayName || firstName || rawUser || p.name || p.id;
+            const rank = i + 1;
+            const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
+
+            return (
+              <div
+                key={p.id || i}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  background: rank === 1 ? 'rgba(255, 149, 0, 0.14)' : '#1C1C1E',
+                  border: rank <= 3 ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)',
+                  fontSize: '13.5px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      fontSize: medal ? '16px' : '12px',
+                      color: medal ? '#FF9500' : '#8E8E93',
+                      width: '24px',
+                      textAlign: 'center',
+                      fontWeight: 800,
+                    }}
+                  >
+                    {medal || rank}
+                  </span>
+                  <span
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      background: p.teamColor || '#FF9500',
+                      display: 'inline-block',
+                    }}
+                  />
+                  <div>
+                    <span style={{ fontWeight: 700, color: '#fff' }}>{displayName}</span>
+                    {rawUser && <span style={{ fontSize: '12px', color: '#8E8E93', marginLeft: '6px' }}>@{rawUser}</span>}
+                  </div>
+                  {p.position && (
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        background: 'rgba(255, 149, 0, 0.15)',
+                        color: '#FF9F0A',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        border: '1px solid rgba(255, 149, 0, 0.3)',
+                      }}
+                    >
+                      {p.position}
+                    </span>
+                  )}
+                  {p.jerseyNumber && (
+                    <span style={{ fontSize: '11px', color: '#8E8E93' }}>#{p.jerseyNumber}</span>
+                  )}
+                  <span style={{ fontSize: '12px', color: '#8E8E93' }}>({p.teamName})</span>
+                </div>
+                <div
+                  className="scoreboard"
+                  style={{ fontSize: '22px', color: '#FF9500', fontWeight: 800, minWidth: '40px', textAlign: 'right' }}
+                >
+                  {p[countKey]}
+                </div>
+              </div>
+            );
+          })}
+
+          {filtered.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '30px 0', color: '#8E8E93', fontSize: '13px' }}>
+              No matching players found.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LeaderboardCard({ title, list = [], countKey }) {
+  const [showModal, setShowModal] = useState(false);
+  const previewLimit = 6;
+  const previewList = (list || []).slice(0, previewLimit);
+  const totalCount = (list || []).length;
+
+  return (
+    <>
+      <div
+        style={{
+          background: '#121212',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '14px',
+          padding: '16px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '12px',
+            }}
+          >
+            <div
+              className="scoreboard"
+              style={{
+                color: '#FF9500',
+                fontSize: '18px',
+                letterSpacing: '0.05em',
+              }}
+            >
+              {title.toUpperCase()}
+            </div>
+            {totalCount > 0 && (
+              <span style={{ fontSize: '11px', color: '#8E8E93' }}>
+                {totalCount} total
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {previewList.map((p, i) => {
+              const rawFirst = (p.firstName || p.first_name || '').trim();
+              const rawUser = (p.username || '').trim();
+              const firstName = (rawFirst && rawFirst.toLowerCase() !== 'unrecorded') ? rawFirst : '';
+              const displayName = p.displayName || firstName || rawUser || p.name || p.id;
+              const tooltip = p.fullName && p.fullName !== displayName ? `${p.fullName} (@${rawUser || p.username || ''})` : displayName;
+
+              return (
+                <div
+                  key={p.id || i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    background: i === 0 ? 'rgba(255, 149, 0, 0.12)' : '#1C1C1E',
+                    border: i === 0 ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)',
+                    fontSize: '13px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '11px', color: '#8E8E93', width: '16px', textAlign: 'right', fontWeight: 700 }}>
+                      {i + 1}
+                    </span>
+                    <span
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: p.teamColor || '#FF9500',
+                        display: 'inline-block',
+                      }}
+                    />
+                    <span style={{ fontWeight: 700, color: 'var(--text-primary)' }} title={tooltip}>{displayName}</span>
+                    {p.position && (
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 800,
+                          background: 'rgba(255, 149, 0, 0.15)',
+                          color: '#FF9F0A',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(255, 149, 0, 0.3)',
+                        }}
+                      >
+                        {p.position}
+                      </span>
+                    )}
+                    <span style={{ fontSize: '11.5px', color: '#8E8E93' }}>({p.teamName})</span>
+                  </div>
+                  <div
+                    className="scoreboard"
+                    style={{ fontSize: '20px', color: '#FF9500', fontWeight: 800 }}
+                  >
+                    {p[countKey]}
+                  </div>
+                </div>
+              );
+            })}
+
+            {(!list || list.length === 0) && (
+              <div style={{ fontSize: '12px', color: '#8E8E93', textAlign: 'center', padding: '16px 0' }}>
+                No records logged in this category yet.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {totalCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            style={{
+              marginTop: '12px',
+              background: 'rgba(255, 149, 0, 0.08)',
+              border: '1px solid rgba(255, 149, 0, 0.25)',
+              color: '#FF9500',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'background 0.2s',
+            }}
+          >
+            <span>View More ({totalCount})</span>
+            <span>➔</span>
+          </button>
+        )}
+      </div>
+
+      {showModal && (
+        <LeaderboardModal
+          title={title}
+          list={list}
+          countKey={countKey}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function PlayerBanDetailModal({ ban, onClose, isCmsMode, onLiftBan }) {
+  if (!ban) return null;
+  const isPeriod = ban.ban_type === 'period';
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        backdropFilter: 'blur(6px)',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: '#161618',
+          border: '1px solid rgba(255, 69, 58, 0.4)',
+          borderRadius: '16px',
+          width: '100%',
+          maxWidth: '540px',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 24px 48px rgba(0, 0, 0, 0.7)',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: '18px 22px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: '#121212',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '22px' }}>⛔</span>
+            <div>
+              <h3 className="scoreboard" style={{ margin: 0, fontSize: '18px', color: '#FF453A' }}>
+                DISCIPLINARY BAN DETAILS
+              </h3>
+              <span style={{ fontSize: '11px', color: '#8E8E93' }}>Official Club Sanction Record</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#8E8E93',
+              fontSize: '22px',
+              cursor: 'pointer',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Content */}
+        <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Player Info Card */}
+          <div
+            style={{
+              background: '#121212',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '12px',
+              padding: '14px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '10px',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#fff' }}>
+                {ban.player?.displayName || ban.player?.name}
+              </div>
+              <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '2px' }}>
+                {ban.player?.position || 'Player'}
+                {ban.player?.jersey_number ? ` · Jersey #${ban.player.jersey_number}` : ''}
+                {ban.player?.username ? ` · @${ban.player.username}` : ''}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: ban.team?.color || '#FF9500',
+                }}
+              />
+              <span style={{ fontWeight: 700, fontSize: '13px', color: ban.team?.color || '#FF9500' }}>
+                {ban.team?.name}
+              </span>
+            </div>
+          </div>
+
+          {/* Sanction Duration Banner */}
+          <div
+            style={{
+              background: 'rgba(255, 69, 58, 0.12)',
+              border: '1px solid rgba(255, 69, 58, 0.3)',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#FF453A', fontWeight: 800 }}>
+                SANCTION DURATION
+              </div>
+              <div style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginTop: '2px' }}>
+                {ban.duration_label || (isPeriod ? ban.period_description : `${ban.games_banned} Matches`)}
+              </div>
+            </div>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 800,
+                padding: '4px 10px',
+                borderRadius: '999px',
+                background: ban.is_active ? 'rgba(255, 69, 58, 0.25)' : 'rgba(48, 209, 88, 0.2)',
+                color: ban.is_active ? '#FF453A' : '#30D158',
+                border: `1px solid ${ban.is_active ? '#FF453A' : '#30D158'}`,
+              }}
+            >
+              {ban.is_active ? '🔴 Active Suspension' : '✓ Ban Lifted / Served'}
+            </span>
+          </div>
+
+          {/* Reason */}
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', textTransform: 'uppercase', marginBottom: '6px' }}>
+              📜 Rule Infringement / Reason for Ban:
+            </div>
+            <div
+              style={{
+                background: '#121212',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                fontSize: '13.5px',
+                color: '#E5E5EA',
+                lineHeight: '1.5',
+              }}
+            >
+              {ban.reason || 'Infringement of official Titans club disciplinary and sportsmanship regulations.'}
+            </div>
+          </div>
+
+          {/* Expected Return Date / Fixture */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <div style={{ background: '#121212', borderRadius: '8px', padding: '10px 14px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <div style={{ fontSize: '11px', color: '#8E8E93', textTransform: 'uppercase', fontWeight: 700 }}>
+                ⚽ Expected Return Fixture:
+              </div>
+              <div style={{ fontSize: '13.5px', color: '#FF9500', fontWeight: 700, marginTop: '3px' }}>
+                {ban.expected_fixture_return || 'To Be Announced'}
+              </div>
+            </div>
+
+            <div style={{ background: '#121212', borderRadius: '8px', padding: '10px 14px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <div style={{ fontSize: '11px', color: '#8E8E93', textTransform: 'uppercase', fontWeight: 700 }}>
+                📅 Projected Return Date:
+              </div>
+              <div style={{ fontSize: '13.5px', color: '#fff', fontWeight: 600, marginTop: '3px' }}>
+                {ban.return_date ? new Date(ban.return_date).toLocaleDateString() : 'Upon suspension completion'}
+              </div>
+            </div>
+          </div>
+
+          {/* Metadata */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#636366', paddingTop: '4px' }}>
+            <span>Imposed: {ban.start_date || 'Current Season'}</span>
+            <span>Sanctioned by: {ban.imposed_by || 'Club Disciplinary Committee'}</span>
+          </div>
+
+          {/* Admin Controls */}
+          {isCmsMode && ban.is_active && (
+            <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '14px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => onLiftBan(ban.id)}
+                style={{
+                  background: 'rgba(48, 209, 88, 0.15)',
+                  border: '1px solid #30D158',
+                  color: '#30D158',
+                  borderRadius: '8px',
+                  padding: '8px 18px',
+                  fontSize: '12.5px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                ✓ Lift Suspension Early
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CreateBanModal({ categoryKey, categoryObj, onClose, onCreated }) {
+  const [playerId, setPlayerId] = useState('');
+  const [banType, setBanType] = useState('games');
+  const [gamesBanned, setGamesBanned] = useState(1);
+  const [periodDesc, setPeriodDesc] = useState('');
+  const [reason, setReason] = useState('');
+  const [expectedFixture, setExpectedFixture] = useState('');
+  const [returnDate, setReturnDate] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
+
+  // Collect all players from teams in this category
+  const players = useMemo(() => {
+    const list = [];
+    (categoryObj?.teams || []).forEach((t) => {
+      (t.players || []).forEach((p) => {
+        if (!p.unknown) {
+          list.push({
+            id: p.id,
+            name: p.name,
+            displayName: p.displayName || p.name,
+            teamName: t.name,
+          });
+        }
+      });
+    });
+    return list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }, [categoryObj]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!playerId) {
+      setErrorMsg('Please select a player to issue a ban.');
+      return;
+    }
+    setErrorMsg(null);
+    setSubmitting(true);
+    try {
+      await api.createBan(categoryKey, {
+        player_id: playerId,
+        ban_type: banType,
+        games_banned: parseInt(gamesBanned, 10) || 1,
+        period_description: periodDesc,
+        reason,
+        expected_fixture_return: expectedFixture,
+        return_date: returnDate || null,
+      });
+      onCreated();
+      onClose();
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to issue ban.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        backdropFilter: 'blur(6px)',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: '#161618',
+          border: '1px solid rgba(255, 69, 58, 0.4)',
+          borderRadius: '16px',
+          width: '100%',
+          maxWidth: '560px',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 24px 48px rgba(0, 0, 0, 0.7)',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          style={{
+            padding: '18px 22px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: '#121212',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '20px' }}>⚖️</span>
+            <h3 className="scoreboard" style={{ margin: 0, fontSize: '18px', color: '#FF453A' }}>
+              ISSUE PLAYER DISCIPLINARY SANCTION
+            </h3>
+          </div>
+          <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#8E8E93', fontSize: '22px', cursor: 'pointer' }}>
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {errorMsg && (
+            <div style={{ background: 'rgba(255, 69, 58, 0.15)', border: '1px solid #FF453A', color: '#FF6961', padding: '10px', borderRadius: '8px', fontSize: '13px' }}>
+              {errorMsg}
+            </div>
+          )}
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#C7C7CC', marginBottom: '6px' }}>
+              Player Infringing Rules *
+            </label>
+            <select
+              className="form-input"
+              value={playerId}
+              onChange={(e) => setPlayerId(e.target.value)}
+              required
+              style={{ width: '100%', fontSize: '13px' }}
+            >
+              <option value="">Select Player…</option>
+              {players.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name || p.displayName} ({p.teamName})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#C7C7CC', marginBottom: '6px' }}>
+                Sanction Type *
+              </label>
+              <select
+                className="form-input"
+                value={banType}
+                onChange={(e) => setBanType(e.target.value)}
+                style={{ width: '100%', fontSize: '13px' }}
+              >
+                <option value="games">Number of Games / Matches</option>
+                <option value="period">Time Period / Weeks / Months</option>
+              </select>
+            </div>
+
+            {banType === 'games' ? (
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#C7C7CC', marginBottom: '6px' }}>
+                  Games Banned
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  className="form-input"
+                  value={gamesBanned}
+                  onChange={(e) => setGamesBanned(e.target.value)}
+                  style={{ width: '100%', fontSize: '13px' }}
+                />
+              </div>
+            ) : (
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#C7C7CC', marginBottom: '6px' }}>
+                  Period Description (e.g. 2 Weeks, 1 Month)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 3 Weeks"
+                  className="form-input"
+                  value={periodDesc}
+                  onChange={(e) => setPeriodDesc(e.target.value)}
+                  style={{ width: '100%', fontSize: '13px' }}
+                />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#C7C7CC', marginBottom: '6px' }}>
+              Infringement / Reason for Ban *
+            </label>
+            <textarea
+              className="form-input"
+              rows={3}
+              placeholder="Detail the club rule, code of conduct infringement, or incident…"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              required
+              style={{ width: '100%', resize: 'vertical', fontSize: '13px' }}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#C7C7CC', marginBottom: '6px' }}>
+                Expected Fixture Return (optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Matchweek 4 vs Tigers"
+                className="form-input"
+                value={expectedFixture}
+                onChange={(e) => setExpectedFixture(e.target.value)}
+                style={{ width: '100%', fontSize: '13px' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#C7C7CC', marginBottom: '6px' }}>
+                Projected Return Date (optional)
+              </label>
+              <input
+                type="date"
+                className="form-input"
+                value={returnDate}
+                onChange={(e) => setReturnDate(e.target.value)}
+                style={{ width: '100%', fontSize: '13px' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#8E8E93',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '12.5px',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                background: '#FF453A',
+                border: 'none',
+                color: '#fff',
+                padding: '8px 20px',
+                borderRadius: '8px',
+                fontSize: '12.5px',
+                fontWeight: 800,
+                cursor: 'pointer',
+              }}
+            >
+              {submitting ? 'Imposing Sanction…' : 'Impose Sanction'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function BannedPlayersSection({ categoryKey, categoryObj, isCmsMode }) {
+  const [bans, setBans] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedBan, setSelectedBan] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const fetchBans = async () => {
+    if (!categoryKey) return;
+    setLoading(true);
+    try {
+      const data = await api.getBans(categoryKey);
+      setBans(data.active_bans || []);
+    } catch (err) {
+      console.error('Failed to load bans:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBans();
+  }, [categoryKey]);
+
+  const handleLiftBan = async (banId) => {
+    try {
+      await api.liftBan(categoryKey, banId);
+      setSelectedBan(null);
+      fetchBans();
+    } catch (err) {
+      alert(err.message || 'Failed to lift ban');
+    }
+  };
+
   return (
     <div
       style={{
         background: '#121212',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '14px',
-        padding: '16px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+        border: '1px solid rgba(255, 69, 58, 0.3)',
+        borderRadius: '16px',
+        padding: '20px',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '14px',
       }}
     >
-      <div
-        className="scoreboard"
-        style={{
-          color: '#FF9500',
-          fontSize: '18px',
-          letterSpacing: '0.05em',
-          marginBottom: '12px',
-        }}
-      >
-        {title.toUpperCase()}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '20px' }}>⛔</span>
+          <div>
+            <h4 className="scoreboard" style={{ margin: 0, fontSize: '18px', color: '#FF453A', letterSpacing: '0.04em' }}>
+              OFFICIAL DISCIPLINARY &amp; SUSPENSIONS BOARD
+            </h4>
+            <span style={{ fontSize: '12px', color: '#8E8E93' }}>
+              Players serving disciplinary bans for club rule infringements ({bans.length} active)
+            </span>
+          </div>
+        </div>
+
+        {isCmsMode && (
+          <button
+            type="button"
+            onClick={() => setShowCreateModal(true)}
+            style={{
+              background: 'rgba(255, 69, 58, 0.15)',
+              border: '1px solid #FF453A',
+              color: '#FF453A',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>+ Issue Disciplinary Ban</span>
+          </button>
+        )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        {(list || []).map((p, i) => {
-          const rawFirst = (p.firstName || p.first_name || '').trim();
-          const rawUser = (p.username || '').trim();
-          const firstName = (rawFirst && rawFirst.toLowerCase() !== 'unrecorded') ? rawFirst : '';
-          // Stats should show first name when available; if not, show username
-          const displayName = p.displayName || firstName || rawUser || p.name || p.id;
-          const tooltip = p.fullName && p.fullName !== displayName ? `${p.fullName} (@${rawUser || p.username || ''})` : displayName;
-
-          return (
+      {loading ? (
+        <div style={{ fontSize: '12px', color: '#8E8E93', textAlign: 'center', padding: '16px 0' }}>
+          Checking disciplinary records…
+        </div>
+      ) : bans.length === 0 ? (
+        <div
+          style={{
+            background: 'rgba(48, 209, 88, 0.08)',
+            border: '1px solid rgba(48, 209, 88, 0.2)',
+            borderRadius: '10px',
+            padding: '14px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+          }}
+        >
+          <span style={{ fontSize: '18px' }}>✅</span>
+          <span style={{ fontSize: '13px', color: '#E5E5EA' }}>
+            <strong>Clean Disciplinary Record:</strong> All registered players in this competition are eligible to compete. No active suspensions or club rule bans are currently in effect.
+          </span>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
+          {bans.map((ban) => (
             <div
-              key={p.id}
+              key={ban.id}
+              onClick={() => setSelectedBan(ban)}
               style={{
+                background: '#1C1C1E',
+                border: '1px solid rgba(255, 69, 58, 0.25)',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '8px 10px',
-                borderRadius: '8px',
-                background: i === 0 ? 'rgba(255, 149, 0, 0.12)' : '#1C1C1E',
-                border: i === 0 ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)',
-                fontSize: '13px',
+                transition: 'border-color 0.15s, transform 0.15s',
               }}
+              title="Click for full ban details, reason, and return date"
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '11px', color: '#8E8E93', width: '16px', textAlign: 'right', fontWeight: 700 }}>
-                  {i + 1}
-                </span>
-                <span
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: p.teamColor || '#FF9500',
-                    display: 'inline-block',
-                  }}
-                />
-                <span style={{ fontWeight: 700, color: 'var(--text-primary)' }} title={tooltip}>{displayName}</span>
-                {p.position && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span
                     style={{
-                      fontSize: '10px',
-                      fontWeight: 800,
-                      background: 'rgba(255, 149, 0, 0.15)',
-                      color: '#FF9F0A',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      border: '1px solid rgba(255, 149, 0, 0.3)',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: ban.team?.color || '#FF9500',
                     }}
-                  >
-                    {p.position}
+                  />
+                  <span style={{ fontWeight: 800, fontSize: '14px', color: '#fff' }}>
+                    {ban.player?.displayName || ban.player?.name}
                   </span>
-                )}
-                <span style={{ fontSize: '11.5px', color: '#8E8E93' }}>({p.teamName})</span>
+                </div>
+                <div style={{ fontSize: '12px', color: '#8E8E93' }}>
+                  Club: <strong style={{ color: '#E5E5EA' }}>{ban.team?.name}</strong>
+                </div>
+                <div style={{ fontSize: '11px', color: '#FF453A', fontWeight: 700 }}>
+                  Sanction: {ban.duration_label || (ban.ban_type === 'games' ? `${ban.games_banned} matches` : ban.period_description)}
+                </div>
               </div>
-              <div
-                className="scoreboard"
-                style={{ fontSize: '20px', color: '#FF9500', fontWeight: 800 }}
-              >
-                {p[countKey]}
+
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    background: 'rgba(255, 69, 58, 0.2)',
+                    color: '#FF6961',
+                    border: '1px solid rgba(255, 69, 58, 0.35)',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Suspended
+                </span>
+                <span style={{ fontSize: '11px', color: '#8E8E93' }}>View Details ➔</span>
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
+      )}
 
-        {(!list || list.length === 0) && (
-          <div style={{ fontSize: '12px', color: '#8E8E93', textAlign: 'center', padding: '16px 0' }}>
-            No records logged in this category yet.
-          </div>
-        )}
-      </div>
+      {selectedBan && (
+        <PlayerBanDetailModal
+          ban={selectedBan}
+          onClose={() => setSelectedBan(null)}
+          isCmsMode={isCmsMode}
+          onLiftBan={handleLiftBan}
+        />
+      )}
+
+      {showCreateModal && (
+        <CreateBanModal
+          categoryKey={categoryKey}
+          categoryObj={categoryObj}
+          onClose={() => setShowCreateModal(false)}
+          onCreated={fetchBans}
+        />
+      )}
     </div>
   );
 }
@@ -1018,6 +1929,9 @@ export default function StatsView({
           <LeaderboardCard title="Top Assists (Playmaker)" list={leaderboards?.assists} countKey="assist" />
           <LeaderboardCard title="Yellow Cards (Discipline)" list={leaderboards?.yellows} countKey="yellow" />
           <LeaderboardCard title="Red Cards (Expulsions)" list={leaderboards?.reds} countKey="red" />
+        </div>
+        <div style={{ marginTop: '16px' }}>
+          <BannedPlayersSection categoryKey={activeCategoryKey} categoryObj={categories?.[activeCategoryKey]} isCmsMode={isCmsMode} />
         </div>
       </div>
     );
@@ -1261,6 +2175,15 @@ export default function StatsView({
                 title="Red Cards (Expulsions)"
                 list={catStats.reds}
                 countKey="red"
+              />
+            </div>
+
+            {/* Official Disciplinary Bans & Suspensions Board */}
+            <div style={{ marginTop: '16px' }}>
+              <BannedPlayersSection
+                categoryKey={catKey}
+                categoryObj={catObj}
+                isCmsMode={isCmsMode}
               />
             </div>
           </section>

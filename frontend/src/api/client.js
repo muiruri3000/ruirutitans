@@ -988,5 +988,104 @@ export const api = {
     }
     return await res.json();
   },
+
+  async getTransfers(categoryKey) {
+    const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/transfers/`, {
+      headers: defaultHeaders(),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to load transfers: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async submitTransferRequest(categoryKey, payload) {
+    const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/transfers/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to submit transfer request: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async actionTransferRequest(categoryKey, transferId, payload) {
+    const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/transfers/${encodeURIComponent(transferId)}/action/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to action transfer: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async toggleTransferWindow(categoryKey, payload = {}) {
+    const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/transfers/toggle-window/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to toggle transfer window: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async directTransfer(categoryKey, payload) {
+    const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/transfers/direct/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to execute direct transfer: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async getBans(categoryKey) {
+    const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/bans/`, {
+      headers: defaultHeaders(),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to load banned players: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async createBan(categoryKey, payload) {
+    const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/bans/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to issue disciplinary ban: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async liftBan(categoryKey, banId) {
+    const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/bans/${encodeURIComponent(banId)}/lift/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to lift ban: ${res.status}`);
+    }
+    return await res.json();
+  },
 };
 

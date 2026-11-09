@@ -19,6 +19,7 @@ import MatchReportModal from './components/MatchReportModal';
 import AIWeeklyReportModal from './components/AIWeeklyReportModal';
 import TacticsView from './components/TacticsView';
 import DutyRosterView from './components/DutyRosterView';
+import TransfersView from './components/TransfersView';
 import ThemeFloatingToggle from './components/ThemeFloatingToggle';
 import { openCategoryFixturesResultsPDF } from './utils/pdfExport';
 import { api, sanitizeExMilitaryFixtures } from './api/client';
@@ -282,6 +283,9 @@ export default function App() {
       }
       if (window.location.hash === '#duty' || window.location.hash === '#duty-roster' || window.location.pathname.includes('/duty-roster')) {
         return 'duty';
+      }
+      if (window.location.hash === '#transfers' || window.location.pathname.includes('/transfers')) {
+        return 'transfers';
       }
     }
     return 'home';
@@ -710,7 +714,7 @@ export default function App() {
       uniqueFixtures.forEach((f) => processEvents(f.events));
 
       const all = Object.values(meta);
-      const top = (k) => all.filter((p) => p[k] > 0).sort((x, y) => y[k] - x[k]).slice(0, 8);
+      const top = (k) => all.filter((p) => p[k] > 0).sort((x, y) => y[k] - x[k]);
       result[catKey] = {
         scorers: top('goal'),
         assists: top('assist'),
@@ -3125,6 +3129,7 @@ export default function App() {
     { key: 'archives', label: '🏛️ Archives' },
     ...(isLoggedIn ? [{ key: 'voting', label: '⭐ TOTW & TOTT (Vote)' }] : []),
     { key: 'stats', label: '📈 Player Stats' },
+    { key: 'transfers', label: '🔄 Transfers' },
     ...(isAdmin ? [{ key: 'balancer', label: '⚖️ Team Balancer' }] : []),
     ...(isAdmin ? [{ key: 'tactics', label: '📋 Tactics' }] : []),
     ...(playerUser
@@ -4519,6 +4524,21 @@ export default function App() {
         )}
 
         {/* =========================================================
+            6A-2. SQUAD TRANSFERS VIEW (Public Ledger & Window)
+           ========================================================= */}
+        {currentView === 'transfers' && (
+          <TransfersView
+            categories={data.categories}
+            activeCategoryKey={activeCategoryKey}
+            cmsUser={cmsUser}
+            playerUser={playerUser}
+            isCmsMode={Boolean(cmsUser)}
+            onOpenAuthModal={(tab) => setAuthModal({ open: true, tab })}
+            onCategoryChanged={(key) => setActiveCategoryKey(key)}
+          />
+        )}
+
+        {/* =========================================================
             6B. TEAM BALANCER VIEW (Excel / CSV / Table / Google Sheet)
            ========================================================= */}
         {currentView === 'balancer' && (
@@ -4672,6 +4692,7 @@ export default function App() {
                 setPlayerUser(updated);
                 api.setPlayerToken(api.getPlayerToken(), updated);
               }}
+              onNavigate={(view) => setCurrentView(view)}
             />
           ) : (
             <div
