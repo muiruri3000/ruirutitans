@@ -183,7 +183,9 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
               <th style={thNum}>GA</th>
               <th style={thNum}>GD</th>
               <th style={thNum}>Pts</th>
-              <th style={{ ...thNum, textAlign: 'right', paddingRight: '14px' }}>Form</th>
+              <th style={{ ...thNum, textAlign: 'right', paddingRight: '14px' }} title="Form over last 5 matches (Left to right: Oldest ➔ Most Recent)">
+                Form ➔
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -267,11 +269,22 @@ export default function TableView({ table, teamCount, activeCategoryKey, isCmsMo
                   <td style={{ ...tdNum, fontWeight: 900, fontSize: '15px', color: '#FF9500' }}>{r.Pts}</td>
                   <td style={{ ...tdNum, textAlign: 'right', paddingRight: '14px' }}>
                     <div style={{ display: 'inline-flex', gap: '3px', justifyContent: 'flex-end' }}>
-                      {(r.form || []).slice(-5).map((res, idx) => (
-                        <span key={idx} className={`form-badge ${res}`} style={{ width: '18px', height: '18px', fontSize: '10px' }}>
-                          {res}
-                        </span>
-                      ))}
+                      {(r.form || []).slice(-5).map((item, idx) => {
+                        const res = typeof item === 'string' ? item : (item?.result || '');
+                        const tooltip = typeof item === 'object' && item?.opponent
+                          ? `${res === 'W' ? 'Won' : res === 'D' ? 'Drew' : 'Lost'} vs ${item.opponent} (${item.score}) · ${item.date}`
+                          : `Match Result: ${res}`;
+                        return (
+                          <span
+                            key={idx}
+                            className={`form-badge ${res}`}
+                            title={tooltip}
+                            style={{ width: '18px', height: '18px', fontSize: '10px', cursor: 'help' }}
+                          >
+                            {res}
+                          </span>
+                        );
+                      })}
                     </div>
                   </td>
                 </tr>

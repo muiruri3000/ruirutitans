@@ -613,7 +613,10 @@ export default function App() {
       table[t.id] = { id: t.id, name: t.name, color: t.color, P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, GD: 0, Pts: 0, form: [] };
     });
 
-    targetCat.fixtures.forEach((f) => {
+    // Ensure fixtures are processed in strict chronological order by date and kickoff time
+    const sortedFixtures = [...targetCat.fixtures].sort(compareFixturesByDate);
+
+    sortedFixtures.forEach((f) => {
       const isPlayed = Boolean(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0));
       if (!isPlayed) return;
       const { hs, as } = computeFixtureScore(f);
@@ -627,15 +630,16 @@ export default function App() {
       a.GF += as; a.GA += hs;
 
       if (hs > as) {
-        h.W++; h.Pts += 3; h.form.push('W');
-        a.L++; a.form.push('L');
+        h.W++; h.Pts += 3; h.form.push({ result: 'W', opponent: a.name, score: `${hs}-${as}`, date: f.date });
+        a.L++; a.form.push({ result: 'L', opponent: h.name, score: `${as}-${hs}`, date: f.date });
       } else if (hs < as) {
-        a.W++; a.Pts += 3; a.form.push('W');
-        h.L++; h.form.push('L');
+        a.W++; a.Pts += 3; a.form.push({ result: 'W', opponent: h.name, score: `${as}-${hs}`, date: f.date });
+        h.L++; h.form.push({ result: 'L', opponent: a.name, score: `${hs}-${as}`, date: f.date });
       } else {
         h.D++; a.D++;
         h.Pts += 1; a.Pts += 1;
-        h.form.push('D'); a.form.push('D');
+        h.form.push({ result: 'D', opponent: a.name, score: `${hs}-${as}`, date: f.date });
+        a.form.push({ result: 'D', opponent: h.name, score: `${as}-${hs}`, date: f.date });
       }
     });
 
