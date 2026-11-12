@@ -387,7 +387,13 @@ export const FORMATION_PRESETS = {
 
 const STORAGE_KEY = 'ruiru_titans_tactics_board_v1';
 
-export default function TacticsView({ categories = {}, activeCategoryKey = 'open', isCmsMode = false }) {
+export default function TacticsView({
+  categories = {},
+  activeCategoryKey = 'open',
+  isCmsMode = false,
+  isStandalonePage = false,
+  onToggleStandalonePage = null,
+}) {
   // 1. Format & Formation Selection
   const [selectedFormat, setSelectedFormat] = useState('11-aside'); // '5-aside' | '7-aside' | '8-aside' | '11-aside'
   const [selectedFormationKey, setSelectedFormationKey] = useState('4-3-3');
@@ -1404,6 +1410,82 @@ export default function TacticsView({ categories = {}, activeCategoryKey = 'open
 
         {/* Global Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {!isStandalonePage ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.open(`${window.location.pathname}?tactics_standalone=true`, '_blank', 'noopener,noreferrer');
+                }
+              }}
+              style={{
+                background: '#FF9500',
+                color: '#16201B',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 14px',
+                fontSize: '12px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 12px rgba(255, 149, 0, 0.25)',
+              }}
+              title="Open the Tactics Board in a new standalone page without navigation or other sections"
+            >
+              <span>↗</span> Open in New Page
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if (onToggleStandalonePage) {
+                  onToggleStandalonePage(false);
+                } else if (typeof window !== 'undefined') {
+                  window.location.href = window.location.pathname;
+                }
+              }}
+              style={{
+                background: '#1C1C1E',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.16)',
+                borderRadius: '8px',
+                padding: '8px 14px',
+                fontSize: '12px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              title="Return to the main Ruiru Titans club portal"
+            >
+              <span>←</span> Club Portal
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => handleToggleFullscreen()}
+            style={{
+              background: '#0F4432',
+              color: '#A7F3D0',
+              border: '1px solid rgba(72, 187, 120, 0.4)',
+              borderRadius: '8px',
+              padding: '8px 14px',
+              fontSize: '12px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+            title="Expand the tactics pitch to full screen"
+          >
+            <span>⛶</span> Full Screen
+          </button>
+
           <button
             type="button"
             onClick={handleResetPositions}

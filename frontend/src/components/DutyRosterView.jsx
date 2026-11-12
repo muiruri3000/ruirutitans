@@ -16,10 +16,13 @@ export default function DutyRosterView({
   const [error, setError] = useState(null);
   const [dutyRoster, setDutyRoster] = useState(() => cat?.dutyRoster || null);
   const [eligiblePlayersMap, setEligiblePlayersMap] = useState({});
-  const [activeFilterTab, setActiveFilterTab] = useState('all'); // 'all' | 'pending' | 'completed'
+  const [activeFilterTab, setActiveFilterTab] = useState('all'); // 'all' | 'pending' | 'completed' | 'counts'
   const [selectedTeamFilter, setSelectedTeamFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [savingKey, setSavingKey] = useState(null);
+  const [savingCountId, setSavingCountId] = useState(null);
+  const [countsSortBy, setCountsSortBy] = useState('total'); // 'total' | 'bibs' | 'goalpost' | 'name'
+  const [countDrafts, setCountDrafts] = useState({});
   const [notification, setNotification] = useState(null);
 
   // Exemptions state
@@ -298,6 +301,88 @@ export default function DutyRosterView({
     }
   };
 
+  // Manually update a player's bibs washed / posts taken counts
+  const handleUpdatePlayerCount = async (playerId, bibs, goalpost) => {
+    if (!isAdmin || !playerId) return;
+    const safeBibs = Math.max(0, parseInt(bibs, 10) || 0);
+    const safePosts = Math.max(0, parseInt(goalpost, 10) || 0);
+    setSavingCountId(String(playerId));
+
+    try {
+      const res = await api.updateDutyRoster(targetCategoryKey, {
+        action: 'update_player_count',
+        playerId,
+        bibs: safeBibs,
+        goalpost: safePosts,
+      });
+      if (res?.dutyRoster) {
+        setDutyRoster(res.dutyRoster);
+        if (res.eligiblePlayers) setEligiblePlayersMap(res.eligiblePlayers);
+      }
+      setCountDrafts((prev) => {
+        const next = { ...prev };
+        delete next[String(playerId)];
+        return next;
+      });
+      setNotification({
+        type: 'success',
+        text: '✓ Player duty counts updated.',
+      });
+    } catch (err) {
+      console.error('Failed to update player duty counts:', err);
+      setNotification({ type: 'error', text: err.message || 'Failed to update player duty counts.' });
+    } finally {
+      setSavingCountId(null);
+    }
+  };
+
+  // Player Duty Counts list (Bibs Washed & Posts Taken per player)
+  const playerDutyCountsList = useMemo(() => {
+    const countsMap = dutyRoster?.playerCounts || {};
+    const list = [];
+    const seen = new Set();
+
+    (cat?.teams || []).forEach((team) => {
+      if (selectedTeamFilter !== 'all' && team.id !== selectedTeamFilter) return;
+      (team.players || []).forEach((p) => {
+        if (p.isUnknown || p.name === 'Unrecorded scorer') return;
+        const pid = String(p.id || p.permanentId || '');
+        if (!pid || seen.has(pid)) return;
+        seen.add(pid);
+
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const matchName = (p.name || '').toLowerCase().includes(q);
+          const matchTeam = (team.name || '').toLowerCase().includes(q);
+          if (!matchName && !matchTeam) return;
+        }
+
+        const c = countsMap[pid] || {};
+        const bibs = Math.max(0, Number(c.bibs) || 0);
+        const goalpost = Math.max(0, Number(c.goalpost) || 0);
+        list.push({
+          playerId: pid,
+          playerName: p.name,
+          position: p.position || '',
+          teamId: team.id,
+          teamName: team.name,
+          bibs,
+          goalpost,
+          total: bibs + goalpost,
+        });
+      });
+    });
+
+    list.sort((a, b) => {
+      if (countsSortBy === 'bibs') return b.bibs - a.bibs || b.total - a.total || a.playerName.localeCompare(b.playerName);
+      if (countsSortBy === 'goalpost') return b.goalpost - a.goalpost || b.total - a.total || a.playerName.localeCompare(b.playerName);
+      if (countsSortBy === 'name') return a.playerName.localeCompare(b.playerName);
+      return b.total - a.total || b.bibs - a.bibs || a.playerName.localeCompare(b.playerName);
+    });
+
+    return list;
+  }, [cat?.teams, dutyRoster?.playerCounts, selectedTeamFilter, searchQuery, countsSortBy]);
+
   // Filtered matchdays based on active tabs, search query, and team filter
   const filteredDays = useMemo(() => {
     if (!dutyRoster?.days) return [];
@@ -515,7 +600,7 @@ export default function DutyRosterView({
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '24px' }}>👕</span>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '13px', color: '#6CE5A0' }}>Match 1 of the Day (17:10)</div>
+              <div style={{ fontWeight: 700, fontSize: '13px', color: '#6CE5A0' }}>Match 1 of the Day (4:30 PM / 16:30)</div>
               <div style={{ fontSize: '12.5px', color: '#D1D1D6' }}>
                 Wash Team Bibs — 2 players picked from opposing teams
               </div>
@@ -524,7 +609,7 @@ export default function DutyRosterView({
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '24px' }}>🥅</span>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '13px', color: '#FF9500' }}>Match 2 of the Day (18:10)</div>
+              <div style={{ fontWeight: 700, fontSize: '13px', color: '#FF9500' }}>Match 2 of the Day (5:30 PM / 17:30)</div>
               <div style={{ fontSize: '12.5px', color: '#D1D1D6' }}>
                 Goalposts (To &amp; From Store) — 2 opposing players take side goalpost from store and return back after match
               </div>
@@ -896,6 +981,7 @@ export default function DutyRosterView({
             { key: 'all', label: 'All Matchdays' },
             { key: 'pending', label: `Pending Work (${summary.pendingDuties})` },
             { key: 'completed', label: `Completed (${summary.completedDuties})` },
+            { key: 'counts', label: `📊 Player Duty Counts (${playerDutyCountsList.length})` },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -989,8 +1075,299 @@ export default function DutyRosterView({
         </div>
       )}
 
+      {/* Player Duty Counts View */}
+      {activeFilterTab === 'counts' && (
+        <div
+          style={{
+            background: '#1C1C1E',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.08)',
+            overflow: 'hidden',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            marginBottom: '24px',
+          }}
+        >
+          <div
+            style={{
+              padding: '14px 20px',
+              background: 'rgba(255,255,255,0.03)',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '10px',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>
+                📊 Player Duty Counts — Bibs Washed &amp; Posts Taken
+              </div>
+              <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '2px' }}>
+                Automatically increments when a duty is ticked as completed &amp; signed off. {isAdmin ? 'Admins can also adjust numbers manually.' : ''}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '11.5px', color: '#8E8E93', fontWeight: 600 }}>Sort:</span>
+              <select
+                value={countsSortBy}
+                onChange={(e) => setCountsSortBy(e.target.value)}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  background: '#141416',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  color: '#F2F2F7',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                }}
+              >
+                <option value="total">Total Duties (High → Low)</option>
+                <option value="bibs">Bibs Washed (High → Low)</option>
+                <option value="goalpost">Posts Taken (High → Low)</option>
+                <option value="name">Player Name (A → Z)</option>
+              </select>
+            </div>
+          </div>
+
+          {playerDutyCountsList.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '44px 20px', color: '#8E8E93', fontSize: '13.5px' }}>
+              No players match your current team or search filter.
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                    <th style={{ textAlign: 'left', padding: '10px 16px', color: '#8E8E93', fontWeight: 700, fontSize: '11.5px', textTransform: 'uppercase' }}>Player</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', color: '#8E8E93', fontWeight: 700, fontSize: '11.5px', textTransform: 'uppercase' }}>Team</th>
+                    <th style={{ textAlign: 'center', padding: '10px 12px', color: '#6CE5A0', fontWeight: 700, fontSize: '11.5px', textTransform: 'uppercase' }}>👕 Bibs Washed</th>
+                    <th style={{ textAlign: 'center', padding: '10px 12px', color: '#FF9500', fontWeight: 700, fontSize: '11.5px', textTransform: 'uppercase' }}>🥅 Posts Taken</th>
+                    <th style={{ textAlign: 'center', padding: '10px 16px', color: '#EBEBF5', fontWeight: 700, fontSize: '11.5px', textTransform: 'uppercase' }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {playerDutyCountsList.map((row) => {
+                    const draft = countDrafts[row.playerId];
+                    const displayBibs = draft?.bibs !== undefined ? draft.bibs : row.bibs;
+                    const displayPosts = draft?.goalpost !== undefined ? draft.goalpost : row.goalpost;
+                    const isSaving = savingCountId === row.playerId;
+
+                    return (
+                      <tr
+                        key={row.playerId}
+                        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                      >
+                        <td style={{ padding: '10px 16px', fontWeight: 700, color: '#FFFFFF' }}>
+                          {row.playerName}
+                          {row.position && (
+                            <span style={{ marginLeft: '6px', fontSize: '11px', color: '#8E8E93', fontWeight: 600 }}>
+                              ({row.position})
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '10px 12px', color: '#AEAEB2', fontSize: '12.5px' }}>
+                          {row.teamName}
+                        </td>
+                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          {isAdmin ? (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <button
+                                type="button"
+                                disabled={isSaving || row.bibs <= 0}
+                                onClick={() => handleUpdatePlayerCount(row.playerId, Math.max(0, row.bibs - 1), row.goalpost)}
+                                style={{
+                                  width: '26px',
+                                  height: '26px',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(255,255,255,0.14)',
+                                  background: '#141416',
+                                  color: '#EBEBF5',
+                                  fontWeight: 800,
+                                  cursor: row.bibs <= 0 ? 'not-allowed' : 'pointer',
+                                  opacity: row.bibs <= 0 ? 0.4 : 1,
+                                }}
+                              >
+                                −
+                              </button>
+                              <input
+                                type="number"
+                                min="0"
+                                value={displayBibs}
+                                disabled={isSaving}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCountDrafts((prev) => ({
+                                    ...prev,
+                                    [row.playerId]: {
+                                      bibs: val,
+                                      goalpost: prev[row.playerId]?.goalpost ?? row.goalpost,
+                                    },
+                                  }));
+                                }}
+                                onBlur={() => {
+                                  if (draft?.bibs !== undefined && Number(draft.bibs) !== row.bibs) {
+                                    handleUpdatePlayerCount(row.playerId, draft.bibs, displayPosts);
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.currentTarget.blur();
+                                  }
+                                }}
+                                style={{
+                                  width: '48px',
+                                  textAlign: 'center',
+                                  padding: '4px',
+                                  borderRadius: '6px',
+                                  background: '#141416',
+                                  border: '1px solid rgba(108, 229, 160, 0.35)',
+                                  color: '#6CE5A0',
+                                  fontWeight: 800,
+                                  fontSize: '13px',
+                                }}
+                              />
+                              <button
+                                type="button"
+                                disabled={isSaving}
+                                onClick={() => handleUpdatePlayerCount(row.playerId, row.bibs + 1, row.goalpost)}
+                                style={{
+                                  width: '26px',
+                                  height: '26px',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(255,255,255,0.14)',
+                                  background: '#141416',
+                                  color: '#6CE5A0',
+                                  fontWeight: 800,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                minWidth: '28px',
+                                padding: '3px 8px',
+                                borderRadius: '999px',
+                                background: row.bibs > 0 ? 'rgba(108, 229, 160, 0.14)' : 'rgba(255,255,255,0.05)',
+                                color: row.bibs > 0 ? '#6CE5A0' : '#8E8E93',
+                                fontWeight: 800,
+                              }}
+                            >
+                              {row.bibs}
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          {isAdmin ? (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <button
+                                type="button"
+                                disabled={isSaving || row.goalpost <= 0}
+                                onClick={() => handleUpdatePlayerCount(row.playerId, row.bibs, Math.max(0, row.goalpost - 1))}
+                                style={{
+                                  width: '26px',
+                                  height: '26px',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(255,255,255,0.14)',
+                                  background: '#141416',
+                                  color: '#EBEBF5',
+                                  fontWeight: 800,
+                                  cursor: row.goalpost <= 0 ? 'not-allowed' : 'pointer',
+                                  opacity: row.goalpost <= 0 ? 0.4 : 1,
+                                }}
+                              >
+                                −
+                              </button>
+                              <input
+                                type="number"
+                                min="0"
+                                value={displayPosts}
+                                disabled={isSaving}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCountDrafts((prev) => ({
+                                    ...prev,
+                                    [row.playerId]: {
+                                      bibs: prev[row.playerId]?.bibs ?? row.bibs,
+                                      goalpost: val,
+                                    },
+                                  }));
+                                }}
+                                onBlur={() => {
+                                  if (draft?.goalpost !== undefined && Number(draft.goalpost) !== row.goalpost) {
+                                    handleUpdatePlayerCount(row.playerId, displayBibs, draft.goalpost);
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.currentTarget.blur();
+                                  }
+                                }}
+                                style={{
+                                  width: '48px',
+                                  textAlign: 'center',
+                                  padding: '4px',
+                                  borderRadius: '6px',
+                                  background: '#141416',
+                                  border: '1px solid rgba(255, 149, 0, 0.35)',
+                                  color: '#FF9500',
+                                  fontWeight: 800,
+                                  fontSize: '13px',
+                                }}
+                              />
+                              <button
+                                type="button"
+                                disabled={isSaving}
+                                onClick={() => handleUpdatePlayerCount(row.playerId, row.bibs, row.goalpost + 1)}
+                                style={{
+                                  width: '26px',
+                                  height: '26px',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(255,255,255,0.14)',
+                                  background: '#141416',
+                                  color: '#FF9500',
+                                  fontWeight: 800,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                minWidth: '28px',
+                                padding: '3px 8px',
+                                borderRadius: '999px',
+                                background: row.goalpost > 0 ? 'rgba(255, 149, 0, 0.14)' : 'rgba(255,255,255,0.05)',
+                                color: row.goalpost > 0 ? '#FF9500' : '#8E8E93',
+                                fontWeight: 800,
+                              }}
+                            >
+                              {row.goalpost}
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '10px 16px', textAlign: 'center', fontWeight: 800, color: row.total > 0 ? '#FFFFFF' : '#8E8E93' }}>
+                          {row.total}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Matchdays List */}
-      {!loading && filteredDays.length === 0 && (
+      {activeFilterTab !== 'counts' && !loading && filteredDays.length === 0 && (
         <div
           style={{
             textAlign: 'center',
@@ -1013,6 +1390,7 @@ export default function DutyRosterView({
         </div>
       )}
 
+      {activeFilterTab !== 'counts' && (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {filteredDays.map((day) => (
           <div
@@ -1519,6 +1897,7 @@ export default function DutyRosterView({
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

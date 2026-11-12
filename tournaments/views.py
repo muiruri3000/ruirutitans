@@ -31,6 +31,7 @@ from .services import (
     build_real_open_season_dict,
     build_category_duty_roster,
     update_duty_roster_assignment,
+    update_duty_roster_player_count,
     get_category_duty_eligible_players,
     get_category_completed_duty_player_ids,
     get_category_duty_exempted_player_ids,
@@ -1150,7 +1151,7 @@ class PlayerUpdateProfileAPIView(views.APIView):
             category_key = payload.get("category_key") or payload.get("categoryKey")
             qs = Player.objects.filter(is_unknown=False)
             if category_key:
-                qs = qs.filter(team__category__key=category_key)
+                qs = qs.filter(Q(team__category__key=category_key) | Q(category__key=category_key))
             if player_id:
                 target_player = qs.filter(
                     Q(player_id=player_id) | Q(username__iexact=player_id) | Q(name__iexact=player_id)
@@ -1161,7 +1162,7 @@ class PlayerUpdateProfileAPIView(views.APIView):
             cat_k = auth_player.get("category_key")
             qs = Player.objects.filter(is_unknown=False)
             if cat_k:
-                qs = qs.filter(team__category__key=cat_k)
+                qs = qs.filter(Q(team__category__key=cat_k) | Q(category__key=cat_k))
             target_player = qs.filter(Q(player_id=pid) | Q(username__iexact=auth_player.get("username"))).first()
 
         if not target_player:
@@ -1170,10 +1171,11 @@ class PlayerUpdateProfileAPIView(views.APIView):
         try:
             updated_player = update_player_profile(target_player, payload)
             p_dict = updated_player.to_dict()
-            p_dict["team_id"] = updated_player.team.team_id
-            p_dict["team_name"] = updated_player.team.name
-            p_dict["team_color"] = updated_player.team.color
-            p_dict["category_key"] = updated_player.team.category.key
+            eff_cat = updated_player.effective_category
+            p_dict["team_id"] = updated_player.team.team_id if updated_player.team else None
+            p_dict["team_name"] = updated_player.team.name if updated_player.team else "Free Agent"
+            p_dict["team_color"] = updated_player.team.color if updated_player.team else "#8E8E93"
+            p_dict["category_key"] = eff_cat.key if eff_cat else ""
             p_dict["first_name"] = updated_player.first_name
             p_dict["surname"] = updated_player.surname
             p_dict["dob"] = str(updated_player.date_of_birth) if updated_player.date_of_birth else ""
@@ -1221,7 +1223,7 @@ class AdminPlayerResetPasswordAPIView(views.APIView):
                 "player_id": player.player_id,
                 "name": player.name,
                 "jersey_number": player.jersey_number,
-                "team_name": player.team.name,
+                "team_name": player.team.name if player.team else "Free Agent",
                 "code": code,
                 "is_active": player.is_active,
                 "message": f"Password reset for @{player.username} ({player.name}). 4-digit temporary code: {code}",
@@ -1344,7 +1346,7 @@ class AdminPlayerUpdatePositionAPIView(views.APIView):
                 "username": player.username,
                 "name": player.name,
                 "position": player.position,
-                "team_id": player.team.team_id,
+                "team_id": player.team.team_id if player.team else None,
                 "message": f"Position for {player.name} updated to '{player.position or 'Unassigned'}'.",
             })
         except ValueError as e:
@@ -1383,7 +1385,7 @@ class AdminPlayerUpdateUsernameAPIView(views.APIView):
                 "player_id": player.player_id,
                 "username": player.username,
                 "name": player.name,
-                "team_id": player.team.team_id,
+                "team_id": player.team.team_id if player.team else None,
                 "message": f"Username for {player.name} updated to '@{player.username}'.",
             })
         except ValueError as e:
@@ -1998,6 +2000,37 @@ class DutyRosterAPIView(views.APIView):
                 "eligiblePlayers": eligible_players,
             })
 
+        elif action == "update_player_count":
+            player_id = request.data.get("playerId") or request.data.get("player_id")
+            if not player_id:
+                return Response({"error": "playerId is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+            bibs = request.data.get("bibs")
+            goalpost = request.data.get("goalpost")
+            try:
+                bibs_val = int(bibs) if bibs is not None else None
+                goalpost_val = int(goalpost) if goalpost is not None else None
+            except (TypeError, ValueError):
+                return Response({"error": "bibs and goalpost must be integers."}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                roster = update_duty_roster_player_count(
+                    category=cat,
+                    player_id=player_id,
+                    bibs=bibs_val,
+                    goalpost=goalpost_val,
+                )
+            except ValueError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+            eligible_players = get_category_duty_eligible_players(cat)
+            return Response({
+                "status": "success",
+                "message": "Player duty counts updated.",
+                "dutyRoster": roster,
+                "eligiblePlayers": eligible_players,
+            })
+
         elif action == "save_all":
             assignments = request.data.get("assignments")
             if isinstance(assignments, dict):
@@ -2290,11 +2323,13 @@ class TransferListCreateAPIView(views.APIView):
 
         completed_qs = category.transfers.filter(status="approved").select_related("player", "from_team", "to_team").order_by("-approved_at", "-created_at")
         completed = [t.to_dict() for t in completed_qs]
+        free_agents_qs = Player.objects.filter(category=category, team__isnull=True, is_unknown=False).order_by("name", "id")
 
         data = {
             "category_key": category.key,
             "transfer_window_open": bool(category.transfer_window_open),
             "completed_transfers": completed,
+            "free_agents": [p.to_dict() for p in free_agents_qs],
         }
 
         if cms_info:
@@ -2329,7 +2364,7 @@ class TransferListCreateAPIView(views.APIView):
 
         to_team_id = payload.get("to_team_id")
         reason = payload.get("reason", "")
-        transfer_type = payload.get("transfer_type", "permanent")
+        transfer_type = payload.get("transfer_type") or None
 
         if not player_id or not to_team_id:
             return Response({"error": "player_id and to_team_id are required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -2420,7 +2455,7 @@ class TransferDirectAPIView(views.APIView):
         player_id = payload.get("player_id")
         to_team_id = payload.get("to_team_id")
         notes = payload.get("notes", "")
-        transfer_type = payload.get("transfer_type", "permanent")
+        transfer_type = payload.get("transfer_type") or None
         effective_date = payload.get("effective_date", None)
 
         from .services import direct_admin_transfer, get_authenticated_cms_from_request
@@ -2445,6 +2480,67 @@ class TransferDirectAPIView(views.APIView):
                 "message": f"Player {req.player.name} successfully transferred to {req.to_team.name}.",
                 "transfer": req.to_dict(),
             })
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TransferFreeAgentCreateAPIView(views.APIView):
+    """
+    GET: List free agents in a category (public).
+    POST: Admin adds a new free agent (optionally moving them immediately to an existing team).
+    """
+    permission_classes = [ReadOnlyOrCMSAdmin]
+
+    def get(self, request, key):
+        category = get_object_or_404(Category, key=key)
+        free_agents_qs = Player.objects.filter(category=category, team__isnull=True, is_unknown=False).order_by("name", "id")
+        return Response({
+            "category_key": category.key,
+            "free_agents": [p.to_dict() for p in free_agents_qs],
+        })
+
+    def post(self, request, key):
+        category = get_object_or_404(Category, key=key)
+        payload = request.data or {}
+
+        from .services import add_free_agent, get_authenticated_cms_from_request
+        cms = get_authenticated_cms_from_request(request)
+        admin_username = (cms.get("username") if cms else getattr(request.user, "username", "Admin")) or "Admin"
+
+        try:
+            player, code, transfer_req = add_free_agent(
+                category=category,
+                name=payload.get("name"),
+                first_name=payload.get("first_name") or payload.get("firstName"),
+                surname=payload.get("surname"),
+                position=payload.get("position", ""),
+                jersey_number=payload.get("jersey_number") or payload.get("jerseyNumber"),
+                username=payload.get("username"),
+                date_of_birth=payload.get("date_of_birth") or payload.get("dob"),
+                active_foot=payload.get("active_foot") or payload.get("activeFoot") or "right",
+                preferred_positions=payload.get("preferred_positions") or payload.get("preferredPositions"),
+                to_team_id=payload.get("to_team_id") or payload.get("toTeamId"),
+                notes=payload.get("notes", ""),
+                admin_username=admin_username,
+            )
+            if transfer_req:
+                msg = (
+                    f"Free agent '{player.name}' added and signed to {transfer_req.to_team.name}! "
+                    f"Username: @{player.username} · 4-digit code: {code}"
+                )
+            else:
+                msg = (
+                    f"Free agent '{player.name}' added to Free Agents pool! "
+                    f"Username: @{player.username} · 4-digit code: {code}"
+                )
+            return Response({
+                "status": "success",
+                "message": msg,
+                "player": player.to_dict(),
+                "code": code,
+                "username": player.username,
+                "transfer": transfer_req.to_dict() if transfer_req else None,
+            }, status=status.HTTP_201_CREATED)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

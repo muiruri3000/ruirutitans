@@ -51,6 +51,7 @@ from .views import (
     TransferActionAPIView,
     TransferToggleWindowAPIView,
     TransferDirectAPIView,
+    TransferFreeAgentCreateAPIView,
     PlayerBanListCreateAPIView,
     PlayerBanLiftAPIView,
 )
@@ -118,6 +119,7 @@ urlpatterns = [
     path("api/categories/<str:key>/transfers/<int:pk>/action/", TransferActionAPIView.as_view(), name="api_category_transfer_action"),
     path("api/categories/<str:key>/transfers/toggle-window/", TransferToggleWindowAPIView.as_view(), name="api_category_transfer_toggle_window"),
     path("api/categories/<str:key>/transfers/direct/", TransferDirectAPIView.as_view(), name="api_category_transfer_direct"),
+    path("api/categories/<str:key>/transfers/free-agents/", TransferFreeAgentCreateAPIView.as_view(), name="api_category_transfer_free_agent_create"),
     path("api/categories/<str:key>/bans/", PlayerBanListCreateAPIView.as_view(), name="api_category_bans"),
     path("api/categories/<str:key>/bans/<int:pk>/lift/", PlayerBanLiftAPIView.as_view(), name="api_category_ban_lift"),
 ]

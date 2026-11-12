@@ -3393,7 +3393,7 @@
       "fixtures": [
         {
           "id": "F1",
-          "date": "Wed, 21 Oct \u00b7 17:10",
+          "date": "Wed, 21 Oct \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "BAL",
           "away": "SS",
@@ -3501,7 +3501,7 @@
         },
         {
           "id": "F2",
-          "date": "Wed, 21 Oct \u00b7 18:10",
+          "date": "Wed, 21 Oct \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "RAN",
           "away": "BLA",
@@ -3597,7 +3597,7 @@
         },
         {
           "id": "F4",
-          "date": "Thu, 22 Oct \u00b7 18:10",
+          "date": "Thu, 22 Oct \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "OXF",
           "away": "MAS",
@@ -3685,7 +3685,7 @@
         },
         {
           "id": "F5",
-          "date": "Fri, 23 Oct \u00b7 17:10",
+          "date": "Fri, 23 Oct \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "RAN",
           "away": "SS",
@@ -3741,7 +3741,7 @@
         },
         {
           "id": "F18",
-          "date": "Fri, 23 Oct \u00b7 18:10",
+          "date": "Fri, 23 Oct \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "EXM",
           "away": "OXF",
@@ -3821,7 +3821,7 @@
         },
         {
           "id": "F6",
-          "date": "Sat, 24 Oct \u00b7 17:00",
+          "date": "Sat, 24 Oct \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "EXM",
           "away": "BAL",
@@ -3845,7 +3845,7 @@
         },
         {
           "id": "F7",
-          "date": "Sat, 24 Oct \u00b7 17:00",
+          "date": "Sat, 24 Oct \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "MAN",
           "away": "BLA",
@@ -3881,7 +3881,7 @@
         },
         {
           "id": "F12",
-          "date": "Sat, 24 Oct \u00b7 18:00",
+          "date": "Sat, 24 Oct \u00b7 18:30",
           "venue": "Thoome Pri.",
           "home": "MAN",
           "away": "MAS",
@@ -3965,7 +3965,7 @@
         },
         {
           "id": "F9",
-          "date": "Mon, 26 Oct \u00b7 18:00",
+          "date": "Mon, 26 Oct \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "RAN",
           "away": "BAL",
@@ -4025,7 +4025,7 @@
         },
         {
           "id": "F11",
-          "date": "Mon, 26 Oct \u00b7 18:10",
+          "date": "Mon, 26 Oct \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "OXF",
           "away": "SS",
@@ -4125,7 +4125,7 @@
         },
         {
           "id": "F19",
-          "date": "Wed, 28 Oct \u00b7 17:10",
+          "date": "Wed, 28 Oct \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "EXM",
           "away": "MAN",
@@ -4136,7 +4136,7 @@
         },
         {
           "id": "F8",
-          "date": "Wed, 28 Oct \u00b7 18:10",
+          "date": "Wed, 28 Oct \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "BLA",
           "away": "BAL",
@@ -4147,7 +4147,7 @@
         },
         {
           "id": "F3",
-          "date": "Thu, 29 Oct \u00b7 17:10",
+          "date": "Thu, 29 Oct \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "MAS",
           "away": "SS",
@@ -4158,7 +4158,7 @@
         },
         {
           "id": "F10",
-          "date": "Thu, 29 Oct \u00b7 18:10",
+          "date": "Thu, 29 Oct \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "OXF",
           "away": "RAN",
@@ -4169,7 +4169,7 @@
         },
         {
           "id": "F13",
-          "date": "Fri, 30 Oct \u00b7 17:10",
+          "date": "Fri, 30 Oct \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "BAL",
           "away": "MAN",
@@ -4180,7 +4180,7 @@
         },
         {
           "id": "F14",
-          "date": "Fri, 30 Oct \u00b7 18:10",
+          "date": "Fri, 30 Oct \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "BLA",
           "away": "EXM",
@@ -4191,7 +4191,7 @@
         },
         {
           "id": "F15",
-          "date": "Sat, 31 Oct \u00b7 17:00",
+          "date": "Sat, 31 Oct \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "SS",
           "away": "BLA",
@@ -4202,7 +4202,7 @@
         },
         {
           "id": "F16",
-          "date": "Sat, 31 Oct \u00b7 18:00",
+          "date": "Sat, 31 Oct \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "MAS",
           "away": "RAN",
@@ -4213,7 +4213,7 @@
         },
         {
           "id": "F17",
-          "date": "Mon, 02 Nov \u00b7 17:10",
+          "date": "Mon, 02 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "MAS",
           "away": "EXM",
@@ -4224,7 +4224,7 @@
         },
         {
           "id": "F20",
-          "date": "Mon, 02 Nov \u00b7 18:10",
+          "date": "Mon, 02 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "MAN",
           "away": "OXF",
@@ -4235,7 +4235,7 @@
         },
         {
           "id": "F21",
-          "date": "Wed, 04 Nov \u00b7 17:10",
+          "date": "Wed, 04 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "BAL",
           "away": "MAS",
@@ -4246,7 +4246,7 @@
         },
         {
           "id": "F22",
-          "date": "Wed, 04 Nov \u00b7 18:10",
+          "date": "Wed, 04 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "BLA",
           "away": "OXF",
@@ -4257,7 +4257,7 @@
         },
         {
           "id": "F23",
-          "date": "Thu, 05 Nov \u00b7 17:10",
+          "date": "Thu, 05 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "EXM",
           "away": "RAN",
@@ -4268,7 +4268,7 @@
         },
         {
           "id": "F24",
-          "date": "Thu, 05 Nov \u00b7 18:10",
+          "date": "Thu, 05 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "SS",
           "away": "MAN",
@@ -4279,7 +4279,7 @@
         },
         {
           "id": "F25",
-          "date": "Fri, 06 Nov \u00b7 17:10",
+          "date": "Fri, 06 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "BAL",
           "away": "OXF",
@@ -4290,7 +4290,7 @@
         },
         {
           "id": "F26",
-          "date": "Fri, 06 Nov \u00b7 18:10",
+          "date": "Fri, 06 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "BLA",
           "away": "MAS",
@@ -4301,7 +4301,7 @@
         },
         {
           "id": "F27",
-          "date": "Sat, 07 Nov \u00b7 17:00",
+          "date": "Sat, 07 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "SS",
           "away": "EXM",
@@ -4312,7 +4312,7 @@
         },
         {
           "id": "F28",
-          "date": "Sat, 07 Nov \u00b7 18:00",
+          "date": "Sat, 07 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "MAN",
           "away": "RAN",
@@ -4323,7 +4323,7 @@
         },
         {
           "id": "F29",
-          "date": "Mon, 09 Nov \u00b7 17:10",
+          "date": "Mon, 09 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "SS",
           "away": "BAL",
@@ -4334,7 +4334,7 @@
         },
         {
           "id": "F30",
-          "date": "Mon, 09 Nov \u00b7 18:10",
+          "date": "Mon, 09 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "BLA",
           "away": "RAN",
@@ -4345,7 +4345,7 @@
         },
         {
           "id": "F31",
-          "date": "Wed, 11 Nov \u00b7 17:10",
+          "date": "Wed, 11 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "OXF",
           "away": "EXM",
@@ -4356,7 +4356,7 @@
         },
         {
           "id": "F32",
-          "date": "Wed, 11 Nov \u00b7 18:10",
+          "date": "Wed, 11 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "MAS",
           "away": "MAN",
@@ -4367,7 +4367,7 @@
         },
         {
           "id": "F33",
-          "date": "Thu, 12 Nov \u00b7 17:10",
+          "date": "Thu, 12 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "SS",
           "away": "RAN",
@@ -4378,7 +4378,7 @@
         },
         {
           "id": "F34",
-          "date": "Thu, 12 Nov \u00b7 18:10",
+          "date": "Thu, 12 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "BAL",
           "away": "BLA",
@@ -4389,7 +4389,7 @@
         },
         {
           "id": "F35",
-          "date": "Fri, 13 Nov \u00b7 17:10",
+          "date": "Fri, 13 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "MAS",
           "away": "OXF",
@@ -4400,7 +4400,7 @@
         },
         {
           "id": "F36",
-          "date": "Fri, 13 Nov \u00b7 18:10",
+          "date": "Fri, 13 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "MAN",
           "away": "EXM",
@@ -4411,7 +4411,7 @@
         },
         {
           "id": "F37",
-          "date": "Sat, 14 Nov \u00b7 17:00",
+          "date": "Sat, 14 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "BAL",
           "away": "RAN",
@@ -4422,7 +4422,7 @@
         },
         {
           "id": "F38",
-          "date": "Sat, 14 Nov \u00b7 18:00",
+          "date": "Sat, 14 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "BLA",
           "away": "SS",
@@ -4433,7 +4433,7 @@
         },
         {
           "id": "F39",
-          "date": "Mon, 16 Nov \u00b7 17:10",
+          "date": "Mon, 16 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "EXM",
           "away": "MAS",
@@ -4444,7 +4444,7 @@
         },
         {
           "id": "F40",
-          "date": "Mon, 16 Nov \u00b7 18:10",
+          "date": "Mon, 16 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "OXF",
           "away": "MAN",
@@ -4455,7 +4455,7 @@
         },
         {
           "id": "F41",
-          "date": "Wed, 18 Nov \u00b7 17:10",
+          "date": "Wed, 18 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "BAL",
           "away": "EXM",
@@ -4466,7 +4466,7 @@
         },
         {
           "id": "F42",
-          "date": "Wed, 18 Nov \u00b7 18:10",
+          "date": "Wed, 18 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "BLA",
           "away": "MAN",
@@ -4477,7 +4477,7 @@
         },
         {
           "id": "F43",
-          "date": "Thu, 19 Nov \u00b7 17:10",
+          "date": "Thu, 19 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "SS",
           "away": "OXF",
@@ -4488,7 +4488,7 @@
         },
         {
           "id": "F44",
-          "date": "Thu, 19 Nov \u00b7 18:10",
+          "date": "Thu, 19 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "RAN",
           "away": "MAS",
@@ -4499,7 +4499,7 @@
         },
         {
           "id": "F45",
-          "date": "Fri, 20 Nov \u00b7 17:10",
+          "date": "Fri, 20 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "MAN",
           "away": "BAL",
@@ -4510,7 +4510,7 @@
         },
         {
           "id": "F46",
-          "date": "Fri, 20 Nov \u00b7 18:10",
+          "date": "Fri, 20 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "EXM",
           "away": "BLA",
@@ -4521,7 +4521,7 @@
         },
         {
           "id": "F47",
-          "date": "Sat, 21 Nov \u00b7 17:00",
+          "date": "Sat, 21 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "SS",
           "away": "MAS",
@@ -4532,7 +4532,7 @@
         },
         {
           "id": "F48",
-          "date": "Sat, 21 Nov \u00b7 18:00",
+          "date": "Sat, 21 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "RAN",
           "away": "OXF",
@@ -4543,7 +4543,7 @@
         },
         {
           "id": "F49",
-          "date": "Mon, 23 Nov \u00b7 17:10",
+          "date": "Mon, 23 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "MAS",
           "away": "BAL",
@@ -4554,7 +4554,7 @@
         },
         {
           "id": "F50",
-          "date": "Mon, 23 Nov \u00b7 18:10",
+          "date": "Mon, 23 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "OXF",
           "away": "BLA",
@@ -4565,7 +4565,7 @@
         },
         {
           "id": "F51",
-          "date": "Wed, 25 Nov \u00b7 17:10",
+          "date": "Wed, 25 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "RAN",
           "away": "EXM",
@@ -4576,7 +4576,7 @@
         },
         {
           "id": "F52",
-          "date": "Wed, 25 Nov \u00b7 18:10",
+          "date": "Wed, 25 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "MAN",
           "away": "SS",
@@ -4587,7 +4587,7 @@
         },
         {
           "id": "F53",
-          "date": "Thu, 26 Nov \u00b7 17:10",
+          "date": "Thu, 26 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "OXF",
           "away": "BAL",
@@ -4598,7 +4598,7 @@
         },
         {
           "id": "F54",
-          "date": "Thu, 26 Nov \u00b7 18:10",
+          "date": "Thu, 26 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "MAS",
           "away": "BLA",
@@ -4609,7 +4609,7 @@
         },
         {
           "id": "F55",
-          "date": "Fri, 27 Nov \u00b7 17:10",
+          "date": "Fri, 27 Nov \u00b7 16:30",
           "venue": "Thoome Pri.",
           "home": "EXM",
           "away": "SS",
@@ -4620,7 +4620,7 @@
         },
         {
           "id": "F56",
-          "date": "Fri, 27 Nov \u00b7 18:10",
+          "date": "Fri, 27 Nov \u00b7 17:30",
           "venue": "Thoome Pri.",
           "home": "RAN",
           "away": "MAN",
@@ -4631,42 +4631,42 @@
         }
       ],
       "schedule": {
-        "time": "17:10",
+        "time": "16:30",
         "days": {
           "0": {
             "enabled": false,
             "matches": 1,
-            "time": "18:00"
+            "time": "16:30"
           },
           "1": {
             "enabled": true,
             "matches": 2,
-            "time": "17:10"
+            "time": "16:30"
           },
           "2": {
             "enabled": false,
             "matches": 2,
-            "time": "17:10"
+            "time": "16:30"
           },
           "3": {
             "enabled": true,
             "matches": 2,
-            "time": "17:10"
+            "time": "16:30"
           },
           "4": {
             "enabled": true,
             "matches": 2,
-            "time": "17:10"
+            "time": "16:30"
           },
           "5": {
             "enabled": true,
             "matches": 2,
-            "time": "17:10"
+            "time": "16:30"
           },
           "6": {
             "enabled": true,
             "matches": 2,
-            "time": "17:00"
+            "time": "16:30"
           }
         },
         "matches_per_day": 2,
@@ -4702,7 +4702,7 @@
             "matches": [
               {
                 "fixtureId": "F1",
-                "date": "Wed, 21 Oct \u00b7 17:10",
+                "date": "Wed, 21 Oct \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -4731,7 +4731,7 @@
               },
               {
                 "fixtureId": "F2",
-                "date": "Wed, 21 Oct \u00b7 18:10",
+                "date": "Wed, 21 Oct \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -4765,7 +4765,7 @@
             "matches": [
               {
                 "fixtureId": "F4",
-                "date": "Thu, 22 Oct \u00b7 18:10",
+                "date": "Thu, 22 Oct \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -4799,7 +4799,7 @@
             "matches": [
               {
                 "fixtureId": "F5",
-                "date": "Fri, 23 Oct \u00b7 17:10",
+                "date": "Fri, 23 Oct \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -4828,7 +4828,7 @@
               },
               {
                 "fixtureId": "F18",
-                "date": "Fri, 23 Oct \u00b7 18:10",
+                "date": "Fri, 23 Oct \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -4862,7 +4862,7 @@
             "matches": [
               {
                 "fixtureId": "F6",
-                "date": "Sat, 24 Oct \u00b7 17:00",
+                "date": "Sat, 24 Oct \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -4891,7 +4891,7 @@
               },
               {
                 "fixtureId": "F7",
-                "date": "Sat, 24 Oct \u00b7 17:00",
+                "date": "Sat, 24 Oct \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -4920,7 +4920,7 @@
               },
               {
                 "fixtureId": "F12",
-                "date": "Sat, 24 Oct \u00b7 18:00",
+                "date": "Sat, 24 Oct \u00b7 18:30",
                 "orderOfDay": 3,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -4954,7 +4954,7 @@
             "matches": [
               {
                 "fixtureId": "F9",
-                "date": "Mon, 26 Oct \u00b7 18:00",
+                "date": "Mon, 26 Oct \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -4983,7 +4983,7 @@
               },
               {
                 "fixtureId": "F11",
-                "date": "Mon, 26 Oct \u00b7 18:10",
+                "date": "Mon, 26 Oct \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5017,7 +5017,7 @@
             "matches": [
               {
                 "fixtureId": "F19",
-                "date": "Wed, 28 Oct \u00b7 17:10",
+                "date": "Wed, 28 Oct \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5046,7 +5046,7 @@
               },
               {
                 "fixtureId": "F8",
-                "date": "Wed, 28 Oct \u00b7 18:10",
+                "date": "Wed, 28 Oct \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5080,7 +5080,7 @@
             "matches": [
               {
                 "fixtureId": "F3",
-                "date": "Thu, 29 Oct \u00b7 17:10",
+                "date": "Thu, 29 Oct \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5109,7 +5109,7 @@
               },
               {
                 "fixtureId": "F10",
-                "date": "Thu, 29 Oct \u00b7 18:10",
+                "date": "Thu, 29 Oct \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5143,7 +5143,7 @@
             "matches": [
               {
                 "fixtureId": "F13",
-                "date": "Fri, 30 Oct \u00b7 17:10",
+                "date": "Fri, 30 Oct \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5172,7 +5172,7 @@
               },
               {
                 "fixtureId": "F14",
-                "date": "Fri, 30 Oct \u00b7 18:10",
+                "date": "Fri, 30 Oct \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5206,7 +5206,7 @@
             "matches": [
               {
                 "fixtureId": "F15",
-                "date": "Sat, 31 Oct \u00b7 17:00",
+                "date": "Sat, 31 Oct \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5235,7 +5235,7 @@
               },
               {
                 "fixtureId": "F16",
-                "date": "Sat, 31 Oct \u00b7 18:00",
+                "date": "Sat, 31 Oct \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5269,7 +5269,7 @@
             "matches": [
               {
                 "fixtureId": "F17",
-                "date": "Mon, 02 Nov \u00b7 17:10",
+                "date": "Mon, 02 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5298,7 +5298,7 @@
               },
               {
                 "fixtureId": "F20",
-                "date": "Mon, 02 Nov \u00b7 18:10",
+                "date": "Mon, 02 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5332,7 +5332,7 @@
             "matches": [
               {
                 "fixtureId": "F21",
-                "date": "Wed, 04 Nov \u00b7 17:10",
+                "date": "Wed, 04 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5361,7 +5361,7 @@
               },
               {
                 "fixtureId": "F22",
-                "date": "Wed, 04 Nov \u00b7 18:10",
+                "date": "Wed, 04 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5395,7 +5395,7 @@
             "matches": [
               {
                 "fixtureId": "F23",
-                "date": "Thu, 05 Nov \u00b7 17:10",
+                "date": "Thu, 05 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5424,7 +5424,7 @@
               },
               {
                 "fixtureId": "F24",
-                "date": "Thu, 05 Nov \u00b7 18:10",
+                "date": "Thu, 05 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5458,7 +5458,7 @@
             "matches": [
               {
                 "fixtureId": "F25",
-                "date": "Fri, 06 Nov \u00b7 17:10",
+                "date": "Fri, 06 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5487,7 +5487,7 @@
               },
               {
                 "fixtureId": "F26",
-                "date": "Fri, 06 Nov \u00b7 18:10",
+                "date": "Fri, 06 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5521,7 +5521,7 @@
             "matches": [
               {
                 "fixtureId": "F27",
-                "date": "Sat, 07 Nov \u00b7 17:00",
+                "date": "Sat, 07 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5550,7 +5550,7 @@
               },
               {
                 "fixtureId": "F28",
-                "date": "Sat, 07 Nov \u00b7 18:00",
+                "date": "Sat, 07 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5584,7 +5584,7 @@
             "matches": [
               {
                 "fixtureId": "F29",
-                "date": "Mon, 09 Nov \u00b7 17:10",
+                "date": "Mon, 09 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5613,7 +5613,7 @@
               },
               {
                 "fixtureId": "F30",
-                "date": "Mon, 09 Nov \u00b7 18:10",
+                "date": "Mon, 09 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5647,7 +5647,7 @@
             "matches": [
               {
                 "fixtureId": "F31",
-                "date": "Wed, 11 Nov \u00b7 17:10",
+                "date": "Wed, 11 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5676,7 +5676,7 @@
               },
               {
                 "fixtureId": "F32",
-                "date": "Wed, 11 Nov \u00b7 18:10",
+                "date": "Wed, 11 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5710,7 +5710,7 @@
             "matches": [
               {
                 "fixtureId": "F33",
-                "date": "Thu, 12 Nov \u00b7 17:10",
+                "date": "Thu, 12 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5739,7 +5739,7 @@
               },
               {
                 "fixtureId": "F34",
-                "date": "Thu, 12 Nov \u00b7 18:10",
+                "date": "Thu, 12 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5773,7 +5773,7 @@
             "matches": [
               {
                 "fixtureId": "F35",
-                "date": "Fri, 13 Nov \u00b7 17:10",
+                "date": "Fri, 13 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5802,7 +5802,7 @@
               },
               {
                 "fixtureId": "F36",
-                "date": "Fri, 13 Nov \u00b7 18:10",
+                "date": "Fri, 13 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5836,7 +5836,7 @@
             "matches": [
               {
                 "fixtureId": "F37",
-                "date": "Sat, 14 Nov \u00b7 17:00",
+                "date": "Sat, 14 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5865,7 +5865,7 @@
               },
               {
                 "fixtureId": "F38",
-                "date": "Sat, 14 Nov \u00b7 18:00",
+                "date": "Sat, 14 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5899,7 +5899,7 @@
             "matches": [
               {
                 "fixtureId": "F39",
-                "date": "Mon, 16 Nov \u00b7 17:10",
+                "date": "Mon, 16 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5928,7 +5928,7 @@
               },
               {
                 "fixtureId": "F40",
-                "date": "Mon, 16 Nov \u00b7 18:10",
+                "date": "Mon, 16 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -5962,7 +5962,7 @@
             "matches": [
               {
                 "fixtureId": "F41",
-                "date": "Wed, 18 Nov \u00b7 17:10",
+                "date": "Wed, 18 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -5991,7 +5991,7 @@
               },
               {
                 "fixtureId": "F42",
-                "date": "Wed, 18 Nov \u00b7 18:10",
+                "date": "Wed, 18 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -6025,7 +6025,7 @@
             "matches": [
               {
                 "fixtureId": "F43",
-                "date": "Thu, 19 Nov \u00b7 17:10",
+                "date": "Thu, 19 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -6054,7 +6054,7 @@
               },
               {
                 "fixtureId": "F44",
-                "date": "Thu, 19 Nov \u00b7 18:10",
+                "date": "Thu, 19 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -6088,7 +6088,7 @@
             "matches": [
               {
                 "fixtureId": "F45",
-                "date": "Fri, 20 Nov \u00b7 17:10",
+                "date": "Fri, 20 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -6117,7 +6117,7 @@
               },
               {
                 "fixtureId": "F46",
-                "date": "Fri, 20 Nov \u00b7 18:10",
+                "date": "Fri, 20 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -6151,7 +6151,7 @@
             "matches": [
               {
                 "fixtureId": "F47",
-                "date": "Sat, 21 Nov \u00b7 17:00",
+                "date": "Sat, 21 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -6180,7 +6180,7 @@
               },
               {
                 "fixtureId": "F48",
-                "date": "Sat, 21 Nov \u00b7 18:00",
+                "date": "Sat, 21 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -6214,7 +6214,7 @@
             "matches": [
               {
                 "fixtureId": "F49",
-                "date": "Mon, 23 Nov \u00b7 17:10",
+                "date": "Mon, 23 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -6243,7 +6243,7 @@
               },
               {
                 "fixtureId": "F50",
-                "date": "Mon, 23 Nov \u00b7 18:10",
+                "date": "Mon, 23 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -6277,7 +6277,7 @@
             "matches": [
               {
                 "fixtureId": "F51",
-                "date": "Wed, 25 Nov \u00b7 17:10",
+                "date": "Wed, 25 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -6306,7 +6306,7 @@
               },
               {
                 "fixtureId": "F52",
-                "date": "Wed, 25 Nov \u00b7 18:10",
+                "date": "Wed, 25 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -6340,7 +6340,7 @@
             "matches": [
               {
                 "fixtureId": "F53",
-                "date": "Thu, 26 Nov \u00b7 17:10",
+                "date": "Thu, 26 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -6369,7 +6369,7 @@
               },
               {
                 "fixtureId": "F54",
-                "date": "Thu, 26 Nov \u00b7 18:10",
+                "date": "Thu, 26 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -6403,7 +6403,7 @@
             "matches": [
               {
                 "fixtureId": "F55",
-                "date": "Fri, 27 Nov \u00b7 17:10",
+                "date": "Fri, 27 Nov \u00b7 16:30",
                 "orderOfDay": 1,
                 "dutyType": "bibs",
                 "dutyLabel": "Wash Team Bibs",
@@ -6432,7 +6432,7 @@
               },
               {
                 "fixtureId": "F56",
-                "date": "Fri, 27 Nov \u00b7 18:10",
+                "date": "Fri, 27 Nov \u00b7 17:30",
                 "orderOfDay": 2,
                 "dutyType": "goalpost",
                 "dutyLabel": "Take Side Goalpost From & Back to Store",
@@ -6465,7 +6465,7 @@
         "assignments": {
           "F1": {
             "fixtureId": "F1",
-            "date": "Wed, 21 Oct \u00b7 17:10",
+            "date": "Wed, 21 Oct \u00b7 16:30",
             "dayString": "Wed, 21 Oct",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -6491,7 +6491,7 @@
           },
           "F2": {
             "fixtureId": "F2",
-            "date": "Wed, 21 Oct \u00b7 18:10",
+            "date": "Wed, 21 Oct \u00b7 17:30",
             "dayString": "Wed, 21 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -6517,7 +6517,7 @@
           },
           "F4": {
             "fixtureId": "F4",
-            "date": "Thu, 22 Oct \u00b7 18:10",
+            "date": "Thu, 22 Oct \u00b7 16:30",
             "dayString": "Thu, 22 Oct",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -6543,7 +6543,7 @@
           },
           "F5": {
             "fixtureId": "F5",
-            "date": "Fri, 23 Oct \u00b7 17:10",
+            "date": "Fri, 23 Oct \u00b7 16:30",
             "dayString": "Fri, 23 Oct",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -6569,7 +6569,7 @@
           },
           "F18": {
             "fixtureId": "F18",
-            "date": "Fri, 23 Oct \u00b7 18:10",
+            "date": "Fri, 23 Oct \u00b7 17:30",
             "dayString": "Fri, 23 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -6595,7 +6595,7 @@
           },
           "F6": {
             "fixtureId": "F6",
-            "date": "Sat, 24 Oct \u00b7 17:00",
+            "date": "Sat, 24 Oct \u00b7 16:30",
             "dayString": "Sat, 24 Oct",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -6621,7 +6621,7 @@
           },
           "F7": {
             "fixtureId": "F7",
-            "date": "Sat, 24 Oct \u00b7 17:00",
+            "date": "Sat, 24 Oct \u00b7 17:30",
             "dayString": "Sat, 24 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -6647,7 +6647,7 @@
           },
           "F12": {
             "fixtureId": "F12",
-            "date": "Sat, 24 Oct \u00b7 18:00",
+            "date": "Sat, 24 Oct \u00b7 18:30",
             "dayString": "Sat, 24 Oct",
             "orderOfDay": 3,
             "dutyType": "goalpost",
@@ -6673,7 +6673,7 @@
           },
           "F9": {
             "fixtureId": "F9",
-            "date": "Mon, 26 Oct \u00b7 18:00",
+            "date": "Mon, 26 Oct \u00b7 16:30",
             "dayString": "Mon, 26 Oct",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -6699,7 +6699,7 @@
           },
           "F11": {
             "fixtureId": "F11",
-            "date": "Mon, 26 Oct \u00b7 18:10",
+            "date": "Mon, 26 Oct \u00b7 17:30",
             "dayString": "Mon, 26 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -6725,7 +6725,7 @@
           },
           "F19": {
             "fixtureId": "F19",
-            "date": "Wed, 28 Oct \u00b7 17:10",
+            "date": "Wed, 28 Oct \u00b7 16:30",
             "dayString": "Wed, 28 Oct",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -6751,7 +6751,7 @@
           },
           "F8": {
             "fixtureId": "F8",
-            "date": "Wed, 28 Oct \u00b7 18:10",
+            "date": "Wed, 28 Oct \u00b7 17:30",
             "dayString": "Wed, 28 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -6777,7 +6777,7 @@
           },
           "F3": {
             "fixtureId": "F3",
-            "date": "Thu, 29 Oct \u00b7 17:10",
+            "date": "Thu, 29 Oct \u00b7 16:30",
             "dayString": "Thu, 29 Oct",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -6803,7 +6803,7 @@
           },
           "F10": {
             "fixtureId": "F10",
-            "date": "Thu, 29 Oct \u00b7 18:10",
+            "date": "Thu, 29 Oct \u00b7 17:30",
             "dayString": "Thu, 29 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -6829,7 +6829,7 @@
           },
           "F13": {
             "fixtureId": "F13",
-            "date": "Fri, 30 Oct \u00b7 17:10",
+            "date": "Fri, 30 Oct \u00b7 16:30",
             "dayString": "Fri, 30 Oct",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -6855,7 +6855,7 @@
           },
           "F14": {
             "fixtureId": "F14",
-            "date": "Fri, 30 Oct \u00b7 18:10",
+            "date": "Fri, 30 Oct \u00b7 17:30",
             "dayString": "Fri, 30 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -6881,7 +6881,7 @@
           },
           "F15": {
             "fixtureId": "F15",
-            "date": "Sat, 31 Oct \u00b7 17:00",
+            "date": "Sat, 31 Oct \u00b7 16:30",
             "dayString": "Sat, 31 Oct",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -6907,7 +6907,7 @@
           },
           "F16": {
             "fixtureId": "F16",
-            "date": "Sat, 31 Oct \u00b7 18:00",
+            "date": "Sat, 31 Oct \u00b7 17:30",
             "dayString": "Sat, 31 Oct",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -6933,7 +6933,7 @@
           },
           "F17": {
             "fixtureId": "F17",
-            "date": "Mon, 02 Nov \u00b7 17:10",
+            "date": "Mon, 02 Nov \u00b7 16:30",
             "dayString": "Mon, 02 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -6959,7 +6959,7 @@
           },
           "F20": {
             "fixtureId": "F20",
-            "date": "Mon, 02 Nov \u00b7 18:10",
+            "date": "Mon, 02 Nov \u00b7 17:30",
             "dayString": "Mon, 02 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -6985,7 +6985,7 @@
           },
           "F21": {
             "fixtureId": "F21",
-            "date": "Wed, 04 Nov \u00b7 17:10",
+            "date": "Wed, 04 Nov \u00b7 16:30",
             "dayString": "Wed, 04 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7011,7 +7011,7 @@
           },
           "F22": {
             "fixtureId": "F22",
-            "date": "Wed, 04 Nov \u00b7 18:10",
+            "date": "Wed, 04 Nov \u00b7 17:30",
             "dayString": "Wed, 04 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7037,7 +7037,7 @@
           },
           "F23": {
             "fixtureId": "F23",
-            "date": "Thu, 05 Nov \u00b7 17:10",
+            "date": "Thu, 05 Nov \u00b7 16:30",
             "dayString": "Thu, 05 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7063,7 +7063,7 @@
           },
           "F24": {
             "fixtureId": "F24",
-            "date": "Thu, 05 Nov \u00b7 18:10",
+            "date": "Thu, 05 Nov \u00b7 17:30",
             "dayString": "Thu, 05 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7089,7 +7089,7 @@
           },
           "F25": {
             "fixtureId": "F25",
-            "date": "Fri, 06 Nov \u00b7 17:10",
+            "date": "Fri, 06 Nov \u00b7 16:30",
             "dayString": "Fri, 06 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7115,7 +7115,7 @@
           },
           "F26": {
             "fixtureId": "F26",
-            "date": "Fri, 06 Nov \u00b7 18:10",
+            "date": "Fri, 06 Nov \u00b7 17:30",
             "dayString": "Fri, 06 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7141,7 +7141,7 @@
           },
           "F27": {
             "fixtureId": "F27",
-            "date": "Sat, 07 Nov \u00b7 17:00",
+            "date": "Sat, 07 Nov \u00b7 16:30",
             "dayString": "Sat, 07 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7167,7 +7167,7 @@
           },
           "F28": {
             "fixtureId": "F28",
-            "date": "Sat, 07 Nov \u00b7 18:00",
+            "date": "Sat, 07 Nov \u00b7 17:30",
             "dayString": "Sat, 07 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7193,7 +7193,7 @@
           },
           "F29": {
             "fixtureId": "F29",
-            "date": "Mon, 09 Nov \u00b7 17:10",
+            "date": "Mon, 09 Nov \u00b7 16:30",
             "dayString": "Mon, 09 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7219,7 +7219,7 @@
           },
           "F30": {
             "fixtureId": "F30",
-            "date": "Mon, 09 Nov \u00b7 18:10",
+            "date": "Mon, 09 Nov \u00b7 17:30",
             "dayString": "Mon, 09 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7245,7 +7245,7 @@
           },
           "F31": {
             "fixtureId": "F31",
-            "date": "Wed, 11 Nov \u00b7 17:10",
+            "date": "Wed, 11 Nov \u00b7 16:30",
             "dayString": "Wed, 11 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7271,7 +7271,7 @@
           },
           "F32": {
             "fixtureId": "F32",
-            "date": "Wed, 11 Nov \u00b7 18:10",
+            "date": "Wed, 11 Nov \u00b7 17:30",
             "dayString": "Wed, 11 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7297,7 +7297,7 @@
           },
           "F33": {
             "fixtureId": "F33",
-            "date": "Thu, 12 Nov \u00b7 17:10",
+            "date": "Thu, 12 Nov \u00b7 16:30",
             "dayString": "Thu, 12 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7323,7 +7323,7 @@
           },
           "F34": {
             "fixtureId": "F34",
-            "date": "Thu, 12 Nov \u00b7 18:10",
+            "date": "Thu, 12 Nov \u00b7 17:30",
             "dayString": "Thu, 12 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7349,7 +7349,7 @@
           },
           "F35": {
             "fixtureId": "F35",
-            "date": "Fri, 13 Nov \u00b7 17:10",
+            "date": "Fri, 13 Nov \u00b7 16:30",
             "dayString": "Fri, 13 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7375,7 +7375,7 @@
           },
           "F36": {
             "fixtureId": "F36",
-            "date": "Fri, 13 Nov \u00b7 18:10",
+            "date": "Fri, 13 Nov \u00b7 17:30",
             "dayString": "Fri, 13 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7401,7 +7401,7 @@
           },
           "F37": {
             "fixtureId": "F37",
-            "date": "Sat, 14 Nov \u00b7 17:00",
+            "date": "Sat, 14 Nov \u00b7 16:30",
             "dayString": "Sat, 14 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7427,7 +7427,7 @@
           },
           "F38": {
             "fixtureId": "F38",
-            "date": "Sat, 14 Nov \u00b7 18:00",
+            "date": "Sat, 14 Nov \u00b7 17:30",
             "dayString": "Sat, 14 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7453,7 +7453,7 @@
           },
           "F39": {
             "fixtureId": "F39",
-            "date": "Mon, 16 Nov \u00b7 17:10",
+            "date": "Mon, 16 Nov \u00b7 16:30",
             "dayString": "Mon, 16 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7479,7 +7479,7 @@
           },
           "F40": {
             "fixtureId": "F40",
-            "date": "Mon, 16 Nov \u00b7 18:10",
+            "date": "Mon, 16 Nov \u00b7 17:30",
             "dayString": "Mon, 16 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7505,7 +7505,7 @@
           },
           "F41": {
             "fixtureId": "F41",
-            "date": "Wed, 18 Nov \u00b7 17:10",
+            "date": "Wed, 18 Nov \u00b7 16:30",
             "dayString": "Wed, 18 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7531,7 +7531,7 @@
           },
           "F42": {
             "fixtureId": "F42",
-            "date": "Wed, 18 Nov \u00b7 18:10",
+            "date": "Wed, 18 Nov \u00b7 17:30",
             "dayString": "Wed, 18 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7557,7 +7557,7 @@
           },
           "F43": {
             "fixtureId": "F43",
-            "date": "Thu, 19 Nov \u00b7 17:10",
+            "date": "Thu, 19 Nov \u00b7 16:30",
             "dayString": "Thu, 19 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7583,7 +7583,7 @@
           },
           "F44": {
             "fixtureId": "F44",
-            "date": "Thu, 19 Nov \u00b7 18:10",
+            "date": "Thu, 19 Nov \u00b7 17:30",
             "dayString": "Thu, 19 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7609,7 +7609,7 @@
           },
           "F45": {
             "fixtureId": "F45",
-            "date": "Fri, 20 Nov \u00b7 17:10",
+            "date": "Fri, 20 Nov \u00b7 16:30",
             "dayString": "Fri, 20 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7635,7 +7635,7 @@
           },
           "F46": {
             "fixtureId": "F46",
-            "date": "Fri, 20 Nov \u00b7 18:10",
+            "date": "Fri, 20 Nov \u00b7 17:30",
             "dayString": "Fri, 20 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7661,7 +7661,7 @@
           },
           "F47": {
             "fixtureId": "F47",
-            "date": "Sat, 21 Nov \u00b7 17:00",
+            "date": "Sat, 21 Nov \u00b7 16:30",
             "dayString": "Sat, 21 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7687,7 +7687,7 @@
           },
           "F48": {
             "fixtureId": "F48",
-            "date": "Sat, 21 Nov \u00b7 18:00",
+            "date": "Sat, 21 Nov \u00b7 17:30",
             "dayString": "Sat, 21 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7713,7 +7713,7 @@
           },
           "F49": {
             "fixtureId": "F49",
-            "date": "Mon, 23 Nov \u00b7 17:10",
+            "date": "Mon, 23 Nov \u00b7 16:30",
             "dayString": "Mon, 23 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7739,7 +7739,7 @@
           },
           "F50": {
             "fixtureId": "F50",
-            "date": "Mon, 23 Nov \u00b7 18:10",
+            "date": "Mon, 23 Nov \u00b7 17:30",
             "dayString": "Mon, 23 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7765,7 +7765,7 @@
           },
           "F51": {
             "fixtureId": "F51",
-            "date": "Wed, 25 Nov \u00b7 17:10",
+            "date": "Wed, 25 Nov \u00b7 16:30",
             "dayString": "Wed, 25 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7791,7 +7791,7 @@
           },
           "F52": {
             "fixtureId": "F52",
-            "date": "Wed, 25 Nov \u00b7 18:10",
+            "date": "Wed, 25 Nov \u00b7 17:30",
             "dayString": "Wed, 25 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7817,7 +7817,7 @@
           },
           "F53": {
             "fixtureId": "F53",
-            "date": "Thu, 26 Nov \u00b7 17:10",
+            "date": "Thu, 26 Nov \u00b7 16:30",
             "dayString": "Thu, 26 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7843,7 +7843,7 @@
           },
           "F54": {
             "fixtureId": "F54",
-            "date": "Thu, 26 Nov \u00b7 18:10",
+            "date": "Thu, 26 Nov \u00b7 17:30",
             "dayString": "Thu, 26 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7869,7 +7869,7 @@
           },
           "F55": {
             "fixtureId": "F55",
-            "date": "Fri, 27 Nov \u00b7 17:10",
+            "date": "Fri, 27 Nov \u00b7 16:30",
             "dayString": "Fri, 27 Nov",
             "orderOfDay": 1,
             "dutyType": "bibs",
@@ -7895,7 +7895,7 @@
           },
           "F56": {
             "fixtureId": "F56",
-            "date": "Fri, 27 Nov \u00b7 18:10",
+            "date": "Fri, 27 Nov \u00b7 17:30",
             "dayString": "Fri, 27 Nov",
             "orderOfDay": 2,
             "dutyType": "goalpost",
@@ -7948,7 +7948,8 @@
           "pendingDuties": 92,
           "exemptedCount": 0
         }
-      }
+      },
+      "schedule_time": "16:30"
     }
   },
   "deletedCategories": {},

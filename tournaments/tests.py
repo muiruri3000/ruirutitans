@@ -2673,6 +2673,62 @@ class DutyRosterTests(TestCase):
         t1_avail2 = [p["id"] for p in data2["eligiblePlayers"]["T1"]["available"]]
         self.assertIn("T1-P1", t1_avail2)
 
+    def test_player_duty_counts_increment_and_manual_update(self):
+        # 1. Fetch initial roster
+        res = self.client.get(f"/api/categories/{self.category.key}/duty-roster/")
+        self.assertEqual(res.status_code, 200)
+        roster = res.json()["dutyRoster"]
+        fx1_home_pid = roster["assignments"]["FX-1"]["homeDuty"]["playerId"]
+        fx2_home_pid = roster["assignments"]["FX-2"]["homeDuty"]["playerId"]
+
+        # 2. Sign off FX-1 (bibs) and verify count increments to 1
+        tick_bibs = self.client.post(
+            f"/api/categories/{self.category.key}/duty-roster/",
+            data=json.dumps({
+                "action": "toggle_completion",
+                "fixtureId": "FX-1",
+                "side": "home",
+                "completed": True,
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(tick_bibs.status_code, 200)
+        counts = tick_bibs.json()["dutyRoster"]["playerCounts"]
+        self.assertEqual(counts[fx1_home_pid]["bibs"], 1)
+        self.assertEqual(counts[fx1_home_pid]["goalpost"], 0)
+
+        # 3. Manually set counts for fx2_home_pid (bibs=3, goalpost=2)
+        manual_res = self.client.post(
+            f"/api/categories/{self.category.key}/duty-roster/",
+            data=json.dumps({
+                "action": "update_player_count",
+                "playerId": fx2_home_pid,
+                "bibs": 3,
+                "goalpost": 2,
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(manual_res.status_code, 200)
+        counts2 = manual_res.json()["dutyRoster"]["playerCounts"]
+        self.assertEqual(counts2[fx2_home_pid]["bibs"], 3)
+        self.assertEqual(counts2[fx2_home_pid]["goalpost"], 2)
+
+        # 4. Sign off FX-2 (goalpost) for fx2_home_pid and verify goalpost increments from 2 -> 3
+        tick_posts = self.client.post(
+            f"/api/categories/{self.category.key}/duty-roster/",
+            data=json.dumps({
+                "action": "toggle_completion",
+                "fixtureId": "FX-2",
+                "side": "home",
+                "completed": True,
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(tick_posts.status_code, 200)
+        counts3 = tick_posts.json()["dutyRoster"]["playerCounts"]
+        self.assertEqual(counts3[fx2_home_pid]["bibs"], 3)
+        self.assertEqual(counts3[fx2_home_pid]["goalpost"], 3)
+
 
 class VisitorCommentAndUsernameEditingTests(TestCase):
     def setUp(self):

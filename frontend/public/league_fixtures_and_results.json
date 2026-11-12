@@ -1086,7 +1086,7 @@
   "completed_results": [
     {
       "id": "F1",
-      "date": "Wed, 21 Oct \u00b7 17:10",
+      "date": "Wed, 21 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -1206,7 +1206,7 @@
     },
     {
       "id": "F2",
-      "date": "Wed, 21 Oct \u00b7 18:10",
+      "date": "Wed, 21 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -1313,7 +1313,7 @@
     },
     {
       "id": "F4",
-      "date": "Thu, 22 Oct \u00b7 18:10",
+      "date": "Thu, 22 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -1412,7 +1412,7 @@
     },
     {
       "id": "F5",
-      "date": "Fri, 23 Oct \u00b7 17:10",
+      "date": "Fri, 23 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -1479,7 +1479,7 @@
     },
     {
       "id": "F18",
-      "date": "Fri, 23 Oct \u00b7 18:10",
+      "date": "Fri, 23 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -1570,7 +1570,7 @@
     },
     {
       "id": "F6",
-      "date": "Sat, 24 Oct \u00b7 17:00",
+      "date": "Sat, 24 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -1605,7 +1605,7 @@
     },
     {
       "id": "F7",
-      "date": "Sat, 24 Oct \u00b7 17:00",
+      "date": "Sat, 24 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -1652,7 +1652,7 @@
     },
     {
       "id": "F12",
-      "date": "Sat, 24 Oct \u00b7 18:00",
+      "date": "Sat, 24 Oct \u00b7 18:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -1747,7 +1747,7 @@
     },
     {
       "id": "F9",
-      "date": "Mon, 26 Oct \u00b7 18:00",
+      "date": "Mon, 26 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -1818,7 +1818,7 @@
     },
     {
       "id": "F11",
-      "date": "Mon, 26 Oct \u00b7 18:10",
+      "date": "Mon, 26 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -1931,7 +1931,7 @@
   "upcoming_fixtures": [
     {
       "id": "F19",
-      "date": "Wed, 28 Oct \u00b7 17:10",
+      "date": "Wed, 28 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -1949,7 +1949,7 @@
     },
     {
       "id": "F8",
-      "date": "Wed, 28 Oct \u00b7 18:10",
+      "date": "Wed, 28 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -1967,7 +1967,7 @@
     },
     {
       "id": "F3",
-      "date": "Thu, 29 Oct \u00b7 17:10",
+      "date": "Thu, 29 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -1985,7 +1985,7 @@
     },
     {
       "id": "F10",
-      "date": "Thu, 29 Oct \u00b7 18:10",
+      "date": "Thu, 29 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -2003,7 +2003,7 @@
     },
     {
       "id": "F13",
-      "date": "Fri, 30 Oct \u00b7 17:10",
+      "date": "Fri, 30 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -2021,7 +2021,7 @@
     },
     {
       "id": "F14",
-      "date": "Fri, 30 Oct \u00b7 18:10",
+      "date": "Fri, 30 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -2039,7 +2039,7 @@
     },
     {
       "id": "F15",
-      "date": "Sat, 31 Oct \u00b7 17:00",
+      "date": "Sat, 31 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -2057,7 +2057,7 @@
     },
     {
       "id": "F16",
-      "date": "Sat, 31 Oct \u00b7 18:00",
+      "date": "Sat, 31 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -2075,7 +2075,7 @@
     },
     {
       "id": "F17",
-      "date": "Mon, 02 Nov \u00b7 17:10",
+      "date": "Mon, 02 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -2093,7 +2093,7 @@
     },
     {
       "id": "F20",
-      "date": "Mon, 02 Nov \u00b7 18:10",
+      "date": "Mon, 02 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -2111,7 +2111,7 @@
     },
     {
       "id": "F21",
-      "date": "Wed, 04 Nov \u00b7 17:10",
+      "date": "Wed, 04 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -2129,7 +2129,7 @@
     },
     {
       "id": "F22",
-      "date": "Wed, 04 Nov \u00b7 18:10",
+      "date": "Wed, 04 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -2147,7 +2147,7 @@
     },
     {
       "id": "F23",
-      "date": "Thu, 05 Nov \u00b7 17:10",
+      "date": "Thu, 05 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -2165,7 +2165,7 @@
     },
     {
       "id": "F24",
-      "date": "Thu, 05 Nov \u00b7 18:10",
+      "date": "Thu, 05 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -2183,7 +2183,7 @@
     },
     {
       "id": "F25",
-      "date": "Fri, 06 Nov \u00b7 17:10",
+      "date": "Fri, 06 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -2201,7 +2201,7 @@
     },
     {
       "id": "F26",
-      "date": "Fri, 06 Nov \u00b7 18:10",
+      "date": "Fri, 06 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -2219,7 +2219,7 @@
     },
     {
       "id": "F27",
-      "date": "Sat, 07 Nov \u00b7 17:00",
+      "date": "Sat, 07 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -2237,7 +2237,7 @@
     },
     {
       "id": "F28",
-      "date": "Sat, 07 Nov \u00b7 18:00",
+      "date": "Sat, 07 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -2255,7 +2255,7 @@
     },
     {
       "id": "F29",
-      "date": "Mon, 09 Nov \u00b7 17:10",
+      "date": "Mon, 09 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -2273,7 +2273,7 @@
     },
     {
       "id": "F30",
-      "date": "Mon, 09 Nov \u00b7 18:10",
+      "date": "Mon, 09 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -2291,7 +2291,7 @@
     },
     {
       "id": "F31",
-      "date": "Wed, 11 Nov \u00b7 17:10",
+      "date": "Wed, 11 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -2309,7 +2309,7 @@
     },
     {
       "id": "F32",
-      "date": "Wed, 11 Nov \u00b7 18:10",
+      "date": "Wed, 11 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -2327,7 +2327,7 @@
     },
     {
       "id": "F33",
-      "date": "Thu, 12 Nov \u00b7 17:10",
+      "date": "Thu, 12 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -2345,7 +2345,7 @@
     },
     {
       "id": "F34",
-      "date": "Thu, 12 Nov \u00b7 18:10",
+      "date": "Thu, 12 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -2363,7 +2363,7 @@
     },
     {
       "id": "F35",
-      "date": "Fri, 13 Nov \u00b7 17:10",
+      "date": "Fri, 13 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -2381,7 +2381,7 @@
     },
     {
       "id": "F36",
-      "date": "Fri, 13 Nov \u00b7 18:10",
+      "date": "Fri, 13 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -2399,7 +2399,7 @@
     },
     {
       "id": "F37",
-      "date": "Sat, 14 Nov \u00b7 17:00",
+      "date": "Sat, 14 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -2417,7 +2417,7 @@
     },
     {
       "id": "F38",
-      "date": "Sat, 14 Nov \u00b7 18:00",
+      "date": "Sat, 14 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -2435,7 +2435,7 @@
     },
     {
       "id": "F39",
-      "date": "Mon, 16 Nov \u00b7 17:10",
+      "date": "Mon, 16 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -2453,7 +2453,7 @@
     },
     {
       "id": "F40",
-      "date": "Mon, 16 Nov \u00b7 18:10",
+      "date": "Mon, 16 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -2471,7 +2471,7 @@
     },
     {
       "id": "F41",
-      "date": "Wed, 18 Nov \u00b7 17:10",
+      "date": "Wed, 18 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -2489,7 +2489,7 @@
     },
     {
       "id": "F42",
-      "date": "Wed, 18 Nov \u00b7 18:10",
+      "date": "Wed, 18 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -2507,7 +2507,7 @@
     },
     {
       "id": "F43",
-      "date": "Thu, 19 Nov \u00b7 17:10",
+      "date": "Thu, 19 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -2525,7 +2525,7 @@
     },
     {
       "id": "F44",
-      "date": "Thu, 19 Nov \u00b7 18:10",
+      "date": "Thu, 19 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -2543,7 +2543,7 @@
     },
     {
       "id": "F45",
-      "date": "Fri, 20 Nov \u00b7 17:10",
+      "date": "Fri, 20 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -2561,7 +2561,7 @@
     },
     {
       "id": "F46",
-      "date": "Fri, 20 Nov \u00b7 18:10",
+      "date": "Fri, 20 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -2579,7 +2579,7 @@
     },
     {
       "id": "F47",
-      "date": "Sat, 21 Nov \u00b7 17:00",
+      "date": "Sat, 21 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -2597,7 +2597,7 @@
     },
     {
       "id": "F48",
-      "date": "Sat, 21 Nov \u00b7 18:00",
+      "date": "Sat, 21 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -2615,7 +2615,7 @@
     },
     {
       "id": "F49",
-      "date": "Mon, 23 Nov \u00b7 17:10",
+      "date": "Mon, 23 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -2633,7 +2633,7 @@
     },
     {
       "id": "F50",
-      "date": "Mon, 23 Nov \u00b7 18:10",
+      "date": "Mon, 23 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -2651,7 +2651,7 @@
     },
     {
       "id": "F51",
-      "date": "Wed, 25 Nov \u00b7 17:10",
+      "date": "Wed, 25 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -2669,7 +2669,7 @@
     },
     {
       "id": "F52",
-      "date": "Wed, 25 Nov \u00b7 18:10",
+      "date": "Wed, 25 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -2687,7 +2687,7 @@
     },
     {
       "id": "F53",
-      "date": "Thu, 26 Nov \u00b7 17:10",
+      "date": "Thu, 26 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -2705,7 +2705,7 @@
     },
     {
       "id": "F54",
-      "date": "Thu, 26 Nov \u00b7 18:10",
+      "date": "Thu, 26 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -2723,7 +2723,7 @@
     },
     {
       "id": "F55",
-      "date": "Fri, 27 Nov \u00b7 17:10",
+      "date": "Fri, 27 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -2741,7 +2741,7 @@
     },
     {
       "id": "F56",
-      "date": "Fri, 27 Nov \u00b7 18:10",
+      "date": "Fri, 27 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -2761,7 +2761,7 @@
   "all_fixtures": [
     {
       "id": "F1",
-      "date": "Wed, 21 Oct \u00b7 17:10",
+      "date": "Wed, 21 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -2881,7 +2881,7 @@
     },
     {
       "id": "F2",
-      "date": "Wed, 21 Oct \u00b7 18:10",
+      "date": "Wed, 21 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -2988,7 +2988,7 @@
     },
     {
       "id": "F4",
-      "date": "Thu, 22 Oct \u00b7 18:10",
+      "date": "Thu, 22 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -3087,7 +3087,7 @@
     },
     {
       "id": "F5",
-      "date": "Fri, 23 Oct \u00b7 17:10",
+      "date": "Fri, 23 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -3154,7 +3154,7 @@
     },
     {
       "id": "F18",
-      "date": "Fri, 23 Oct \u00b7 18:10",
+      "date": "Fri, 23 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -3245,7 +3245,7 @@
     },
     {
       "id": "F6",
-      "date": "Sat, 24 Oct \u00b7 17:00",
+      "date": "Sat, 24 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -3280,7 +3280,7 @@
     },
     {
       "id": "F7",
-      "date": "Sat, 24 Oct \u00b7 17:00",
+      "date": "Sat, 24 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -3327,7 +3327,7 @@
     },
     {
       "id": "F12",
-      "date": "Sat, 24 Oct \u00b7 18:00",
+      "date": "Sat, 24 Oct \u00b7 18:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -3422,7 +3422,7 @@
     },
     {
       "id": "F9",
-      "date": "Mon, 26 Oct \u00b7 18:00",
+      "date": "Mon, 26 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -3493,7 +3493,7 @@
     },
     {
       "id": "F11",
-      "date": "Mon, 26 Oct \u00b7 18:10",
+      "date": "Mon, 26 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -3604,7 +3604,7 @@
     },
     {
       "id": "F19",
-      "date": "Wed, 28 Oct \u00b7 17:10",
+      "date": "Wed, 28 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -3622,7 +3622,7 @@
     },
     {
       "id": "F8",
-      "date": "Wed, 28 Oct \u00b7 18:10",
+      "date": "Wed, 28 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -3640,7 +3640,7 @@
     },
     {
       "id": "F3",
-      "date": "Thu, 29 Oct \u00b7 17:10",
+      "date": "Thu, 29 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -3658,7 +3658,7 @@
     },
     {
       "id": "F10",
-      "date": "Thu, 29 Oct \u00b7 18:10",
+      "date": "Thu, 29 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -3676,7 +3676,7 @@
     },
     {
       "id": "F13",
-      "date": "Fri, 30 Oct \u00b7 17:10",
+      "date": "Fri, 30 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -3694,7 +3694,7 @@
     },
     {
       "id": "F14",
-      "date": "Fri, 30 Oct \u00b7 18:10",
+      "date": "Fri, 30 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -3712,7 +3712,7 @@
     },
     {
       "id": "F15",
-      "date": "Sat, 31 Oct \u00b7 17:00",
+      "date": "Sat, 31 Oct \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -3730,7 +3730,7 @@
     },
     {
       "id": "F16",
-      "date": "Sat, 31 Oct \u00b7 18:00",
+      "date": "Sat, 31 Oct \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -3748,7 +3748,7 @@
     },
     {
       "id": "F17",
-      "date": "Mon, 02 Nov \u00b7 17:10",
+      "date": "Mon, 02 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -3766,7 +3766,7 @@
     },
     {
       "id": "F20",
-      "date": "Mon, 02 Nov \u00b7 18:10",
+      "date": "Mon, 02 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -3784,7 +3784,7 @@
     },
     {
       "id": "F21",
-      "date": "Wed, 04 Nov \u00b7 17:10",
+      "date": "Wed, 04 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -3802,7 +3802,7 @@
     },
     {
       "id": "F22",
-      "date": "Wed, 04 Nov \u00b7 18:10",
+      "date": "Wed, 04 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -3820,7 +3820,7 @@
     },
     {
       "id": "F23",
-      "date": "Thu, 05 Nov \u00b7 17:10",
+      "date": "Thu, 05 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -3838,7 +3838,7 @@
     },
     {
       "id": "F24",
-      "date": "Thu, 05 Nov \u00b7 18:10",
+      "date": "Thu, 05 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -3856,7 +3856,7 @@
     },
     {
       "id": "F25",
-      "date": "Fri, 06 Nov \u00b7 17:10",
+      "date": "Fri, 06 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -3874,7 +3874,7 @@
     },
     {
       "id": "F26",
-      "date": "Fri, 06 Nov \u00b7 18:10",
+      "date": "Fri, 06 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -3892,7 +3892,7 @@
     },
     {
       "id": "F27",
-      "date": "Sat, 07 Nov \u00b7 17:00",
+      "date": "Sat, 07 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -3910,7 +3910,7 @@
     },
     {
       "id": "F28",
-      "date": "Sat, 07 Nov \u00b7 18:00",
+      "date": "Sat, 07 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -3928,7 +3928,7 @@
     },
     {
       "id": "F29",
-      "date": "Mon, 09 Nov \u00b7 17:10",
+      "date": "Mon, 09 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -3946,7 +3946,7 @@
     },
     {
       "id": "F30",
-      "date": "Mon, 09 Nov \u00b7 18:10",
+      "date": "Mon, 09 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -3964,7 +3964,7 @@
     },
     {
       "id": "F31",
-      "date": "Wed, 11 Nov \u00b7 17:10",
+      "date": "Wed, 11 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -3982,7 +3982,7 @@
     },
     {
       "id": "F32",
-      "date": "Wed, 11 Nov \u00b7 18:10",
+      "date": "Wed, 11 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -4000,7 +4000,7 @@
     },
     {
       "id": "F33",
-      "date": "Thu, 12 Nov \u00b7 17:10",
+      "date": "Thu, 12 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -4018,7 +4018,7 @@
     },
     {
       "id": "F34",
-      "date": "Thu, 12 Nov \u00b7 18:10",
+      "date": "Thu, 12 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -4036,7 +4036,7 @@
     },
     {
       "id": "F35",
-      "date": "Fri, 13 Nov \u00b7 17:10",
+      "date": "Fri, 13 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -4054,7 +4054,7 @@
     },
     {
       "id": "F36",
-      "date": "Fri, 13 Nov \u00b7 18:10",
+      "date": "Fri, 13 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -4072,7 +4072,7 @@
     },
     {
       "id": "F37",
-      "date": "Sat, 14 Nov \u00b7 17:00",
+      "date": "Sat, 14 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -4090,7 +4090,7 @@
     },
     {
       "id": "F38",
-      "date": "Sat, 14 Nov \u00b7 18:00",
+      "date": "Sat, 14 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -4108,7 +4108,7 @@
     },
     {
       "id": "F39",
-      "date": "Mon, 16 Nov \u00b7 17:10",
+      "date": "Mon, 16 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -4126,7 +4126,7 @@
     },
     {
       "id": "F40",
-      "date": "Mon, 16 Nov \u00b7 18:10",
+      "date": "Mon, 16 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -4144,7 +4144,7 @@
     },
     {
       "id": "F41",
-      "date": "Wed, 18 Nov \u00b7 17:10",
+      "date": "Wed, 18 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BAL",
@@ -4162,7 +4162,7 @@
     },
     {
       "id": "F42",
-      "date": "Wed, 18 Nov \u00b7 18:10",
+      "date": "Wed, 18 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "BLA",
@@ -4180,7 +4180,7 @@
     },
     {
       "id": "F43",
-      "date": "Thu, 19 Nov \u00b7 17:10",
+      "date": "Thu, 19 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -4198,7 +4198,7 @@
     },
     {
       "id": "F44",
-      "date": "Thu, 19 Nov \u00b7 18:10",
+      "date": "Thu, 19 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -4216,7 +4216,7 @@
     },
     {
       "id": "F45",
-      "date": "Fri, 20 Nov \u00b7 17:10",
+      "date": "Fri, 20 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -4234,7 +4234,7 @@
     },
     {
       "id": "F46",
-      "date": "Fri, 20 Nov \u00b7 18:10",
+      "date": "Fri, 20 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -4252,7 +4252,7 @@
     },
     {
       "id": "F47",
-      "date": "Sat, 21 Nov \u00b7 17:00",
+      "date": "Sat, 21 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "SS",
@@ -4270,7 +4270,7 @@
     },
     {
       "id": "F48",
-      "date": "Sat, 21 Nov \u00b7 18:00",
+      "date": "Sat, 21 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -4288,7 +4288,7 @@
     },
     {
       "id": "F49",
-      "date": "Mon, 23 Nov \u00b7 17:10",
+      "date": "Mon, 23 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -4306,7 +4306,7 @@
     },
     {
       "id": "F50",
-      "date": "Mon, 23 Nov \u00b7 18:10",
+      "date": "Mon, 23 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -4324,7 +4324,7 @@
     },
     {
       "id": "F51",
-      "date": "Wed, 25 Nov \u00b7 17:10",
+      "date": "Wed, 25 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",
@@ -4342,7 +4342,7 @@
     },
     {
       "id": "F52",
-      "date": "Wed, 25 Nov \u00b7 18:10",
+      "date": "Wed, 25 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAN",
@@ -4360,7 +4360,7 @@
     },
     {
       "id": "F53",
-      "date": "Thu, 26 Nov \u00b7 17:10",
+      "date": "Thu, 26 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "OXF",
@@ -4378,7 +4378,7 @@
     },
     {
       "id": "F54",
-      "date": "Thu, 26 Nov \u00b7 18:10",
+      "date": "Thu, 26 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "MAS",
@@ -4396,7 +4396,7 @@
     },
     {
       "id": "F55",
-      "date": "Fri, 27 Nov \u00b7 17:10",
+      "date": "Fri, 27 Nov \u00b7 16:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "EXM",
@@ -4414,7 +4414,7 @@
     },
     {
       "id": "F56",
-      "date": "Fri, 27 Nov \u00b7 18:10",
+      "date": "Fri, 27 Nov \u00b7 17:30",
       "venue": "Thoome Pri.",
       "home_team": {
         "id": "RAN",

@@ -1,5 +1,6 @@
 import re
 from django.db import models
+from django.db.models import Q
 from django.utils.text import slugify
 
 
@@ -201,6 +202,10 @@ class Category(models.Model):
         }
 
         weekly_mvps_data = [m.to_dict() for m in self.weekly_mvps.all().order_by("week_number")]
+        free_agents_data = [
+            p.to_dict()
+            for p in self.players.filter(team__isnull=True, is_unknown=False).order_by("id")
+        ]
 
         if self.mode == "league":
             league_fixtures = list(self.fixtures.filter(phase="league"))
@@ -212,6 +217,7 @@ class Category(models.Model):
                 "format": self.format,
                 "note": self.note,
                 "teams": teams_data,
+                "freeAgents": free_agents_data,
                 "fixtures": fixtures_data,
                 "schedule": schedule,
                 "dutyRoster": duty_roster,
@@ -244,6 +250,7 @@ class Category(models.Model):
                 "label": self.label,
                 "mode": "cup",
                 "teams": teams_data,
+                "freeAgents": free_agents_data,
                 "fixtures": all_cup_fixtures,
                 "groupLetters": self.group_letters or [],
                 "groupOf": self.group_of or {},
@@ -303,7 +310,8 @@ def get_default_player_password_hash():
 
 
 class Player(models.Model):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players")
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="players", null=True, blank=True)
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name="players")
     player_id = models.CharField(max_length=64)
     name = models.CharField(max_length=128)
     first_name = models.CharField(max_length=64, blank=True, default="")
@@ -349,7 +357,12 @@ class Player(models.Model):
 
     def __str__(self):
         pos = f" [{self.position}]" if self.position else ""
-        return f"{self.name}{pos} ({self.player_id}) - {self.team.name}"
+        team_label = self.team.name if self.team else "Free Agent"
+        return f"{self.name}{pos} ({self.player_id}) - {team_label}"
+
+    @property
+    def effective_category(self):
+        return self.category or (self.team.category if self.team_id and self.team else None)
 
     def set_password(self, raw_password):
         from django.contrib.auth.hashers import make_password
@@ -418,19 +431,39 @@ class Player(models.Model):
 
     def save(self, *args, **kwargs):
         from django.contrib.auth.hashers import make_password
+        # Keep category synced with assigned team when a team is present
+        if self.team_id:
+            self.category_id = self.team.category_id
         # Preserve permanent player_id once assigned, or assign a permanent unique ID on creation
         if self.pk:
             orig = Player.objects.filter(pk=self.pk).values_list("player_id", flat=True).first()
             if orig:
                 self.player_id = orig
-        if not self.player_id and self.team_id:
-            prefix = self.team.team_id.upper()
-            if self.is_unknown:
-                self.player_id = f"{prefix}-UNK"
+        if not self.player_id:
+            if self.team_id:
+                prefix = self.team.team_id.upper()
+                if self.is_unknown:
+                    self.player_id = f"{prefix}-UNK"
+                else:
+                    existing_ids = set(
+                        Player.objects.filter(team=self.team).values_list("player_id", flat=True)
+                    )
+                    seq = 1
+                    while f"{prefix}-P{seq}" in existing_ids:
+                        seq += 1
+                    self.player_id = f"{prefix}-P{seq}"
             else:
-                existing_ids = set(
-                    Player.objects.filter(team=self.team).values_list("player_id", flat=True)
-                )
+                prefix = "FA"
+                if self.category_id:
+                    existing_ids = set(
+                        Player.objects.filter(
+                            Q(category_id=self.category_id) | Q(team__category_id=self.category_id)
+                        ).values_list("player_id", flat=True)
+                    )
+                else:
+                    existing_ids = set(
+                        Player.objects.filter(team__isnull=True).values_list("player_id", flat=True)
+                    )
                 seq = 1
                 while f"{prefix}-P{seq}" in existing_ids:
                     seq += 1
@@ -494,6 +527,9 @@ class Player(models.Model):
             "jerseyNumber": self.jersey_number,
             "mustChangePassword": bool(self.must_change_password),
             "isActive": bool(self.is_active),
+            "isFreeAgent": self.team_id is None,
+            "teamId": self.team.team_id if self.team_id and self.team else None,
+            "teamName": self.team.name if self.team_id and self.team else "Free Agent",
         }
         active_b = self.active_ban
         res["isBanned"] = bool(active_b)
@@ -1198,7 +1234,7 @@ class TransferRequest(models.Model):
 
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="transfers")
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="transfers")
-    from_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="transfers_out")
+    from_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="transfers_out", null=True, blank=True)
     to_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="transfers_in")
     status = models.CharField(max_length=20, default="pending", choices=STATUS_CHOICES)
     transfer_type = models.CharField(max_length=32, default="permanent", choices=TRANSFER_TYPE_CHOICES)
@@ -1215,7 +1251,8 @@ class TransferRequest(models.Model):
         verbose_name_plural = "Transfer Requests"
 
     def __str__(self):
-        return f"{self.player.name}: {self.from_team.name} -> {self.to_team.name} [{self.status}]"
+        from_name = self.from_team.name if self.from_team else "Free Agent"
+        return f"{self.player.name}: {from_name} -> {self.to_team.name} [{self.status}]"
 
     def to_dict(self):
         raw_first = (self.player.first_name or "").strip()
@@ -1234,11 +1271,19 @@ class TransferRequest(models.Model):
                 "position": self.player.position,
                 "jersey_number": self.player.jersey_number,
             },
-            "from_team": {
-                "id": self.from_team.team_id,
-                "name": self.from_team.name,
-                "color": self.from_team.color,
-            },
+            "from_team": (
+                {
+                    "id": self.from_team.team_id,
+                    "name": self.from_team.name,
+                    "color": self.from_team.color,
+                }
+                if self.from_team
+                else {
+                    "id": None,
+                    "name": "Free Agent",
+                    "color": "#8E8E93",
+                }
+            ),
             "to_team": {
                 "id": self.to_team.team_id,
                 "name": self.to_team.name,

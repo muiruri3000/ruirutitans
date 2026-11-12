@@ -1,6 +1,7 @@
 import logging
 import secrets
 from django.contrib.auth.models import User
+from django.db.models import Q
 from rest_framework.authentication import BaseAuthentication
 from rest_framework import exceptions
 
@@ -183,7 +184,7 @@ class TitansPlayerAuthentication(BaseAuthentication):
             category_key = payload.get("category_key")
             qs = Player.objects.filter(player_id=player_id, is_unknown=False)
             if category_key:
-                player = qs.filter(team__category__key=category_key).first() or qs.first()
+                player = qs.filter(Q(team__category__key=category_key) | Q(category__key=category_key)).first() or qs.first()
             else:
                 player = qs.first()
 
@@ -216,7 +217,7 @@ class TitansPlayerAuthentication(BaseAuthentication):
                 category_key = session_player.get("category_key")
                 qs = Player.objects.filter(player_id=player_id, is_unknown=False)
                 if category_key:
-                    player = qs.filter(team__category__key=category_key).first() or qs.first()
+                    player = qs.filter(Q(team__category__key=category_key) | Q(category__key=category_key)).first() or qs.first()
                 else:
                     player = qs.first()
 

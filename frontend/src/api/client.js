@@ -1052,6 +1052,19 @@ export const api = {
     return await res.json();
   },
 
+  async addFreeAgent(categoryKey, payload) {
+    const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/transfers/free-agents/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to add free agent: ${res.status}`);
+    }
+    return await res.json();
+  },
+
   async getBans(categoryKey) {
     const res = await fetch(`/api/categories/${encodeURIComponent(categoryKey)}/bans/`, {
       headers: defaultHeaders(),

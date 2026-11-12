@@ -1248,7 +1248,10 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
                 db_existing_ids.add(p_id)
                 all_category_player_ids.add(p_id)
 
-                existing_p = Player.objects.filter(team__category=category, player_id=p_id).first()
+                existing_p = Player.objects.filter(
+                    Q(team__category=category) | Q(category=category),
+                    player_id=p_id,
+                ).first()
                 p_name = p_info.get("name", p_id)
                 default_uname = slugify(p_name).replace("-", "_") if not is_unk else ""
                 p_username = (
@@ -1286,6 +1289,7 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
                 p_is_active = bool(p_info.get("isActive", p_info.get("is_active", existing_p.is_active if existing_p else True)))
 
                 defaults_dict = {
+                    "category": category,
                     "name": p_name,
                     "username": p_username,
                     "password": p_password,
@@ -3151,30 +3155,52 @@ def update_voting_formation(category, target="totw", round_id=None, formation=""
         raise ValueError(f"Unknown target: '{target}'. Expected 'totw' or 'tott'.")
 
 
-def submit_transfer_request(category, player_id, to_team_id, reason="", transfer_type="permanent", requested_by_admin=False):
-    from .models import Player, Team, TransferRequest
-    player = Player.objects.filter(team__category=category, player_id=player_id).first()
+def _find_category_player(category, player_id):
+    from .models import Player
+    return Player.objects.filter(
+        Q(team__category=category) | Q(category=category),
+        player_id=player_id,
+    ).first()
+
+
+def _resolve_category_team(category, team_id):
+    from .models import Team
+    if not team_id:
+        return None
+    team = Team.objects.filter(category=category, team_id=team_id).first()
+    if not team and str(team_id).isdigit():
+        team = Team.objects.filter(category=category, id=int(team_id)).first()
+    if not team:
+        team = Team.objects.filter(category=category, name__iexact=str(team_id).strip()).first()
+    return team
+
+
+def submit_transfer_request(category, player_id, to_team_id, reason="", transfer_type=None, requested_by_admin=False):
+    from .models import TransferRequest
+    player = _find_category_player(category, player_id)
     if not player:
         raise ValueError(f"Player {player_id} not found in {category.label}.")
 
     from_team = player.team
-    to_team = Team.objects.filter(category=category, team_id=to_team_id).first()
-    if not to_team:
-        to_team = Team.objects.filter(category=category, id=to_team_id).first() if str(to_team_id).isdigit() else None
+    to_team = _resolve_category_team(category, to_team_id)
     if not to_team:
         raise ValueError(f"Destination team not found in {category.label}.")
 
-    if from_team.id == to_team.id:
+    if from_team and from_team.id == to_team.id:
         raise ValueError(f"Player is already a member of {to_team.name}.")
 
     if not category.transfer_window_open and not requested_by_admin:
         raise ValueError("The transfer window is currently closed. Transfer requests cannot be submitted at this time.")
 
+    effective_type = transfer_type or ("free" if from_team is None else "permanent")
+    if effective_type not in ("permanent", "loan", "free"):
+        effective_type = "free" if from_team is None else "permanent"
+
     pending = TransferRequest.objects.filter(category=category, player=player, status="pending").first()
     if pending:
         pending.to_team = to_team
         pending.request_reason = reason.strip()
-        pending.transfer_type = transfer_type
+        pending.transfer_type = effective_type
         pending.save()
         return pending
 
@@ -3184,7 +3210,7 @@ def submit_transfer_request(category, player_id, to_team_id, reason="", transfer
         from_team=from_team,
         to_team=to_team,
         status="pending",
-        transfer_type=transfer_type,
+        transfer_type=effective_type,
         request_reason=reason.strip(),
     )
     return req
@@ -3201,7 +3227,8 @@ def action_transfer_request(category, transfer_id, action, admin_notes="", effec
     if act == "approve":
         player = transfer.player
         player.team = transfer.to_team
-        player.save(update_fields=["team"])
+        player.category = transfer.to_team.category
+        player.save(update_fields=["team", "category"])
         transfer.status = "approved"
         transfer.approved_at = timezone.now()
         transfer.approved_by = admin_username
@@ -3221,25 +3248,28 @@ def action_transfer_request(category, transfer_id, action, admin_notes="", effec
     return transfer
 
 
-def direct_admin_transfer(category, player_id, to_team_id, notes="", transfer_type="permanent", effective_date=None, admin_username="Admin"):
-    from .models import Player, Team, TransferRequest
+def direct_admin_transfer(category, player_id, to_team_id, notes="", transfer_type=None, effective_date=None, admin_username="Admin"):
+    from .models import TransferRequest
     from django.utils import timezone
-    player = Player.objects.filter(team__category=category, player_id=player_id).first()
+    player = _find_category_player(category, player_id)
     if not player:
         raise ValueError(f"Player {player_id} not found.")
 
     from_team = player.team
-    to_team = Team.objects.filter(category=category, team_id=to_team_id).first()
+    to_team = _resolve_category_team(category, to_team_id)
     if not to_team:
-        to_team = Team.objects.filter(category=category, id=to_team_id).first() if str(to_team_id).isdigit() else None
-    if not to_team:
-        raise ValueError(f"Destination team not found.")
+        raise ValueError("Destination team not found.")
 
-    if from_team.id == to_team.id:
+    if from_team and from_team.id == to_team.id:
         raise ValueError("Player is already on this team.")
 
+    effective_type = transfer_type or ("free" if from_team is None else "permanent")
+    if effective_type not in ("permanent", "loan", "free"):
+        effective_type = "free" if from_team is None else "permanent"
+
     player.team = to_team
-    player.save(update_fields=["team"])
+    player.category = to_team.category
+    player.save(update_fields=["team", "category"])
 
     req = TransferRequest.objects.create(
         category=category,
@@ -3247,14 +3277,144 @@ def direct_admin_transfer(category, player_id, to_team_id, notes="", transfer_ty
         from_team=from_team,
         to_team=to_team,
         status="approved",
-        transfer_type=transfer_type,
-        request_reason="Direct administrative squad transfer",
-        admin_notes=notes.strip(),
+        transfer_type=effective_type,
+        request_reason="Free agent signing" if from_team is None else "Direct administrative squad transfer",
+        admin_notes=(notes or "").strip(),
         effective_date=effective_date,
         approved_at=timezone.now(),
         approved_by=admin_username,
     )
     return req
+
+
+def add_free_agent(
+    category,
+    name=None,
+    first_name=None,
+    surname=None,
+    position="",
+    jersey_number=None,
+    username=None,
+    date_of_birth=None,
+    active_foot="right",
+    preferred_positions=None,
+    to_team_id=None,
+    notes="",
+    admin_username="Admin",
+):
+    """
+    Creates an unattached Free Agent in the competition who can move to any existing team.
+    If to_team_id is provided, immediately moves/signs the free agent to that team and records
+    the approved free transfer.
+    """
+    from datetime import datetime, date
+    from django.utils import timezone
+    from .models import Player
+
+    f_name = str(first_name or "").strip()
+    s_name = str(surname or "").strip()
+    if f_name or s_name:
+        clean_name = f"{f_name} {s_name}".strip()
+    else:
+        clean_name = str(name or "").strip()
+
+    if not clean_name:
+        raise ValueError("Free agent name (first name or full name) is required.")
+
+    raw_pos = str(position or "").strip().upper()
+    legacy_map = {"DEF": "CB", "MID": "CM", "WING": "RW", "FWD": "ST"}
+    if raw_pos in legacy_map:
+        raw_pos = legacy_map[raw_pos]
+    valid_pos = {"", "GK", "LB", "CB", "RB", "CDM", "CM", "LW", "RW", "ST"}
+    if raw_pos not in valid_pos:
+        raise ValueError(f"Invalid position '{position}'. Choose from GK, LB, CB, RB, CDM, CM, LW, RW, ST.")
+
+    j_num = None
+    if jersey_number is not None and str(jersey_number).strip() != "":
+        clean_j = str(jersey_number).strip().lstrip("#")
+        if not clean_j.isdigit():
+            raise ValueError("Jersey number must be a valid positive number.")
+        j_num = int(clean_j)
+        if j_num <= 0 or j_num > 999:
+            raise ValueError("Jersey number must be between 1 and 999.")
+
+    to_team = None
+    if to_team_id is not None and str(to_team_id).strip() != "":
+        to_team = _resolve_category_team(category, to_team_id)
+        if not to_team:
+            raise ValueError(f"Destination team '{to_team_id}' not found in {category.label}.")
+        if j_num is not None:
+            existing_holder = Player.objects.filter(team=to_team, jersey_number=j_num, is_unknown=False).first()
+            if existing_holder:
+                raise ValueError(
+                    f"Jersey #{j_num} is already assigned to {existing_holder.name} on {to_team.name}."
+                )
+
+    if username and str(username).strip():
+        uname = slugify(str(username).strip()).replace("-", "_")
+    else:
+        uname = slugify(clean_name).replace("-", "_")
+    if not uname:
+        uname = "free_agent"
+
+    base_uname = uname
+    counter = 1
+    while Player.objects.filter(
+        Q(team__category=category) | Q(category=category),
+        username__iexact=uname,
+    ).exists():
+        uname = f"{base_uname}_{counter}"
+        counter += 1
+
+    parsed_dob = None
+    if date_of_birth:
+        if isinstance(date_of_birth, (datetime, date)):
+            parsed_dob = date_of_birth
+        else:
+            try:
+                parsed_dob = datetime.strptime(str(date_of_birth)[:10], "%Y-%m-%d").date()
+            except ValueError:
+                parsed_dob = None
+
+    pos_list = preferred_positions if isinstance(preferred_positions, list) else ([raw_pos] if raw_pos else [])
+    primary_pos = raw_pos or (pos_list[0] if pos_list else "")
+    foot = str(active_foot or "right").strip().lower()
+    if foot not in ("left", "right", "both"):
+        foot = "right"
+
+    code = generate_four_digit_code()
+    player = Player.objects.create(
+        category=category,
+        team=None,
+        name=clean_name,
+        first_name=f_name,
+        surname=s_name,
+        date_of_birth=parsed_dob,
+        active_foot=foot,
+        preferred_positions=pos_list,
+        username=uname,
+        position=primary_pos,
+        jersey_number=j_num,
+        password=code,
+        temp_code=code,
+        temp_code_created_at=timezone.now(),
+        must_change_password=True,
+        is_active=True,
+    )
+
+    transfer_req = None
+    if to_team:
+        transfer_req = direct_admin_transfer(
+            category=category,
+            player_id=player.player_id,
+            to_team_id=to_team.team_id,
+            notes=notes or "Free agent added and assigned to squad",
+            transfer_type="free",
+            admin_username=admin_username,
+        )
+        player.refresh_from_db()
+
+    return player, code, transfer_req
 
 
 def toggle_transfer_window(category, is_open=None):
@@ -3267,13 +3427,15 @@ def toggle_transfer_window(category, is_open=None):
 
 
 def create_player_ban(category, player_id, ban_type="games", games_banned=1, period_description="", reason="", start_date=None, return_date=None, expected_fixture_return="", imposed_by="Admin"):
-    from .models import Player, PlayerBan
+    from .models import PlayerBan
     from django.utils import timezone
-    player = Player.objects.filter(team__category=category, player_id=player_id).first()
+    player = _find_category_player(category, player_id)
     if not player:
         raise ValueError(f"Player {player_id} not found in this competition.")
 
     team = player.team
+    if not team:
+        raise ValueError("Free agents not assigned to a team cannot receive a club disciplinary ban.")
     if ban_type not in ("games", "period"):
         ban_type = "games"
 
@@ -3704,7 +3866,10 @@ def register_player_by_admin(
 
     base_uname = uname
     counter = 1
-    while Player.objects.filter(team__category=category, username__iexact=uname).exists():
+    while Player.objects.filter(
+        Q(team__category=category) | Q(category=category),
+        username__iexact=uname,
+    ).exists():
         uname = f"{base_uname}_{counter}"
         counter += 1
 
@@ -3725,6 +3890,7 @@ def register_player_by_admin(
     primary_pos = position or (pos_list[0] if pos_list else "")
 
     player = Player.objects.create(
+        category=category,
         team=team,
         name=clean_name,
         first_name=f_name,
@@ -3791,8 +3957,10 @@ def update_player_profile(player_record, data):
         norm_uname = slugify(new_username).replace("-", "_")
         if norm_uname and norm_uname != player_record.username:
             # Check uniqueness within this category
+            eff_cat = player_record.effective_category
+            cat_q = Q(team__category=eff_cat) | Q(category=eff_cat) if eff_cat else Q()
             existing = Player.objects.filter(
-                team__category=player_record.team.category,
+                cat_q,
                 username__iexact=norm_uname,
             ).exclude(pk=player_record.pk).exists()
             if existing:
@@ -3801,6 +3969,47 @@ def update_player_profile(player_record, data):
 
     player_record.save()
     return player_record
+
+
+def _filter_players_by_category_key(qs, category_key):
+    if not category_key:
+        return qs
+    return qs.filter(Q(team__category__key=category_key) | Q(category__key=category_key))
+
+
+def _player_team_display(player):
+    return player.team.name if player.team_id and player.team else "Free Agent"
+
+
+def _build_player_auth_profile(player, include_extended=True):
+    eff_cat = player.effective_category
+    profile = {
+        "role": "player",
+        "id": player.player_id,
+        "player_id": player.player_id,
+        "permanent_id": player.player_id,
+        "username": player.username or slugify(player.name).replace("-", "_"),
+        "name": player.name,
+        "position": player.position or "",
+        "jersey_number": player.jersey_number,
+        "team_id": player.team.team_id if player.team_id and player.team else None,
+        "team_name": player.team.name if player.team_id and player.team else "Free Agent",
+        "team_color": player.team.color if player.team_id and player.team else "#8E8E93",
+        "category_key": eff_cat.key if eff_cat else "",
+        "must_change_password": bool(player.must_change_password),
+    }
+    if include_extended:
+        profile.update({
+            "first_name": player.first_name or (player.name.split(" ", 1)[0] if player.name else ""),
+            "surname": player.surname or (player.name.split(" ", 1)[1] if (player.name and " " in player.name) else ""),
+            "dob": str(player.date_of_birth) if player.date_of_birth else "",
+            "date_of_birth": str(player.date_of_birth) if player.date_of_birth else "",
+            "active_foot": player.active_foot or "right",
+            "preferred_positions": player.preferred_positions or ([player.position] if player.position else []),
+            "is_active": bool(getattr(player, "is_active", True)),
+            "is_free_agent": player.team_id is None,
+        })
+    return profile
 
 
 def reset_player_password_by_admin(username_or_ident, category_key=None, team_id=None):
@@ -3813,9 +4022,8 @@ def reset_player_password_by_admin(username_or_ident, category_key=None, team_id
     if not ident:
         raise ValueError("Please provide a player username, ID, name, or jersey number.")
 
-    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
-    if category_key:
-        base_qs = base_qs.filter(team__category__key=category_key)
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category", "category")
+    base_qs = _filter_players_by_category_key(base_qs, category_key)
     if team_id:
         base_qs = base_qs.filter(Q(team__team_id=team_id) | Q(team__name__iexact=team_id))
 
@@ -3839,7 +4047,7 @@ def reset_player_password_by_admin(username_or_ident, category_key=None, team_id
         if len(num_matches) == 1:
             player = num_matches[0]
         elif len(num_matches) > 1:
-            options_str = ", ".join(f"{p.name} ({p.team.name} @{p.username})" for p in num_matches[:4])
+            options_str = ", ".join(f"{p.name} ({_player_team_display(p)} @{p.username})" for p in num_matches[:4])
             raise ValueError(
                 f"Multiple players have jersey #{num_val}: {options_str}. "
                 "Please specify their username or team name."
@@ -3885,9 +4093,8 @@ def release_player_jersey_admin(player_ident, team_id=None, category_key=None):
     if not ident:
         raise ValueError("Player identifier is required.")
 
-    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
-    if category_key:
-        base_qs = base_qs.filter(team__category__key=category_key)
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category", "category")
+    base_qs = _filter_players_by_category_key(base_qs, category_key)
     if team_id:
         base_qs = base_qs.filter(Q(team__team_id=team_id) | Q(team__name__iexact=team_id))
 
@@ -3908,7 +4115,7 @@ def release_player_jersey_admin(player_ident, team_id=None, category_key=None):
         if len(num_matches) == 1:
             player = num_matches[0]
         elif len(num_matches) > 1:
-            options_str = ", ".join(f"{p.name} ({p.team.name})" for p in num_matches[:4])
+            options_str = ", ".join(f"{p.name} ({_player_team_display(p)})" for p in num_matches[:4])
             raise ValueError(f"Multiple players have jersey #{clean_num}: {options_str}. Please specify player ID or team.")
 
     if not player:
@@ -3938,9 +4145,8 @@ def set_player_active_status_admin(player_ident, is_active=None, team_id=None, c
     if not ident:
         raise ValueError("Player identifier is required.")
 
-    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
-    if category_key:
-        base_qs = base_qs.filter(team__category__key=category_key)
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category", "category")
+    base_qs = _filter_players_by_category_key(base_qs, category_key)
     if team_id:
         base_qs = base_qs.filter(Q(team__team_id=team_id) | Q(team__name__iexact=team_id))
 
@@ -3961,7 +4167,7 @@ def set_player_active_status_admin(player_ident, is_active=None, team_id=None, c
         if len(num_matches) == 1:
             player = num_matches[0]
         elif len(num_matches) > 1:
-            options_str = ", ".join(f"{p.name} ({p.team.name})" for p in num_matches[:4])
+            options_str = ", ".join(f"{p.name} ({_player_team_display(p)})" for p in num_matches[:4])
             raise ValueError(f"Multiple players have jersey #{clean_num}: {options_str}. Please specify player ID or team.")
 
     if not player:
@@ -3999,9 +4205,8 @@ def update_player_position_by_admin(player_ident, position="", team_id=None, cat
     if pos not in valid:
         raise ValueError(f"Invalid position '{position}'. Choose from GK, LB, CB, RB, CDM, CM, LW, RW, ST, or leave blank to unassign.")
 
-    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
-    if category_key:
-        base_qs = base_qs.filter(team__category__key=category_key)
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category", "category")
+    base_qs = _filter_players_by_category_key(base_qs, category_key)
     if team_id:
         base_qs = base_qs.filter(Q(team__team_id=team_id) | Q(team__name__iexact=team_id))
 
@@ -4022,7 +4227,7 @@ def update_player_position_by_admin(player_ident, position="", team_id=None, cat
         if len(num_matches) == 1:
             player = num_matches[0]
         elif len(num_matches) > 1:
-            options_str = ", ".join(f"{p.name} ({p.team.name})" for p in num_matches[:4])
+            options_str = ", ".join(f"{p.name} ({_player_team_display(p)})" for p in num_matches[:4])
             raise ValueError(f"Multiple players have jersey #{clean_num}: {options_str}. Please specify player ID or team.")
 
     if not player and ident.isdigit():
@@ -4066,9 +4271,8 @@ def update_player_username_by_admin(player_ident, new_username, team_id=None, ca
     if len(clean_uname) > 64:
         raise ValueError("Username cannot exceed 64 characters.")
 
-    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
-    if category_key:
-        base_qs = base_qs.filter(team__category__key=category_key)
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category", "category")
+    base_qs = _filter_players_by_category_key(base_qs, category_key)
     if team_id:
         base_qs = base_qs.filter(Q(team__team_id=team_id) | Q(team__name__iexact=team_id))
 
@@ -4089,7 +4293,7 @@ def update_player_username_by_admin(player_ident, new_username, team_id=None, ca
         if len(num_matches) == 1:
             player = num_matches[0]
         elif len(num_matches) > 1:
-            options_str = ", ".join(f"{p.name} ({p.team.name})" for p in num_matches[:4])
+            options_str = ", ".join(f"{p.name} ({_player_team_display(p)})" for p in num_matches[:4])
             raise ValueError(f"Multiple players have jersey #{clean_num}: {options_str}. Please specify player ID or team.")
 
     if not player and ident.isdigit():
@@ -4221,21 +4425,8 @@ def change_player_password(player_or_ident, new_password, current_code=None):
         p.save(update_fields=["password", "temp_code", "temp_code_created_at", "must_change_password"])
 
     player.refresh_from_db()
-    profile = {
-        "role": "player",
-        "id": player.player_id,
-        "player_id": player.player_id,
-        "permanent_id": player.player_id,
-        "username": player.username or slugify(player.name).replace("-", "_"),
-        "name": player.name,
-        "position": player.position or "",
-        "jersey_number": player.jersey_number,
-        "team_id": player.team.team_id,
-        "team_name": player.team.name,
-        "team_color": player.team.color,
-        "category_key": player.team.category.key,
-        "must_change_password": False,
-    }
+    profile = _build_player_auth_profile(player, include_extended=False)
+    profile["must_change_password"] = False
     token = create_signed_token(profile, salt="titans-player-auth")
     return profile, token
 
@@ -4258,7 +4449,7 @@ def authenticate_player_credentials(
         raise ValueError("Please enter both your player username and password or 4-digit code.")
 
     norm_slug = slugify(ident).replace("-", "_")
-    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
+    base_qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category", "category")
 
     lookup_q = (
         Q(username__iexact=ident)
@@ -4269,11 +4460,11 @@ def authenticate_player_credentials(
 
     player = None
     if category_key:
-        player = base_qs.filter(team__category__key=category_key).filter(lookup_q).first()
+        player = _filter_players_by_category_key(base_qs, category_key).filter(lookup_q).first()
     if not player:
         # Prefer league ('open') category first if multiple categories have the same player name
         player = (
-            base_qs.filter(team__category__key="open").filter(lookup_q).first()
+            _filter_players_by_category_key(base_qs, "open").filter(lookup_q).first()
             or base_qs.filter(lookup_q).first()
         )
 
@@ -4300,28 +4491,7 @@ def authenticate_player_credentials(
     if not is_valid:
         raise ValueError("Invalid player credentials or 4-digit activation code. Please check and try again.")
 
-    profile = {
-        "role": "player",
-        "id": player.player_id,
-        "player_id": player.player_id,
-        "permanent_id": player.player_id,
-        "username": player.username or slugify(player.name).replace("-", "_"),
-        "name": player.name,
-        "first_name": player.first_name or (player.name.split(" ", 1)[0] if player.name else ""),
-        "surname": player.surname or (player.name.split(" ", 1)[1] if (player.name and " " in player.name) else ""),
-        "dob": str(player.date_of_birth) if player.date_of_birth else "",
-        "date_of_birth": str(player.date_of_birth) if player.date_of_birth else "",
-        "active_foot": player.active_foot or "right",
-        "preferred_positions": player.preferred_positions or ([player.position] if player.position else []),
-        "position": player.position or "",
-        "jersey_number": player.jersey_number,
-        "team_id": player.team.team_id,
-        "team_name": player.team.name,
-        "team_color": player.team.color,
-        "category_key": player.team.category.key,
-        "must_change_password": bool(player.must_change_password),
-        "is_active": bool(getattr(player, "is_active", True)),
-    }
+    profile = _build_player_auth_profile(player, include_extended=True)
     token = create_signed_token(profile, salt="titans-player-auth")
     return profile, token
 
@@ -4339,9 +4509,9 @@ def _resolve_active_player_record(payload, require_cv=True):
     if not player_id:
         return None, None
     category_key = payload.get("category_key")
-    qs = Player.objects.filter(player_id=player_id, is_unknown=False).select_related("team", "team__category")
+    qs = Player.objects.filter(player_id=player_id, is_unknown=False).select_related("team", "team__category", "category")
     if category_key:
-        player = qs.filter(team__category__key=category_key).first() or qs.first()
+        player = _filter_players_by_category_key(qs, category_key).first() or qs.first()
     else:
         player = qs.first()
     if not player or not getattr(player, "is_active", True):
@@ -4355,28 +4525,7 @@ def _resolve_active_player_record(payload, require_cv=True):
     elif token_cv and not secrets.compare_digest(str(token_cv), expected_cv):
         return None, None
 
-    synced_profile = {
-        "role": "player",
-        "id": player.player_id,
-        "player_id": player.player_id,
-        "permanent_id": player.player_id,
-        "username": player.username or slugify(player.name).replace("-", "_"),
-        "name": player.name,
-        "first_name": player.first_name or (player.name.split(" ", 1)[0] if player.name else ""),
-        "surname": player.surname or (player.name.split(" ", 1)[1] if (player.name and " " in player.name) else ""),
-        "dob": str(player.date_of_birth) if player.date_of_birth else "",
-        "date_of_birth": str(player.date_of_birth) if player.date_of_birth else "",
-        "active_foot": player.active_foot or "right",
-        "preferred_positions": player.preferred_positions or ([player.position] if player.position else []),
-        "position": player.position or "",
-        "jersey_number": player.jersey_number,
-        "team_id": player.team.team_id,
-        "team_name": player.team.name,
-        "team_color": player.team.color,
-        "category_key": player.team.category.key,
-        "must_change_password": bool(player.must_change_password),
-        "is_active": bool(player.is_active),
-    }
+    synced_profile = _build_player_auth_profile(player, include_extended=True)
     return player, synced_profile
 
 
@@ -5187,10 +5336,10 @@ def lookup_player_usernames_by_name(query, category_key=None, limit=25):
         return []
 
     q_str = str(query).strip()
-    qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category")
+    qs = Player.objects.filter(is_unknown=False).select_related("team", "team__category", "category")
 
     if category_key:
-        qs = qs.filter(team__category__key=category_key)
+        qs = _filter_players_by_category_key(qs, category_key)
 
     clean_digits = q_str.lstrip("#").strip()
     filter_q = Q(name__icontains=q_str) | Q(username__icontains=q_str) | Q(player_id__icontains=q_str)
@@ -5206,6 +5355,7 @@ def lookup_player_usernames_by_name(query, category_key=None, limit=25):
         if key in seen:
             continue
         seen.add(key)
+        eff_cat = p.effective_category
         results.append({
             "id": p.player_id,
             "name": p.name,
@@ -5213,11 +5363,11 @@ def lookup_player_usernames_by_name(query, category_key=None, limit=25):
             "jersey_number": p.jersey_number,
             "position": p.position,
             "team_id": p.team.team_id if p.team else "",
-            "team_name": p.team.name if p.team else "",
-            "team_color": p.team.color if p.team else "#3F7A4E",
+            "team_name": p.team.name if p.team else "Free Agent",
+            "team_color": p.team.color if p.team else "#8E8E93",
             "is_active": getattr(p, "is_active", True),
-            "category_key": p.team.category.key if p.team and p.team.category else "",
-            "category_name": p.team.category.label if p.team and p.team.category else "",
+            "category_key": eff_cat.key if eff_cat else "",
+            "category_name": eff_cat.label if eff_cat else "",
         })
     return results
 
@@ -5728,6 +5878,30 @@ def build_category_duty_roster(category, force_regenerate=False):
             "matches": day_matches_structured,
         })
 
+    # Preserve or initialize playerCounts (bibs washed / goalpost taken)
+    existing_counts = existing_roster.get("playerCounts")
+    player_counts = {}
+    if isinstance(existing_counts, dict):
+        for pid, counts in existing_counts.items():
+            if isinstance(counts, dict):
+                player_counts[str(pid)] = {
+                    "bibs": max(0, int(counts.get("bibs") or 0)),
+                    "goalpost": max(0, int(counts.get("goalpost") or 0)),
+                }
+    else:
+        for a in new_assignments.values():
+            d_type = a.get("dutyType") or ("bibs" if a.get("orderOfDay") == 1 else "goalpost")
+            if d_type not in ("bibs", "goalpost"):
+                continue
+            for side_key in ("homeDuty", "awayDuty"):
+                d_info = a.get(side_key) or {}
+                pid = d_info.get("playerId")
+                if d_info.get("completed") and pid:
+                    pid_str = str(pid)
+                    if pid_str not in player_counts:
+                        player_counts[pid_str] = {"bibs": 0, "goalpost": 0}
+                    player_counts[pid_str][d_type] += 1
+
     # Summary metrics
     final_completed_ids = sorted(list(get_category_completed_duty_player_ids({"assignments": new_assignments})))
     total_duties = len(new_assignments) * 2
@@ -5743,6 +5917,7 @@ def build_category_duty_roster(category, force_regenerate=False):
         "days": structured_days,
         "assignments": new_assignments,
         "completedPlayerIds": final_completed_ids,
+        "playerCounts": player_counts,
         "summary": {
             "totalDuties": total_duties,
             "completedDuties": comp_count,
@@ -5834,13 +6009,15 @@ def update_duty_roster_assignment(category, fixture_id, side, player_id=None, pl
     entry = assignments[fixture_id]
     target_key = "homeDuty" if side == "home" else "awayDuty"
     target_duty = entry.get(target_key) or {}
+    was_completed = bool(target_duty.get("completed"))
+    prev_player_id = target_duty.get("playerId")
 
     if player_id is not None:
         target_duty["playerId"] = str(player_id) if player_id else None
         if player_name is not None:
             target_duty["playerName"] = str(player_name)
         elif player_id:
-            p_obj = Player.objects.filter(category=category, player_id=player_id).first()
+            p_obj = Player.objects.filter(team__category=category, player_id=player_id).first()
             if p_obj:
                 target_duty["playerName"] = p_obj.name
 
@@ -5848,6 +6025,23 @@ def update_duty_roster_assignment(category, fixture_id, side, player_id=None, pl
         is_done = bool(completed)
         target_duty["completed"] = is_done
         target_duty["completedAt"] = timezone.now().isoformat() if is_done else None
+
+        duty_type = entry.get("dutyType") or ("bibs" if entry.get("orderOfDay") == 1 else "goalpost")
+        if duty_type in ("bibs", "goalpost"):
+            player_counts = dict(roster_data.get("playerCounts") or {})
+            if is_done and not was_completed:
+                active_pid = str(target_duty.get("playerId") or "")
+                if active_pid:
+                    cur = dict(player_counts.get(active_pid) or {"bibs": 0, "goalpost": 0})
+                    cur[duty_type] = max(0, int(cur.get(duty_type) or 0)) + 1
+                    player_counts[active_pid] = cur
+            elif not is_done and was_completed:
+                revert_pid = str(prev_player_id or target_duty.get("playerId") or "")
+                if revert_pid:
+                    cur = dict(player_counts.get(revert_pid) or {"bibs": 0, "goalpost": 0})
+                    cur[duty_type] = max(0, int(cur.get(duty_type) or 0) - 1)
+                    player_counts[revert_pid] = cur
+            roster_data["playerCounts"] = player_counts
 
     entry[target_key] = target_duty
     assignments[fixture_id] = entry
@@ -5881,6 +6075,35 @@ def update_duty_roster_assignment(category, fixture_id, side, player_id=None, pl
     }
 
     # Save to category.schedule_days
+    schedule_days = category.schedule_days if isinstance(category.schedule_days, dict) else {}
+    schedule_days["duty_roster"] = roster_data
+    category.schedule_days = schedule_days
+    category.save(update_fields=["schedule_days"])
+    return roster_data
+
+
+def update_duty_roster_player_count(category, player_id, bibs=None, goalpost=None):
+    """
+    Manually set a player's bibs washed and/or goalpost taken counts in the category duty roster.
+    """
+    player = Player.objects.filter(team__category=category, player_id=str(player_id)).first()
+    if not player:
+        raise ValueError(f"Player '{player_id}' not found in category '{category.key}'.")
+
+    roster_data = build_category_duty_roster(category, force_regenerate=False)
+    player_counts = dict(roster_data.get("playerCounts") or {})
+    pid_str = str(player.player_id)
+    cur = dict(player_counts.get(pid_str) or {"bibs": 0, "goalpost": 0})
+
+    if bibs is not None:
+        cur["bibs"] = max(0, int(bibs))
+    if goalpost is not None:
+        cur["goalpost"] = max(0, int(goalpost))
+
+    player_counts[pid_str] = cur
+    roster_data["playerCounts"] = player_counts
+    roster_data["updatedAt"] = timezone.now().isoformat()
+
     schedule_days = category.schedule_days if isinstance(category.schedule_days, dict) else {}
     schedule_days["duty_roster"] = roster_data
     category.schedule_days = schedule_days

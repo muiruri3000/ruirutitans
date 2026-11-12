@@ -1,6 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../api/client';
 
+const POSITION_OPTIONS = [
+  { value: '', label: 'Any / Unassigned' },
+  { value: 'GK', label: 'Goalkeeper (GK)' },
+  { value: 'LB', label: 'Left Back (LB)' },
+  { value: 'CB', label: 'Center Back (CB)' },
+  { value: 'RB', label: 'Right Back (RB)' },
+  { value: 'CDM', label: 'Defensive Midfielder (CDM)' },
+  { value: 'CM', label: 'Central Midfielder (CM)' },
+  { value: 'LW', label: 'Left Winger (LW)' },
+  { value: 'RW', label: 'Right Winger (RW)' },
+  { value: 'ST', label: 'Striker (ST)' },
+];
+
 export default function TransfersView({
   categories = {},
   activeCategoryKey,
@@ -9,6 +22,7 @@ export default function TransfersView({
   isCmsMode = false,
   onOpenAuthModal,
   onCategoryChanged,
+  onRefreshState,
 }) {
   const [selectedCategoryKey, setSelectedCategoryKey] = useState(
     activeCategoryKey || Object.keys(categories)[0] || 'ruiru-titans-league-oct-nov-2026'
@@ -27,6 +41,7 @@ export default function TransfersView({
     completed_transfers: [],
     pending_transfers: [],
     rejected_transfers: [],
+    free_agents: [],
     transfer_window_open: true,
     my_pending_transfer: null,
   });
@@ -39,8 +54,16 @@ export default function TransfersView({
   // Player Transfer Request Form State
   const [targetTeamId, setTargetTeamId] = useState('');
   const [transferReason, setTransferReason] = useState('');
-  const [transferType, setTransferType] = useState('permanent');
+  const [transferType, setTransferType] = useState(playerUser && !playerUser.team_id ? 'free' : 'permanent');
   const [submittingReq, setSubmittingReq] = useState(false);
+
+  useEffect(() => {
+    if (playerUser && !playerUser.team_id) {
+      setTransferType('free');
+    } else {
+      setTransferType('permanent');
+    }
+  }, [playerUser]);
 
   // Admin Direct Transfer State
   const [directPlayerId, setDirectPlayerId] = useState('');
@@ -48,6 +71,20 @@ export default function TransfersView({
   const [directNotes, setDirectNotes] = useState('');
   const [directType, setDirectType] = useState('permanent');
   const [directSubmitting, setDirectSubmitting] = useState(false);
+
+  // Admin Add Free Agent State
+  const [faFirstName, setFaFirstName] = useState('');
+  const [faSurname, setFaSurname] = useState('');
+  const [faPosition, setFaPosition] = useState('');
+  const [faJerseyNumber, setFaJerseyNumber] = useState('');
+  const [faToTeamId, setFaToTeamId] = useState('');
+  const [faNotes, setFaNotes] = useState('');
+  const [faSubmitting, setFaSubmitting] = useState(false);
+  const [faCreatedInfo, setFaCreatedInfo] = useState(null);
+
+  // Quick Move Free Agent State (per free agent id)
+  const [faMoveTargets, setFaMoveTargets] = useState({});
+  const [faMovingId, setFaMovingId] = useState(null);
 
   // Admin Action State
   const [actionNotes, setActionNotes] = useState({});
@@ -65,6 +102,7 @@ export default function TransfersView({
         completed_transfers: data.completed_transfers || [],
         pending_transfers: data.pending_transfers || [],
         rejected_transfers: data.rejected_transfers || [],
+        free_agents: data.free_agents || [],
         transfer_window_open: data.transfer_window_open !== undefined ? data.transfer_window_open : true,
         my_pending_transfer: data.my_pending_transfer || null,
       });
@@ -85,23 +123,42 @@ export default function TransfersView({
     return currentCategory?.teams || [];
   }, [currentCategory]);
 
-  // All players in current category (for admin direct transfer)
+  // All players in current category (team players + free agents for admin direct transfer)
   const allCategoryPlayers = useMemo(() => {
     const list = [];
+    const seenIds = new Set();
     teams.forEach((t) => {
       (t.players || []).forEach((p) => {
-        if (!p.unknown) {
+        if (!p.unknown && p.id && !seenIds.has(p.id)) {
+          seenIds.add(p.id);
           list.push({
             ...p,
             teamId: t.id,
             teamName: t.name,
             teamColor: t.color,
+            isFreeAgent: false,
           });
         }
       });
     });
+    (transfersData.free_agents || []).forEach((fa) => {
+      if (fa.id && !seenIds.has(fa.id)) {
+        seenIds.add(fa.id);
+        list.push({
+          ...fa,
+          teamId: null,
+          teamName: 'Free Agent',
+          teamColor: '#8E8E93',
+          isFreeAgent: true,
+        });
+      }
+    });
     return list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  }, [teams]);
+  }, [teams, transfersData.free_agents]);
+
+  const selectedDirectPlayer = useMemo(() => {
+    return allCategoryPlayers.find((p) => p.id === directPlayerId) || null;
+  }, [allCategoryPlayers, directPlayerId]);
 
   // Toggle Transfer Window
   const handleToggleWindow = async () => {
@@ -164,9 +221,9 @@ export default function TransfersView({
       });
       setSuccessMsg(res.message || `Transfer request ${action}ed.`);
       setTimeout(() => setSuccessMsg(null), 4000);
-      fetchTransfers();
-      if (typeof window !== 'undefined' && window.location) {
-        // Soft refresh parent state if available
+      await fetchTransfers();
+      if (action === 'approve' && onRefreshState) {
+        await onRefreshState();
       }
     } catch (err) {
       setErrorMsg(err.message || `Failed to ${action} transfer request.`);
@@ -186,21 +243,104 @@ export default function TransfersView({
     setSuccessMsg(null);
     setDirectSubmitting(true);
     try {
+      const effectiveType = selectedDirectPlayer?.isFreeAgent ? 'free' : directType;
       const res = await api.directTransfer(selectedCategoryKey, {
         player_id: directPlayerId,
         to_team_id: directToTeamId,
         notes: directNotes,
-        transfer_type: directType,
+        transfer_type: effectiveType,
       });
       setSuccessMsg(res.message || 'Player successfully transferred to new club!');
       setDirectPlayerId('');
       setDirectToTeamId('');
       setDirectNotes('');
-      fetchTransfers();
+      await fetchTransfers();
+      if (onRefreshState) {
+        await onRefreshState();
+      }
     } catch (err) {
       setErrorMsg(err.message || 'Failed to complete direct transfer.');
     } finally {
       setDirectSubmitting(false);
+    }
+  };
+
+  // Admin Add Free Agent
+  const handleAddFreeAgent = async (e) => {
+    e.preventDefault();
+    if (!faFirstName.trim()) {
+      setErrorMsg('Please enter the free agent\'s first name.');
+      return;
+    }
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setFaCreatedInfo(null);
+    setFaSubmitting(true);
+    try {
+      const payload = {
+        first_name: faFirstName.trim(),
+        surname: faSurname.trim(),
+        position: faPosition,
+        jersey_number: faJerseyNumber.trim() || null,
+        to_team_id: faToTeamId || null,
+        notes: faNotes.trim(),
+      };
+      const res = await api.addFreeAgent(selectedCategoryKey, payload);
+      setSuccessMsg(res.message || 'Free agent added successfully.');
+      setFaCreatedInfo({
+        player: res.player,
+        code: res.code,
+        username: res.username,
+        transfer: res.transfer,
+      });
+      setFaFirstName('');
+      setFaSurname('');
+      setFaPosition('');
+      setFaJerseyNumber('');
+      setFaToTeamId('');
+      setFaNotes('');
+      await fetchTransfers();
+      if (res.transfer && onRefreshState) {
+        await onRefreshState();
+      }
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to add free agent.');
+    } finally {
+      setFaSubmitting(false);
+    }
+  };
+
+  // Admin Quick Move Free Agent to Any Existing Team
+  const handleMoveFreeAgent = async (freeAgentId) => {
+    const destTeamId = faMoveTargets[freeAgentId];
+    if (!destTeamId) {
+      setErrorMsg('Please select an existing team to move this free agent to.');
+      return;
+    }
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setFaMovingId(freeAgentId);
+    try {
+      const res = await api.directTransfer(selectedCategoryKey, {
+        player_id: freeAgentId,
+        to_team_id: destTeamId,
+        transfer_type: 'free',
+        notes: 'Free agent signed to existing squad',
+      });
+      setSuccessMsg(res.message || 'Free agent moved to team successfully!');
+      setFaMoveTargets((prev) => {
+        const next = { ...prev };
+        delete next[freeAgentId];
+        return next;
+      });
+      await fetchTransfers();
+      if (onRefreshState) {
+        await onRefreshState();
+      }
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to move free agent.');
+    } finally {
+      setFaMovingId(null);
     }
   };
 
@@ -453,6 +593,7 @@ export default function TransfersView({
                   >
                     <option value="permanent">Permanent Squad Transfer</option>
                     <option value="loan">Seasonal Loan Agreement</option>
+                    <option value="free">Free Agent Signing</option>
                   </select>
                 </div>
               </div>
@@ -693,7 +834,7 @@ export default function TransfersView({
               <span>Execute Direct Administrative Squad Move</span>
             </h4>
             <p style={{ margin: '0 0 12px 0', fontSize: '12.5px', color: '#8E8E93' }}>
-              Instantly reassign a player to a new team in this competition without requiring a prior request.
+              Instantly reassign a club player or free agent to any existing team in this competition without requiring a prior request.
             </p>
 
             <form onSubmit={handleDirectTransfer} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '10px' }}>
@@ -704,7 +845,7 @@ export default function TransfersView({
                 required
                 style={{ fontSize: '13px' }}
               >
-                <option value="">Select Player…</option>
+                <option value="">Select Player or Free Agent…</option>
                 {allCategoryPlayers.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name || p.displayName} ({p.teamName})
@@ -720,11 +861,13 @@ export default function TransfersView({
                 style={{ fontSize: '13px' }}
               >
                 <option value="">Destination Club…</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
+                {teams
+                  .filter((t) => !selectedDirectPlayer?.teamId || t.id !== selectedDirectPlayer.teamId)
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
               </select>
 
               <input
@@ -753,7 +896,266 @@ export default function TransfersView({
               </button>
             </form>
           </div>
+
+          {/* Add Free Agent */}
+          <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '16px' }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>🆕</span>
+              <span>Add Free Agent</span>
+            </h4>
+            <p style={{ margin: '0 0 12px 0', fontSize: '12.5px', color: '#8E8E93' }}>
+              Add an unattached free agent who can move to any of the existing teams (now or anytime later from the Free Agents pool).
+            </p>
+
+            {faCreatedInfo && (
+              <div
+                style={{
+                  background: 'rgba(48, 209, 88, 0.12)',
+                  border: '1px solid rgba(48, 209, 88, 0.4)',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '10px',
+                }}
+              >
+                <div style={{ fontSize: '12.5px', color: '#E5E5EA' }}>
+                  <div style={{ fontWeight: 800, color: '#30D158', marginBottom: '2px' }}>
+                    ✅ {faCreatedInfo.player?.name} ({faCreatedInfo.player?.id})
+                    {faCreatedInfo.transfer?.to_team?.name ? ` → Signed to ${faCreatedInfo.transfer.to_team.name}` : ' · Added to Free Agents Pool'}
+                  </div>
+                  <div>
+                    Username: <strong style={{ color: '#fff' }}>@{faCreatedInfo.username}</strong> · 4-Digit Code:{' '}
+                    <strong style={{ color: '#FF9500', letterSpacing: '2px' }}>{faCreatedInfo.code}</strong>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFaCreatedInfo(null)}
+                  style={{
+                    background: '#1C1C1E',
+                    color: '#8E8E93',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Dismiss ✕
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={handleAddFreeAgent} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '10px' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="First Name *"
+                  value={faFirstName}
+                  onChange={(e) => setFaFirstName(e.target.value)}
+                  required
+                  style={{ fontSize: '13px' }}
+                />
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Surname (optional)"
+                  value={faSurname}
+                  onChange={(e) => setFaSurname(e.target.value)}
+                  style={{ fontSize: '13px' }}
+                />
+                <select
+                  className="form-input"
+                  value={faPosition}
+                  onChange={(e) => setFaPosition(e.target.value)}
+                  style={{ fontSize: '13px' }}
+                >
+                  {POSITION_OPTIONS.map((opt) => (
+                    <option key={opt.value || 'any'} value={opt.value}>
+                      Position: {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min={1}
+                  max={999}
+                  className="form-input"
+                  placeholder="Jersey # (optional)"
+                  value={faJerseyNumber}
+                  onChange={(e) => setFaJerseyNumber(e.target.value)}
+                  style={{ fontSize: '13px' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '10px' }}>
+                <select
+                  className="form-input"
+                  value={faToTeamId}
+                  onChange={(e) => setFaToTeamId(e.target.value)}
+                  style={{ fontSize: '13px' }}
+                >
+                  <option value="">Keep in Free Agents Pool (Unassigned)</option>
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      Move Immediately To: {t.name}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Administrative note (optional)…"
+                  value={faNotes}
+                  onChange={(e) => setFaNotes(e.target.value)}
+                  style={{ fontSize: '13px' }}
+                />
+
+                <button
+                  type="submit"
+                  disabled={faSubmitting || !faFirstName.trim()}
+                  className="stat-btn"
+                  style={{
+                    background: '#30D158',
+                    color: '#0B1A10',
+                    fontWeight: 800,
+                    fontSize: '12.5px',
+                    borderRadius: '8px',
+                    opacity: faSubmitting || !faFirstName.trim() ? 0.6 : 1,
+                  }}
+                >
+                  {faSubmitting ? 'Adding Free Agent…' : faToTeamId ? '➕ Add & Move to Team' : '➕ Add Free Agent'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
+      )}
+
+      {/* Free Agents Pool (Publicly visible when free agents exist or to Admin) */}
+      {(isAdmin || (transfersData.free_agents || []).length > 0) && (
+        <section
+          style={{
+            background: '#121212',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '22px 24px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <h3 className="scoreboard" style={{ margin: 0, fontSize: '20px', color: '#64D2FF', letterSpacing: '0.04em' }}>
+                🏃 AVAILABLE FREE AGENTS
+              </h3>
+              <span style={{ fontSize: '12px', color: '#8E8E93' }}>
+                Unattached players eligible to move to any existing team in {currentCategory?.label || 'this competition'} ({(transfersData.free_agents || []).length})
+              </span>
+            </div>
+          </div>
+
+          {(transfersData.free_agents || []).length === 0 ? (
+            <div style={{ fontSize: '13px', color: '#8E8E93', padding: '16px', textAlign: 'center', background: '#161618', borderRadius: '10px', border: '1px dashed rgba(255, 255, 255, 0.08)' }}>
+              No free agents currently in the pool. Use &ldquo;Add Free Agent&rdquo; above to register an unattached player.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+              {(transfersData.free_agents || []).map((fa) => {
+                const isMoving = faMovingId === fa.id;
+                const chosenTeam = faMoveTargets[fa.id] || '';
+                return (
+                  <div
+                    key={fa.id}
+                    style={{
+                      background: '#161618',
+                      border: '1px solid rgba(100, 210, 255, 0.25)',
+                      borderRadius: '12px',
+                      padding: '14px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                      <div>
+                        <div style={{ fontSize: '15px', fontWeight: 800, color: '#fff' }}>
+                          {fa.name}
+                        </div>
+                        <div style={{ fontSize: '11.5px', color: '#8E8E93', marginTop: '2px' }}>
+                          {fa.position || 'Any Position'}
+                          {fa.jerseyNumber ? ` · #${fa.jerseyNumber}` : ''}
+                          {` · ID: ${fa.id}`}
+                          {fa.username ? ` · @${fa.username}` : ''}
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '10.5px',
+                          fontWeight: 800,
+                          padding: '3px 8px',
+                          borderRadius: '999px',
+                          background: 'rgba(100, 210, 255, 0.15)',
+                          color: '#64D2FF',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Free Agent
+                      </span>
+                    </div>
+
+                    {isAdmin && (
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <select
+                          className="form-input"
+                          value={chosenTeam}
+                          onChange={(e) =>
+                            setFaMoveTargets((prev) => ({ ...prev, [fa.id]: e.target.value }))
+                          }
+                          style={{ flex: 1, fontSize: '12.5px', padding: '7px 10px' }}
+                        >
+                          <option value="">Move to existing team…</option>
+                          {teams.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          disabled={isMoving || !chosenTeam}
+                          onClick={() => handleMoveFreeAgent(fa.id)}
+                          style={{
+                            background: '#30D158',
+                            color: '#0B1A10',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '8px 12px',
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            cursor: isMoving || !chosenTeam ? 'not-allowed' : 'pointer',
+                            opacity: isMoving || !chosenTeam ? 0.55 : 1,
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {isMoving ? 'Moving…' : 'Move to Team'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
       )}
 
       {/* Completed Transfers Ledger (Publicly Visible) */}
@@ -883,12 +1285,22 @@ export default function TransfersView({
                           fontWeight: 700,
                           padding: '3px 8px',
                           borderRadius: '4px',
-                          background: t.transfer_type === 'loan' ? 'rgba(90, 200, 250, 0.15)' : 'rgba(255, 149, 0, 0.15)',
-                          color: t.transfer_type === 'loan' ? '#5AC8FA' : '#FF9500',
+                          background:
+                            t.transfer_type === 'loan'
+                              ? 'rgba(90, 200, 250, 0.15)'
+                              : t.transfer_type === 'free'
+                                ? 'rgba(100, 210, 255, 0.15)'
+                                : 'rgba(255, 149, 0, 0.15)',
+                          color:
+                            t.transfer_type === 'loan'
+                              ? '#5AC8FA'
+                              : t.transfer_type === 'free'
+                                ? '#64D2FF'
+                                : '#FF9500',
                           textTransform: 'capitalize',
                         }}
                       >
-                        {t.transfer_type || 'Permanent'}
+                        {t.transfer_type === 'free' ? 'Free Agent' : (t.transfer_type || 'Permanent')}
                       </span>
                     </td>
                     <td style={{ padding: '12px' }}>

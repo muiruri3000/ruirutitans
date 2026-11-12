@@ -2326,7 +2326,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
   "fixtures": [
     {
       "id": "F1",
-      "date": "Wed, 21 Oct · 17:10",
+      "date": "Wed, 21 Oct · 16:30",
       "venue": "Thoome Pri.",
       "home": "BAL",
       "away": "SS",
@@ -2434,7 +2434,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F2",
-      "date": "Wed, 21 Oct · 18:10",
+      "date": "Wed, 21 Oct · 17:30",
       "venue": "Thoome Pri.",
       "home": "RAN",
       "away": "BLA",
@@ -2530,7 +2530,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F4",
-      "date": "Thu, 22 Oct · 18:10",
+      "date": "Thu, 22 Oct · 16:30",
       "venue": "Thoome Pri.",
       "home": "OXF",
       "away": "MAS",
@@ -2618,7 +2618,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F5",
-      "date": "Fri, 23 Oct · 17:10",
+      "date": "Fri, 23 Oct · 16:30",
       "venue": "Thoome Pri.",
       "home": "RAN",
       "away": "SS",
@@ -2674,7 +2674,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F18",
-      "date": "Fri, 23 Oct · 18:10",
+      "date": "Fri, 23 Oct · 17:30",
       "venue": "Thoome Pri.",
       "home": "EXM",
       "away": "OXF",
@@ -2754,7 +2754,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F6",
-      "date": "Sat, 24 Oct · 17:00",
+      "date": "Sat, 24 Oct · 16:30",
       "venue": "Thoome Pri.",
       "home": "EXM",
       "away": "BAL",
@@ -2778,7 +2778,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F7",
-      "date": "Sat, 24 Oct · 17:00",
+      "date": "Sat, 24 Oct · 17:30",
       "venue": "Thoome Pri.",
       "home": "MAN",
       "away": "BLA",
@@ -2814,7 +2814,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F12",
-      "date": "Sat, 24 Oct · 18:00",
+      "date": "Sat, 24 Oct · 18:30",
       "venue": "Thoome Pri.",
       "home": "MAN",
       "away": "MAS",
@@ -2898,7 +2898,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F9",
-      "date": "Mon, 26 Oct · 18:00",
+      "date": "Mon, 26 Oct · 16:30",
       "venue": "Thoome Pri.",
       "home": "RAN",
       "away": "BAL",
@@ -2958,7 +2958,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F11",
-      "date": "Mon, 26 Oct · 18:10",
+      "date": "Mon, 26 Oct · 17:30",
       "venue": "Thoome Pri.",
       "home": "OXF",
       "away": "SS",
@@ -3058,7 +3058,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F19",
-      "date": "Wed, 28 Oct · 17:10",
+      "date": "Wed, 28 Oct · 16:30",
       "venue": "Thoome Pri.",
       "home": "EXM",
       "away": "MAN",
@@ -3069,7 +3069,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F8",
-      "date": "Wed, 28 Oct · 18:10",
+      "date": "Wed, 28 Oct · 17:30",
       "venue": "Thoome Pri.",
       "home": "BLA",
       "away": "BAL",
@@ -3080,7 +3080,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F3",
-      "date": "Thu, 29 Oct · 17:10",
+      "date": "Thu, 29 Oct · 16:30",
       "venue": "Thoome Pri.",
       "home": "MAS",
       "away": "SS",
@@ -3091,7 +3091,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F10",
-      "date": "Thu, 29 Oct · 18:10",
+      "date": "Thu, 29 Oct · 17:30",
       "venue": "Thoome Pri.",
       "home": "OXF",
       "away": "RAN",
@@ -3102,7 +3102,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F13",
-      "date": "Fri, 30 Oct · 17:10",
+      "date": "Fri, 30 Oct · 16:30",
       "venue": "Thoome Pri.",
       "home": "BAL",
       "away": "MAN",
@@ -3113,7 +3113,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F14",
-      "date": "Fri, 30 Oct · 18:10",
+      "date": "Fri, 30 Oct · 17:30",
       "venue": "Thoome Pri.",
       "home": "BLA",
       "away": "EXM",
@@ -3124,7 +3124,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F15",
-      "date": "Sat, 31 Oct · 17:00",
+      "date": "Sat, 31 Oct · 16:30",
       "venue": "Thoome Pri.",
       "home": "SS",
       "away": "BLA",
@@ -3135,7 +3135,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F16",
-      "date": "Sat, 31 Oct · 18:00",
+      "date": "Sat, 31 Oct · 17:30",
       "venue": "Thoome Pri.",
       "home": "MAS",
       "away": "RAN",
@@ -3146,7 +3146,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F17",
-      "date": "Mon, 02 Nov · 17:10",
+      "date": "Mon, 02 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "MAS",
       "away": "EXM",
@@ -3157,7 +3157,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F20",
-      "date": "Mon, 02 Nov · 18:10",
+      "date": "Mon, 02 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "MAN",
       "away": "OXF",
@@ -3168,7 +3168,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F21",
-      "date": "Wed, 04 Nov · 17:10",
+      "date": "Wed, 04 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "BAL",
       "away": "MAS",
@@ -3179,7 +3179,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F22",
-      "date": "Wed, 04 Nov · 18:10",
+      "date": "Wed, 04 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "BLA",
       "away": "OXF",
@@ -3190,7 +3190,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F23",
-      "date": "Thu, 05 Nov · 17:10",
+      "date": "Thu, 05 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "EXM",
       "away": "RAN",
@@ -3201,7 +3201,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F24",
-      "date": "Thu, 05 Nov · 18:10",
+      "date": "Thu, 05 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "SS",
       "away": "MAN",
@@ -3212,7 +3212,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F25",
-      "date": "Fri, 06 Nov · 17:10",
+      "date": "Fri, 06 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "BAL",
       "away": "OXF",
@@ -3223,7 +3223,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F26",
-      "date": "Fri, 06 Nov · 18:10",
+      "date": "Fri, 06 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "BLA",
       "away": "MAS",
@@ -3234,7 +3234,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F27",
-      "date": "Sat, 07 Nov · 17:00",
+      "date": "Sat, 07 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "SS",
       "away": "EXM",
@@ -3245,7 +3245,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F28",
-      "date": "Sat, 07 Nov · 18:00",
+      "date": "Sat, 07 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "MAN",
       "away": "RAN",
@@ -3256,7 +3256,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F29",
-      "date": "Mon, 09 Nov · 17:10",
+      "date": "Mon, 09 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "SS",
       "away": "BAL",
@@ -3267,7 +3267,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F30",
-      "date": "Mon, 09 Nov · 18:10",
+      "date": "Mon, 09 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "BLA",
       "away": "RAN",
@@ -3278,7 +3278,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F31",
-      "date": "Wed, 11 Nov · 17:10",
+      "date": "Wed, 11 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "OXF",
       "away": "EXM",
@@ -3289,7 +3289,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F32",
-      "date": "Wed, 11 Nov · 18:10",
+      "date": "Wed, 11 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "MAS",
       "away": "MAN",
@@ -3300,7 +3300,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F33",
-      "date": "Thu, 12 Nov · 17:10",
+      "date": "Thu, 12 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "SS",
       "away": "RAN",
@@ -3311,7 +3311,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F34",
-      "date": "Thu, 12 Nov · 18:10",
+      "date": "Thu, 12 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "BAL",
       "away": "BLA",
@@ -3322,7 +3322,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F35",
-      "date": "Fri, 13 Nov · 17:10",
+      "date": "Fri, 13 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "MAS",
       "away": "OXF",
@@ -3333,7 +3333,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F36",
-      "date": "Fri, 13 Nov · 18:10",
+      "date": "Fri, 13 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "MAN",
       "away": "EXM",
@@ -3344,7 +3344,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F37",
-      "date": "Sat, 14 Nov · 17:00",
+      "date": "Sat, 14 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "BAL",
       "away": "RAN",
@@ -3355,7 +3355,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F38",
-      "date": "Sat, 14 Nov · 18:00",
+      "date": "Sat, 14 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "BLA",
       "away": "SS",
@@ -3366,7 +3366,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F39",
-      "date": "Mon, 16 Nov · 17:10",
+      "date": "Mon, 16 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "EXM",
       "away": "MAS",
@@ -3377,7 +3377,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F40",
-      "date": "Mon, 16 Nov · 18:10",
+      "date": "Mon, 16 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "OXF",
       "away": "MAN",
@@ -3388,7 +3388,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F41",
-      "date": "Wed, 18 Nov · 17:10",
+      "date": "Wed, 18 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "BAL",
       "away": "EXM",
@@ -3399,7 +3399,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F42",
-      "date": "Wed, 18 Nov · 18:10",
+      "date": "Wed, 18 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "BLA",
       "away": "MAN",
@@ -3410,7 +3410,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F43",
-      "date": "Thu, 19 Nov · 17:10",
+      "date": "Thu, 19 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "SS",
       "away": "OXF",
@@ -3421,7 +3421,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F44",
-      "date": "Thu, 19 Nov · 18:10",
+      "date": "Thu, 19 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "RAN",
       "away": "MAS",
@@ -3432,7 +3432,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F45",
-      "date": "Fri, 20 Nov · 17:10",
+      "date": "Fri, 20 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "MAN",
       "away": "BAL",
@@ -3443,7 +3443,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F46",
-      "date": "Fri, 20 Nov · 18:10",
+      "date": "Fri, 20 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "EXM",
       "away": "BLA",
@@ -3454,7 +3454,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F47",
-      "date": "Sat, 21 Nov · 17:00",
+      "date": "Sat, 21 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "SS",
       "away": "MAS",
@@ -3465,7 +3465,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F48",
-      "date": "Sat, 21 Nov · 18:00",
+      "date": "Sat, 21 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "RAN",
       "away": "OXF",
@@ -3476,7 +3476,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F49",
-      "date": "Mon, 23 Nov · 17:10",
+      "date": "Mon, 23 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "MAS",
       "away": "BAL",
@@ -3487,7 +3487,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F50",
-      "date": "Mon, 23 Nov · 18:10",
+      "date": "Mon, 23 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "OXF",
       "away": "BLA",
@@ -3498,7 +3498,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F51",
-      "date": "Wed, 25 Nov · 17:10",
+      "date": "Wed, 25 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "RAN",
       "away": "EXM",
@@ -3509,7 +3509,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F52",
-      "date": "Wed, 25 Nov · 18:10",
+      "date": "Wed, 25 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "MAN",
       "away": "SS",
@@ -3520,7 +3520,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F53",
-      "date": "Thu, 26 Nov · 17:10",
+      "date": "Thu, 26 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "OXF",
       "away": "BAL",
@@ -3531,7 +3531,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F54",
-      "date": "Thu, 26 Nov · 18:10",
+      "date": "Thu, 26 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "MAS",
       "away": "BLA",
@@ -3542,7 +3542,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F55",
-      "date": "Fri, 27 Nov · 17:10",
+      "date": "Fri, 27 Nov · 16:30",
       "venue": "Thoome Pri.",
       "home": "EXM",
       "away": "SS",
@@ -3553,7 +3553,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     },
     {
       "id": "F56",
-      "date": "Fri, 27 Nov · 18:10",
+      "date": "Fri, 27 Nov · 17:30",
       "venue": "Thoome Pri.",
       "home": "RAN",
       "away": "MAN",
@@ -3564,7 +3564,7 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
     }
   ],
   "schedule": {
-    "time": "17:10",
+    "time": "16:30",
     "days": {
       "0": {
         "enabled": false,
@@ -3574,32 +3574,32 @@ export const ACTIVE_2026_LEAGUE_CAMPAIGN = {
       "1": {
         "enabled": true,
         "matches": 2,
-        "time": "17:10"
+        "time": "16:30"
       },
       "2": {
         "enabled": false,
         "matches": 2,
-        "time": "17:10"
+        "time": "16:30"
       },
       "3": {
         "enabled": true,
         "matches": 2,
-        "time": "17:10"
+        "time": "16:30"
       },
       "4": {
         "enabled": true,
         "matches": 2,
-        "time": "17:10"
+        "time": "16:30"
       },
       "5": {
         "enabled": true,
         "matches": 2,
-        "time": "17:10"
+        "time": "16:30"
       },
       "6": {
         "enabled": true,
         "matches": 2,
-        "time": "17:00"
+        "time": "16:30"
       }
     },
     "matches_per_day": 2,

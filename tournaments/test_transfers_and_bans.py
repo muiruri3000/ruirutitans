@@ -9,6 +9,9 @@ from tournaments.services import (
     submit_transfer_request,
     action_transfer_request,
     direct_admin_transfer,
+    add_free_agent,
+    authenticate_player_credentials,
+    import_state_to_db,
     toggle_transfer_window,
     create_player_ban,
     lift_player_ban,
@@ -258,3 +261,135 @@ class TransfersAndBansTestCase(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(resp.json()["ban"]["is_active"])
+
+    def test_add_free_agent_and_move_to_existing_team(self):
+        # 1. Admin adds a free agent via API without assigning a team yet
+        resp = self.client.post(
+            f"/api/categories/{self.category.key}/transfers/free-agents/",
+            data={
+                "first_name": "Alex",
+                "surname": "Kamau",
+                "position": "CM",
+            },
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=self.cms_token,
+        )
+        self.assertEqual(resp.status_code, 201)
+        body = resp.json()
+        self.assertEqual(body["player"]["name"], "Alex Kamau")
+        self.assertTrue(body["player"]["isFreeAgent"])
+        self.assertIsNone(body["transfer"])
+        fa_id = body["player"]["id"]
+        self.assertTrue(fa_id.startswith("FA-P"))
+
+        # 2. Public GET /transfers/ includes the free agent in free_agents
+        resp = self.client.get(f"/api/categories/{self.category.key}/transfers/")
+        self.assertEqual(resp.status_code, 200)
+        free_agents = resp.json().get("free_agents", [])
+        self.assertEqual(len(free_agents), 1)
+        self.assertEqual(free_agents[0]["id"], fa_id)
+
+        # 3. Saving category state preserves unassigned free agents
+        state_dict = self.category.to_state_dict()
+        self.assertEqual(len(state_dict.get("freeAgents", [])), 1)
+        import_state_to_db({"categories": {self.category.key: state_dict}}, soft_delete_missing=False)
+        self.assertTrue(Player.objects.filter(category=self.category, player_id=fa_id, team__isnull=True).exists())
+
+        # 4. Admin moves the free agent to team_a via direct transfer
+        resp = self.client.post(
+            f"/api/categories/{self.category.key}/transfers/direct/",
+            data={
+                "player_id": fa_id,
+                "to_team_id": self.team_a.team_id,
+                "transfer_type": "free",
+                "notes": "Free agent signed by Alpha FC",
+            },
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=self.cms_token,
+        )
+        self.assertEqual(resp.status_code, 200)
+        t_data = resp.json()["transfer"]
+        self.assertEqual(t_data["from_team"]["name"], "Free Agent")
+        self.assertIsNone(t_data["from_team"]["id"])
+        self.assertEqual(t_data["to_team"]["id"], self.team_a.team_id)
+        self.assertEqual(t_data["transfer_type"], "free")
+
+        # Free agent is now on team_a and removed from free_agents pool
+        fa_player = Player.objects.get(player_id=fa_id)
+        self.assertEqual(fa_player.team, self.team_a)
+        resp = self.client.get(f"/api/categories/{self.category.key}/transfers/")
+        self.assertEqual(resp.json().get("free_agents", []), [])
+        self.assertEqual(len(resp.json().get("completed_transfers", [])), 1)
+
+    def test_add_free_agent_with_immediate_team_move(self):
+        resp = self.client.post(
+            f"/api/categories/{self.category.key}/transfers/free-agents/",
+            data={
+                "first_name": "Brian",
+                "surname": "Otieno",
+                "position": "ST",
+                "jersey_number": 11,
+                "to_team_id": self.team_b.team_id,
+                "notes": "Immediate free agent signing",
+            },
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=self.cms_token,
+        )
+        self.assertEqual(resp.status_code, 201)
+        body = resp.json()
+        self.assertEqual(body["player"]["teamId"], self.team_b.team_id)
+        self.assertFalse(body["player"]["isFreeAgent"])
+        self.assertIsNotNone(body["transfer"])
+        self.assertEqual(body["transfer"]["from_team"]["name"], "Free Agent")
+        self.assertEqual(body["transfer"]["to_team"]["id"], self.team_b.team_id)
+        self.assertEqual(body["transfer"]["transfer_type"], "free")
+
+    def test_free_agent_login_and_transfer_request_to_existing_team(self):
+        fa, code, _ = add_free_agent(
+            category=self.category,
+            first_name="Dennis",
+            surname="Mugo",
+            position="GK",
+        )
+        profile, token = authenticate_player_credentials(
+            username=fa.username,
+            password=code,
+            category_key=self.category.key,
+        )
+        self.assertIsNone(profile["team_id"])
+        self.assertEqual(profile["team_name"], "Free Agent")
+
+        # Free agent submits transfer request to team_b
+        resp = self.client.post(
+            f"/api/categories/{self.category.key}/transfers/",
+            data={
+                "to_team_id": self.team_b.team_id,
+                "reason": "Joining Bravo Stars as free agent",
+                "transfer_type": "free",
+            },
+            content_type="application/json",
+            HTTP_X_TITANS_PLAYER_TOKEN=token,
+        )
+        self.assertEqual(resp.status_code, 201)
+        transfer_id = resp.json()["transfer"]["id"]
+        self.assertEqual(resp.json()["transfer"]["from_team"]["name"], "Free Agent")
+
+        # Admin approves request -> free agent moves to team_b
+        resp = self.client.post(
+            f"/api/categories/{self.category.key}/transfers/{transfer_id}/action/",
+            data={"action": "approve"},
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=self.cms_token,
+        )
+        self.assertEqual(resp.status_code, 200)
+        fa.refresh_from_db()
+        self.assertEqual(fa.team, self.team_b)
+
+    def test_non_admin_cannot_add_free_agent(self):
+        resp = self.client.post(
+            f"/api/categories/{self.category.key}/transfers/free-agents/",
+            data={"first_name": "Unauthorized", "surname": "Player"},
+            content_type="application/json",
+            HTTP_X_TITANS_PLAYER_TOKEN=self.player_token,
+        )
+        self.assertIn(resp.status_code, (401, 403))

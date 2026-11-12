@@ -267,7 +267,6 @@ export default function App() {
       if (params.get('tactics_standalone') === 'true' || window.location.hash === '#tactics-standalone') {
         return true;
       }
-      return localStorage.getItem('titans_tactics_dedicated_page') === 'true';
     }
     return false;
   });
@@ -276,9 +275,6 @@ export default function App() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('tactics_standalone') === 'true' || window.location.hash === '#tactics-standalone' || window.location.hash === '#tactics') {
-        return 'tactics';
-      }
-      if (localStorage.getItem('titans_tactics_dedicated_page') === 'true') {
         return 'tactics';
       }
       if (window.location.hash === '#duty' || window.location.hash === '#duty-roster' || window.location.pathname.includes('/duty-roster')) {
@@ -294,11 +290,13 @@ export default function App() {
   const handleToggleStandaloneTactics = (val) => {
     const next = typeof val === 'boolean' ? val : !isStandaloneTactics;
     setIsStandaloneTactics(next);
-    try {
-      localStorage.setItem('titans_tactics_dedicated_page', next ? 'true' : 'false');
-    } catch {}
     if (next) {
       setCurrentView('tactics');
+    } else if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('tactics_standalone') || window.location.hash === '#tactics-standalone') {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
     }
   };
   const [fixturesInitialFilter, setFixturesInitialFilter] = useState('all');
@@ -2070,7 +2068,7 @@ export default function App() {
     const schedule = category.schedule || {
       start_date: '2026-10-22',
       match_days: ['Wednesday', 'Thursday', 'Friday', 'Saturday', 'Monday'],
-      match_times: ['17:10', '18:10'],
+      match_times: ['16:30', '17:30'],
       venue: 'Thoome Pri.',
     };
 
@@ -3191,8 +3189,8 @@ export default function App() {
         transition: 'background-color 0.25s ease, color 0.25s ease',
       }}
     >
-      {/* Top Bar with Sign In to Manager Dashboard Link & Player Auth OR Dedicated Tactics Header */}
-      {!isDedicatedTacticsMode ? (
+      {/* Top Bar with Sign In to Manager Dashboard Link & Player Auth (Hidden on standalone tactics page) */}
+      {!isDedicatedTacticsMode && (
         <TopNav
           syncStatus={syncStatus}
           cmsUser={cmsUser}
@@ -3215,100 +3213,15 @@ export default function App() {
           onLogoutCms={handleLogoutCms}
           onLogoutPlayer={handleLogoutPlayer}
         />
-      ) : (
-        <header
-          style={{
-            background: '#121212',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            padding: '10px 18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button
-              type="button"
-              onClick={() => handleToggleStandaloneTactics(false)}
-              style={{
-                background: '#1C1C1E',
-                color: '#FFFFFF',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                padding: '6px 14px',
-                fontSize: '12px',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'all 0.15s ease',
-              }}
-              title="Return to the main Ruiru Titans club portal"
-            >
-              <span>←</span>
-              <span>Back to Club Portal</span>
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '18px' }}>📋</span>
-              <span className="scoreboard" style={{ fontSize: '18px', color: '#FF9F0A', letterSpacing: '0.04em' }}>
-                RUIRU TITANS · DEDICATED TACTICS BOARD
-              </span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => window.open(window.location.pathname + '?tactics_standalone=true', '_blank')}
-              style={{
-                background: '#000000',
-                color: '#8E8E93',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                padding: '6px 12px',
-                fontSize: '11.5px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-              }}
-              title="Open in a separate standalone browser window"
-            >
-              <span>↗</span> Open in New Window
-            </button>
-            <button
-              type="button"
-              onClick={() => handleToggleStandaloneTactics(false)}
-              style={{
-                background: '#231518',
-                color: '#FF8A8A',
-                border: '1px solid #732228',
-                borderRadius: '8px',
-                padding: '6px 12px',
-                fontSize: '11.5px',
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-              title="Exit dedicated board page and restore all club portal sections"
-            >
-              ✕ Exit Dedicated Page
-            </button>
-          </div>
-        </header>
       )}
 
       {/* Main Content Container */}
       <main
         style={{
-          maxWidth: isDedicatedTacticsMode ? '1440px' : '1180px',
+          maxWidth: isDedicatedTacticsMode ? '100%' : '1180px',
           width: '100%',
           margin: '0 auto',
-          padding: isDedicatedTacticsMode ? '10px 14px 48px' : '20px 16px 64px',
+          padding: isDedicatedTacticsMode ? '12px 16px 24px' : '20px 16px 64px',
           flex: 1,
         }}
       >
@@ -4539,6 +4452,18 @@ export default function App() {
             isCmsMode={Boolean(cmsUser)}
             onOpenAuthModal={(tab) => setAuthModal({ open: true, tab })}
             onCategoryChanged={(key) => setActiveCategoryKey(key)}
+            onRefreshState={async () => {
+              try {
+                const serverState = await api.getState();
+                if (serverState && serverState.categories) {
+                  const sanitizedState = sanitizeExMilitaryFixtures(serverState);
+                  setData(sanitizedState);
+                  try {
+                    localStorage.setItem('ruiru_titans_react_state', JSON.stringify(sanitizedState));
+                  } catch {}
+                }
+              } catch {}
+            }}
           />
         )}
 
