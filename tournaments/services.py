@@ -4560,16 +4560,32 @@ def get_authenticated_player_from_request(request):
     return None
 
 
+def build_cms_user_payload(user):
+    """Build the canonical cms_user dictionary including user_type and granular permissions."""
+    from .models import get_or_create_cms_profile
+
+    profile = get_or_create_cms_profile(user)
+    return {
+        "role": "cms",
+        "username": user.username,
+        "email": user.email,
+        "user_type": profile.user_type,
+        "is_superadmin": profile.user_type == "superadmin",
+        "permissions": profile.get_effective_permissions(),
+    }
+
+
 def get_authenticated_cms_from_request(request):
     """
     Extracts and verifies the logged-in CMS Admin from either:
     1. X-Titans-CMS-Token header (signed token)
     2. Authorization: Bearer <token> header (signed with 'titans-cms-auth')
     3. Django session (request.user.is_authenticated and is_staff, or 'titans_cms')
-    Always verifies that the Django User exists in the DB, is_active, and is_staff/is_superuser.
+    Always verifies that the Django User exists in the DB, is_active, not blocked, and is_staff/is_superuser.
     """
     import secrets
     from django.contrib.auth.models import User
+    from .models import get_or_create_cms_profile
 
     token = request.headers.get("X-Titans-CMS-Token", "").strip()
     if not token:
@@ -4584,35 +4600,29 @@ def get_authenticated_cms_from_request(request):
         if payload and payload.get("role") == "cms" and payload.get("username"):
             user = User.objects.filter(username__iexact=payload["username"]).first()
             if user and user.is_active and (user.is_staff or user.is_superuser):
-                expected_cv = get_cms_user_credential_fingerprint(user)
-                token_cv = payload.get("_cv")
-                if token_cv and secrets.compare_digest(str(token_cv), expected_cv):
-                    return {
-                        "role": "cms",
-                        "username": user.username,
-                        "email": user.email,
-                    }
+                profile = get_or_create_cms_profile(user)
+                if not profile.is_blocked:
+                    expected_cv = get_cms_user_credential_fingerprint(user)
+                    token_cv = payload.get("_cv")
+                    if token_cv and secrets.compare_digest(str(token_cv), expected_cv):
+                        return build_cms_user_payload(user)
 
     if hasattr(request, "user") and request.user.is_authenticated and getattr(request.user, "is_active", True) and (request.user.is_staff or request.user.is_superuser):
-        return {
-            "role": "cms",
-            "username": request.user.username,
-            "email": request.user.email,
-        }
+        profile = get_or_create_cms_profile(request.user)
+        if not profile.is_blocked:
+            return build_cms_user_payload(request.user)
 
     session_cms = request.session.get("titans_cms") if hasattr(request, "session") else None
     if session_cms and session_cms.get("role") == "cms" and session_cms.get("username"):
         user = User.objects.filter(username__iexact=session_cms["username"]).first()
         if user and user.is_active and (user.is_staff or user.is_superuser):
-            token_cv = session_cms.get("_cv")
-            expected_cv = get_cms_user_credential_fingerprint(user)
-            cv_ok = bool(token_cv and secrets.compare_digest(str(token_cv), expected_cv)) if token else bool(not token_cv or secrets.compare_digest(str(token_cv), expected_cv))
-            if cv_ok:
-                return {
-                    "role": "cms",
-                    "username": user.username,
-                    "email": user.email,
-                }
+            profile = get_or_create_cms_profile(user)
+            if not profile.is_blocked:
+                token_cv = session_cms.get("_cv")
+                expected_cv = get_cms_user_credential_fingerprint(user)
+                cv_ok = bool(token_cv and secrets.compare_digest(str(token_cv), expected_cv)) if token else bool(not token_cv or secrets.compare_digest(str(token_cv), expected_cv))
+                if cv_ok:
+                    return build_cms_user_payload(user)
 
     return None
 

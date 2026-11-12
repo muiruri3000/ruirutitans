@@ -1370,5 +1370,118 @@ class PlayerBan(models.Model):
         }
 
 
+CMS_PERMISSION_DEFINITIONS = [
+    ("manage_players", "Manage Players & Squads"),
+    ("manage_teams", "Manage Teams & Competitions"),
+    ("manage_fixtures", "Manage Fixtures & Match Reports"),
+    ("manage_tactics", "Access Tactics & Formations Board"),
+    ("manage_duty_roster", "Manage Duty Roster & Counts"),
+    ("manage_transfers", "Manage Transfers & Bans"),
+    ("manage_voting", "Manage Voting & Weekly MVP"),
+    ("manage_homepage", "Manage Homepage, Highlights & Comments"),
+    ("manage_users", "Add & Manage Users"),
+    ("downgrade_admin", "Downgrade an Admin"),
+    ("delete_admin", "Delete an Admin"),
+    ("block_admin", "Block / Unblock an Admin"),
+]
+
+CMS_PERMISSION_KEYS = [k for k, _ in CMS_PERMISSION_DEFINITIONS]
+
+CMS_USER_TYPES = [
+    ("superadmin", "Superadmin"),
+    ("admin", "Admin"),
+    ("match_reporter", "Match Reporter"),
+    ("team_manager", "Team Manager"),
+    ("duty_coordinator", "Duty Coordinator"),
+    ("moderator", "Moderator"),
+    ("custom", "Custom User"),
+]
+
+
+def get_default_permissions_for_type(user_type: str) -> dict:
+    """Return canonical default permission checkboxes for a given CMS user type."""
+    if user_type == "superadmin":
+        return {k: True for k in CMS_PERMISSION_KEYS}
+    if user_type == "admin":
+        return {
+            k: (k not in ("downgrade_admin", "delete_admin", "block_admin"))
+            for k in CMS_PERMISSION_KEYS
+        }
+    presets = {
+        "match_reporter": {"manage_fixtures", "manage_homepage"},
+        "team_manager": {"manage_players", "manage_tactics", "manage_transfers"},
+        "duty_coordinator": {"manage_duty_roster"},
+        "moderator": {"manage_homepage", "manage_voting"},
+        "custom": set(),
+    }
+    allowed = presets.get(user_type, set())
+    return {k: (k in allowed) for k in CMS_PERMISSION_KEYS}
+
+
+class CMSUserProfile(models.Model):
+    """
+    Stores role type, granular capability checkboxes, and block status for CMS/staff users.
+    """
+    user = models.OneToOneField(
+        "auth.User",
+        on_delete=models.CASCADE,
+        related_name="cms_profile",
+    )
+    user_type = models.CharField(max_length=32, choices=CMS_USER_TYPES, default="admin")
+    permissions = models.JSONField(default=dict, blank=True)
+    is_blocked = models.BooleanField(default=False)
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_cms_profiles",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def get_effective_permissions(self) -> dict:
+        if self.user_type == "superadmin":
+            return {k: True for k in CMS_PERMISSION_KEYS}
+        base = get_default_permissions_for_type(self.user_type)
+        stored = self.permissions if isinstance(self.permissions, dict) else {}
+        for k in CMS_PERMISSION_KEYS:
+            if k in stored:
+                base[k] = bool(stored[k])
+        return base
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.user.id,
+            "username": self.user.username,
+            "email": self.user.email or "",
+            "user_type": self.user_type,
+            "is_superadmin": self.user_type == "superadmin",
+            "is_blocked": bool(self.is_blocked or not self.user.is_active),
+            "is_active": bool(self.user.is_active and not self.is_blocked),
+            "permissions": self.get_effective_permissions(),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+def get_or_create_cms_profile(user):
+    """Fetch or lazily initialize a CMSUserProfile for a Django User."""
+    profile = getattr(user, "cms_profile", None)
+    if profile is not None:
+        return profile
+    existing = CMSUserProfile.objects.filter(user=user).first()
+    if existing:
+        return existing
+    is_super = bool(user.username.lower() == "admin" or user.is_superuser)
+    u_type = "superadmin" if is_super else "admin"
+    return CMSUserProfile.objects.create(
+        user=user,
+        user_type=u_type,
+        permissions=get_default_permissions_for_type(u_type),
+        is_blocked=not user.is_active,
+    )
+
+
+
 
 

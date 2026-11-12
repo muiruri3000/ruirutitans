@@ -2909,6 +2909,152 @@ class VisitorCommentAndUsernameEditingTests(TestCase):
         self.assertIn("already in use", dup_res.json()["error"].lower())
 
 
+class CMSUserRolesAndPermissionsTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+        from .models import CMSUserProfile, get_default_permissions_for_type
+
+        self.superadmin_user = User.objects.create_user(
+            username="admin",
+            email="admin@ruirutitans.com",
+            password="superpassword",
+            is_staff=True,
+            is_superuser=True,
+        )
+        CMSUserProfile.objects.create(
+            user=self.superadmin_user,
+            user_type="superadmin",
+            permissions=get_default_permissions_for_type("superadmin"),
+        )
+
+    def _login(self, username, password):
+        res = self.client.post(
+            "/api/auth/cms-login/",
+            data=json.dumps({"username": username, "password": password}),
+            content_type="application/json",
+        )
+        return res
+
+    def test_superadmin_and_admin_permission_hierarchy(self):
+        # 1. Superadmin login returns user_type='superadmin' and all permissions ticked
+        login_res = self._login("admin", "superpassword")
+        self.assertEqual(login_res.status_code, 200)
+        super_data = login_res.json()
+        self.assertTrue(super_data["cms_user"]["is_superadmin"])
+        self.assertTrue(super_data["cms_user"]["permissions"]["downgrade_admin"])
+        self.assertTrue(super_data["cms_user"]["permissions"]["delete_admin"])
+        self.assertTrue(super_data["cms_user"]["permissions"]["block_admin"])
+        super_token = super_data["token"]
+
+        # 2. Superadmin creates an Admin user (all ticked except downgrade/delete/block admin)
+        create_admin = self.client.post(
+            "/api/auth/cms-users/",
+            data=json.dumps({
+                "username": "sub_admin",
+                "email": "sub@ruirutitans.com",
+                "password": "pass1234",
+                "user_type": "admin",
+            }),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=super_token,
+        )
+        self.assertEqual(create_admin.status_code, 201)
+        sub_admin_obj = create_admin.json()["user"]
+        self.assertEqual(sub_admin_obj["user_type"], "admin")
+        self.assertTrue(sub_admin_obj["permissions"]["manage_players"])
+        self.assertTrue(sub_admin_obj["permissions"]["manage_users"])
+        self.assertFalse(sub_admin_obj["permissions"]["downgrade_admin"])
+        self.assertFalse(sub_admin_obj["permissions"]["delete_admin"])
+        self.assertFalse(sub_admin_obj["permissions"]["block_admin"])
+
+        # 3. Superadmin creates a second Admin and a custom Match Reporter
+        create_admin2 = self.client.post(
+            "/api/auth/cms-users/",
+            data=json.dumps({
+                "username": "other_admin",
+                "password": "pass1234",
+                "user_type": "admin",
+            }),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=super_token,
+        )
+        self.assertEqual(create_admin2.status_code, 201)
+        other_admin_id = create_admin2.json()["user"]["id"]
+
+        create_reporter = self.client.post(
+            "/api/auth/cms-users/",
+            data=json.dumps({
+                "username": "reporter_1",
+                "password": "pass1234",
+                "user_type": "match_reporter",
+                "permissions": {"manage_fixtures": True, "manage_tactics": True},
+            }),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=super_token,
+        )
+        self.assertEqual(create_reporter.status_code, 201)
+        rep_perms = create_reporter.json()["user"]["permissions"]
+        self.assertTrue(rep_perms["manage_fixtures"])
+        self.assertTrue(rep_perms["manage_tactics"])
+        self.assertFalse(rep_perms["manage_players"])
+
+        # 4. sub_admin logs in and tries to downgrade, block, or delete other_admin -> 403 Forbidden
+        sub_login = self._login("sub_admin", "pass1234")
+        self.assertEqual(sub_login.status_code, 200)
+        sub_token = sub_login.json()["token"]
+
+        downgrade_attempt = self.client.patch(
+            f"/api/auth/cms-users/{other_admin_id}/",
+            data=json.dumps({"user_type": "moderator"}),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=sub_token,
+        )
+        self.assertEqual(downgrade_attempt.status_code, 403)
+
+        block_attempt = self.client.patch(
+            f"/api/auth/cms-users/{other_admin_id}/",
+            data=json.dumps({"is_blocked": True}),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=sub_token,
+        )
+        self.assertEqual(block_attempt.status_code, 403)
+
+        delete_attempt = self.client.delete(
+            f"/api/auth/cms-users/{other_admin_id}/",
+            HTTP_X_TITANS_CMS_TOKEN=sub_token,
+        )
+        self.assertEqual(delete_attempt.status_code, 403)
+
+        # 5. Superadmin CAN downgrade, block (preventing login), and delete other_admin
+        super_downgrade = self.client.patch(
+            f"/api/auth/cms-users/{other_admin_id}/",
+            data=json.dumps({"user_type": "moderator"}),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=super_token,
+        )
+        self.assertEqual(super_downgrade.status_code, 200)
+        self.assertEqual(super_downgrade.json()["user"]["user_type"], "moderator")
+
+        super_block = self.client.patch(
+            f"/api/auth/cms-users/{other_admin_id}/",
+            data=json.dumps({"is_blocked": True}),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=super_token,
+        )
+        self.assertEqual(super_block.status_code, 200)
+        self.assertTrue(super_block.json()["user"]["is_blocked"])
+
+        blocked_login = self._login("other_admin", "pass1234")
+        self.assertIn(blocked_login.status_code, [401, 403])
+
+        super_delete = self.client.delete(
+            f"/api/auth/cms-users/{other_admin_id}/",
+            HTTP_X_TITANS_CMS_TOKEN=super_token,
+        )
+        self.assertEqual(super_delete.status_code, 200)
+
+
+
 
 
 

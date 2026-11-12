@@ -962,11 +962,13 @@ class CMSLoginAPIView(views.APIView):
         from .services import (
             create_signed_token,
             get_cms_user_credential_fingerprint,
+            build_cms_user_payload,
             get_client_ip,
             check_auth_rate_limit,
             record_auth_failure,
             clear_auth_failures,
         )
+        from .models import get_or_create_cms_profile
 
         payload = request.data or {}
         username = str(payload.get("username", "")).strip()
@@ -996,17 +998,20 @@ class CMSLoginAPIView(views.APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+        profile = get_or_create_cms_profile(user)
+        if profile.is_blocked:
+            return Response(
+                {"error": "This account has been blocked by a Superadmin."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         clear_auth_failures("cms_login", client_ip, username)
 
         # Log off former player session immediately
         if hasattr(request, "session"):
             request.session.pop("titans_player", None)
 
-        cms_profile = {
-            "role": "cms",
-            "username": user.username,
-            "email": user.email,
-        }
+        cms_profile = build_cms_user_payload(user)
         if hasattr(request, "session"):
             request.session["titans_cms"] = {
                 **cms_profile,
@@ -1564,6 +1569,240 @@ class CMSChangePasswordAPIView(views.APIView):
             "message": "Manager password changed successfully!",
             "cms_user": cms_profile,
             "token": token,
+        })
+
+
+class CMSUsersAPIView(views.APIView):
+    """
+    Manage CMS / Admin / Custom Users and their granular capability checkboxes.
+    - Superadmin: full control, including downgrading, deleting, or blocking an Admin.
+    - Admin: all capabilities ticked by default EXCEPT downgrading, deleting, or blocking an Admin.
+    - Other user types: customizable via checkboxes.
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def _get_actor(self, request):
+        from django.contrib.auth.models import User
+        from .models import get_or_create_cms_profile
+        from .services import get_authenticated_cms_from_request
+
+        cms_info = get_authenticated_cms_from_request(request)
+        if not cms_info:
+            return None, None, {}
+        actor_user = User.objects.filter(username__iexact=cms_info.get("username", "")).first()
+        if not actor_user:
+            return None, None, {}
+        actor_profile = get_or_create_cms_profile(actor_user)
+        return actor_user, actor_profile, actor_profile.get_effective_permissions()
+
+    def _sanitize_permissions(self, raw_perms, user_type, actor_is_superadmin):
+        from .models import CMS_PERMISSION_KEYS, get_default_permissions_for_type
+
+        if user_type == "superadmin":
+            return {k: True for k in CMS_PERMISSION_KEYS}
+
+        base = get_default_permissions_for_type(user_type)
+        if isinstance(raw_perms, dict):
+            for k in CMS_PERMISSION_KEYS:
+                if k in raw_perms:
+                    base[k] = bool(raw_perms[k])
+
+        # Only superadmin can grant admin-control permissions
+        if not actor_is_superadmin:
+            base["downgrade_admin"] = False
+            base["delete_admin"] = False
+            base["block_admin"] = False
+        return base
+
+    def get(self, request):
+        from django.contrib.auth.models import User
+        from django.db.models import Q
+        from .models import (
+            CMS_PERMISSION_DEFINITIONS,
+            CMS_USER_TYPES,
+            get_default_permissions_for_type,
+            get_or_create_cms_profile,
+        )
+
+        actor_user, actor_profile, actor_perms = self._get_actor(request)
+        if not actor_user:
+            return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        users_qs = (
+            User.objects.filter(Q(is_staff=True) | Q(is_superuser=True) | Q(cms_profile__isnull=False))
+            .distinct()
+            .order_by("id")
+        )
+        users_list = [get_or_create_cms_profile(u).to_dict() for u in users_qs]
+
+        return Response({
+            "status": "success",
+            "users": users_list,
+            "user_types": [
+                {
+                    "key": k,
+                    "label": lbl,
+                    "default_permissions": get_default_permissions_for_type(k),
+                }
+                for k, lbl in CMS_USER_TYPES
+            ],
+            "permission_definitions": [
+                {"key": k, "label": lbl} for k, lbl in CMS_PERMISSION_DEFINITIONS
+            ],
+            "actor_is_superadmin": actor_profile.user_type == "superadmin",
+            "actor_permissions": actor_perms,
+        })
+
+    def post(self, request):
+        from django.contrib.auth.models import User
+        from .models import CMSUserProfile, CMS_USER_TYPES
+
+        actor_user, actor_profile, actor_perms = self._get_actor(request)
+        if not actor_user:
+            return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        actor_is_superadmin = actor_profile.user_type == "superadmin"
+        if not actor_is_superadmin and not actor_perms.get("manage_users"):
+            return Response({"error": "You do not have permission to add users."}, status=status.HTTP_403_FORBIDDEN)
+
+        payload = request.data or {}
+        username = str(payload.get("username", "")).strip()
+        email = str(payload.get("email", "")).strip()
+        password = str(payload.get("password", "")).strip()
+        user_type = str(payload.get("user_type", "admin")).strip()
+
+        valid_types = {k for k, _ in CMS_USER_TYPES}
+        if user_type not in valid_types:
+            return Response({"error": f"Invalid user_type '{user_type}'."}, status=status.HTTP_400_BAD_REQUEST)
+        if user_type == "superadmin" and not actor_is_superadmin:
+            return Response({"error": "Only a Superadmin can create another Superadmin."}, status=status.HTTP_403_FORBIDDEN)
+        if not username:
+            return Response({"error": "Username is required."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(password) < 4:
+            return Response({"error": "Password must be at least 4 characters."}, status=status.HTTP_400_BAD_REQUEST)
+        if User.objects.filter(username__iexact=username).exists():
+            return Response({"error": f"Username '{username}' is already taken."}, status=status.HTTP_400_BAD_REQUEST)
+
+        perms = self._sanitize_permissions(payload.get("permissions"), user_type, actor_is_superadmin)
+        new_user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            is_staff=True,
+            is_superuser=(user_type == "superadmin"),
+            is_active=True,
+        )
+        profile = CMSUserProfile.objects.create(
+            user=new_user,
+            user_type=user_type,
+            permissions=perms,
+            is_blocked=False,
+            created_by=actor_user,
+        )
+        return Response({
+            "status": "success",
+            "message": f"User '{username}' created as {user_type}.",
+            "user": profile.to_dict(),
+        }, status=status.HTTP_201_CREATED)
+
+    def patch(self, request, user_id=None):
+        from django.contrib.auth.models import User
+        from .models import CMS_USER_TYPES, get_or_create_cms_profile
+
+        actor_user, actor_profile, actor_perms = self._get_actor(request)
+        if not actor_user:
+            return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        actor_is_superadmin = actor_profile.user_type == "superadmin"
+        if not actor_is_superadmin and not actor_perms.get("manage_users"):
+            return Response({"error": "You do not have permission to manage users."}, status=status.HTTP_403_FORBIDDEN)
+
+        target_user = User.objects.filter(id=user_id).first()
+        if not target_user:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        target_profile = get_or_create_cms_profile(target_user)
+
+        if target_profile.user_type == "superadmin" and not actor_is_superadmin:
+            return Response({"error": "Only a Superadmin can modify a Superadmin account."}, status=status.HTTP_403_FORBIDDEN)
+
+        payload = request.data or {}
+        new_type = payload.get("user_type")
+        if new_type is not None:
+            new_type = str(new_type).strip()
+            valid_types = {k for k, _ in CMS_USER_TYPES}
+            if new_type not in valid_types:
+                return Response({"error": f"Invalid user_type '{new_type}'."}, status=status.HTTP_400_BAD_REQUEST)
+            if new_type == "superadmin" and not actor_is_superadmin:
+                return Response({"error": "Only a Superadmin can promote a user to Superadmin."}, status=status.HTTP_403_FORBIDDEN)
+            if target_profile.user_type == "admin" and new_type not in ("admin", "superadmin"):
+                if not actor_is_superadmin and not actor_perms.get("downgrade_admin"):
+                    return Response({"error": "Only a Superadmin (or a user with Downgrade Admin permission) can downgrade an Admin."}, status=status.HTTP_403_FORBIDDEN)
+            target_profile.user_type = new_type
+
+        if "is_blocked" in payload:
+            want_blocked = bool(payload["is_blocked"])
+            if target_user.id == actor_user.id and want_blocked:
+                return Response({"error": "You cannot block your own account."}, status=status.HTTP_400_BAD_REQUEST)
+            if target_profile.user_type in ("admin", "superadmin") and not actor_is_superadmin and not actor_perms.get("block_admin"):
+                return Response({"error": "Only a Superadmin can block or unblock an Admin account."}, status=status.HTTP_403_FORBIDDEN)
+            target_profile.is_blocked = want_blocked
+            target_user.is_active = not want_blocked
+
+        if "permissions" in payload:
+            target_profile.permissions = self._sanitize_permissions(
+                payload.get("permissions"),
+                target_profile.user_type,
+                actor_is_superadmin,
+            )
+
+        if "email" in payload:
+            target_user.email = str(payload.get("email") or "").strip()
+
+        new_password = str(payload.get("password") or "").strip()
+        if new_password:
+            if len(new_password) < 4:
+                return Response({"error": "Password must be at least 4 characters."}, status=status.HTTP_400_BAD_REQUEST)
+            target_user.set_password(new_password)
+
+        target_user.is_superuser = (target_profile.user_type == "superadmin")
+        target_user.is_staff = True
+        target_user.save()
+        target_profile.save()
+
+        return Response({
+            "status": "success",
+            "message": f"Updated user '{target_user.username}'.",
+            "user": target_profile.to_dict(),
+        })
+
+    def delete(self, request, user_id=None):
+        from django.contrib.auth.models import User
+        from .models import get_or_create_cms_profile
+
+        actor_user, actor_profile, actor_perms = self._get_actor(request)
+        if not actor_user:
+            return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        actor_is_superadmin = actor_profile.user_type == "superadmin"
+        target_user = User.objects.filter(id=user_id).first()
+        if not target_user:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        if target_user.id == actor_user.id:
+            return Response({"error": "You cannot delete your own account."}, status=status.HTTP_400_BAD_REQUEST)
+
+        target_profile = get_or_create_cms_profile(target_user)
+        if target_profile.user_type == "superadmin" and not actor_is_superadmin:
+            return Response({"error": "Only a Superadmin can delete a Superadmin account."}, status=status.HTTP_403_FORBIDDEN)
+        if target_profile.user_type == "admin" and not actor_is_superadmin and not actor_perms.get("delete_admin"):
+            return Response({"error": "Only a Superadmin can delete an Admin account."}, status=status.HTTP_403_FORBIDDEN)
+        if not actor_is_superadmin and not actor_perms.get("manage_users"):
+            return Response({"error": "You do not have permission to delete users."}, status=status.HTTP_403_FORBIDDEN)
+
+        uname = target_user.username
+        target_user.delete()
+        return Response({
+            "status": "success",
+            "message": f"User '{uname}' deleted.",
         })
 
 

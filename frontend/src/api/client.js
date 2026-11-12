@@ -912,6 +912,53 @@ export const api = {
     return await res.json();
   },
 
+  async getCmsUsers() {
+    const res = await fetch(`/api/auth/cms-users/`, { headers: defaultHeaders() });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to load users: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async createCmsUser(payload) {
+    const res = await fetch(`/api/auth/cms-users/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to create user: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async updateCmsUser(userId, payload) {
+    const res = await fetch(`/api/auth/cms-users/${userId}/`, {
+      method: "PATCH",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to update user: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async deleteCmsUser(userId) {
+    const res = await fetch(`/api/auth/cms-users/${userId}/`, {
+      method: "DELETE",
+      headers: defaultHeaders(),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to delete user: ${res.status}`);
+    }
+    return await res.json();
+  },
+
   async updateDutyRoster(categoryKey, payload) {
     const url = categoryKey
       ? `/api/categories/${encodeURIComponent(categoryKey)}/duty-roster/`

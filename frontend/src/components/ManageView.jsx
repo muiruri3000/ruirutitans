@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TeamBalancerView from './TeamBalancerView';
 import DutyRosterView from './DutyRosterView';
+import UserPermissionsPanel from './UserPermissionsPanel';
 import { api } from '../api/client';
 import PasswordInput from './PasswordInput';
 
@@ -75,6 +76,13 @@ export default function ManageView({
   onUpdateCmsUser = null,
   initialSection = 'players',
 }) {
+  const hasPerm = (key) => {
+    if (!cmsUser) return false;
+    if (cmsUser.is_superadmin || cmsUser.user_type === 'superadmin') return true;
+    if (!cmsUser.permissions) return true;
+    return Boolean(cmsUser.permissions[key]);
+  };
+
   const [adminSection, setAdminSection] = useState(initialSection || 'players'); // 'players' | 'balancer' | 'homepage' | 'voting' | 'teams' | 'security'
 
   useEffect(() => {
@@ -849,6 +857,7 @@ export default function ManageView({
           flexWrap: 'wrap',
         }}
       >
+        {hasPerm('manage_players') && (
         <button
           type="button"
           onClick={() => setAdminSection('players')}
@@ -867,6 +876,8 @@ export default function ManageView({
         >
           📝 Player Registration &amp; 4-Digit Code
         </button>
+        )}
+        {hasPerm('manage_teams') && (
         <button
           type="button"
           onClick={() => setAdminSection('balancer')}
@@ -885,6 +896,8 @@ export default function ManageView({
         >
           ⚖️ Team Balancer (Excel / CSV / Google Sheet)
         </button>
+        )}
+        {hasPerm('manage_homepage') && (
         <button
           type="button"
           onClick={() => setAdminSection('homepage')}
@@ -903,6 +916,8 @@ export default function ManageView({
         >
           🖼️ Homepage Carousel, Jerseys &amp; Fixtures
         </button>
+        )}
+        {hasPerm('manage_voting') && (
         <button
           type="button"
           onClick={() => setAdminSection('voting')}
@@ -921,6 +936,8 @@ export default function ManageView({
         >
           ⭐ Weekly Voting Toggle &amp; TOTW Settings
         </button>
+        )}
+        {hasPerm('manage_teams') && (
         <button
           type="button"
           onClick={() => setAdminSection('teams')}
@@ -939,6 +956,8 @@ export default function ManageView({
         >
           ⚽ Championship Teams, Squad Rosters &amp; Referees
         </button>
+        )}
+        {hasPerm('manage_duty_roster') && (
         <button
           type="button"
           onClick={() => setAdminSection('duty')}
@@ -957,6 +976,7 @@ export default function ManageView({
         >
           🧹 Matchday Duty Roster
         </button>
+        )}
         <button
           type="button"
           onClick={() => setAdminSection('security')}
@@ -973,7 +993,7 @@ export default function ManageView({
             cursor: 'pointer',
           }}
         >
-          🔐 Manager Password &amp; Security
+          🔐 Users, Permissions &amp; Security
         </button>
       </div>
 
@@ -3782,6 +3802,8 @@ export default function ManageView({
               </button>
             </form>
           </div>
+
+          <UserPermissionsPanel cmsUser={cmsUser} />
         </div>
       )}
 
