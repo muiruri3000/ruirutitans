@@ -534,13 +534,13 @@ export default function TacticsView({
   }, []);
 
   const handleToggleFullscreen = async (forceState = null) => {
-    const shouldExit = forceState !== null ? !forceState : isPitchFullscreen;
+    // If called directly from an event handler (e.g. onClick={handleToggleFullscreen}),
+    // forceState is an Event object, not a boolean. Guard so only boolean values are treated as explicit flags.
+    const isExplicitBool = typeof forceState === 'boolean';
+    const shouldExit = isExplicitBool ? !forceState : isPitchFullscreen;
 
     if (shouldExit) {
-      if (forceState === null) {
-        // User explicitly tapped exit button
-        userExitedFullscreenRef.current = true;
-      }
+      userExitedFullscreenRef.current = true;
       setIsPitchFullscreen(false);
       setShowFullscreenBench(false);
       try {
@@ -553,11 +553,12 @@ export default function TacticsView({
         }
       } catch (e) {}
       try {
-        if (screen.orientation && screen.orientation.unlock) {
-          screen.orientation.unlock();
+        if (window.screen?.orientation?.unlock) {
+          window.screen.orientation.unlock();
         }
       } catch (e) {}
       setIsLandscape(previousOrientationRef.current);
+      showStatusNotice('Exited fullscreen view');
     } else {
       userExitedFullscreenRef.current = false;
       previousOrientationRef.current = isLandscape;
@@ -574,8 +575,8 @@ export default function TacticsView({
         }
       } catch (e) {}
       try {
-        if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock('landscape');
+        if (window.screen?.orientation?.lock) {
+          await window.screen.orientation.lock('landscape');
         }
       } catch (e) {}
       showStatusNotice('⛶ Pitch Covering Screen (Landscape) · Tap ✕ to exit');
@@ -604,6 +605,7 @@ export default function TacticsView({
     const handleFsChange = () => {
       const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
       if (!isFs && isPitchFullscreen) {
+        userExitedFullscreenRef.current = true;
         setIsPitchFullscreen(false);
         setShowFullscreenBench(false);
         setIsLandscape(previousOrientationRef.current);
@@ -620,7 +622,7 @@ export default function TacticsView({
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isPitchFullscreen) {
-        handleToggleFullscreen();
+        handleToggleFullscreen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -1467,7 +1469,7 @@ export default function TacticsView({
 
           <button
             type="button"
-            onClick={() => handleToggleFullscreen()}
+            onClick={() => handleToggleFullscreen(true)}
             style={{
               background: '#0F4432',
               color: '#A7F3D0',
@@ -1770,7 +1772,7 @@ export default function TacticsView({
       {windowDimensions.width <= 768 && !isPitchFullscreen && (
         <button
           type="button"
-          onClick={handleToggleFullscreen}
+          onClick={() => handleToggleFullscreen(true)}
           style={{
             width: '100%',
             background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.22), rgba(255, 149, 0, 0.08))',
@@ -1884,10 +1886,10 @@ export default function TacticsView({
               }}
             >
               {/* Left: Exit button & Formation info */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                 <button
                   type="button"
-                  onClick={handleToggleFullscreen}
+                  onClick={() => handleToggleFullscreen(false)}
                   style={{
                     background: '#FF9500',
                     color: '#16201B',
@@ -1901,16 +1903,17 @@ export default function TacticsView({
                     alignItems: 'center',
                     gap: '6px',
                     boxShadow: '0 2px 8px rgba(255, 149, 0, 0.4)',
+                    flexShrink: 0,
                   }}
                   title="Exit Fullscreen Mode"
                 >
                   <span style={{ fontSize: '13px', fontWeight: 900 }}>✕</span>
                   <span>Exit Fullscreen</span>
                 </button>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF9F0A' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF9F0A', whiteSpace: 'nowrap' }}>
                   {activeFormation.name}
                 </span>
-                <span style={{ fontSize: '11px', color: '#7AA392' }}>
+                <span style={{ fontSize: '11px', color: '#7AA392', whiteSpace: 'nowrap' }}>
                   ({currentAssignedCount}/{effectiveMaxPlayers})
                 </span>
               </div>
@@ -2250,42 +2253,75 @@ export default function TacticsView({
             </div>
           )}
 
-          {/* Fullscreen Floating Pill to restore menu if hidden */}
+          {/* Fullscreen Floating Pill to restore menu if hidden or exit */}
           {isPitchFullscreen && isFullscreenMenuHidden && (
             <div
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsFullscreenMenuHidden(false);
-                showStatusNotice('📋 Menu bar restored');
-              }}
               style={{
                 position: 'absolute',
                 top: 'max(env(safe-area-inset-top, 0px), 8px)',
                 left: '50%',
                 transform: 'translateX(-50%)',
                 zIndex: 90,
-                background: 'rgba(18, 18, 18, 0.85)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 149, 0, 0.6)',
-                color: '#FF9500',
-                borderRadius: '30px',
-                padding: '5px 16px',
-                fontSize: '11px',
-                fontWeight: 800,
-                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
-                transition: 'all 0.2s ease',
-                userSelect: 'none',
-                touchAction: 'manipulation',
+                gap: '8px',
               }}
-              title="Tap or swipe anywhere on screen to show menu bar"
             >
-              <span style={{ fontSize: '11px' }}>▼</span>
-              <span>Swipe or tap for Controls</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleFullscreen(false);
+                }}
+                style={{
+                  background: '#FF9500',
+                  color: '#16201B',
+                  border: 'none',
+                  borderRadius: '30px',
+                  padding: '5px 12px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
+                }}
+                title="Exit Fullscreen Mode"
+              >
+                <span>✕</span>
+                <span>Exit Fullscreen</span>
+              </button>
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFullscreenMenuHidden(false);
+                  showStatusNotice('📋 Menu bar restored');
+                }}
+                style={{
+                  background: 'rgba(18, 18, 18, 0.85)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 149, 0, 0.6)',
+                  color: '#FF9500',
+                  borderRadius: '30px',
+                  padding: '5px 14px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
+                  transition: 'all 0.2s ease',
+                  userSelect: 'none',
+                  touchAction: 'manipulation',
+                }}
+                title="Tap or swipe anywhere on screen to show menu bar"
+              >
+                <span style={{ fontSize: '11px' }}>▼</span>
+                <span>Swipe or tap for Controls</span>
+              </div>
             </div>
           )}
 
@@ -2333,7 +2369,7 @@ export default function TacticsView({
                 {/* Fullscreen Landscape Button */}
                 <button
                   type="button"
-                  onClick={handleToggleFullscreen}
+                  onClick={() => handleToggleFullscreen(true)}
                   style={{
                     background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.22), rgba(255, 149, 0, 0.08))',
                     color: '#FF9F0A',
