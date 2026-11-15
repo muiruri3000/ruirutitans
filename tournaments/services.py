@@ -4,7 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.text import slugify
 from django.db.models import Count, Max, Avg, Q
-from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote, WeeklyMVP, fixture_sort_key, parse_fixture_date_key
+from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote, WeeklyMVP, AuditLog, fixture_sort_key, parse_fixture_date_key
 
 REAL_OPEN_TEAM_SEED = [
     {
@@ -2289,6 +2289,86 @@ def compute_category_suspensions(category):
                 if is_interf:
                     st["red_interference"] = True
 
+    # 3. Any remaining unserved card suspensions (no upcoming fixture yet)
+    for st in player_state.values():
+        if st["pending_red"] or st["pending_yellows"] >= 4:
+            is_interf = st["red_interference"] if st["pending_red"] else st["yellow_interference"]
+            src_fix = st["last_card_fixture_id"]
+            if st["pending_red"] and st["pending_yellows"] >= 4:
+                reason = f"Red Card & {st['pending_yellows']} Yellow Cards Accumulation"
+            elif st["pending_red"]:
+                reason = (
+                    f"Red Card (Sideline Interference in {src_fix})"
+                    if is_interf and src_fix
+                    else ("Red Card (Sideline Interference)" if is_interf else "Red Card — Misses Next Match")
+                )
+            else:
+                reason = (
+                    f"{st['pending_yellows']} Yellow Cards Accumulation (incl. Interference in {src_fix})"
+                    if is_interf and src_fix
+                    else f"{st['pending_yellows']} Yellow Cards Accumulation — Misses Next Match"
+                )
+            by_fixture.setdefault("__unscheduled__", []).append({
+                "teamId": st["team_id"],
+                "team": st["team_name"],
+                "playerId": st["player_id"],
+                "player": st["player_name"],
+                "playerName": st["player_name"],
+                "reason": reason,
+                "interference": bool(is_interf),
+                "sourceFixtureId": src_fix,
+            })
+
+    # 4. Active disciplinary bans (PlayerBan) linked to player's current team
+    active_bans_qs = category.player_bans.filter(is_active=True).select_related("player", "team", "player__team")
+    for b in active_bans_qs:
+        eff_team = (b.player.team if b.player and b.player.team else None) or b.team
+        if not eff_team:
+            continue
+        t_id = eff_team.team_id
+        t_name = eff_team.name
+        p_id = b.player.player_id
+        p_name = b.player.name if not b.player.is_unknown else f"{t_name} squad member"
+        duration_label = (
+            f"{b.games_banned} Match{'es' if b.games_banned != 1 else ''}"
+            if b.ban_type == "games"
+            else (b.period_description or "Period Suspension")
+        )
+        reason = (
+            f"Disciplinary Ban ({duration_label}): {b.reason}"
+            if b.reason
+            else f"Disciplinary Ban — {duration_label}"
+        )
+        team_upcoming = [
+            f
+            for f in upcoming_unplayed
+            if (f.home_team and f.home_team.team_id == t_id) or (f.away_team and f.away_team.team_id == t_id)
+        ]
+        target_fixtures = (
+            team_upcoming[: max(1, int(b.games_banned or 1))]
+            if b.ban_type == "games"
+            else team_upcoming
+        )
+        ban_entry = {
+            "teamId": t_id,
+            "team": t_name,
+            "playerId": p_id,
+            "player": p_name,
+            "playerName": p_name,
+            "reason": reason,
+            "interference": False,
+            "sourceFixtureId": None,
+            "isBan": True,
+            "banId": b.id,
+            "durationLabel": duration_label,
+            "expectedFixtureReturn": b.expected_fixture_return,
+        }
+        target_keys = [f.fixture_id for f in target_fixtures] if target_fixtures else ["__unscheduled__"]
+        for fix_key in target_keys:
+            existing = by_fixture.setdefault(fix_key, [])
+            if not any(item.get("banId") == b.id or item.get("playerId") == p_id for item in existing):
+                existing.append(dict(ban_entry))
+
     return by_fixture
 
 
@@ -3229,6 +3309,10 @@ def action_transfer_request(category, transfer_id, action, admin_notes="", effec
         player.team = transfer.to_team
         player.category = transfer.to_team.category
         player.save(update_fields=["team", "category"])
+        player.disciplinary_bans.filter(is_active=True).update(
+            team=transfer.to_team,
+            category=transfer.to_team.category,
+        )
         transfer.status = "approved"
         transfer.approved_at = timezone.now()
         transfer.approved_by = admin_username
@@ -3270,6 +3354,10 @@ def direct_admin_transfer(category, player_id, to_team_id, notes="", transfer_ty
     player.team = to_team
     player.category = to_team.category
     player.save(update_fields=["team", "category"])
+    player.disciplinary_bans.filter(is_active=True).update(
+        team=to_team,
+        category=to_team.category,
+    )
 
     req = TransferRequest.objects.create(
         category=category,
@@ -5242,17 +5330,76 @@ def compute_team_analytics(category, team_id):
         })
 
     all_susp_map = compute_category_suspensions(category)
+    upcoming_fix_ids = {m["fixture_id"] for m in team_upcoming}
     active_suspensions = []
+    seen_player_ids = set()
+    seen_ban_ids = set()
+
+    # 1. Active disciplinary bans linked to this team or any player on its roster
+    from .models import PlayerBan
+    team_player_pks = [p.pk for p in team.players.all()]
+    active_bans_qs = category.player_bans.filter(
+        Q(team=team) | Q(player_id__in=team_player_pks),
+        is_active=True,
+    ).select_related("player", "team")
+    next_target_fix_id = team_upcoming[0]["fixture_id"] if team_upcoming else None
+    for b in active_bans_qs:
+        duration_label = (
+            f"{b.games_banned} Match{'es' if b.games_banned != 1 else ''}"
+            if b.ban_type == "games"
+            else (b.period_description or "Period Suspension")
+        )
+        reason = (
+            f"{b.reason} ({duration_label})"
+            if b.reason
+            else f"Disciplinary Ban — {duration_label}"
+        )
+        p_id = b.player.player_id
+        seen_ban_ids.add(b.id)
+        seen_player_ids.add(p_id)
+        active_suspensions.append({
+            "target_fixture_id": next_target_fix_id,
+            "player_id": p_id,
+            "player_name": b.player.name,
+            "reason": reason,
+            "duration_label": duration_label,
+            "expected_fixture_return": b.expected_fixture_return,
+            "is_ban": True,
+            "ban_id": b.id,
+            "interference": False,
+        })
+
+    # 2. Match-card suspensions from upcoming (or unscheduled) fixtures
     for fix_id, susp_list in all_susp_map.items():
+        if upcoming_fix_ids:
+            if fix_id not in upcoming_fix_ids and fix_id != "__unscheduled__":
+                continue
+        elif fix_id != "__unscheduled__":
+            continue
         for s in susp_list:
             if s.get("teamId") == team_id or s.get("team") == team_id:
+                s_pid = s.get("playerId") or s.get("player")
+                s_ban_id = s.get("banId")
+                if (s_ban_id and s_ban_id in seen_ban_ids) or (s_pid and s_pid in seen_player_ids):
+                    continue
+                if s_pid:
+                    seen_player_ids.add(s_pid)
                 active_suspensions.append({
-                    "target_fixture_id": fix_id,
-                    "player_id": s.get("playerId") or s.get("player"),
+                    "target_fixture_id": None if fix_id == "__unscheduled__" else fix_id,
+                    "player_id": s_pid,
                     "player_name": s.get("playerName"),
                     "reason": s.get("reason"),
+                    "duration_label": s.get("durationLabel"),
+                    "expected_fixture_return": s.get("expectedFixtureReturn", ""),
+                    "is_ban": bool(s.get("isBan")),
                     "interference": s.get("interference", False),
                 })
+
+    susp_reason_by_pid = {s["player_id"]: s["reason"] for s in active_suspensions if s.get("player_id")}
+    for r_item in roster:
+        r_pid = r_item["id"]
+        r_item["is_suspended"] = r_pid in seen_player_ids
+        r_item["suspension_reason"] = susp_reason_by_pid.get(r_pid)
 
     projections = {}
     if category.mode == "league":
@@ -6481,6 +6628,333 @@ def get_weekly_mvp_summary(category, auto_compute=True):
         "next_update": next_sat_cutoff.strftime("Saturday at 8:00 PM (%d %b)"),
         "next_cutoff_iso": next_sat_cutoff.isoformat(),
     }
+
+
+# ============================================================
+# SYSTEM AUDITING (LOGINS & ACTIVITIES)
+# ============================================================
+
+def resolve_audit_actor(
+    request=None,
+    *,
+    actor_type=None,
+    actor_id=None,
+    actor_username=None,
+    actor_name=None,
+    actor_role=None,
+):
+    """
+    Resolves who performed an action using explicit overrides or the authenticated
+    CMS user / Player attached to the HTTP request.
+    """
+    if actor_username or actor_name or (actor_type and actor_type in ("system", "visitor")):
+        resolved_type = actor_type or "cms"
+        resolved_role = actor_role or ("player" if resolved_type == "player" else resolved_type)
+        resolved_username = str(actor_username or "").strip()
+        resolved_name = str(actor_name or resolved_username or resolved_type).strip()
+        return {
+            "actor_type": resolved_type,
+            "actor_id": str(actor_id or ""),
+            "actor_username": resolved_username[:150],
+            "actor_name": resolved_name[:200],
+            "actor_role": str(resolved_role)[:50],
+        }
+
+    if request is not None:
+        cms = get_authenticated_cms_from_request(request)
+        if cms:
+            uname = str(cms.get("username") or "").strip()
+            role = str(cms.get("user_type") or "admin").strip()
+            role_label = role.replace("_", " ").title()
+            return {
+                "actor_type": "cms",
+                "actor_id": str(actor_id or ""),
+                "actor_username": uname[:150],
+                "actor_name": f"{uname} ({role_label})"[:200],
+                "actor_role": role[:50],
+            }
+
+        player = get_authenticated_player_from_request(request)
+        if player:
+            pid = str(player.get("player_id") or player.get("id") or "").strip()
+            uname = str(player.get("username") or "").strip()
+            pname = str(player.get("name") or uname or pid or "Player").strip()
+            team_name = str(player.get("team_name") or "Free Agent").strip()
+            return {
+                "actor_type": "player",
+                "actor_id": pid[:100],
+                "actor_username": uname[:150],
+                "actor_name": f"{pname} ({team_name})"[:200],
+                "actor_role": "player",
+            }
+
+        # Fallback to Django session/user if available
+        django_user = getattr(request, "user", None)
+        if django_user and getattr(django_user, "is_authenticated", False):
+            uname = str(getattr(django_user, "username", "") or "").strip()
+            role = "superadmin" if getattr(django_user, "is_superuser", False) else "admin"
+            return {
+                "actor_type": "cms",
+                "actor_id": str(getattr(django_user, "id", "") or "")[:100],
+                "actor_username": uname[:150],
+                "actor_name": f"{uname} ({role.title()})"[:200],
+                "actor_role": role[:50],
+            }
+
+    return {
+        "actor_type": actor_type or "visitor",
+        "actor_id": str(actor_id or "")[:100],
+        "actor_username": str(actor_username or "")[:150],
+        "actor_name": str(actor_name or "Visitor")[:200],
+        "actor_role": str(actor_role or "visitor")[:50],
+    }
+
+
+def record_audit_log(
+    request=None,
+    *,
+    event_type="activity",
+    action="",
+    target="",
+    category_key="",
+    details=None,
+    actor_type=None,
+    actor_id=None,
+    actor_username=None,
+    actor_name=None,
+    actor_role=None,
+):
+    """
+    Records an AuditLog row safely without ever raising exceptions back to callers.
+    """
+    try:
+        actor = resolve_audit_actor(
+            request,
+            actor_type=actor_type,
+            actor_id=actor_id,
+            actor_username=actor_username,
+            actor_name=actor_name,
+            actor_role=actor_role,
+        )
+        ip_address = get_client_ip(request) if request is not None else ""
+        if ip_address == "unknown":
+            ip_address = ""
+        meta = getattr(request, "META", {}) or {} if request is not None else {}
+        user_agent = str(meta.get("HTTP_USER_AGENT") or "")[:255]
+        clean_details = details if isinstance(details, dict) else {}
+
+        return AuditLog.objects.create(
+            actor_type=actor["actor_type"],
+            actor_id=actor["actor_id"],
+            actor_username=actor["actor_username"],
+            actor_name=actor["actor_name"],
+            actor_role=actor["actor_role"],
+            event_type=str(event_type or "activity")[:50],
+            action=str(action or "Performed action")[:255],
+            target=str(target or "")[:255],
+            category_key=str(category_key or "")[:100],
+            details=clean_details,
+            ip_address=str(ip_address or "")[:64],
+            user_agent=user_agent,
+        )
+    except Exception:
+        return None
+
+
+def _compute_fixture_score_pair(fx: dict):
+    if fx.get("walkover"):
+        winner = fx["walkover"]
+        if winner == fx.get("home"):
+            return (3, 0)
+        if winner == fx.get("away"):
+            return (0, 3)
+    events = fx.get("events") or []
+    h_goals = sum(1 for e in events if e.get("type") == "goal" and e.get("team") == fx.get("home"))
+    a_goals = sum(1 for e in events if e.get("type") == "goal" and e.get("team") == fx.get("away"))
+    if h_goals == 0 and a_goals == 0 and isinstance(fx.get("homeScore"), int) and isinstance(fx.get("awayScore"), int):
+        return (fx["homeScore"], fx["awayScore"])
+    return (h_goals, a_goals)
+
+
+def summarize_state_diff_for_audit(old_state: dict, new_state: dict):
+    """
+    Compares old and new tournament state dictionaries during /api/state/ POST
+    and returns a list of structured audit log specs describing what changed.
+    """
+    entries = []
+    old_cats = (old_state or {}).get("categories") or {}
+    new_cats = (new_state or {}).get("categories") or {}
+
+    for cat_key, new_cat in new_cats.items():
+        if not isinstance(new_cat, dict):
+            continue
+        old_cat = old_cats.get(cat_key) or {}
+        cat_label = new_cat.get("label") or cat_key
+
+        # 1. Fixture changes (scores, played status, events, walkover)
+        old_fixtures = {f.get("id"): f for f in (old_cat.get("fixtures") or []) if isinstance(f, dict) and f.get("id")}
+        new_fixtures = {f.get("id"): f for f in (new_cat.get("fixtures") or []) if isinstance(f, dict) and f.get("id")}
+
+        changed_fixtures = []
+        for fid, nf in new_fixtures.items():
+            of = old_fixtures.get(fid)
+            if not of:
+                continue
+            old_sig = (
+                bool(of.get("played")),
+                of.get("walkover"),
+                len(of.get("events") or []),
+                _compute_fixture_score_pair(of),
+                of.get("date"),
+                of.get("referee"),
+            )
+            new_sig = (
+                bool(nf.get("played")),
+                nf.get("walkover"),
+                len(nf.get("events") or []),
+                _compute_fixture_score_pair(nf),
+                nf.get("date"),
+                nf.get("referee"),
+            )
+            if old_sig != new_sig:
+                hs, as_ = _compute_fixture_score_pair(nf)
+                h_id = nf.get("home") or "Home"
+                a_id = nf.get("away") or "Away"
+                score_changed = (
+                    bool(of.get("played")) != bool(nf.get("played"))
+                    or of.get("walkover") != nf.get("walkover")
+                    or len(of.get("events") or []) != len(nf.get("events") or [])
+                    or _compute_fixture_score_pair(of) != (hs, as_)
+                )
+                changed_fixtures.append({
+                    "id": fid,
+                    "home": h_id,
+                    "away": a_id,
+                    "score": f"{hs}-{as_}",
+                    "played": bool(nf.get("played")),
+                    "walkover": nf.get("walkover"),
+                    "score_changed": score_changed,
+                })
+
+        for cf in changed_fixtures[:5]:
+            if cf["walkover"]:
+                action_text = f"Recorded walkover ({cf['walkover']}): {cf['home']} vs {cf['away']}"
+            elif cf["score_changed"]:
+                action_text = f"Updated match result: {cf['home']} {cf['score']} {cf['away']}"
+            else:
+                action_text = f"Updated fixture schedule/officials: {cf['home']} vs {cf['away']}"
+            entries.append({
+                "event_type": "match_update",
+                "action": action_text,
+                "target": f"{cf['home']} vs {cf['away']} ({cf['id']})",
+                "category_key": cat_key,
+                "details": cf,
+            })
+
+        if len(changed_fixtures) > 5:
+            entries.append({
+                "event_type": "match_update",
+                "action": f"Updated {len(changed_fixtures)} fixtures in {cat_label}",
+                "target": cat_label,
+                "category_key": cat_key,
+                "details": {"total_changed": len(changed_fixtures)},
+            })
+
+        # 2. Team additions / removals
+        old_teams = {t.get("id"): t for t in (old_cat.get("teams") or []) if isinstance(t, dict) and t.get("id")}
+        new_teams = {t.get("id"): t for t in (new_cat.get("teams") or []) if isinstance(t, dict) and t.get("id")}
+        added_teams = [new_teams[tid].get("name") or tid for tid in new_teams if tid not in old_teams]
+        removed_teams = [old_teams[tid].get("name") or tid for tid in old_teams if tid not in new_teams]
+        if added_teams:
+            entries.append({
+                "event_type": "state_update",
+                "action": f"Added team(s) to {cat_label}: {', '.join(added_teams[:4])}",
+                "target": ", ".join(added_teams[:4]),
+                "category_key": cat_key,
+                "details": {"added_teams": added_teams},
+            })
+        if removed_teams:
+            entries.append({
+                "event_type": "state_update",
+                "action": f"Removed team(s) from {cat_label}: {', '.join(removed_teams[:4])}",
+                "target": ", ".join(removed_teams[:4]),
+                "category_key": cat_key,
+                "details": {"removed_teams": removed_teams},
+            })
+
+        # 3. Player roster additions / removals / updates across shared teams
+        added_players = []
+        removed_players = []
+        for tid, nt in new_teams.items():
+            if tid not in old_teams:
+                continue
+            ot = old_teams[tid]
+            op_map = {p.get("id"): p.get("name") for p in (ot.get("players") or []) if isinstance(p, dict) and p.get("id") and not str(p.get("id")).endswith("-UNK")}
+            np_map = {p.get("id"): p.get("name") for p in (nt.get("players") or []) if isinstance(p, dict) and p.get("id") and not str(p.get("id")).endswith("-UNK")}
+            for pid, pname in np_map.items():
+                if pid not in op_map:
+                    added_players.append(f"{pname} ({tid})")
+            for pid, pname in op_map.items():
+                if pid not in np_map:
+                    removed_players.append(f"{pname} ({tid})")
+
+        if added_players:
+            entries.append({
+                "event_type": "player_management",
+                "action": f"Added player(s) to roster in {cat_label}: {', '.join(added_players[:5])}",
+                "target": ", ".join(added_players[:3]),
+                "category_key": cat_key,
+                "details": {"added_players": added_players[:15], "count": len(added_players)},
+            })
+        if removed_players:
+            entries.append({
+                "event_type": "player_management",
+                "action": f"Removed player(s) from roster in {cat_label}: {', '.join(removed_players[:5])}",
+                "target": ", ".join(removed_players[:3]),
+                "category_key": cat_key,
+                "details": {"removed_players": removed_players[:15], "count": len(removed_players)},
+            })
+
+        # 4. Tactics board / referee updates
+        if old_cat.get("referees") != new_cat.get("referees") and new_cat.get("referees") is not None:
+            entries.append({
+                "event_type": "state_update",
+                "action": f"Updated referee list in {cat_label}",
+                "target": cat_label,
+                "category_key": cat_key,
+                "details": {"referee_count": len(new_cat.get("referees") or [])},
+            })
+
+    # Category creations / soft deletions
+    for cat_key, new_cat in new_cats.items():
+        if cat_key not in old_cats and isinstance(new_cat, dict):
+            entries.append({
+                "event_type": "category_management",
+                "action": f"Created competition: {new_cat.get('label') or cat_key}",
+                "target": new_cat.get("label") or cat_key,
+                "category_key": cat_key,
+            })
+    for cat_key, old_cat in old_cats.items():
+        if cat_key not in new_cats and isinstance(old_cat, dict):
+            entries.append({
+                "event_type": "category_management",
+                "action": f"Archived or deleted competition: {old_cat.get('label') or cat_key}",
+                "target": old_cat.get("label") or cat_key,
+                "category_key": cat_key,
+            })
+
+    if not entries:
+        active_cat = (new_state or {}).get("activeCategory") or ""
+        entries.append({
+            "event_type": "state_update",
+            "action": "Synchronized tournament state",
+            "target": active_cat or "All Categories",
+            "category_key": active_cat,
+            "details": {"categories": list(new_cats.keys())},
+        })
+
+    return entries
+
 
 
 

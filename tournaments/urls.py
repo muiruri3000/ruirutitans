@@ -55,6 +55,7 @@ from .views import (
     TransferFreeAgentCreateAPIView,
     PlayerBanListCreateAPIView,
     PlayerBanLiftAPIView,
+    AuditLogListAPIView,
 )
 
 app_name = "tournaments"
@@ -125,6 +126,7 @@ urlpatterns = [
     path("api/categories/<str:key>/transfers/free-agents/", TransferFreeAgentCreateAPIView.as_view(), name="api_category_transfer_free_agent_create"),
     path("api/categories/<str:key>/bans/", PlayerBanListCreateAPIView.as_view(), name="api_category_bans"),
     path("api/categories/<str:key>/bans/<int:pk>/lift/", PlayerBanLiftAPIView.as_view(), name="api_category_ban_lift"),
+    path("api/admin/audit-logs/", AuditLogListAPIView.as_view(), name="api_admin_audit_logs"),
 ]
 
 

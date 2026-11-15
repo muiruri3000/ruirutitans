@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.utils import timezone
 from django.contrib.auth.models import User
-from tournaments.models import Category, Team, Player, TransferRequest, PlayerBan
+from tournaments.models import Category, Team, Player, TransferRequest, PlayerBan, Fixture
 from tournaments.services import (
     create_signed_token,
     get_cms_user_credential_fingerprint,
@@ -15,6 +15,8 @@ from tournaments.services import (
     toggle_transfer_window,
     create_player_ban,
     lift_player_ban,
+    compute_category_suspensions,
+    compute_team_analytics,
 )
 
 
@@ -163,6 +165,16 @@ class TransfersAndBansTestCase(TestCase):
         self.assertEqual(self.player.team, self.team_b)
 
     def test_player_disciplinary_bans(self):
+        upcoming_fix = Fixture.objects.create(
+            category=self.category,
+            fixture_id="FIX-UPCOMING-1",
+            phase="league",
+            date="Sat, 28 Nov · 16:00",
+            home_team=self.team_a,
+            away_team=self.team_b,
+            played=False,
+        )
+
         # 1. Create a game-based ban
         ban = create_player_ban(
             category=self.category,
@@ -183,11 +195,48 @@ class TransfersAndBansTestCase(TestCase):
         self.assertTrue(p_dict.get("isBanned"))
         self.assertIsNotNone(p_dict.get("activeBan"))
 
+        # Check category suspensions & team analytics include active disciplinary ban
+        cat_susps = compute_category_suspensions(self.category)
+        fix_susps = cat_susps.get(upcoming_fix.fixture_id, [])
+        self.assertTrue(
+            any(s.get("playerId") == self.player.player_id and s.get("isBan") for s in fix_susps)
+        )
+
+        analytics = compute_team_analytics(self.category, self.team_a.team_id)
+        self.assertIsNotNone(analytics)
+        self.assertTrue(
+            any(
+                s.get("player_id") == self.player.player_id and s.get("is_ban")
+                for s in analytics.get("active_suspensions", [])
+            )
+        )
+        roster_entry = next(
+            (r for r in analytics.get("roster", []) if r.get("id") == self.player.player_id),
+            None,
+        )
+        self.assertIsNotNone(roster_entry)
+        self.assertTrue(roster_entry.get("is_suspended"))
+
         # 2. Lift ban
         lifted = lift_player_ban(self.category, ban.id)
         self.assertFalse(lifted.is_active)
         self.player.refresh_from_db()
         self.assertFalse(self.player.is_banned)
+
+        cat_susps_after = compute_category_suspensions(self.category)
+        self.assertFalse(
+            any(
+                s.get("playerId") == self.player.player_id
+                for s in cat_susps_after.get(upcoming_fix.fixture_id, [])
+            )
+        )
+        analytics_after = compute_team_analytics(self.category, self.team_a.team_id)
+        self.assertEqual(analytics_after.get("active_suspensions"), [])
+        roster_after = next(
+            (r for r in analytics_after.get("roster", []) if r.get("id") == self.player.player_id),
+            None,
+        )
+        self.assertFalse(roster_after.get("is_suspended"))
 
     def test_api_public_and_admin_transfers(self):
         # Public GET

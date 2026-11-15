@@ -1147,5 +1147,21 @@ export const api = {
     }
     return await res.json();
   },
+
+  async getAuditLogs(params = {}) {
+    const qs = new URLSearchParams();
+    Object.entries(params || {}).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && String(v).trim() !== "") {
+        qs.set(k, String(v).trim());
+      }
+    });
+    const url = `/api/admin/audit-logs/${qs.toString() ? `?${qs.toString()}` : ""}`;
+    const res = await fetch(url, { headers: defaultHeaders() });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to load audit logs: ${res.status}`);
+    }
+    return await res.json();
+  },
 };
 

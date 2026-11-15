@@ -25,7 +25,7 @@ export function computeFixtureScore(matchLike, homeId, awayId) {
  * Computes complete profile, player roster, suspensions, last 20 matches,
  * next 5 fixtures, current form metrics, and predictive competition simulations for a team.
  */
-export function computeTeamProfile(teamId, currentCategory, allCategories = {}, activeSuspensionsMap = {}) {
+export function computeTeamProfile(teamId, currentCategory, allCategories = {}, activeSuspensionsMap = {}, extraBans = []) {
   if (!teamId) return null;
 
   // 1. Locate team object
@@ -208,34 +208,161 @@ export function computeTeamProfile(teamId, currentCategory, allCategories = {}, 
     });
   });
 
-  // 4. Active Suspensions
+  // 4. Active Suspensions (Disciplinary Bans + Card Suspensions)
   const teamSuspensions = [];
   const nextFixture = next5Fixtures[0] || null;
   const nextFixtureLabel = nextFixture
     ? `vs ${nextFixture.opponentName} (${nextFixture.date})`
     : 'Upcoming Match';
 
-  // Check suspensions map passed in from App.jsx
+  const rosterPlayers = team.players || [];
+  const normalizedTeamName = (team.name || '').trim().toLowerCase();
+
+  const findRosterPlayer = (playerId, playerName, playerUsername) => {
+    if (playerId) {
+      const byId = rosterPlayers.find((p) => p.id === playerId || p.permanentId === playerId);
+      if (byId) return byId;
+    }
+    const cleanName = (playerName || '').trim().toLowerCase();
+    if (cleanName) {
+      const byName = rosterPlayers.find(
+        (p) =>
+          (p.name || '').trim().toLowerCase() === cleanName ||
+          (p.firstName || '').trim().toLowerCase() === cleanName
+      );
+      if (byName) return byName;
+    }
+    const cleanUname = (playerUsername || '').trim().toLowerCase();
+    if (cleanUname && cleanUname !== 'admin') {
+      const byUname = rosterPlayers.find((p) => (p.username || '').trim().toLowerCase() === cleanUname);
+      if (byUname) return byUname;
+    }
+    return null;
+  };
+
+  // Collect active disciplinary bans from category state, live API bans, roster items, and same-team bans across categories
+  const candidateBans = [];
+  const seenBanKeys = new Set();
+  const pushCandidateBan = (b, fromOtherCategory = false) => {
+    if (!b || b.is_active === false) return;
+    const bPlayerId = b.player?.id || b.player_id || '';
+    const bPlayerName = b.player?.name || b.player?.displayName || b.player_name || '';
+    const bPlayerUsername = b.player?.username || '';
+    const bTeamId = b.team?.id || b.team_id || '';
+    const bTeamName = (b.team?.name || b.team_name || '').trim().toLowerCase();
+
+    const matchedRosterPlayer = findRosterPlayer(bPlayerId, bPlayerName, bPlayerUsername);
+    const sameTeamName = Boolean(normalizedTeamName && bTeamName && bTeamName === normalizedTeamName);
+    const belongsToTeam = fromOtherCategory
+      ? Boolean(sameTeamName && matchedRosterPlayer)
+      : Boolean(bTeamId === teamId || sameTeamName || matchedRosterPlayer);
+
+    if (!belongsToTeam) return;
+
+    const dedupKey = b.id
+      ? `ban:${b.id}`
+      : `player:${matchedRosterPlayer ? matchedRosterPlayer.id : bPlayerId || bPlayerName.toLowerCase()}`;
+    if (seenBanKeys.has(dedupKey)) return;
+    seenBanKeys.add(dedupKey);
+    candidateBans.push({ ban: b, matchedRosterPlayer });
+  };
+
+  (category?.activeBans || []).forEach((b) => pushCandidateBan(b, false));
+  (extraBans || []).forEach((b) => pushCandidateBan(b, false));
+  rosterPlayers.forEach((p) => {
+    if (p?.activeBan) pushCandidateBan(p.activeBan, false);
+  });
+  Object.values(allCategories || {}).forEach((cObj) => {
+    if (!cObj || cObj === category) return;
+    (cObj.activeBans || []).forEach((b) => pushCandidateBan(b, true));
+  });
+
+  candidateBans.forEach(({ ban: b, matchedRosterPlayer }) => {
+    const resolvedPlayerId = matchedRosterPlayer ? matchedRosterPlayer.id : (b.player?.id || b.player_id || b.player?.name);
+    const resolvedPlayerName = matchedRosterPlayer
+      ? matchedRosterPlayer.name
+      : (b.player?.displayName || b.player?.name || 'Squad Member');
+    const gamesBannedNum = parseInt(b.games_banned, 10) || 1;
+    const durationLabel =
+      b.duration_label ||
+      (b.ban_type === 'games'
+        ? `${gamesBannedNum} Match${gamesBannedNum !== 1 ? 'es' : ''}`
+        : (b.period_description || 'Period Suspension'));
+
+    let forFixture = nextFixtureLabel;
+    if (b.expected_fixture_return) {
+      forFixture = `${nextFixtureLabel} · Expected Return: ${b.expected_fixture_return}`;
+    } else if (b.return_date) {
+      forFixture = `${nextFixtureLabel} (Until ${b.return_date})`;
+    } else if (b.ban_type === 'games' && gamesBannedNum > 1) {
+      forFixture = `Next ${gamesBannedNum} Matches (${nextFixtureLabel})`;
+    }
+
+    teamSuspensions.push({
+      playerId: resolvedPlayerId,
+      playerName: resolvedPlayerName,
+      reason: b.reason ? `${b.reason} (${durationLabel})` : `Disciplinary Ban — ${durationLabel}`,
+      forFixture,
+      isBan: true,
+      banId: b.id,
+      durationLabel,
+      expectedFixtureReturn: b.expected_fixture_return || '',
+      returnDate: b.return_date || null,
+      startDate: b.start_date || null,
+      imposedBy: b.imposed_by || 'Disciplinary Committee',
+    });
+  });
+
+  // Check card/fixture suspensions map passed in from App.jsx (skipping already-played fixtures)
   Object.entries(activeSuspensionsMap || {}).forEach(([fixId, suspList]) => {
+    if (uniquePlayedMap.has(String(fixId))) return;
     (suspList || []).forEach((s) => {
-      if (s.teamId === teamId) {
-        teamSuspensions.push({
-          playerId: s.playerId,
-          playerName: s.playerName,
-          reason: s.reason,
-          forFixture: nextFixtureLabel,
-        });
-      }
+      const matchedRosterPlayer = findRosterPlayer(s.playerId, s.playerName);
+      if (s.teamId !== teamId && !matchedRosterPlayer) return;
+      const resolvedPlayerId = matchedRosterPlayer ? matchedRosterPlayer.id : s.playerId;
+      const resolvedPlayerName = matchedRosterPlayer ? matchedRosterPlayer.name : s.playerName;
+      const cleanResName = (resolvedPlayerName || '').trim().toLowerCase();
+
+      const alreadyListed = teamSuspensions.some(
+        (existing) =>
+          (resolvedPlayerId && existing.playerId === resolvedPlayerId) ||
+          (cleanResName && (existing.playerName || '').trim().toLowerCase() === cleanResName)
+      );
+      if (alreadyListed) return;
+
+      teamSuspensions.push({
+        playerId: resolvedPlayerId,
+        playerName: resolvedPlayerName,
+        reason: s.reason,
+        forFixture: nextFixtureLabel,
+        isBan: Boolean(s.isBan),
+        banId: s.banId,
+        durationLabel: s.durationLabel || null,
+      });
     });
   });
 
   // Mark suspended flag on roster
-  const suspendedPlayerIds = new Set(teamSuspensions.map((s) => s.playerId));
-  const roster = Object.values(playerStatsMap).map((p) => ({
-    ...p,
-    isSuspended: suspendedPlayerIds.has(p.id),
-    suspensionReason: teamSuspensions.find((s) => s.playerId === p.id)?.reason || null,
-  }));
+  const suspendedPlayerIds = new Set(teamSuspensions.map((s) => s.playerId).filter(Boolean));
+  const suspendedPlayerNames = new Set(
+    teamSuspensions.map((s) => (s.playerName || '').trim().toLowerCase()).filter(Boolean)
+  );
+  const roster = Object.values(playerStatsMap).map((p) => {
+    const cleanName = (p.name || '').trim().toLowerCase();
+    const matchSusp =
+      teamSuspensions.find((s) => s.playerId === p.id) ||
+      teamSuspensions.find((s) => (s.playerName || '').trim().toLowerCase() === cleanName);
+    const isSusp =
+      suspendedPlayerIds.has(p.id) ||
+      (cleanName && suspendedPlayerNames.has(cleanName)) ||
+      Boolean(p.isBanned || p.activeBan);
+    return {
+      ...p,
+      isSuspended: isSusp,
+      suspensionReason: matchSusp?.reason || p.activeBan?.reason || null,
+      suspensionDuration: matchSusp?.durationLabel || p.activeBan?.duration_label || null,
+    };
+  });
 
   // 5. Current Form metrics
   const recent5 = last20Matches.slice(0, 5);

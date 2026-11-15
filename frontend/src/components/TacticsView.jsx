@@ -636,18 +636,141 @@ export default function TacticsView({
     }
   }, [isPitchFullscreen]);
 
-  // 12. Drawing Tools, Annotations, Ball & Custom Player Colors
-  const [activeTool, setActiveTool] = useState('select'); // 'select' | 'curve' | 'line' | 'pass' | 'paint'
-  const [drawColor, setDrawColor] = useState('#FF9F0A'); // Active color for drawing and painting
-  const [drawings, setDrawings] = useState([]); // Array of { id, type, color, points }
+  // 12. Drawing Tools, Annotations, Boxes, Text, Ball & Custom Player Colors
+  const [activeTool, setActiveTool] = useState('select'); // 'select' | 'curve' | 'line' | 'pass' | 'box' | 'text' | 'paint'
+  const [drawColor, setDrawColor] = useState('#FF9F0A'); // Active color for drawing, boxes, text and painting
+  const [drawings, setDrawings] = useState([]); // Array of { id, type, color, points?, x?, y?, width?, height?, text?, fontSize? }
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentDrawing, setCurrentDrawing] = useState(null);
+  const [selectedBoxId, setSelectedBoxId] = useState(null);
+  const [boxInteraction, setBoxInteraction] = useState(null); // { id, mode, startClientX, startClientY, origX, origY, origWidth, origHeight }
+  const [selectedTextId, setSelectedTextId] = useState(null);
+  const [textDragInteraction, setTextDragInteraction] = useState(null); // { id, startClientX, startClientY, origX, origY }
+  const [newTextDraft, setNewTextDraft] = useState('');
+  const [pendingArrowStart, setPendingArrowStart] = useState(null); // { x, y, type, color }
+  const [hoverPitchPoint, setHoverPitchPoint] = useState(null); // { x, y }
+  const currentDrawingRef = useRef(null);
+  const lastTouchStartTimeRef = useRef(0);
   const [playerCustomColors, setPlayerCustomColors] = useState({}); // { [nodeId]: color }
   const [showBall, setShowBall] = useState(true);
   const [ballPos, setBallPos] = useState({ x: 50, y: 50 });
   const [isDraggingBall, setIsDraggingBall] = useState(false);
   const ballDragStartRef = useRef({ startX: 0, startY: 0, ballX: 50, ballY: 50 });
   const svgRef = useRef(null);
+
+  const effectiveDrawColor = drawColor === 'reset' ? '#FF9F0A' : drawColor;
+  const isDrawingToolActive =
+    activeTool === 'curve' || activeTool === 'line' || activeTool === 'pass' || activeTool === 'box' || activeTool === 'text';
+
+  const selectedBox = useMemo(
+    () => drawings.find((d) => d.type === 'box' && d.id === selectedBoxId) || null,
+    [drawings, selectedBoxId]
+  );
+
+  const selectedText = useMemo(
+    () => drawings.find((d) => d.type === 'text' && d.id === selectedTextId) || null,
+    [drawings, selectedTextId]
+  );
+
+  const hexToRgba = (hex, alpha = 0.2) => {
+    if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) {
+      return `rgba(255, 159, 10, ${alpha})`;
+    }
+    let c = hex.slice(1);
+    if (c.length === 3) {
+      c = c
+        .split('')
+        .map((ch) => ch + ch)
+        .join('');
+    }
+    const num = parseInt(c, 16);
+    if (isNaN(num)) return `rgba(255, 159, 10, ${alpha})`;
+    return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+  };
+
+  const updateSelectedBox = (updates) => {
+    if (!selectedBoxId) return;
+    setDrawings((prev) =>
+      prev.map((d) => {
+        if (d.id !== selectedBoxId || d.type !== 'box') return d;
+        const next = { ...d, ...updates };
+        next.width = Math.max(4, Math.min(96, Math.round(next.width * 10) / 10));
+        next.height = Math.max(4, Math.min(96, Math.round(next.height * 10) / 10));
+        next.x = Math.max(0, Math.min(100 - next.width, Math.round(next.x * 10) / 10));
+        next.y = Math.max(0, Math.min(100 - next.height, Math.round(next.y * 10) / 10));
+        return next;
+      })
+    );
+  };
+
+  const updateSelectedText = (updates) => {
+    if (!selectedTextId) return;
+    setDrawings((prev) =>
+      prev.map((d) => {
+        if (d.id !== selectedTextId || d.type !== 'text') return d;
+        const next = { ...d, ...updates };
+        next.fontSize = Math.max(9, Math.min(40, Math.round((next.fontSize || 14) * 10) / 10));
+        next.x = Math.max(2, Math.min(98, Math.round(next.x * 10) / 10));
+        next.y = Math.max(2, Math.min(98, Math.round(next.y * 10) / 10));
+        return next;
+      })
+    );
+  };
+
+  const handleSelectDrawColor = (color) => {
+    setDrawColor(color);
+    if (selectedBoxId) {
+      updateSelectedBox({ color });
+      showStatusNotice('🎨 Updated selected box color');
+    } else if (selectedTextId) {
+      updateSelectedText({ color });
+      showStatusNotice('🎨 Updated selected text color');
+    } else if (activeTool === 'paint') {
+      showStatusNotice(`🎨 Selected color ${color} — now tap any player, box, or text on pitch to update!`);
+    }
+  };
+
+  const handleAddPresetBox = () => {
+    const newBox = {
+      id: Date.now(),
+      type: 'box',
+      color: effectiveDrawColor,
+      x: 38,
+      y: 40,
+      width: 24,
+      height: 18,
+    };
+    setDrawings((prev) => [...prev, newBox]);
+    setSelectedBoxId(newBox.id);
+    setSelectedTextId(null);
+    showStatusNotice('⬜ Box added — drag handles or use Width / Height / Color controls to adjust');
+  };
+
+  const handleAddTextAt = (x = 50, y = 50, customText = null) => {
+    const rawText = customText !== null ? customText : newTextDraft.trim();
+    const label = rawText || 'Tactical Note';
+    const newTextItem = {
+      id: Date.now(),
+      type: 'text',
+      text: label,
+      color: effectiveDrawColor,
+      x: Math.max(4, Math.min(96, Math.round(x * 10) / 10)),
+      y: Math.max(4, Math.min(96, Math.round(y * 10) / 10)),
+      fontSize: 14,
+    };
+    setDrawings((prev) => [...prev, newTextItem]);
+    setSelectedTextId(newTextItem.id);
+    setSelectedBoxId(null);
+    if (customText === null && newTextDraft.trim()) {
+      setNewTextDraft('');
+    }
+    showStatusNotice('🔤 Text added to pitch — edit text, drag to reposition, or adjust size & color');
+  };
+
+  useEffect(() => {
+    setPendingArrowStart(null);
+    setHoverPitchPoint(null);
+  }, [activeTool]);
 
   // Load or Initialize Positions when formation or format changes
   useEffect(() => {
@@ -780,6 +903,10 @@ export default function TacticsView({
 
   // Handle Dragging Positions around the Pitch (friendly or opponent)
   const handlePointerDown = (e, slotId, isOpponent = false) => {
+    if (isDrawingToolActive) {
+      handleSvgPointerDown(e);
+      return;
+    }
     e.stopPropagation();
     const sourceList = isOpponent ? opponentNodes : pitchNodes;
     const node = sourceList.find((n) => n.id === slotId);
@@ -998,11 +1125,11 @@ export default function TacticsView({
         }, 750);
       }
 
-      // Swiping detection: any movement > 25px restores the menu
+      // Swiping detection: any movement > 25px restores the menu when hidden
       if (isSingleTouch && (!e.touches || e.touches.length === 0)) {
         isSingleTouch = false;
         const touch = e.changedTouches && e.changedTouches[0];
-        if (touch) {
+        if (touch && isPitchFullscreen && isFullscreenMenuHidden) {
           const deltaX = touch.clientX - touchStartX;
           const deltaY = touch.clientY - touchStartY;
           const dist = Math.hypot(deltaX, deltaY);
@@ -1027,13 +1154,15 @@ export default function TacticsView({
     const handlePointerUp = (e) => {
       if (isPointerDragging && e.pointerType === 'mouse') {
         isPointerDragging = false;
-        const deltaX = e.clientX - pointerStartX;
-        const deltaY = e.clientY - pointerStartY;
-        const dist = Math.hypot(deltaX, deltaY);
-        const elapsed = Date.now() - pointerStartTime;
-        if (dist > 35 && elapsed < 800) {
-          setIsFullscreenMenuHidden(false);
-          showStatusNotice('📋 Menu bar restored');
+        if (isPitchFullscreen && isFullscreenMenuHidden) {
+          const deltaX = e.clientX - pointerStartX;
+          const deltaY = e.clientY - pointerStartY;
+          const dist = Math.hypot(deltaX, deltaY);
+          const elapsed = Date.now() - pointerStartTime;
+          if (dist > 35 && elapsed < 800) {
+            setIsFullscreenMenuHidden(false);
+            showStatusNotice('📋 Menu bar restored');
+          }
         }
       }
     };
@@ -1054,10 +1183,14 @@ export default function TacticsView({
       targetEl.removeEventListener('pointerup', handlePointerUp);
       if (pinchZoomTimeoutRef.current) clearTimeout(pinchZoomTimeoutRef.current);
     };
-  }, [isPitchFullscreen]);
+  }, [isPitchFullscreen, isFullscreenMenuHidden]);
 
   // Handle Dragging Ball on Pitch
   const handleBallPointerDown = (e) => {
+    if (isDrawingToolActive) {
+      handleSvgPointerDown(e);
+      return;
+    }
     e.stopPropagation();
     setIsDraggingBall(true);
     const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
@@ -1118,25 +1251,83 @@ export default function TacticsView({
     };
   }, [isDraggingBall, isLandscape]);
 
-  // Handle Drawing on Pitch (Curve, Line Arrow, Pass Arrow)
+  const getPitchCoordsFromEvent = (e) => {
+    if (!pitchRef.current) return null;
+    const rect = pitchRef.current.getBoundingClientRect();
+    const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+    const clientX = typeof e.clientX === 'number' ? e.clientX : (touch ? touch.clientX : 0);
+    const clientY = typeof e.clientY === 'number' ? e.clientY : (touch ? touch.clientY : 0);
+    const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+    return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+  };
+
+  // Handle Drawing on Pitch (Curve, Line Arrow, Pass Arrow, Tactical Box, Text) from anywhere including empty space
   const handleSvgPointerDown = (e) => {
-    if (activeTool !== 'curve' && activeTool !== 'line' && activeTool !== 'pass') return;
+    if (!isDrawingToolActive) return;
+    if (e.type === 'touchstart') {
+      lastTouchStartTimeRef.current = Date.now();
+    } else if (e.type === 'mousedown' && Date.now() - lastTouchStartTimeRef.current < 500) {
+      return;
+    }
     e.stopPropagation();
 
-    if (!pitchRef.current) return;
-    const rect = pitchRef.current.getBoundingClientRect();
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+    const pt = getPitchCoordsFromEvent(e);
+    if (!pt) return;
 
-    const startX = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-    const startY = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+    const colorToUse = drawColor === 'reset' ? '#FF9F0A' : drawColor;
+    if (drawColor === 'reset') setDrawColor('#FF9F0A');
 
-    setIsDrawing(true);
-    setCurrentDrawing({
+    if (activeTool === 'text') {
+      handleAddTextAt(pt.x, pt.y);
+      return;
+    }
+
+    // Two-tap / two-click support for arrows from empty space (or anywhere on pitch)
+    if ((activeTool === 'line' || activeTool === 'pass') && pendingArrowStart && pendingArrowStart.type === activeTool) {
+      const dist = Math.hypot(pt.x - pendingArrowStart.x, pt.y - pendingArrowStart.y);
+      if (dist >= 1.5) {
+        const newArrow = {
+          id: Date.now(),
+          type: activeTool,
+          color: colorToUse,
+          points: [
+            { x: pendingArrowStart.x, y: pendingArrowStart.y },
+            { x: pt.x, y: pt.y },
+          ],
+        };
+        setDrawings((d) => [...d, newArrow]);
+        setPendingArrowStart(null);
+        setHoverPitchPoint(null);
+        return;
+      }
+    }
+
+    if (activeTool === 'box') {
+      const initialBox = {
+        type: 'box',
+        color: colorToUse,
+        startX: pt.x,
+        startY: pt.y,
+        x: pt.x,
+        y: pt.y,
+        width: 0,
+        height: 0,
+      };
+      currentDrawingRef.current = initialBox;
+      setCurrentDrawing(initialBox);
+      setIsDrawing(true);
+      return;
+    }
+
+    const initialDrawing = {
       type: activeTool,
-      color: drawColor,
-      points: [{ x: Math.round(startX * 10) / 10, y: Math.round(startY * 10) / 10 }],
-    });
+      color: colorToUse,
+      points: [pt],
+    };
+    currentDrawingRef.current = initialDrawing;
+    setCurrentDrawing(initialDrawing);
+    setIsDrawing(true);
   };
 
   useEffect(() => {
@@ -1144,46 +1335,286 @@ export default function TacticsView({
 
     const handleDrawingMove = (e) => {
       if (e.touches && e.touches.length > 1) return;
-      if (!pitchRef.current) return;
-      const rect = pitchRef.current.getBoundingClientRect();
-      const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
-      const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+      if (e.cancelable) e.preventDefault();
+      const pt = getPitchCoordsFromEvent(e);
+      if (!pt || !currentDrawingRef.current) return;
 
-      const curX = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-      const curY = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
-
-      setCurrentDrawing((prev) => {
-        if (!prev) return null;
-        const pt = { x: Math.round(curX * 10) / 10, y: Math.round(curY * 10) / 10 };
-        if (prev.type === 'curve') {
-          return { ...prev, points: [...prev.points, pt] };
+      const prev = currentDrawingRef.current;
+      let next;
+      if (prev.type === 'box') {
+        next = {
+          ...prev,
+          x: Math.round(Math.min(prev.startX, pt.x) * 10) / 10,
+          y: Math.round(Math.min(prev.startY, pt.y) * 10) / 10,
+          width: Math.round(Math.abs(pt.x - prev.startX) * 10) / 10,
+          height: Math.round(Math.abs(pt.y - prev.startY) * 10) / 10,
+        };
+      } else if (prev.type === 'curve') {
+        next = { ...prev, points: [...prev.points, pt] };
+      } else {
+        next = { ...prev, points: [prev.points[0], pt] };
+        if (Math.hypot(pt.x - prev.points[0].x, pt.y - prev.points[0].y) >= 2) {
+          setPendingArrowStart(null);
         }
-        return { ...prev, points: [prev.points[0], pt] };
-      });
+      }
+      currentDrawingRef.current = next;
+      setCurrentDrawing(next);
     };
 
     const handleDrawingUp = () => {
+      const finished = currentDrawingRef.current;
+      currentDrawingRef.current = null;
       setIsDrawing(false);
-      setCurrentDrawing((prev) => {
-        if (prev && prev.points && prev.points.length > 1) {
-          setDrawings((d) => [...d, { ...prev, id: Date.now() }]);
+      setCurrentDrawing(null);
+      if (!finished) return;
+
+      if (finished.type === 'box') {
+        const boxCoords =
+          finished.width >= 2 && finished.height >= 2
+            ? {
+                x: finished.x,
+                y: finished.y,
+                width: finished.width,
+                height: finished.height,
+              }
+            : {
+                x: Math.round(Math.max(0, Math.min(78, finished.startX - 11)) * 10) / 10,
+                y: Math.round(Math.max(0, Math.min(84, finished.startY - 8)) * 10) / 10,
+                width: 22,
+                height: 16,
+              };
+        const newBox = {
+          id: Date.now(),
+          type: 'box',
+          color: finished.color,
+          ...boxCoords,
+        };
+        setDrawings((d) => [...d, newBox]);
+        setSelectedBoxId(newBox.id);
+        setSelectedTextId(null);
+        showStatusNotice('⬜ Box added to pitch — drag handles or use controls to adjust width, height & color');
+        return;
+      }
+
+      if (finished.type === 'line' || finished.type === 'pass') {
+        const p1 = finished.points[0];
+        const p2 = finished.points[finished.points.length - 1];
+        const dist = finished.points.length >= 2 ? Math.hypot(p2.x - p1.x, p2.y - p1.y) : 0;
+        if (dist >= 1.5) {
+          setDrawings((d) => [...d, { ...finished, id: Date.now() }]);
+          setPendingArrowStart(null);
+          setHoverPitchPoint(null);
+        } else {
+          setPendingArrowStart({
+            x: p1.x,
+            y: p1.y,
+            type: finished.type,
+            color: finished.color,
+          });
+          setHoverPitchPoint(p1);
+          showStatusNotice('🎯 Arrow start set — tap or click anywhere on the pitch to finish the arrow');
         }
-        return null;
-      });
+        return;
+      }
+
+      if (finished.type === 'curve' && finished.points && finished.points.length > 1) {
+        setDrawings((d) => [...d, { ...finished, id: Date.now() }]);
+      }
     };
 
     window.addEventListener('mousemove', handleDrawingMove);
     window.addEventListener('mouseup', handleDrawingUp);
     window.addEventListener('touchmove', handleDrawingMove, { passive: false });
     window.addEventListener('touchend', handleDrawingUp);
+    window.addEventListener('touchcancel', handleDrawingUp);
 
     return () => {
       window.removeEventListener('mousemove', handleDrawingMove);
       window.removeEventListener('mouseup', handleDrawingUp);
       window.removeEventListener('touchmove', handleDrawingMove);
       window.removeEventListener('touchend', handleDrawingUp);
+      window.removeEventListener('touchcancel', handleDrawingUp);
     };
   }, [isDrawing]);
+
+  const getPointerClientCoords = (e) => {
+    const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+    return {
+      clientX: typeof e.clientX === 'number' ? e.clientX : touch ? touch.clientX : 0,
+      clientY: typeof e.clientY === 'number' ? e.clientY : touch ? touch.clientY : 0,
+    };
+  };
+
+  const handleBoxInteractionStart = (e, box, mode) => {
+    e.stopPropagation();
+    if (e.type === 'touchstart') {
+      lastTouchStartTimeRef.current = Date.now();
+    } else if (e.type === 'mousedown' && Date.now() - lastTouchStartTimeRef.current < 500) {
+      return;
+    }
+    const { clientX, clientY } = getPointerClientCoords(e);
+    setSelectedBoxId(box.id);
+    setSelectedTextId(null);
+    setBoxInteraction({
+      id: box.id,
+      mode,
+      startClientX: clientX,
+      startClientY: clientY,
+      origX: box.x,
+      origY: box.y,
+      origWidth: box.width,
+      origHeight: box.height,
+    });
+  };
+
+  const handleTextDragStart = (e, textItem) => {
+    e.stopPropagation();
+    if (e.type === 'touchstart') {
+      lastTouchStartTimeRef.current = Date.now();
+    } else if (e.type === 'mousedown' && Date.now() - lastTouchStartTimeRef.current < 500) {
+      return;
+    }
+    const { clientX, clientY } = getPointerClientCoords(e);
+    setSelectedTextId(textItem.id);
+    setSelectedBoxId(null);
+    setTextDragInteraction({
+      id: textItem.id,
+      startClientX: clientX,
+      startClientY: clientY,
+      origX: textItem.x,
+      origY: textItem.y,
+    });
+  };
+
+  // Dragging or resizing a selected tactical box on the pitch
+  useEffect(() => {
+    if (!boxInteraction) return;
+
+    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+
+    const handleBoxMove = (e) => {
+      if (e.touches && e.touches.length > 1) return;
+      if (e.cancelable) e.preventDefault();
+      if (!pitchRef.current) return;
+      const rect = pitchRef.current.getBoundingClientRect();
+      const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+      const clientX = typeof e.clientX === 'number' ? e.clientX : (touch ? touch.clientX : 0);
+      const clientY = typeof e.clientY === 'number' ? e.clientY : (touch ? touch.clientY : 0);
+
+      const deltaPctX = ((clientX - boxInteraction.startClientX) / rect.width) * 100;
+      const deltaPctY = ((clientY - boxInteraction.startClientY) / rect.height) * 100;
+      const { id, mode, origX, origY, origWidth, origHeight } = boxInteraction;
+
+      let nextX = origX;
+      let nextY = origY;
+      let nextW = origWidth;
+      let nextH = origHeight;
+
+      if (mode === 'move') {
+        nextX = clamp(origX + deltaPctX, 0, 100 - origWidth);
+        nextY = clamp(origY + deltaPctY, 0, 100 - origHeight);
+      } else {
+        if (mode.includes('e')) {
+          nextW = clamp(origWidth + deltaPctX, 4, 100 - origX);
+        }
+        if (mode.includes('s')) {
+          nextH = clamp(origHeight + deltaPctY, 4, 100 - origY);
+        }
+        if (mode.includes('w')) {
+          const dx = clamp(deltaPctX, -origX, origWidth - 4);
+          nextX = origX + dx;
+          nextW = origWidth - dx;
+        }
+        if (mode.includes('n')) {
+          const dy = clamp(deltaPctY, -origY, origHeight - 4);
+          nextY = origY + dy;
+          nextH = origHeight - dy;
+        }
+      }
+
+      setDrawings((prev) =>
+        prev.map((d) =>
+          d.id === id && d.type === 'box'
+            ? {
+                ...d,
+                x: Math.round(nextX * 10) / 10,
+                y: Math.round(nextY * 10) / 10,
+                width: Math.round(nextW * 10) / 10,
+                height: Math.round(nextH * 10) / 10,
+              }
+            : d
+        )
+      );
+    };
+
+    const handleBoxUp = () => {
+      setBoxInteraction(null);
+    };
+
+    window.addEventListener('mousemove', handleBoxMove);
+    window.addEventListener('mouseup', handleBoxUp);
+    window.addEventListener('touchmove', handleBoxMove, { passive: false });
+    window.addEventListener('touchend', handleBoxUp);
+    window.addEventListener('touchcancel', handleBoxUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleBoxMove);
+      window.removeEventListener('mouseup', handleBoxUp);
+      window.removeEventListener('touchmove', handleBoxMove);
+      window.removeEventListener('touchend', handleBoxUp);
+      window.removeEventListener('touchcancel', handleBoxUp);
+    };
+  }, [boxInteraction]);
+
+  // Dragging a selected text annotation on the pitch
+  useEffect(() => {
+    if (!textDragInteraction) return;
+
+    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+
+    const handleTextMove = (e) => {
+      if (e.touches && e.touches.length > 1) return;
+      if (e.cancelable) e.preventDefault();
+      if (!pitchRef.current) return;
+      const rect = pitchRef.current.getBoundingClientRect();
+      const { clientX, clientY } = getPointerClientCoords(e);
+
+      const deltaPctX = ((clientX - textDragInteraction.startClientX) / rect.width) * 100;
+      const deltaPctY = ((clientY - textDragInteraction.startClientY) / rect.height) * 100;
+      const nextX = clamp(textDragInteraction.origX + deltaPctX, 2, 98);
+      const nextY = clamp(textDragInteraction.origY + deltaPctY, 2, 98);
+
+      setDrawings((prev) =>
+        prev.map((d) =>
+          d.id === textDragInteraction.id && d.type === 'text'
+            ? {
+                ...d,
+                x: Math.round(nextX * 10) / 10,
+                y: Math.round(nextY * 10) / 10,
+              }
+            : d
+        )
+      );
+    };
+
+    const handleTextUp = () => {
+      setTextDragInteraction(null);
+    };
+
+    window.addEventListener('mousemove', handleTextMove);
+    window.addEventListener('mouseup', handleTextUp);
+    window.addEventListener('touchmove', handleTextMove, { passive: false });
+    window.addEventListener('touchend', handleTextUp);
+    window.addEventListener('touchcancel', handleTextUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleTextMove);
+      window.removeEventListener('mouseup', handleTextUp);
+      window.removeEventListener('touchmove', handleTextMove);
+      window.removeEventListener('touchend', handleTextUp);
+      window.removeEventListener('touchcancel', handleTextUp);
+    };
+  }, [textDragInteraction]);
 
   // Helper to generate SVG path for freehand curves
   const generateSvgPath = (points) => {
@@ -2012,7 +2443,11 @@ export default function TacticsView({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTool('line')}
+                  onClick={() => {
+                    if (drawColor === 'reset') setDrawColor('#FF9F0A');
+                    setActiveTool('line');
+                    showStatusNotice('➔ Run Arrow: Drag or tap from any empty space or player on pitch');
+                  }}
                   style={{
                     background: activeTool === 'line' ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
                     color: activeTool === 'line' ? '#16201B' : '#E2E8F0',
@@ -2024,13 +2459,17 @@ export default function TacticsView({
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                   }}
-                  title="Draw movement arrow"
+                  title="Draw movement arrow from anywhere on pitch"
                 >
                   ➔ Run
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTool('pass')}
+                  onClick={() => {
+                    if (drawColor === 'reset') setDrawColor('#FF9F0A');
+                    setActiveTool('pass');
+                    showStatusNotice('⇢ Pass Arrow: Drag or tap from any empty space or player on pitch');
+                  }}
                   style={{
                     background: activeTool === 'pass' ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
                     color: activeTool === 'pass' ? '#16201B' : '#E2E8F0',
@@ -2042,9 +2481,54 @@ export default function TacticsView({
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                   }}
-                  title="Draw pass arrow"
+                  title="Draw pass arrow from anywhere on pitch"
                 >
                   ⇢ Pass
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (drawColor === 'reset') setDrawColor('#FF9F0A');
+                    setActiveTool('box');
+                    showStatusNotice('⬜ Box Tool: Drag on pitch (or tap) to draw a box, then adjust width, height & color');
+                  }}
+                  style={{
+                    background: activeTool === 'box' ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
+                    color: activeTool === 'box' ? '#16201B' : '#E2E8F0',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="Draw adjustable tactical box / zone on pitch"
+                >
+                  ⬜ Box
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (drawColor === 'reset') setDrawColor('#FF9F0A');
+                    setSelectedBoxId(null);
+                    setActiveTool('text');
+                    showStatusNotice('🔤 Text Tool: Tap anywhere on the pitch to add text, then edit or resize');
+                  }}
+                  style={{
+                    background: activeTool === 'text' ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
+                    color: activeTool === 'text' ? '#16201B' : '#E2E8F0',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="Add editable text label on pitch"
+                >
+                  🔤 Text
                 </button>
                 <button
                   type="button"
@@ -2060,7 +2544,7 @@ export default function TacticsView({
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                   }}
-                  title="Paint player colors"
+                  title="Paint player, box, or text colors"
                 >
                   🎨 Paint
                 </button>
@@ -2069,20 +2553,233 @@ export default function TacticsView({
                 {['#FF9F0A', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF'].map((c) => (
                   <div
                     key={c}
-                    onClick={() => setDrawColor(c)}
+                    onClick={() => handleSelectDrawColor(c)}
                     style={{
                       width: '16px',
                       height: '16px',
                       borderRadius: '50%',
                       background: c,
-                      border: drawColor === c ? '2px solid #FFFFFF' : '1px solid rgba(0,0,0,0.6)',
+                      border: (selectedBox ? selectedBox.color : selectedText ? selectedText.color : drawColor) === c ? '2px solid #FFFFFF' : '1px solid rgba(0,0,0,0.6)',
                       cursor: 'pointer',
                       flexShrink: 0,
-                      transform: drawColor === c ? 'scale(1.2)' : 'scale(1)',
+                      transform: (selectedBox ? selectedBox.color : selectedText ? selectedText.color : drawColor) === c ? 'scale(1.2)' : 'scale(1)',
                     }}
                     title={`Color ${c}`}
                   />
                 ))}
+                <input
+                  type="color"
+                  value={selectedBox ? selectedBox.color : selectedText ? selectedText.color : effectiveDrawColor}
+                  onChange={(e) => handleSelectDrawColor(e.target.value)}
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    padding: 0,
+                    border: 'none',
+                    borderRadius: '4px',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                  title="Custom color picker"
+                />
+
+                {selectedBox && (
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      background: 'rgba(255, 149, 0, 0.14)',
+                      border: '1px solid rgba(255, 149, 0, 0.45)',
+                      borderRadius: '6px',
+                      padding: '2px 6px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#FF9F0A' }}>W:</span>
+                    <button
+                      type="button"
+                      onClick={() => updateSelectedBox({ width: selectedBox.width - 2 })}
+                      style={{ background: '#1C1C1E', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      −
+                    </button>
+                    <input
+                      type="range"
+                      min="4"
+                      max="96"
+                      step="1"
+                      value={Math.round(selectedBox.width)}
+                      onChange={(e) => updateSelectedBox({ width: parseFloat(e.target.value) })}
+                      style={{ width: '48px', accentColor: '#FF9500', cursor: 'pointer' }}
+                      title={`Box Width: ${Math.round(selectedBox.width)}%`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updateSelectedBox({ width: selectedBox.width + 2 })}
+                      style={{ background: '#1C1C1E', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      +
+                    </button>
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#FF9F0A', marginLeft: '2px' }}>H:</span>
+                    <button
+                      type="button"
+                      onClick={() => updateSelectedBox({ height: selectedBox.height - 2 })}
+                      style={{ background: '#1C1C1E', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      −
+                    </button>
+                    <input
+                      type="range"
+                      min="4"
+                      max="96"
+                      step="1"
+                      value={Math.round(selectedBox.height)}
+                      onChange={(e) => updateSelectedBox({ height: parseFloat(e.target.value) })}
+                      style={{ width: '48px', accentColor: '#FF9500', cursor: 'pointer' }}
+                      title={`Box Height: ${Math.round(selectedBox.height)}%`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updateSelectedBox({ height: selectedBox.height + 2 })}
+                      style={{ background: '#1C1C1E', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDrawings((prev) => prev.filter((d) => d.id !== selectedBox.id));
+                        setSelectedBoxId(null);
+                      }}
+                      style={{
+                        background: '#231518',
+                        color: '#FF8A8A',
+                        border: '1px solid #732228',
+                        borderRadius: '4px',
+                        padding: '1px 5px',
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                      title="Delete selected box"
+                    >
+                      🗑️ Box
+                    </button>
+                  </div>
+                )}
+
+                {(activeTool === 'text' || selectedText) && (
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      background: 'rgba(255, 149, 0, 0.14)',
+                      border: '1px solid rgba(255, 149, 0, 0.45)',
+                      borderRadius: '6px',
+                      padding: '2px 6px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#FF9F0A' }}>🔤</span>
+                    <input
+                      type="text"
+                      value={selectedText ? selectedText.text : newTextDraft}
+                      onChange={(e) => {
+                        if (selectedText) {
+                          updateSelectedText({ text: e.target.value });
+                        } else {
+                          setNewTextDraft(e.target.value);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !selectedText) {
+                          e.preventDefault();
+                          handleAddTextAt(50, 50);
+                        }
+                      }}
+                      placeholder={selectedText ? 'Edit pitch text...' : 'Type text then tap pitch...'}
+                      style={{
+                        width: '125px',
+                        background: '#000000',
+                        color: '#FFFFFF',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '4px',
+                        padding: '2px 6px',
+                        fontSize: '10.5px',
+                        fontWeight: 700,
+                        outline: 'none',
+                      }}
+                    />
+                    {!selectedText && (
+                      <button
+                        type="button"
+                        onClick={() => handleAddTextAt(50, 50)}
+                        style={{
+                          background: '#FF9500',
+                          color: '#16201B',
+                          border: 'none',
+                          borderRadius: '4px',
+                          padding: '2px 6px',
+                          fontSize: '10px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title="Add text to center of pitch"
+                      >
+                        + Add
+                      </button>
+                    )}
+                    {selectedText && (
+                      <>
+                        <span style={{ fontSize: '10px', fontWeight: 800, color: '#FF9F0A' }}>Size:</span>
+                        <button
+                          type="button"
+                          onClick={() => updateSelectedText({ fontSize: (selectedText.fontSize || 14) - 2 })}
+                          style={{ background: '#1C1C1E', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
+                          title="Decrease text size"
+                        >
+                          −
+                        </button>
+                        <span style={{ fontSize: '10px', fontWeight: 800, color: '#FFFFFF', minWidth: '24px', textAlign: 'center' }}>
+                          {Math.round(selectedText.fontSize || 14)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateSelectedText({ fontSize: (selectedText.fontSize || 14) + 2 })}
+                          style={{ background: '#1C1C1E', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
+                          title="Increase text size"
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDrawings((prev) => prev.filter((d) => d.id !== selectedText.id));
+                            setSelectedTextId(null);
+                            showStatusNotice('🗑️ Text deleted from pitch');
+                          }}
+                          style={{
+                            background: '#231518',
+                            color: '#FF8A8A',
+                            border: '1px solid #732228',
+                            borderRadius: '4px',
+                            padding: '1px 5px',
+                            fontSize: '10px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                          }}
+                          title="Delete selected text"
+                        >
+                          🗑️ Text
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 <button
                   type="button"
@@ -2168,7 +2865,18 @@ export default function TacticsView({
                   <>
                     <button
                       type="button"
-                      onClick={() => setDrawings((prev) => prev.slice(0, -1))}
+                      onClick={() => {
+                        setDrawings((prev) => {
+                          const removed = prev[prev.length - 1];
+                          if (removed && removed.id === selectedBoxId) {
+                            setSelectedBoxId(null);
+                          }
+                          if (removed && removed.id === selectedTextId) {
+                            setSelectedTextId(null);
+                          }
+                          return prev.slice(0, -1);
+                        });
+                      }}
                       style={{
                         background: '#16382B',
                         color: '#FFFFFF',
@@ -2186,7 +2894,12 @@ export default function TacticsView({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDrawings([])}
+                      onClick={() => {
+                        setDrawings([]);
+                        setSelectedBoxId(null);
+                        setSelectedTextId(null);
+                        setPendingArrowStart(null);
+                      }}
                       style={{
                         background: '#231518',
                         color: '#FF8A8A',
@@ -2589,8 +3302,9 @@ export default function TacticsView({
               <button
                 type="button"
                 onClick={() => {
+                  if (drawColor === 'reset') setDrawColor('#FF9F0A');
                   setActiveTool('line');
-                  showStatusNotice('➡️ Arrow Tool: Drag on pitch to draw movement arrow');
+                  showStatusNotice('➡️ Arrow Tool: Drag or tap from any empty space or player on the pitch');
                 }}
                 style={{
                   background: activeTool === 'line' ? '#FF9500' : '#0E291E',
@@ -2602,7 +3316,7 @@ export default function TacticsView({
                   fontWeight: 800,
                   cursor: 'pointer',
                 }}
-                title="Draw straight arrow"
+                title="Draw straight arrow starting anywhere on pitch"
               >
                 ➡️ Arrow
               </button>
@@ -2610,8 +3324,9 @@ export default function TacticsView({
               <button
                 type="button"
                 onClick={() => {
+                  if (drawColor === 'reset') setDrawColor('#FF9F0A');
                   setActiveTool('pass');
-                  showStatusNotice('↪️ Pass Arrow: Drag on pitch to draw dashed pass line');
+                  showStatusNotice('↪️ Pass Arrow: Drag or tap from any empty space or player on the pitch');
                 }}
                 style={{
                   background: activeTool === 'pass' ? '#FF9500' : '#0E291E',
@@ -2623,7 +3338,7 @@ export default function TacticsView({
                   fontWeight: 800,
                   cursor: 'pointer',
                 }}
-                title="Draw dashed pass arrow"
+                title="Draw dashed pass arrow starting anywhere on pitch"
               >
                 ↪️ Pass
               </button>
@@ -2631,8 +3346,54 @@ export default function TacticsView({
               <button
                 type="button"
                 onClick={() => {
+                  if (drawColor === 'reset') setDrawColor('#FF9F0A');
+                  setSelectedTextId(null);
+                  setActiveTool('box');
+                  showStatusNotice('⬜ Box Tool: Drag anywhere on pitch (or tap) to draw a tactical box');
+                }}
+                style={{
+                  background: activeTool === 'box' ? '#FF9500' : '#0E291E',
+                  color: activeTool === 'box' ? '#16201B' : '#E2E8F0',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+                title="Draw adjustable box / tactical zone on pitch"
+              >
+                ⬜ Box
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (drawColor === 'reset') setDrawColor('#FF9F0A');
+                  setSelectedBoxId(null);
+                  setActiveTool('text');
+                  showStatusNotice('🔤 Text Tool: Tap anywhere on pitch to place text, then type & style');
+                }}
+                style={{
+                  background: activeTool === 'text' ? '#FF9500' : '#0E291E',
+                  color: activeTool === 'text' ? '#16201B' : '#E2E8F0',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+                title="Add editable text annotation anywhere on pitch"
+              >
+                🔤 Text
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
                   setActiveTool('paint');
-                  showStatusNotice(`🎨 Color Changer: Pick a color, then tap any player on the pitch to update their color!`);
+                  showStatusNotice('🎨 Color Changer: Pick a color, then tap any player, box, or text on the pitch to update its color!');
                 }}
                 style={{
                   background: activeTool === 'paint' ? drawColor : '#0E291E',
@@ -2645,7 +3406,7 @@ export default function TacticsView({
                   cursor: 'pointer',
                   boxShadow: activeTool === 'paint' ? '0 0 8px rgba(255,255,255,0.5)' : 'none',
                 }}
-                title="Tap color, then tap a player on pitch to update their color"
+                title="Tap color, then tap a player, box, or text on pitch to update its color"
               >
                 🎨 Color Changer
               </button>
@@ -2677,34 +3438,32 @@ export default function TacticsView({
             {/* Color Changer Palette & Swatches */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700 }}>Color:</span>
-              {['#FF9F0A', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#F97316', '#A855F7', '#06B6D4'].map((c) => (
-                <div
-                  key={c}
-                  onClick={() => {
-                    setDrawColor(c);
-                    if (activeTool === 'paint') {
-                      showStatusNotice(`🎨 Selected color ${c} — now tap any player on pitch to update!`);
-                    }
-                  }}
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '50%',
-                    background: c,
-                    border: drawColor === c ? '2px solid #FFFFFF' : '1px solid rgba(0,0,0,0.6)',
-                    cursor: 'pointer',
-                    boxShadow: drawColor === c ? '0 0 6px #FFFFFF' : 'none',
-                    transform: drawColor === c ? 'scale(1.2)' : 'scale(1)',
-                    transition: 'all 0.1s ease',
-                  }}
-                  title={`Select color ${c}`}
-                />
-              ))}
+              {['#FF9F0A', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#F97316', '#A855F7', '#06B6D4'].map((c) => {
+                const activeSwatch = (selectedBox ? selectedBox.color : selectedText ? selectedText.color : drawColor) === c;
+                return (
+                  <div
+                    key={c}
+                    onClick={() => handleSelectDrawColor(c)}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: '50%',
+                      background: c,
+                      border: activeSwatch ? '2px solid #FFFFFF' : '1px solid rgba(0,0,0,0.6)',
+                      cursor: 'pointer',
+                      boxShadow: activeSwatch ? '0 0 6px #FFFFFF' : 'none',
+                      transform: activeSwatch ? 'scale(1.2)' : 'scale(1)',
+                      transition: 'all 0.1s ease',
+                    }}
+                    title={`Select color ${c}`}
+                  />
+                );
+              })}
 
               <input
                 type="color"
-                value={drawColor === 'reset' ? '#FF9F0A' : drawColor}
-                onChange={(e) => setDrawColor(e.target.value)}
+                value={selectedBox ? selectedBox.color : selectedText ? selectedText.color : effectiveDrawColor}
+                onChange={(e) => handleSelectDrawColor(e.target.value)}
                 style={{
                   width: '22px',
                   height: '22px',
@@ -2770,7 +3529,18 @@ export default function TacticsView({
                 <>
                   <button
                     type="button"
-                    onClick={() => setDrawings((prev) => prev.slice(0, -1))}
+                    onClick={() => {
+                      setDrawings((prev) => {
+                        const removed = prev[prev.length - 1];
+                        if (removed && removed.id === selectedBoxId) {
+                          setSelectedBoxId(null);
+                        }
+                        if (removed && removed.id === selectedTextId) {
+                          setSelectedTextId(null);
+                        }
+                        return prev.slice(0, -1);
+                      });
+                    }}
                     style={{
                       background: '#16382B',
                       color: '#FFFFFF',
@@ -2787,7 +3557,12 @@ export default function TacticsView({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setDrawings([])}
+                    onClick={() => {
+                      setDrawings([]);
+                      setSelectedBoxId(null);
+                      setSelectedTextId(null);
+                      setPendingArrowStart(null);
+                    }}
                     style={{
                       background: '#231518',
                       color: '#FF8A8A',
@@ -2808,6 +3583,473 @@ export default function TacticsView({
           </div>
           )}
 
+          {/* Dedicated Tactical Box Adjuster Panel (Width, Height & Color Controls) */}
+          {!isPitchFullscreen && (activeTool === 'box' || selectedBox) && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '10px',
+                background: '#0A1914',
+                border: '1px solid rgba(255, 149, 0, 0.4)',
+                borderRadius: '8px',
+                padding: '7px 10px',
+                marginBottom: '10px',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#FF9F0A' }}>
+                  ⬜ {selectedBox ? 'Selected Box:' : 'Box Tool:'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAddPresetBox}
+                  style={{
+                    background: '#FF9500',
+                    color: '#16201B',
+                    border: 'none',
+                    borderRadius: '5px',
+                    padding: '3px 8px',
+                    fontSize: '10.5px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                  title="Place a new adjustable box at the center of the pitch"
+                >
+                  + Add Box
+                </button>
+                {!selectedBox && (
+                  <span style={{ fontSize: '10.5px', color: '#8E8E93' }}>
+                    Drag on the pitch (or tap) to draw a box, or click an existing box to resize &amp; recolor.
+                  </span>
+                )}
+              </div>
+
+              {selectedBox && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  {/* Width Adjuster */}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#8E8E93' }}>Width:</span>
+                    <button
+                      type="button"
+                      onClick={() => updateSelectedBox({ width: selectedBox.width - 2 })}
+                      style={{
+                        background: '#1C1C1E',
+                        color: '#FF9F0A',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        borderRadius: '4px',
+                        padding: '1px 6px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                      title="Decrease box width"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="range"
+                      min="4"
+                      max="96"
+                      step="1"
+                      value={Math.round(selectedBox.width)}
+                      onChange={(e) => updateSelectedBox({ width: parseFloat(e.target.value) })}
+                      style={{ width: '68px', accentColor: '#FF9500', cursor: 'pointer' }}
+                      title={`Box Width: ${Math.round(selectedBox.width)}%`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updateSelectedBox({ width: selectedBox.width + 2 })}
+                      style={{
+                        background: '#1C1C1E',
+                        color: '#FF9F0A',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        borderRadius: '4px',
+                        padding: '1px 6px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                      title="Increase box width"
+                    >
+                      +
+                    </button>
+                    <input
+                      type="number"
+                      min="4"
+                      max="96"
+                      value={Math.round(selectedBox.width)}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) updateSelectedBox({ width: val });
+                      }}
+                      style={{
+                        width: '40px',
+                        background: '#000000',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        borderRadius: '4px',
+                        color: '#FFFFFF',
+                        fontSize: '10.5px',
+                        fontWeight: 800,
+                        textAlign: 'center',
+                        padding: '1px 2px',
+                      }}
+                      title="Box width %"
+                    />
+                    <span style={{ fontSize: '10px', color: '#8E8E93' }}>%</span>
+                  </div>
+
+                  {/* Height Adjuster */}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#8E8E93' }}>Height:</span>
+                    <button
+                      type="button"
+                      onClick={() => updateSelectedBox({ height: selectedBox.height - 2 })}
+                      style={{
+                        background: '#1C1C1E',
+                        color: '#FF9F0A',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        borderRadius: '4px',
+                        padding: '1px 6px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                      title="Decrease box height"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="range"
+                      min="4"
+                      max="96"
+                      step="1"
+                      value={Math.round(selectedBox.height)}
+                      onChange={(e) => updateSelectedBox({ height: parseFloat(e.target.value) })}
+                      style={{ width: '68px', accentColor: '#FF9500', cursor: 'pointer' }}
+                      title={`Box Height: ${Math.round(selectedBox.height)}%`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updateSelectedBox({ height: selectedBox.height + 2 })}
+                      style={{
+                        background: '#1C1C1E',
+                        color: '#FF9F0A',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        borderRadius: '4px',
+                        padding: '1px 6px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                      title="Increase box height"
+                    >
+                      +
+                    </button>
+                    <input
+                      type="number"
+                      min="4"
+                      max="96"
+                      value={Math.round(selectedBox.height)}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) updateSelectedBox({ height: val });
+                      }}
+                      style={{
+                        width: '40px',
+                        background: '#000000',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        borderRadius: '4px',
+                        color: '#FFFFFF',
+                        fontSize: '10.5px',
+                        fontWeight: 800,
+                        textAlign: 'center',
+                        padding: '1px 2px',
+                      }}
+                      title="Box height %"
+                    />
+                    <span style={{ fontSize: '10px', color: '#8E8E93' }}>%</span>
+                  </div>
+
+                  {/* Box Color Adjuster */}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#8E8E93' }}>Box Color:</span>
+                    {['#FF9F0A', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#A855F7'].map((c) => (
+                      <div
+                        key={c}
+                        onClick={() => handleSelectDrawColor(c)}
+                        style={{
+                          width: '15px',
+                          height: '15px',
+                          borderRadius: '4px',
+                          background: c,
+                          border: selectedBox.color === c ? '2px solid #FFFFFF' : '1px solid rgba(255,255,255,0.25)',
+                          cursor: 'pointer',
+                        }}
+                        title={`Set box color ${c}`}
+                      />
+                    ))}
+                    <input
+                      type="color"
+                      value={selectedBox.color}
+                      onChange={(e) => {
+                        setDrawColor(e.target.value);
+                        updateSelectedBox({ color: e.target.value });
+                      }}
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        padding: 0,
+                        border: 'none',
+                        borderRadius: '4px',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                      }}
+                      title="Pick custom box color"
+                    />
+                  </div>
+
+                  {/* Delete Box */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDrawings((prev) => prev.filter((d) => d.id !== selectedBox.id));
+                      setSelectedBoxId(null);
+                      showStatusNotice('🗑️ Box deleted from pitch');
+                    }}
+                    style={{
+                      background: '#231518',
+                      color: '#FF8A8A',
+                      border: '1px solid #732228',
+                      borderRadius: '5px',
+                      padding: '3px 8px',
+                      fontSize: '10.5px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                    title="Delete selected box"
+                  >
+                    🗑️ Delete Box
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Dedicated Tactical Text Adjuster Panel (Text Content, Size & Color Controls) */}
+          {!isPitchFullscreen && (activeTool === 'text' || selectedText) && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '10px',
+                background: '#0A1914',
+                border: '1px solid rgba(255, 149, 0, 0.4)',
+                borderRadius: '8px',
+                padding: '7px 10px',
+                marginBottom: '10px',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#FF9F0A' }}>
+                  🔤 {selectedText ? 'Selected Text:' : 'Text Tool:'}
+                </span>
+                <input
+                  type="text"
+                  value={selectedText ? selectedText.text : newTextDraft}
+                  onChange={(e) => {
+                    if (selectedText) {
+                      updateSelectedText({ text: e.target.value });
+                    } else {
+                      setNewTextDraft(e.target.value);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !selectedText) {
+                      e.preventDefault();
+                      handleAddTextAt(50, 50);
+                    }
+                  }}
+                  placeholder={selectedText ? 'Enter pitch text...' : 'Type label then tap pitch (or + Add Text)...'}
+                  style={{
+                    minWidth: '175px',
+                    background: '#000000',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: '5px',
+                    color: '#FFFFFF',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '4px 8px',
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAddTextAt(50, 50)}
+                  style={{
+                    background: '#FF9500',
+                    color: '#16201B',
+                    border: 'none',
+                    borderRadius: '5px',
+                    padding: '3px 8px',
+                    fontSize: '10.5px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                  title="Place a new text annotation at the center of the pitch"
+                >
+                  + Add Text
+                </button>
+                {!selectedText && (
+                  <span style={{ fontSize: '10.5px', color: '#8E8E93' }}>
+                    Tap anywhere on the pitch to place text, or click existing text to edit, move &amp; style.
+                  </span>
+                )}
+              </div>
+
+              {selectedText && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  {/* Size Adjuster */}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#8E8E93' }}>Size:</span>
+                    <button
+                      type="button"
+                      onClick={() => updateSelectedText({ fontSize: (selectedText.fontSize || 14) - 2 })}
+                      style={{
+                        background: '#1C1C1E',
+                        color: '#FF9F0A',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        borderRadius: '4px',
+                        padding: '1px 6px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                      title="Decrease font size"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="range"
+                      min="10"
+                      max="36"
+                      step="1"
+                      value={Math.round(selectedText.fontSize || 14)}
+                      onChange={(e) => updateSelectedText({ fontSize: parseFloat(e.target.value) })}
+                      style={{ width: '68px', accentColor: '#FF9500', cursor: 'pointer' }}
+                      title={`Text Size: ${Math.round(selectedText.fontSize || 14)}px`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updateSelectedText({ fontSize: (selectedText.fontSize || 14) + 2 })}
+                      style={{
+                        background: '#1C1C1E',
+                        color: '#FF9F0A',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        borderRadius: '4px',
+                        padding: '1px 6px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                      title="Increase font size"
+                    >
+                      +
+                    </button>
+                    <input
+                      type="number"
+                      min="9"
+                      max="40"
+                      value={Math.round(selectedText.fontSize || 14)}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) updateSelectedText({ fontSize: val });
+                      }}
+                      style={{
+                        width: '40px',
+                        background: '#000000',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        borderRadius: '4px',
+                        color: '#FFFFFF',
+                        fontSize: '10.5px',
+                        fontWeight: 800,
+                        textAlign: 'center',
+                        padding: '1px 2px',
+                      }}
+                      title="Text size in px"
+                    />
+                    <span style={{ fontSize: '10px', color: '#8E8E93' }}>px</span>
+                  </div>
+
+                  {/* Text Color Adjuster */}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#8E8E93' }}>Text Color:</span>
+                    {['#FF9F0A', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#A855F7'].map((c) => (
+                      <div
+                        key={c}
+                        onClick={() => handleSelectDrawColor(c)}
+                        style={{
+                          width: '15px',
+                          height: '15px',
+                          borderRadius: '4px',
+                          background: c,
+                          border: selectedText.color === c ? '2px solid #FFFFFF' : '1px solid rgba(255,255,255,0.25)',
+                          cursor: 'pointer',
+                        }}
+                        title={`Set text color ${c}`}
+                      />
+                    ))}
+                    <input
+                      type="color"
+                      value={selectedText.color}
+                      onChange={(e) => {
+                        setDrawColor(e.target.value);
+                        updateSelectedText({ color: e.target.value });
+                      }}
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        padding: 0,
+                        border: 'none',
+                        borderRadius: '4px',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                      }}
+                      title="Pick custom text color"
+                    />
+                  </div>
+
+                  {/* Delete Text */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDrawings((prev) => prev.filter((d) => d.id !== selectedText.id));
+                      setSelectedTextId(null);
+                      showStatusNotice('🗑️ Text deleted from pitch');
+                    }}
+                    style={{
+                      background: '#231518',
+                      color: '#FF8A8A',
+                      border: '1px solid #732228',
+                      borderRadius: '5px',
+                      padding: '3px 8px',
+                      fontSize: '10.5px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                    title="Delete selected text"
+                  >
+                    🗑️ Delete Text
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Pitch Viewport Container */}
           <div
             className={isPitchFullscreen ? 'tactics-pitch-viewport' : ''}
@@ -2815,7 +4057,7 @@ export default function TacticsView({
               if (!isPitchFullscreen) return;
               if (activeTool !== 'select') return;
               if (selectedSubForPlacement) return;
-              if (dragStartPosRef.current?.moved || isDraggingBall) return;
+              if (dragStartPosRef.current?.moved || isDraggingBall || boxInteraction || textDragInteraction) return;
               if (e.target.closest('button') || e.target.closest('.tactics-hud-scroll') || e.target.closest('.tactics-fullscreen-hud')) return;
               if (!isFullscreenMenuHidden) {
                 setIsFullscreenMenuHidden(true);
@@ -2870,11 +4112,27 @@ export default function TacticsView({
               {/* Realistic Green Soccer Turf with Pitch Markings & Dropzone Support */}
               <div
                 ref={pitchRef}
+                onMouseDown={(e) => {
+                  if (isDrawingToolActive) {
+                    handleSvgPointerDown(e);
+                  } else if (e.target === e.currentTarget && (selectedBoxId || selectedTextId)) {
+                    setSelectedBoxId(null);
+                    setSelectedTextId(null);
+                  }
+                }}
+                onTouchStart={(e) => {
+                  if (isDrawingToolActive) {
+                    handleSvgPointerDown(e);
+                  } else if (e.target === e.currentTarget && (selectedBoxId || selectedTextId)) {
+                    setSelectedBoxId(null);
+                    setSelectedTextId(null);
+                  }
+                }}
                 onClick={(e) => {
                   if (!isPitchFullscreen) return;
                   if (activeTool !== 'select') return;
                   if (selectedSubForPlacement) return;
-                  if (dragStartPosRef.current?.moved || isDraggingBall) return;
+                  if (dragStartPosRef.current?.moved || isDraggingBall || boxInteraction || textDragInteraction) return;
                   if (e.target.closest('button')) return;
                   if (!isFullscreenMenuHidden) {
                     setIsFullscreenMenuHidden(true);
@@ -3123,38 +4381,70 @@ export default function TacticsView({
               preserveAspectRatio="none"
               onMouseDown={handleSvgPointerDown}
               onTouchStart={handleSvgPointerDown}
+              onMouseMove={(e) => {
+                if (pendingArrowStart && (activeTool === 'line' || activeTool === 'pass')) {
+                  const pt = getPitchCoordsFromEvent(e);
+                  if (pt) setHoverPitchPoint(pt);
+                }
+              }}
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 width: '100%',
                 height: '100%',
-                zIndex: activeTool === 'curve' || activeTool === 'line' || activeTool === 'pass' ? 25 : 4,
-                pointerEvents: activeTool === 'curve' || activeTool === 'line' || activeTool === 'pass' ? 'auto' : 'none',
+                zIndex: activeTool === 'curve' || activeTool === 'line' || activeTool === 'pass' ? 45 : activeTool === 'box' || activeTool === 'text' ? 25 : 4,
+                pointerEvents: isDrawingToolActive ? 'all' : 'none',
+                cursor: isDrawingToolActive ? 'crosshair' : 'default',
                 touchAction: 'none',
               }}
             >
               <defs>
-                {['#FF9F0A', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#F97316', '#A855F7', '#EC4899', '#06B6D4']
-                  .concat(drawColor)
-                  .filter((c, i, arr) => arr.indexOf(c) === i)
-                  .map((c) => (
-                    <marker
-                      key={c}
-                      id={`arrow-${c.replace('#', '')}`}
-                      viewBox="0 0 10 10"
-                      refX="6"
-                      refY="5"
-                      markerWidth="3.5"
-                      markerHeight="3.5"
-                      orient="auto-start-reverse"
-                    >
-                      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill={c} />
-                    </marker>
-                  ))}
+                {Array.from(
+                  new Set([
+                    '#FF9F0A',
+                    '#EF4444',
+                    '#3B82F6',
+                    '#10B981',
+                    '#FFFFFF',
+                    '#F97316',
+                    '#A855F7',
+                    '#EC4899',
+                    '#06B6D4',
+                    effectiveDrawColor,
+                    ...(pendingArrowStart ? [pendingArrowStart.color] : []),
+                    ...drawings.map((d) => d.color).filter(Boolean),
+                  ])
+                ).map((c) => (
+                  <marker
+                    key={c}
+                    id={`arrow-${c.replace('#', '')}`}
+                    viewBox="0 0 10 10"
+                    refX="6"
+                    refY="5"
+                    markerWidth="3.5"
+                    markerHeight="3.5"
+                    orient="auto-start-reverse"
+                  >
+                    <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill={c} />
+                  </marker>
+                ))}
               </defs>
 
-              {/* Render all saved tactical annotations */}
+              {/* Full-surface transparent hit-target so arrows & boxes can start from any empty space */}
+              <rect
+                x="0"
+                y="0"
+                width="100"
+                height="100"
+                fill="transparent"
+                style={{
+                  pointerEvents: isDrawingToolActive ? 'all' : 'none',
+                  cursor: isDrawingToolActive ? 'crosshair' : 'default',
+                }}
+              />
+
+              {/* Render all saved tactical annotations (curves and arrows) */}
               {drawings.map((d) => {
                 if (d.type === 'curve') {
                   return (
@@ -3169,46 +4459,79 @@ export default function TacticsView({
                     />
                   );
                 }
-                if (d.type === 'line' && d.points.length >= 2) {
+                if (d.type === 'line' && d.points && d.points.length >= 2) {
                   const p1 = d.points[0];
                   const p2 = d.points[d.points.length - 1];
                   return (
-                    <line
-                      key={d.id}
-                      x1={p1.x}
-                      y1={p1.y}
-                      x2={p2.x}
-                      y2={p2.y}
-                      stroke={d.color}
-                      strokeWidth="1.2"
-                      strokeLinecap="round"
-                      markerEnd={`url(#arrow-${d.color.replace('#', '')})`}
-                    />
+                    <g key={d.id}>
+                      <circle cx={p1.x} cy={p1.y} r="1.1" fill={d.color} />
+                      <line
+                        x1={p1.x}
+                        y1={p1.y}
+                        x2={p2.x}
+                        y2={p2.y}
+                        stroke={d.color}
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                        markerEnd={`url(#arrow-${d.color.replace('#', '')})`}
+                      />
+                    </g>
                   );
                 }
-                if (d.type === 'pass' && d.points.length >= 2) {
+                if (d.type === 'pass' && d.points && d.points.length >= 2) {
                   const p1 = d.points[0];
                   const p2 = d.points[d.points.length - 1];
                   return (
-                    <line
-                      key={d.id}
-                      x1={p1.x}
-                      y1={p1.y}
-                      x2={p2.x}
-                      y2={p2.y}
-                      stroke={d.color}
-                      strokeWidth="1.2"
-                      strokeDasharray="2,2"
-                      strokeLinecap="round"
-                      markerEnd={`url(#arrow-${d.color.replace('#', '')})`}
-                    />
+                    <g key={d.id}>
+                      <circle cx={p1.x} cy={p1.y} r="1.1" fill={d.color} />
+                      <line
+                        x1={p1.x}
+                        y1={p1.y}
+                        x2={p2.x}
+                        y2={p2.y}
+                        stroke={d.color}
+                        strokeWidth="1.2"
+                        strokeDasharray="2,2"
+                        strokeLinecap="round"
+                        markerEnd={`url(#arrow-${d.color.replace('#', '')})`}
+                      />
+                    </g>
                   );
                 }
                 return null;
               })}
 
-              {/* Render active in-progress drawing */}
-              {currentDrawing && currentDrawing.points.length > 0 && (
+              {/* Render pending two-tap arrow start & live preview */}
+              {pendingArrowStart && (
+                <g>
+                  <circle
+                    cx={pendingArrowStart.x}
+                    cy={pendingArrowStart.y}
+                    r="1.6"
+                    fill={pendingArrowStart.color}
+                    stroke="#FFFFFF"
+                    strokeWidth="0.5"
+                  />
+                  {hoverPitchPoint &&
+                    Math.hypot(hoverPitchPoint.x - pendingArrowStart.x, hoverPitchPoint.y - pendingArrowStart.y) >= 1.5 && (
+                      <line
+                        x1={pendingArrowStart.x}
+                        y1={pendingArrowStart.y}
+                        x2={hoverPitchPoint.x}
+                        y2={hoverPitchPoint.y}
+                        stroke={pendingArrowStart.color}
+                        strokeWidth="1.2"
+                        strokeDasharray={pendingArrowStart.type === 'pass' ? '2,2' : undefined}
+                        strokeOpacity="0.7"
+                        strokeLinecap="round"
+                        markerEnd={`url(#arrow-${pendingArrowStart.color.replace('#', '')})`}
+                      />
+                    )}
+                </g>
+              )}
+
+              {/* Render active in-progress drawing (curve / line / pass) */}
+              {currentDrawing && currentDrawing.type !== 'box' && currentDrawing.points && currentDrawing.points.length > 0 && (
                 currentDrawing.type === 'curve' ? (
                   <path
                     d={generateSvgPath(currentDrawing.points)}
@@ -3219,20 +4542,331 @@ export default function TacticsView({
                     strokeLinejoin="round"
                   />
                 ) : currentDrawing.points.length >= 2 ? (
-                  <line
-                    x1={currentDrawing.points[0].x}
-                    y1={currentDrawing.points[0].y}
-                    x2={currentDrawing.points[currentDrawing.points.length - 1].x}
-                    y2={currentDrawing.points[currentDrawing.points.length - 1].y}
-                    stroke={currentDrawing.color}
-                    strokeWidth="1.2"
-                    strokeDasharray={currentDrawing.type === 'pass' ? '2,2' : undefined}
-                    strokeLinecap="round"
-                    markerEnd={`url(#arrow-${currentDrawing.color.replace('#', '')})`}
-                  />
-                ) : null
+                  <g>
+                    <circle cx={currentDrawing.points[0].x} cy={currentDrawing.points[0].y} r="1.1" fill={currentDrawing.color} />
+                    <line
+                      x1={currentDrawing.points[0].x}
+                      y1={currentDrawing.points[0].y}
+                      x2={currentDrawing.points[currentDrawing.points.length - 1].x}
+                      y2={currentDrawing.points[currentDrawing.points.length - 1].y}
+                      stroke={currentDrawing.color}
+                      strokeWidth="1.2"
+                      strokeDasharray={currentDrawing.type === 'pass' ? '2,2' : undefined}
+                      strokeLinecap="round"
+                      markerEnd={`url(#arrow-${currentDrawing.color.replace('#', '')})`}
+                    />
+                  </g>
+                ) : (
+                  <circle cx={currentDrawing.points[0].x} cy={currentDrawing.points[0].y} r="1.3" fill={currentDrawing.color} />
+                )
               )}
             </svg>
+
+            {/* Saved Tactical Boxes / Zones on Pitch */}
+            {drawings
+              .filter((d) => d.type === 'box')
+              .map((box) => {
+                const isSelected = selectedBoxId === box.id;
+                return (
+                  <div
+                    key={box.id}
+                    onMouseDown={(e) => {
+                      if (activeTool === 'select' || activeTool === 'box') {
+                        handleBoxInteractionStart(e, box, 'move');
+                      }
+                    }}
+                    onTouchStart={(e) => {
+                      if (activeTool === 'select' || activeTool === 'box') {
+                        handleBoxInteractionStart(e, box, 'move');
+                      }
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (activeTool === 'paint') {
+                        const targetColor = drawColor === 'reset' ? '#FF9F0A' : drawColor;
+                        setDrawings((prev) =>
+                          prev.map((d) => (d.id === box.id ? { ...d, color: targetColor } : d))
+                        );
+                        setSelectedBoxId(box.id);
+                        setSelectedTextId(null);
+                        showStatusNotice(
+                          drawColor === 'reset'
+                            ? '🔄 Reset box color to default'
+                            : '🎨 Updated box color'
+                        );
+                      } else if (activeTool === 'select' || activeTool === 'box') {
+                        setSelectedBoxId(box.id);
+                        setSelectedTextId(null);
+                      }
+                    }}
+                    style={{
+                      position: 'absolute',
+                      left: `${box.x}%`,
+                      top: `${box.y}%`,
+                      width: `${box.width}%`,
+                      height: `${box.height}%`,
+                      background: hexToRgba(box.color, isSelected ? 0.24 : 0.18),
+                      border: `2px ${isSelected ? 'solid' : 'dashed'} ${box.color}`,
+                      borderRadius: '6px',
+                      boxShadow: isSelected
+                        ? `0 0 0 1px rgba(255,255,255,0.5), 0 0 14px ${hexToRgba(box.color, 0.45)}`
+                        : 'none',
+                      zIndex: 8,
+                      pointerEvents:
+                        activeTool === 'select' || activeTool === 'paint' || activeTool === 'box'
+                          ? 'auto'
+                          : 'none',
+                      cursor:
+                        activeTool === 'paint'
+                          ? 'crosshair'
+                          : activeTool === 'select' || activeTool === 'box'
+                          ? 'move'
+                          : 'default',
+                      boxSizing: 'border-box',
+                      touchAction: 'none',
+                    }}
+                    title="Tactical box (drag to move, use handles or controls to resize & recolor)"
+                  />
+                );
+              })}
+
+            {/* Selected Box Resize Handles & Dimension Overlay */}
+            {selectedBox && activeTool !== 'line' && activeTool !== 'pass' && activeTool !== 'curve' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: `${selectedBox.x}%`,
+                  top: `${selectedBox.y}%`,
+                  width: `${selectedBox.width}%`,
+                  height: `${selectedBox.height}%`,
+                  zIndex: 35,
+                  pointerEvents: 'none',
+                  boxSizing: 'border-box',
+                }}
+              >
+                {/* Dimension Pill (also draggable to move box) */}
+                <div
+                  onMouseDown={(e) => handleBoxInteractionStart(e, selectedBox, 'move')}
+                  onTouchStart={(e) => handleBoxInteractionStart(e, selectedBox, 'move')}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: 'absolute',
+                    top: selectedBox.y < 6 ? '4px' : '-21px',
+                    left: selectedBox.y < 6 ? '4px' : '0',
+                    background: 'rgba(0, 0, 0, 0.88)',
+                    border: `1px solid ${selectedBox.color}`,
+                    color: '#FFFFFF',
+                    borderRadius: '4px',
+                    padding: '1px 6px',
+                    fontSize: '9.5px',
+                    fontWeight: 800,
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'auto',
+                    cursor: 'move',
+                    touchAction: 'none',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.6)',
+                  }}
+                  title="Drag to move box"
+                >
+                  {Math.round(selectedBox.width)}% × {Math.round(selectedBox.height)}%
+                </div>
+
+                {/* Quick Delete Button */}
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDrawings((prev) => prev.filter((d) => d.id !== selectedBox.id));
+                    setSelectedBoxId(null);
+                    showStatusNotice('🗑️ Box deleted from pitch');
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: selectedBox.y < 6 ? '4px' : '-21px',
+                    right: selectedBox.y < 6 ? '4px' : '0',
+                    background: '#7F1D1D',
+                    color: '#FFFFFF',
+                    border: '1px solid #EF4444',
+                    borderRadius: '4px',
+                    padding: '1px 5px',
+                    fontSize: '9.5px',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    pointerEvents: 'auto',
+                    lineHeight: 1.2,
+                  }}
+                  title="Delete selected box"
+                >
+                  ✕
+                </button>
+
+                {/* 8 Resize Handles */}
+                {[
+                  { mode: 'nw', left: '0%', top: '0%', cursor: 'nwse-resize' },
+                  { mode: 'n', left: '50%', top: '0%', cursor: 'ns-resize' },
+                  { mode: 'ne', left: '100%', top: '0%', cursor: 'nesw-resize' },
+                  { mode: 'e', left: '100%', top: '50%', cursor: 'ew-resize' },
+                  { mode: 'se', left: '100%', top: '100%', cursor: 'nwse-resize' },
+                  { mode: 's', left: '50%', top: '100%', cursor: 'ns-resize' },
+                  { mode: 'sw', left: '0%', top: '100%', cursor: 'nesw-resize' },
+                  { mode: 'w', left: '0%', top: '50%', cursor: 'ew-resize' },
+                ].map((h) => (
+                  <div
+                    key={h.mode}
+                    onMouseDown={(e) => handleBoxInteractionStart(e, selectedBox, h.mode)}
+                    onTouchStart={(e) => handleBoxInteractionStart(e, selectedBox, h.mode)}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      position: 'absolute',
+                      left: h.left,
+                      top: h.top,
+                      width: '12px',
+                      height: '12px',
+                      transform: 'translate(-50%, -50%)',
+                      background: '#FFFFFF',
+                      border: `2px solid ${selectedBox.color}`,
+                      borderRadius: h.mode.length === 2 ? '3px' : '50%',
+                      cursor: h.cursor,
+                      pointerEvents: 'auto',
+                      touchAction: 'none',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.85)',
+                    }}
+                    title={`Drag to resize (${h.mode.toUpperCase()})`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* In-Progress Box Preview While Drawing */}
+            {currentDrawing && currentDrawing.type === 'box' && (currentDrawing.width > 0.5 || currentDrawing.height > 0.5) && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: `${currentDrawing.x}%`,
+                  top: `${currentDrawing.y}%`,
+                  width: `${currentDrawing.width}%`,
+                  height: `${currentDrawing.height}%`,
+                  background: hexToRgba(currentDrawing.color, 0.2),
+                  border: `2px dashed ${currentDrawing.color}`,
+                  borderRadius: '6px',
+                  zIndex: 34,
+                  pointerEvents: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            )}
+
+            {/* Saved Tactical Text Annotations on Pitch */}
+            {drawings
+              .filter((d) => d.type === 'text')
+              .map((item) => {
+                const isSelected = selectedTextId === item.id;
+                const canInteract = activeTool === 'select' || activeTool === 'paint' || activeTool === 'text';
+                return (
+                  <div
+                    key={item.id}
+                    onMouseDown={(e) => {
+                      if (activeTool === 'select' || activeTool === 'text') {
+                        handleTextDragStart(e, item);
+                      }
+                    }}
+                    onTouchStart={(e) => {
+                      if (activeTool === 'select' || activeTool === 'text') {
+                        handleTextDragStart(e, item);
+                      }
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (activeTool === 'paint') {
+                        const targetColor = drawColor === 'reset' ? '#FF9F0A' : drawColor;
+                        setDrawings((prev) =>
+                          prev.map((d) => (d.id === item.id ? { ...d, color: targetColor } : d))
+                        );
+                        setSelectedTextId(item.id);
+                        setSelectedBoxId(null);
+                        showStatusNotice(
+                          drawColor === 'reset'
+                            ? '🔄 Reset text color to default'
+                            : '🎨 Updated text color'
+                        );
+                      } else if (activeTool === 'select' || activeTool === 'text') {
+                        setSelectedTextId(item.id);
+                        setSelectedBoxId(null);
+                      }
+                    }}
+                    style={{
+                      position: 'absolute',
+                      left: `${item.x}%`,
+                      top: `${item.y}%`,
+                      transform: 'translate(-50%, -50%)',
+                      color: item.color,
+                      fontSize: `${Math.max(9, Math.round((item.fontSize || 14) * pitchScale))}px`,
+                      fontWeight: 800,
+                      lineHeight: 1.2,
+                      background: 'rgba(0, 0, 0, 0.72)',
+                      border: isSelected
+                        ? `1.5px solid ${item.color}`
+                        : '1px solid rgba(255, 255, 255, 0.22)',
+                      borderRadius: '6px',
+                      padding: '2px 8px',
+                      whiteSpace: 'nowrap',
+                      boxShadow: isSelected
+                        ? `0 0 0 1px rgba(255,255,255,0.4), 0 0 12px ${hexToRgba(item.color, 0.45)}`
+                        : '0 2px 6px rgba(0,0,0,0.65)',
+                      zIndex: isSelected ? 36 : activeTool === 'text' ? 26 : 18,
+                      pointerEvents: canInteract ? 'auto' : 'none',
+                      cursor:
+                        activeTool === 'paint'
+                          ? 'crosshair'
+                          : activeTool === 'select' || activeTool === 'text'
+                          ? 'move'
+                          : 'default',
+                      userSelect: 'none',
+                      touchAction: 'none',
+                    }}
+                    title="Tactical text (drag to move, click to edit text, size & color)"
+                  >
+                    <span>{item.text || ' '}</span>
+                    {isSelected && activeTool !== 'line' && activeTool !== 'pass' && activeTool !== 'curve' && (
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDrawings((prev) => prev.filter((d) => d.id !== item.id));
+                          setSelectedTextId(null);
+                          showStatusNotice('🗑️ Text deleted from pitch');
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '-9px',
+                          right: '-9px',
+                          background: '#7F1D1D',
+                          color: '#FFFFFF',
+                          border: '1px solid #EF4444',
+                          borderRadius: '50%',
+                          width: '17px',
+                          height: '17px',
+                          padding: 0,
+                          fontSize: '9px',
+                          fontWeight: 900,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          lineHeight: 1,
+                        }}
+                        title="Delete selected text"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
 
             {/* Draggable Realistic Soccer Ball on Pitch */}
             {showBall && (

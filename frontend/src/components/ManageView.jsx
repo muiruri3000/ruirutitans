@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TeamBalancerView from './TeamBalancerView';
 import DutyRosterView from './DutyRosterView';
 import UserPermissionsPanel from './UserPermissionsPanel';
+import AuditLogsPanel from './AuditLogsPanel';
 import { api } from '../api/client';
 import PasswordInput from './PasswordInput';
 
@@ -994,6 +995,24 @@ export default function ManageView({
           }}
         >
           🔐 Users, Permissions &amp; Security
+        </button>
+        <button
+          type="button"
+          onClick={() => setAdminSection('audit')}
+          className={`manage-section-btn ${adminSection === 'audit' ? 'active' : ''}`}
+          style={{
+            flex: 1,
+            padding: '10px 14px',
+            borderRadius: '8px',
+            border: 'none',
+            background: adminSection === 'audit' ? '#FF9500' : '#1C1C1E',
+            color: adminSection === 'audit' ? '#16201B' : '#EBEBF5',
+            fontWeight: 800,
+            fontSize: '12.5px',
+            cursor: 'pointer',
+          }}
+        >
+          📋 Audit &amp; Activity Logs
         </button>
       </div>
 
@@ -3690,7 +3709,23 @@ export default function ManageView({
                 Manage and update your platform manager password. Your active session will automatically renew with the updated credentials.
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setAdminSection('audit')}
+                style={{
+                  background: 'rgba(255, 149, 0, 0.14)',
+                  border: '1px solid #FF9500',
+                  color: '#FFB340',
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  fontSize: '11.5px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                📋 View Audit &amp; Activity Logs →
+              </button>
               <span style={{ background: '#1C1C1E', border: '1px solid #2F7D5C', color: '#6CE5A0', padding: '5px 12px', borderRadius: '20px', fontSize: '11.5px', fontWeight: 700 }}>
                 ● Active Manager: @{cmsUser?.username || 'admin'}
               </span>
@@ -3805,6 +3840,11 @@ export default function ManageView({
 
           <UserPermissionsPanel cmsUser={cmsUser} />
         </div>
+      )}
+
+      {/* SECTION 6: AUDIT & ACTIVITY LOGS */}
+      {adminSection === 'audit' && (
+        <AuditLogsPanel categories={categories} activeCategoryKey={activeCategoryKey} />
       )}
 
       {/* ADD LEAGUE TEAM MODAL */}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { computeTeamProfile } from '../utils/teamAnalytics';
+import { api } from '../api/client';
 
 const POSITIONS = ['', 'GK', 'LB', 'CB', 'RB', 'CDM', 'CM', 'LW', 'RW', 'ST'];
 
@@ -22,6 +23,7 @@ export default function TeamDetailModal({
   const [newPlayerUsername, setNewPlayerUsername] = useState('');
   const [newPlayerPassword, setNewPlayerPassword] = useState('');
   const [addMsg, setAddMsg] = useState('');
+  const [liveBans, setLiveBans] = useState([]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -31,9 +33,37 @@ export default function TeamDetailModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  useEffect(() => {
+    let mounted = true;
+    const keysToFetch = new Set();
+    const primaryKey = categoryKey || category?.key;
+    if (primaryKey) keysToFetch.add(primaryKey);
+    Object.entries(allCategories || {}).forEach(([cKey, cObj]) => {
+      if (cObj && !cObj.isDeleted && (cObj.teams || []).some((t) => t.id === teamId)) {
+        keysToFetch.add(cKey);
+      }
+    });
+    if (keysToFetch.size === 0) return undefined;
+
+    Promise.allSettled(Array.from(keysToFetch).map((k) => api.getBans(k))).then((results) => {
+      if (!mounted) return;
+      const merged = [];
+      results.forEach((r) => {
+        if (r.status === 'fulfilled' && Array.isArray(r.value?.active_bans)) {
+          merged.push(...r.value.active_bans);
+        }
+      });
+      setLiveBans(merged);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [teamId, categoryKey, category?.key, allCategories]);
+
   const profile = useMemo(() => {
-    return computeTeamProfile(teamId, category, allCategories, activeSuspensionsMap);
-  }, [teamId, category, allCategories, activeSuspensionsMap]);
+    return computeTeamProfile(teamId, category, allCategories, activeSuspensionsMap, liveBans);
+  }, [teamId, category, allCategories, activeSuspensionsMap, liveBans]);
 
   if (!profile || !profile.team) {
     return (
@@ -873,8 +903,11 @@ export default function TeamDetailModal({
                       </td>
                       <td style={{ padding: '8px 12px', textAlign: 'right' }}>
                         {p.isSuspended ? (
-                          <span style={{ background: '#7F1D1D', color: '#FCA5A5', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>
-                            🚫 Suspended
+                          <span
+                            title={p.suspensionReason || 'Suspended'}
+                            style={{ background: '#7F1D1D', color: '#FCA5A5', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 800, display: 'inline-block' }}
+                          >
+                            🚫 Suspended{p.suspensionDuration ? ` (${p.suspensionDuration})` : ''}
                           </span>
                         ) : (
                           <span style={{ color: '#4ADE80', fontSize: '10.5px', fontWeight: 700 }}>
@@ -957,7 +990,7 @@ export default function TeamDetailModal({
                 </div>
                 {activeSuspensions.map((s, idx) => (
                   <div
-                    key={idx}
+                    key={s.banId || `${s.playerId || s.playerName}-${idx}`}
                     style={{
                       background: 'rgba(239, 68, 68, 0.12)',
                       border: '1px solid #EF4444',
@@ -971,12 +1004,36 @@ export default function TeamDetailModal({
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: '14px', fontWeight: 800, color: '#FCA5A5' }}>
-                        🚫 {s.playerName}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 800, color: '#FCA5A5' }}>
+                          🚫 {s.playerName}
+                        </span>
+                        {s.isBan && (
+                          <span
+                            style={{
+                              background: 'rgba(255, 69, 58, 0.22)',
+                              border: '1px solid rgba(255, 69, 58, 0.5)',
+                              color: '#FF8A80',
+                              borderRadius: '999px',
+                              padding: '1px 8px',
+                              fontSize: '10px',
+                              fontWeight: 800,
+                            }}
+                          >
+                            ⚖️ Disciplinary Ban{s.durationLabel ? ` · ${s.durationLabel}` : ''}
+                          </span>
+                        )}
                       </div>
-                      <div style={{ fontSize: '11.5px', color: '#F87171', marginTop: '2px' }}>
+                      <div style={{ fontSize: '11.5px', color: '#F87171', marginTop: '3px' }}>
                         Reason: <strong>{s.reason}</strong>
                       </div>
+                      {(s.imposedBy || s.startDate) && (
+                        <div style={{ fontSize: '10.5px', color: '#8E8E93', marginTop: '2px' }}>
+                          {s.imposedBy ? `Sanctioned by: ${s.imposedBy}` : ''}
+                          {s.imposedBy && s.startDate ? ' · ' : ''}
+                          {s.startDate ? `Imposed: ${s.startDate}` : ''}
+                        </div>
+                      )}
                     </div>
                     <div style={{ textAlign: 'right', fontSize: '11px', color: '#8E8E93' }}>
                       Serving suspension for: <br />

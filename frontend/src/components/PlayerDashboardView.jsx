@@ -142,7 +142,17 @@ export default function PlayerDashboardView({
     return !isCompleted && (f.home === team.id || f.away === team.id);
   });
 
-  const isSuspended = redsCount > 0 || yellowsCount >= 4;
+  const hasActiveBan = Boolean(
+    playerInRoster?.isBanned ||
+    playerInRoster?.activeBan ||
+    (currentCategory?.activeBans || []).some(
+      (b) =>
+        b.is_active !== false &&
+        (b.player?.id === targetId ||
+          (targetName && (b.player?.name || '').trim().toLowerCase() === targetName))
+    )
+  );
+  const isSuspended = hasActiveBan || redsCount > 0 || yellowsCount >= 4;
 
   const handleChangePassword = async (e) => {
     e.preventDefault();

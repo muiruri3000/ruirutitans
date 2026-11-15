@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote
+from .models import Category, Team, Player, Referee, Fixture, MatchEvent, GlobalSettings, VotingRound, PositionVote, AuditLog
 
 
 class PlayerInline(admin.TabularInline):
@@ -137,4 +137,13 @@ class PositionVoteAdmin(admin.ModelAdmin):
     list_filter = ("voting_round__category", "position", "voting_round")
     search_fields = ("voter_id", "voter_name", "player__name")
     readonly_fields = ("created_at",)
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "event_type", "actor_name", "actor_username", "actor_role", "action", "target", "category_key", "ip_address")
+    list_filter = ("event_type", "actor_type", "actor_role", "category_key")
+    search_fields = ("actor_username", "actor_name", "action", "target", "ip_address")
+    readonly_fields = ("created_at",)
+
 

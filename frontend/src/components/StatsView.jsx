@@ -1212,7 +1212,7 @@ function LeaderboardCard({ title, list = [], countKey }) {
   );
 }
 
-function PlayerBanDetailModal({ ban, onClose, isCmsMode, onLiftBan }) {
+function PlayerBanDetailModal({ ban, categoryKey, onClose, isCmsMode, onLiftBan, onOpenTeamModal }) {
   if (!ban) return null;
   const isPeriod = ban.ban_type === 'period';
 
@@ -1306,7 +1306,21 @@ function PlayerBanDetailModal({ ban, onClose, isCmsMode, onLiftBan }) {
                 {ban.player?.username ? ` · @${ban.player.username}` : ''}
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div
+              onClick={() => {
+                if (onOpenTeamModal && ban.team?.id) {
+                  onClose();
+                  onOpenTeamModal(ban.team.id, ban.category_key || categoryKey);
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: onOpenTeamModal && ban.team?.id ? 'pointer' : 'default',
+              }}
+              title={onOpenTeamModal && ban.team?.id ? `View ${ban.team?.name} Squad & Suspensions` : undefined}
+            >
               <span
                 style={{
                   width: '10px',
@@ -1315,7 +1329,7 @@ function PlayerBanDetailModal({ ban, onClose, isCmsMode, onLiftBan }) {
                   background: ban.team?.color || '#FF9500',
                 }}
               />
-              <span style={{ fontWeight: 700, fontSize: '13px', color: ban.team?.color || '#FF9500' }}>
+              <span style={{ fontWeight: 700, fontSize: '13px', color: ban.team?.color || '#FF9500', textDecoration: onOpenTeamModal && ban.team?.id ? 'underline' : 'none' }}>
                 {ban.team?.name}
               </span>
             </div>
@@ -1694,7 +1708,7 @@ function CreateBanModal({ categoryKey, categoryObj, onClose, onCreated }) {
   );
 }
 
-function BannedPlayersSection({ categoryKey, categoryObj, isCmsMode }) {
+function BannedPlayersSection({ categoryKey, categoryObj, isCmsMode, onRefreshState, onOpenTeamModal }) {
   const [bans, setBans] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedBan, setSelectedBan] = useState(null);
@@ -1721,7 +1735,8 @@ function BannedPlayersSection({ categoryKey, categoryObj, isCmsMode }) {
     try {
       await api.liftBan(categoryKey, banId);
       setSelectedBan(null);
-      fetchBans();
+      await fetchBans();
+      if (onRefreshState) await onRefreshState();
     } catch (err) {
       alert(err.message || 'Failed to lift ban');
     }
@@ -1831,7 +1846,23 @@ function BannedPlayersSection({ categoryKey, categoryObj, isCmsMode }) {
                   </span>
                 </div>
                 <div style={{ fontSize: '12px', color: '#8E8E93' }}>
-                  Club: <strong style={{ color: '#E5E5EA' }}>{ban.team?.name}</strong>
+                  Club:{' '}
+                  <strong
+                    onClick={(e) => {
+                      if (onOpenTeamModal && ban.team?.id) {
+                        e.stopPropagation();
+                        onOpenTeamModal(ban.team.id, ban.category_key || categoryKey);
+                      }
+                    }}
+                    style={{
+                      color: '#E5E5EA',
+                      cursor: onOpenTeamModal && ban.team?.id ? 'pointer' : 'inherit',
+                      textDecoration: onOpenTeamModal && ban.team?.id ? 'underline' : 'none',
+                    }}
+                    title={onOpenTeamModal && ban.team?.id ? `View ${ban.team?.name} Squad & Suspensions` : undefined}
+                  >
+                    {ban.team?.name}
+                  </strong>
                 </div>
                 <div style={{ fontSize: '11px', color: '#FF453A', fontWeight: 700 }}>
                   Sanction: {ban.duration_label || (ban.ban_type === 'games' ? `${ban.games_banned} matches` : ban.period_description)}
@@ -1863,9 +1894,11 @@ function BannedPlayersSection({ categoryKey, categoryObj, isCmsMode }) {
       {selectedBan && (
         <PlayerBanDetailModal
           ban={selectedBan}
+          categoryKey={categoryKey}
           onClose={() => setSelectedBan(null)}
           isCmsMode={isCmsMode}
           onLiftBan={handleLiftBan}
+          onOpenTeamModal={onOpenTeamModal}
         />
       )}
 
@@ -1874,7 +1907,10 @@ function BannedPlayersSection({ categoryKey, categoryObj, isCmsMode }) {
           categoryKey={categoryKey}
           categoryObj={categoryObj}
           onClose={() => setShowCreateModal(false)}
-          onCreated={fetchBans}
+          onCreated={async () => {
+            await fetchBans();
+            if (onRefreshState) await onRefreshState();
+          }}
         />
       )}
     </div>
@@ -1887,6 +1923,8 @@ export default function StatsView({
   leaderboards,
   activeCategoryKey = 'ruiru-titans-league-oct-nov-2026',
   isCmsMode = false,
+  onRefreshState,
+  onOpenTeamModal,
 }) {
   const categoryEntries = Object.entries(categories).filter(([k, c]) => {
     if (c.isDeleted) return false;
@@ -1931,7 +1969,13 @@ export default function StatsView({
           <LeaderboardCard title="Red Cards (Expulsions)" list={leaderboards?.reds} countKey="red" />
         </div>
         <div style={{ marginTop: '16px' }}>
-          <BannedPlayersSection categoryKey={activeCategoryKey} categoryObj={categories?.[activeCategoryKey]} isCmsMode={isCmsMode} />
+          <BannedPlayersSection
+            categoryKey={activeCategoryKey}
+            categoryObj={categories?.[activeCategoryKey]}
+            isCmsMode={isCmsMode}
+            onRefreshState={onRefreshState}
+            onOpenTeamModal={onOpenTeamModal}
+          />
         </div>
       </div>
     );
@@ -2184,6 +2228,8 @@ export default function StatsView({
                 categoryKey={catKey}
                 categoryObj={catObj}
                 isCmsMode={isCmsMode}
+                onRefreshState={onRefreshState}
+                onOpenTeamModal={onOpenTeamModal}
               />
             </div>
           </section>

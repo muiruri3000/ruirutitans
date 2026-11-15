@@ -1482,6 +1482,59 @@ def get_or_create_cms_profile(user):
     )
 
 
+class AuditLog(models.Model):
+    """
+    Stores authentication events (logins, failed logins, logouts, password changes)
+    and administrative/player activities along with the person who performed them.
+    """
+    ACTOR_TYPE_CHOICES = [
+        ("cms", "CMS / Staff"),
+        ("player", "Player"),
+        ("visitor", "Visitor"),
+        ("system", "System"),
+    ]
+
+    actor_type = models.CharField(max_length=20, choices=ACTOR_TYPE_CHOICES, default="cms", db_index=True)
+    actor_id = models.CharField(max_length=100, blank=True, default="", db_index=True)
+    actor_username = models.CharField(max_length=150, blank=True, default="", db_index=True)
+    actor_name = models.CharField(max_length=200, blank=True, default="")
+    actor_role = models.CharField(max_length=50, blank=True, default="")
+    event_type = models.CharField(max_length=50, default="activity", db_index=True)
+    action = models.CharField(max_length=255)
+    target = models.CharField(max_length=255, blank=True, default="")
+    category_key = models.CharField(max_length=100, blank=True, default="", db_index=True)
+    details = models.JSONField(default=dict, blank=True)
+    ip_address = models.CharField(max_length=64, blank=True, default="")
+    user_agent = models.CharField(max_length=255, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        who = self.actor_name or self.actor_username or self.actor_type
+        return f"[{self.event_type}] {who}: {self.action}"
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "actor_type": self.actor_type,
+            "actor_id": self.actor_id,
+            "actor_username": self.actor_username,
+            "actor_name": self.actor_name,
+            "actor_role": self.actor_role,
+            "event_type": self.event_type,
+            "action": self.action,
+            "target": self.target,
+            "category_key": self.category_key,
+            "details": self.details if isinstance(self.details, dict) else {},
+            "ip_address": self.ip_address,
+            "user_agent": self.user_agent,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+
 
 
 

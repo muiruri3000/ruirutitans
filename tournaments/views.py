@@ -17,6 +17,7 @@ from .models import (
     GlobalSettings,
     HighlightVideo,
     VisitorComment,
+    AuditLog,
 )
 from .serializers import (
     CategorySerializer,
@@ -37,6 +38,9 @@ from .services import (
     get_category_duty_exempted_player_ids,
     add_duty_roster_exemption,
     remove_duty_roster_exemption,
+    record_audit_log,
+    summarize_state_diff_for_audit,
+    resolve_audit_actor,
 )
 
 
@@ -93,8 +97,18 @@ class StateAPIView(views.APIView):
                 {"error": "Invalid state payload. 'categories' object is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        old_state = export_state_from_db()
         import_state_to_db(state_data)
         updated_state = export_state_from_db()
+        for entry in summarize_state_diff_for_audit(old_state, updated_state):
+            record_audit_log(
+                request,
+                event_type=entry.get("event_type", "state_update"),
+                action=entry.get("action", "Updated tournament state"),
+                target=entry.get("target", ""),
+                category_key=entry.get("category_key", ""),
+                details=entry.get("details"),
+            )
         return Response(updated_state)
 
 
@@ -133,6 +147,13 @@ class ResetSeasonAPIView(views.APIView):
         ensure_archived_open_season()
         VotingRound.objects.all().delete()
         updated_state = export_state_from_db()
+        record_audit_log(
+            request,
+            event_type="state_update",
+            action="Reset season to default core teams",
+            target="Open League Season",
+            category_key="open",
+        )
         return Response({
             "message": "Ruiru Titans season reset with the 5 core teams starting with 0 players.",
             "state": updated_state,
@@ -169,6 +190,13 @@ class ReloadCanonicalScheduleAPIView(views.APIView):
                 ]
         import_state_to_db(state_dict, soft_delete_missing=False)
         updated_state = export_state_from_db()
+        record_audit_log(
+            request,
+            event_type="state_update",
+            action="Reloaded canonical schedule & fixtures from seed file",
+            target="Canonical Schedule",
+            category_key=state_dict.get("activeCategory", ""),
+        )
         return Response({
             "message": "Canonical tournament state successfully reloaded from initial_tournament_state.json.",
             "state": updated_state,
@@ -210,6 +238,14 @@ class HomepageAPIView(views.APIView):
             current["upcoming_fixtures"] = payload["upcoming_fixtures"]
         settings.homepage_data = persist_homepage_images_to_media(current)
         settings.save(update_fields=["homepage_data"])
+        changed_sections = [k for k in ("carousel", "jerseys", "upcoming_fixtures") if k in payload]
+        record_audit_log(
+            request,
+            event_type="homepage",
+            action=f"Updated homepage content ({', '.join(changed_sections) or 'general'})",
+            target="Club Homepage",
+            details={"sections": changed_sections},
+        )
         return Response({"success": True, "homepage": settings.homepage_data})
 
 
@@ -246,11 +282,25 @@ class HomepageImageUploadAPIView(views.APIView):
                 target_path.write_bytes(raw_bytes)
             media_url = (getattr(settings, "MEDIA_URL", "/media/") or "/media/").rstrip("/")
             url = f"{media_url}/homepage/{filename}"
+            record_audit_log(
+                request,
+                event_type="homepage",
+                action=f"Uploaded homepage image ({filename})",
+                target="Homepage Media",
+                details={"url": url, "filename": getattr(uploaded_file, "name", "")},
+            )
             return Response({"success": True, "url": url})
 
         data_url = (request.data or {}).get("image") if isinstance(request.data, dict) else None
         if data_url and isinstance(data_url, str):
             url = save_data_url_image_to_media(data_url)
+            record_audit_log(
+                request,
+                event_type="homepage",
+                action="Uploaded homepage image",
+                target="Homepage Media",
+                details={"url": url},
+            )
             return Response({"success": True, "url": url})
 
         return Response({"error": "No image file or data URL provided."}, status=status.HTTP_400_BAD_REQUEST)
@@ -300,6 +350,14 @@ class CategoryListCreateAPIView(views.APIView):
         for ct in core_teams_spec:
             Team.objects.create(category=category, **ct)
 
+        record_audit_log(
+            request,
+            event_type="category_management",
+            action=f"Created competition '{category.label}' ({mode}, {format_choice})",
+            target=category.label,
+            category_key=category.key,
+            details={"mode": mode, "format": format_choice},
+        )
         return Response(CategorySerializer(category).data, status=status.HTTP_201_CREATED)
 
 
@@ -346,6 +404,14 @@ class CategoryDetailAPIView(views.APIView):
             if "include_gk" in vc:
                 cat.voting_include_gk = bool(vc["include_gk"])
         cat.save()
+        record_audit_log(
+            request,
+            event_type="category_management",
+            action=f"Updated competition settings for '{cat.label}'",
+            target=cat.label,
+            category_key=cat.key,
+            details={"fields": list(data.keys())},
+        )
         return Response(cat.to_state_dict())
 
     def put(self, request, key):
@@ -353,6 +419,8 @@ class CategoryDetailAPIView(views.APIView):
 
     def delete(self, request, key):
         cat = get_object_or_404(Category, key=key)
+        cat_label = cat.label
+        cat_key = cat.key
         cat.delete()
         # Ensure an active category remains
         remaining = Category.objects.first()
@@ -360,6 +428,13 @@ class CategoryDetailAPIView(views.APIView):
             settings, _ = GlobalSettings.objects.get_or_create(id=1)
             settings.active_category_key = remaining.key
             settings.save()
+        record_audit_log(
+            request,
+            event_type="category_management",
+            action=f"Deleted competition '{cat_label}'",
+            target=cat_label,
+            category_key=cat_key,
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -676,6 +751,15 @@ class FixtureReportAPIView(views.APIView):
         fixture.report = report_data
         fixture.save(update_fields=["report", "updated_at"])
 
+        record_audit_log(
+            request,
+            event_type="match_update",
+            action=f"Saved match report for {fixture.fixture_id}",
+            target=f"{fixture.fixture_id}",
+            category_key=category.key,
+            details={"title": report_data["title"], "motm": report_data["motm"]},
+        )
+
         return Response({
             "success": True,
             "fixture_id": fixture.fixture_id,
@@ -693,6 +777,14 @@ class FixtureReportAPIView(views.APIView):
 
         fixture.report = {}
         fixture.save(update_fields=["report", "updated_at"])
+
+        record_audit_log(
+            request,
+            event_type="match_update",
+            action=f"Removed match report for {fixture.fixture_id}",
+            target=f"{fixture.fixture_id}",
+            category_key=category.key,
+        )
 
         return Response({
             "success": True,
@@ -729,6 +821,14 @@ class WeeklyMVPAPIView(views.APIView):
         from .services import compute_weekly_mvps
         force = bool(request.data.get("force", True))
         data = compute_weekly_mvps(category, force=force)
+        record_audit_log(
+            request,
+            event_type="voting",
+            action=f"Recomputed Weekly MVPs for {category.label}",
+            target=category.label,
+            category_key=category.key,
+            details={"force": force},
+        )
         return Response({
             "success": True,
             "message": f"Weekly MVPs for {category.label} recomputed successfully.",
@@ -800,6 +900,14 @@ class VotingSubmitAPIView(views.APIView):
                 allow_revoting=False,
             )
             result["voter"] = player_auth
+            record_audit_log(
+                request,
+                event_type="voting",
+                action=f"Submitted TOTW ballot in {category.label}",
+                target=f"Round #{round_id}",
+                category_key=category.key,
+                details={"round_id": round_id, "picks": len(votes)},
+            )
             return Response(result)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -850,6 +958,18 @@ class VotingAdminToggleAPIView(views.APIView):
                 include_gk=include_gk,
             )
             data = get_category_voting_data(category, round_id=target_round.id)
+            record_audit_log(
+                request,
+                event_type="voting",
+                action=(
+                    f"Created new voting round '{target_round.title}'"
+                    if create_new
+                    else f"{'Opened' if target_round.is_open else 'Closed' if is_open is not None else 'Updated'} voting settings ({target_round.title})"
+                ),
+                target=target_round.title,
+                category_key=category.key,
+                details={"round_id": target_round.id, "is_open": target_round.is_open},
+            )
             return Response({
                 "success": True,
                 "round": data["round"],
@@ -890,6 +1010,14 @@ class VotingFormationUpdateAPIView(views.APIView):
                 reset=reset,
             )
             data = get_category_voting_data(category, round_id=round_id)
+            record_audit_log(
+                request,
+                event_type="voting",
+                action=f"Updated {str(target).upper()} formation ({result.get('formation') or 'custom'})",
+                target=str(target).upper(),
+                category_key=category.key,
+                details={"target": target, "formation": result.get("formation"), "reset": reset},
+            )
             return Response({
                 "success": True,
                 "target": target,
@@ -993,6 +1121,17 @@ class CMSLoginAPIView(views.APIView):
         user = authenticate(request, username=auth_username, password=password)
         if not user or not user.is_active or not (user.is_staff or user.is_superuser):
             record_auth_failure("cms_login", client_ip, username)
+            record_audit_log(
+                request,
+                event_type="login_failed",
+                action=f"Failed CMS login attempt for '{username}'",
+                target=username,
+                actor_type="cms",
+                actor_username=username,
+                actor_name=f"{username} (Attempt)",
+                actor_role="cms",
+                details={"reason": "Invalid credentials or inactive account"},
+            )
             return Response(
                 {"error": "Invalid Admin credentials. Please check your admin username and password."},
                 status=status.HTTP_401_UNAUTHORIZED,
@@ -1000,6 +1139,18 @@ class CMSLoginAPIView(views.APIView):
 
         profile = get_or_create_cms_profile(user)
         if profile.is_blocked:
+            record_audit_log(
+                request,
+                event_type="login_failed",
+                action=f"Blocked CMS account '{user.username}' attempted login",
+                target=user.username,
+                actor_type="cms",
+                actor_id=str(user.id),
+                actor_username=user.username,
+                actor_name=f"{user.username} ({profile.user_type.replace('_', ' ').title()})",
+                actor_role=profile.user_type,
+                details={"reason": "Account blocked"},
+            )
             return Response(
                 {"error": "This account has been blocked by a Superadmin."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -1018,6 +1169,19 @@ class CMSLoginAPIView(views.APIView):
                 "_cv": get_cms_user_credential_fingerprint(user),
             }
         token = create_signed_token(cms_profile, salt="titans-cms-auth")
+        role_label = (cms_profile.get("user_type") or "admin").replace("_", " ").title()
+        record_audit_log(
+            request,
+            event_type="login",
+            action=f"CMS Login ({role_label})",
+            target=user.username,
+            actor_type="cms",
+            actor_id=str(user.id),
+            actor_username=user.username,
+            actor_name=f"{user.username} ({role_label})",
+            actor_role=cms_profile.get("user_type") or "admin",
+            details={"method": "cms-login"},
+        )
         return Response({
             "success": True,
             "role": "cms",
@@ -1074,6 +1238,19 @@ class PlayerLoginAPIView(views.APIView):
                 request.session.pop("titans_cms", None)
                 logout(request)
                 request.session["titans_player"] = profile
+            record_audit_log(
+                request,
+                event_type="login",
+                action=f"Player Login (@{profile.get('username') or profile.get('player_id')})",
+                target=profile.get("name") or ident,
+                category_key=profile.get("category_key") or "",
+                actor_type="player",
+                actor_id=str(profile.get("player_id") or ""),
+                actor_username=profile.get("username") or "",
+                actor_name=f"{profile.get('name') or ident} ({profile.get('team_name') or 'Free Agent'})",
+                actor_role="player",
+                details={"team": profile.get("team_name") or ""},
+            )
             return Response({
                 "success": True,
                 "role": "player",
@@ -1084,6 +1261,18 @@ class PlayerLoginAPIView(views.APIView):
             })
         except ValueError as e:
             record_auth_failure("player_login", client_ip, ident)
+            record_audit_log(
+                request,
+                event_type="login_failed",
+                action=f"Failed player login attempt for '{ident}'",
+                target=ident,
+                category_key=category_key or "",
+                actor_type="player",
+                actor_username=ident,
+                actor_name=f"{ident or 'Unknown'} (Attempt)",
+                actor_role="player",
+                details={"reason": str(e)},
+            )
             return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -1122,6 +1311,14 @@ class AdminPlayerRegisterAPIView(views.APIView):
                 date_of_birth=date_of_birth,
                 active_foot=active_foot,
                 preferred_positions=preferred_positions,
+            )
+            record_audit_log(
+                request,
+                event_type="player_management",
+                action=f"Registered player '{player.name}' (@{player.username})",
+                target=f"{player.name} ({player.team.name if player.team else 'No Team'})",
+                category_key=category_key,
+                details={"player_id": player.player_id, "team_id": team_id, "position": player.position},
             )
             return Response({
                 "success": True,
@@ -1190,6 +1387,14 @@ class PlayerUpdateProfileAPIView(views.APIView):
             # Update session if player is logged in
             if hasattr(request, "session") and "titans_player" in request.session:
                 request.session["titans_player"] = p_dict
+            record_audit_log(
+                request,
+                event_type="player_management",
+                action=f"Updated player profile for {updated_player.name} (@{updated_player.username})",
+                target=f"{updated_player.name} ({p_dict['team_name']})",
+                category_key=p_dict["category_key"],
+                details={"player_id": updated_player.player_id},
+            )
             return Response({
                 "success": True,
                 "message": f"Personal details for @{updated_player.username} updated successfully!",
@@ -1221,6 +1426,14 @@ class AdminPlayerResetPasswordAPIView(views.APIView):
         try:
             player, code = reset_player_password_by_admin(
                 username, category_key=category_key, team_id=team_id
+            )
+            record_audit_log(
+                request,
+                event_type="player_management",
+                action=f"Reset temporary password for {player.name} (@{player.username})",
+                target=f"{player.name} ({player.team.name if player.team else 'Free Agent'})",
+                category_key=player.effective_category.key if player.effective_category else (category_key or ""),
+                details={"player_id": player.player_id},
             )
             return Response({
                 "success": True,
@@ -1266,6 +1479,14 @@ class AdminPlayerToggleStatusAPIView(views.APIView):
                 category_key=category_key,
             )
             status_text = "activated" if new_status else "disabled"
+            record_audit_log(
+                request,
+                event_type="player_management",
+                action=f"{status_text.capitalize()} player account @{player.username} ({player.name})",
+                target=player.name,
+                category_key=player.effective_category.key if player.effective_category else (category_key or ""),
+                details={"player_id": player.player_id, "is_active": new_status},
+            )
             return Response({
                 "success": True,
                 "player_id": player.player_id,
@@ -1303,6 +1524,14 @@ class AdminPlayerReleaseNumberAPIView(views.APIView):
                 player_ident=player_ident,
                 team_id=team_id,
                 category_key=category_key,
+            )
+            record_audit_log(
+                request,
+                event_type="player_management",
+                action=f"Released jersey #{old_num} from {player.name}",
+                target=player.name,
+                category_key=player.effective_category.key if player.effective_category else (category_key or ""),
+                details={"player_id": player.player_id, "released_number": old_num},
             )
             return Response({
                 "success": True,
@@ -1345,6 +1574,14 @@ class AdminPlayerUpdatePositionAPIView(views.APIView):
                 team_id=team_id,
                 category_key=category_key,
             )
+            record_audit_log(
+                request,
+                event_type="player_management",
+                action=f"Updated position for {player.name} to {player.position or 'Unassigned'}",
+                target=player.name,
+                category_key=player.effective_category.key if player.effective_category else (category_key or ""),
+                details={"player_id": player.player_id, "position": player.position},
+            )
             return Response({
                 "success": True,
                 "player_id": player.player_id,
@@ -1384,6 +1621,14 @@ class AdminPlayerUpdateUsernameAPIView(views.APIView):
                 new_username=new_username,
                 team_id=team_id,
                 category_key=category_key,
+            )
+            record_audit_log(
+                request,
+                event_type="player_management",
+                action=f"Updated username for {player.name} to @{player.username}",
+                target=player.name,
+                category_key=player.effective_category.key if player.effective_category else (category_key or ""),
+                details={"player_id": player.player_id, "username": player.username},
             )
             return Response({
                 "success": True,
@@ -1467,6 +1712,18 @@ class PlayerChangePasswordAPIView(views.APIView):
             )
             clear_auth_failures("player_pw_change", client_ip, ident_for_rl)
             request.session["titans_player"] = profile
+            record_audit_log(
+                request,
+                event_type="password_change",
+                action=f"Player changed password (@{profile.get('username') or profile.get('player_id')})",
+                target=profile.get("name") or ident_for_rl,
+                category_key=profile.get("category_key") or "",
+                actor_type="player",
+                actor_id=str(profile.get("player_id") or ""),
+                actor_username=profile.get("username") or "",
+                actor_name=f"{profile.get('name') or ident_for_rl} ({profile.get('team_name') or 'Free Agent'})",
+                actor_role="player",
+            )
             return Response({
                 "success": True,
                 "player": profile,
@@ -1563,6 +1820,17 @@ class CMSChangePasswordAPIView(views.APIView):
             "_cv": get_cms_user_credential_fingerprint(user),
         }
         token = create_signed_token(cms_profile, salt="titans-cms-auth")
+        record_audit_log(
+            request,
+            event_type="password_change",
+            action=f"CMS user changed password ({user.username})",
+            target=user.username,
+            actor_type="cms",
+            actor_id=str(user.id),
+            actor_username=user.username,
+            actor_name=f"{user.username} ({(cms_info.get('user_type') or 'admin').replace('_', ' ').title()})",
+            actor_role=cms_info.get("user_type") or "admin",
+        )
 
         return Response({
             "success": True,
@@ -1699,6 +1967,13 @@ class CMSUsersAPIView(views.APIView):
             is_blocked=False,
             created_by=actor_user,
         )
+        record_audit_log(
+            request,
+            event_type="user_management",
+            action=f"Created CMS user '{username}' ({user_type})",
+            target=username,
+            details={"user_type": user_type, "email": email},
+        )
         return Response({
             "status": "success",
             "message": f"User '{username}' created as {user_type}.",
@@ -1769,6 +2044,18 @@ class CMSUsersAPIView(views.APIView):
         target_user.save()
         target_profile.save()
 
+        record_audit_log(
+            request,
+            event_type="user_management",
+            action=f"Updated CMS user '{target_user.username}' (role: {target_profile.user_type}, blocked: {target_profile.is_blocked})",
+            target=target_user.username,
+            details={
+                "user_type": target_profile.user_type,
+                "is_blocked": target_profile.is_blocked,
+                "password_changed": bool(new_password),
+            },
+        )
+
         return Response({
             "status": "success",
             "message": f"Updated user '{target_user.username}'.",
@@ -1800,6 +2087,12 @@ class CMSUsersAPIView(views.APIView):
 
         uname = target_user.username
         target_user.delete()
+        record_audit_log(
+            request,
+            event_type="user_management",
+            action=f"Deleted CMS user '{uname}'",
+            target=uname,
+        )
         return Response({
             "status": "success",
             "message": f"User '{uname}' deleted.",
@@ -1817,6 +2110,20 @@ class AuthLogoutAPIView(views.APIView):
         from django.contrib.auth import logout
         payload = request.data or {}
         target_role = payload.get("role", "all")
+
+        actor = resolve_audit_actor(request)
+        if actor.get("actor_type") in ("cms", "player"):
+            record_audit_log(
+                request,
+                event_type="logout",
+                action=f"Logged out ({target_role})",
+                target=actor.get("actor_username") or actor.get("actor_name"),
+                actor_type=actor.get("actor_type"),
+                actor_id=actor.get("actor_id"),
+                actor_username=actor.get("actor_username"),
+                actor_name=actor.get("actor_name"),
+                actor_role=actor.get("actor_role"),
+            )
 
         if target_role in ("player", "all"):
             request.session.pop("titans_player", None)
@@ -2059,6 +2366,14 @@ class HighlightListCreateAPIView(views.APIView):
             thumbnail_url=thumbnail_url.strip(),
             duration=duration.strip(),
         )
+        record_audit_log(
+            request,
+            event_type="content",
+            action=f"Added highlight video '{highlight.title}'",
+            target=highlight.title,
+            category_key=highlight.category_key,
+            details={"video_type": video_type, "match_name": highlight.match_name},
+        )
         return Response({"success": True, "highlight": highlight.to_dict()}, status=status.HTTP_201_CREATED)
 
 
@@ -2079,7 +2394,16 @@ class HighlightDeleteAPIView(views.APIView):
                 highlight.video_file.delete(save=False)
             except Exception:
                 pass
+        h_title = highlight.title
+        h_cat = highlight.category_key
         highlight.delete()
+        record_audit_log(
+            request,
+            event_type="content",
+            action=f"Deleted highlight video '{h_title}'",
+            target=h_title,
+            category_key=h_cat,
+        )
         return Response({"success": True, "message": "Highlight deleted successfully."})
 
 
@@ -2116,6 +2440,14 @@ class CategoryToggleArchiveAPIView(views.APIView):
             category.ended_at = None
 
         category.save()
+        record_audit_log(
+            request,
+            event_type="category_management",
+            action=f"{'Ended & archived' if category.is_ended else 'Reopened'} competition '{category.label}'",
+            target=category.label,
+            category_key=category.key,
+            details={"isEnded": category.is_ended, "championTeam": category.champion_team},
+        )
         return Response({
             "success": True,
             "key": category.key,
@@ -2170,6 +2502,13 @@ class DutyRosterAPIView(views.APIView):
         if action == "regenerate":
             roster = build_category_duty_roster(cat, force_regenerate=True)
             eligible_players = get_category_duty_eligible_players(cat)
+            record_audit_log(
+                request,
+                event_type="duty_roster",
+                action=f"Regenerated duty roster for {cat.label}",
+                target=cat.label,
+                category_key=cat.key,
+            )
             return Response({
                 "status": "success",
                 "message": "Duty roster regenerated successfully.",
@@ -2187,6 +2526,14 @@ class DutyRosterAPIView(views.APIView):
             except ValueError as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             eligible_players = get_category_duty_eligible_players(cat)
+            record_audit_log(
+                request,
+                event_type="duty_roster",
+                action=f"Added duty exemption for {player_id}",
+                target=str(player_id),
+                category_key=cat.key,
+                details={"reason": reason},
+            )
             return Response({
                 "status": "success",
                 "message": f"Player {player_id} added to exemption list.",
@@ -2200,6 +2547,13 @@ class DutyRosterAPIView(views.APIView):
                 return Response({"error": "playerId is required."}, status=status.HTTP_400_BAD_REQUEST)
             roster = remove_duty_roster_exemption(cat, player_id)
             eligible_players = get_category_duty_eligible_players(cat)
+            record_audit_log(
+                request,
+                event_type="duty_roster",
+                action=f"Removed duty exemption for {player_id}",
+                target=str(player_id),
+                category_key=cat.key,
+            )
             return Response({
                 "status": "success",
                 "message": f"Exemption removed for {player_id}.",
@@ -2232,6 +2586,14 @@ class DutyRosterAPIView(views.APIView):
             except ValueError as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             eligible_players = get_category_duty_eligible_players(cat)
+            record_audit_log(
+                request,
+                event_type="duty_roster",
+                action=f"Updated matchday duty for {fixture_id} ({side}): {player_name or player_id or 'status update'}",
+                target=f"{fixture_id} ({side})",
+                category_key=cat.key,
+                details={"action": action, "player_id": player_id, "completed": completed},
+            )
             return Response({
                 "status": "success",
                 "message": "Assignment updated.",
@@ -2263,6 +2625,14 @@ class DutyRosterAPIView(views.APIView):
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
             eligible_players = get_category_duty_eligible_players(cat)
+            record_audit_log(
+                request,
+                event_type="duty_roster",
+                action=f"Updated duty counts for {player_id} (bibs={bibs_val}, goalpost={goalpost_val})",
+                target=str(player_id),
+                category_key=cat.key,
+                details={"bibs": bibs_val, "goalpost": goalpost_val},
+            )
             return Response({
                 "status": "success",
                 "message": "Player duty counts updated.",
@@ -2291,6 +2661,13 @@ class DutyRosterAPIView(views.APIView):
                 cat.schedule_days = sched
                 cat.save(update_fields=["schedule_days"])
                 eligible_players = get_category_duty_eligible_players(cat)
+                record_audit_log(
+                    request,
+                    event_type="duty_roster",
+                    action=f"Saved all duty roster assignments for {cat.label}",
+                    target=cat.label,
+                    category_key=cat.key,
+                )
                 return Response({
                     "status": "success",
                     "dutyRoster": roster,
@@ -2440,6 +2817,14 @@ class VisitorCommentAPIView(views.APIView):
                 comment.delete()
                 msg = "Comment deleted."
 
+            record_audit_log(
+                request,
+                event_type="content",
+                action=f"Moderated visitor comment ({action}) by {comment.author_name}",
+                target=f"Comment #{comment_id}",
+                details={"moderation_action": action, "author": comment.author_name},
+            )
+
             total_count = VisitorComment.objects.count()
             pending_count = VisitorComment.objects.filter(is_approved=False, status="pending").count()
             approved_count = VisitorComment.objects.filter(is_approved=True).count()
@@ -2525,7 +2910,14 @@ class VisitorCommentDetailAPIView(views.APIView):
         if not self._is_cms(request):
             return Response({"error": "Admin permission required to delete comments."}, status=status.HTTP_403_FORBIDDEN)
         comment = get_object_or_404(VisitorComment, pk=pk)
+        c_author = comment.author_name
         comment.delete()
+        record_audit_log(
+            request,
+            event_type="content",
+            action=f"Deleted visitor comment #{pk} by {c_author}",
+            target=f"Comment #{pk}",
+        )
         total_count = VisitorComment.objects.count()
         pending_count = VisitorComment.objects.filter(is_approved=False, status="pending").count()
         approved_count = VisitorComment.objects.filter(is_approved=True).count()
@@ -2617,6 +3009,14 @@ class TransferListCreateAPIView(views.APIView):
                 transfer_type=transfer_type,
                 requested_by_admin=bool(cms_info),
             )
+            record_audit_log(
+                request,
+                event_type="transfer",
+                action=f"Submitted transfer request for {req.player.name} to {req.to_team.name}",
+                target=f"{req.player.name} -> {req.to_team.name}",
+                category_key=category.key,
+                details={"transfer_id": req.id, "from_team": req.from_team.name if req.from_team else "Free Agent", "to_team": req.to_team.name},
+            )
             return Response({
                 "status": "success",
                 "message": "Transfer request submitted successfully. Awaiting admin review.",
@@ -2652,6 +3052,14 @@ class TransferActionAPIView(views.APIView):
                 effective_date=effective_date,
                 admin_username=admin_username,
             )
+            record_audit_log(
+                request,
+                event_type="transfer",
+                action=f"{req.status.capitalize()} transfer for {req.player.name} to {req.to_team.name}",
+                target=f"{req.player.name} -> {req.to_team.name}",
+                category_key=category.key,
+                details={"transfer_id": req.id, "status": req.status, "admin_notes": admin_notes},
+            )
             return Response({
                 "status": "success",
                 "message": f"Transfer request {req.status}.",
@@ -2675,6 +3083,14 @@ class TransferToggleWindowAPIView(views.APIView):
         from .services import toggle_transfer_window
         new_val = toggle_transfer_window(category, is_open=is_open)
         status_str = "open" if new_val else "closed"
+        record_audit_log(
+            request,
+            event_type="transfer",
+            action=f"{'Opened' if new_val else 'Closed'} transfer window in {category.label}",
+            target=category.label,
+            category_key=category.key,
+            details={"transfer_window_open": new_val},
+        )
         return Response({
             "status": "success",
             "message": f"Transfer window is now {status_str}.",
@@ -2713,6 +3129,14 @@ class TransferDirectAPIView(views.APIView):
                 transfer_type=transfer_type,
                 effective_date=effective_date,
                 admin_username=admin_username,
+            )
+            record_audit_log(
+                request,
+                event_type="transfer",
+                action=f"Direct transferred {req.player.name} to {req.to_team.name}",
+                target=f"{req.player.name} -> {req.to_team.name}",
+                category_key=category.key,
+                details={"transfer_id": req.id, "from_team": req.from_team.name if req.from_team else "Free Agent", "to_team": req.to_team.name},
             )
             return Response({
                 "status": "success",
@@ -2772,6 +3196,18 @@ class TransferFreeAgentCreateAPIView(views.APIView):
                     f"Free agent '{player.name}' added to Free Agents pool! "
                     f"Username: @{player.username} · 4-digit code: {code}"
                 )
+            record_audit_log(
+                request,
+                event_type="transfer",
+                action=(
+                    f"Added free agent '{player.name}' and signed to {transfer_req.to_team.name}"
+                    if transfer_req
+                    else f"Added free agent '{player.name}' to Free Agents pool"
+                ),
+                target=player.name,
+                category_key=category.key,
+                details={"player_id": player.player_id, "to_team": transfer_req.to_team.name if transfer_req else None},
+            )
             return Response({
                 "status": "success",
                 "message": msg,
@@ -2839,6 +3275,14 @@ class PlayerBanListCreateAPIView(views.APIView):
                 expected_fixture_return=expected_fixture_return,
                 imposed_by=imposed_by,
             )
+            record_audit_log(
+                request,
+                event_type="ban",
+                action=f"Issued disciplinary ban for {ban.player.name} ({ban.team.name if ban.team else 'Free Agent'})",
+                target=f"{ban.player.name} ({ban.team.name if ban.team else 'Free Agent'})",
+                category_key=category.key,
+                details={"ban_id": ban.id, "ban_type": ban.ban_type, "games_banned": ban.games_banned, "reason": ban.reason},
+            )
             return Response({
                 "status": "success",
                 "message": f"Disciplinary ban issued for {ban.player.name}.",
@@ -2859,6 +3303,14 @@ class PlayerBanLiftAPIView(views.APIView):
         from .services import lift_player_ban
         try:
             ban = lift_player_ban(category, pk)
+            record_audit_log(
+                request,
+                event_type="ban",
+                action=f"Lifted disciplinary ban for {ban.player.name} ({ban.team.name if ban.team else 'Free Agent'})",
+                target=f"{ban.player.name} ({ban.team.name if ban.team else 'Free Agent'})",
+                category_key=category.key,
+                details={"ban_id": ban.id},
+            )
             return Response({
                 "status": "success",
                 "message": f"Ban for {ban.player.name} has been lifted.",
@@ -2866,6 +3318,115 @@ class PlayerBanLiftAPIView(views.APIView):
             })
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AuditLogListAPIView(views.APIView):
+    """
+    GET /api/admin/audit-logs/
+    Returns system audit logs (logins, failed logins, activities) with filtering by
+    event_type, actor, actor_type, category, search query (q), and limit.
+    Restricted to authenticated CMS Administrators.
+    """
+    permission_classes = [IsCMSAdmin]
+
+    EVENT_GROUP_MAP = {
+        "auth": ["login", "login_failed", "logout", "password_change"],
+        "matches": ["match_update", "state_update", "category_management"],
+        "players": ["player_management"],
+        "transfers_bans": ["transfer", "ban"],
+        "users": ["user_management"],
+        "duty_voting": ["duty_roster", "voting"],
+        "content": ["homepage", "content"],
+    }
+
+    def get(self, request):
+        event_type = (request.query_params.get("event_type") or "").strip().lower()
+        actor_type = (request.query_params.get("actor_type") or "").strip().lower()
+        actor = (request.query_params.get("actor") or "").strip()
+        category = (request.query_params.get("category") or "").strip()
+        q = (request.query_params.get("q") or "").strip()
+
+        try:
+            limit = int(request.query_params.get("limit") or 150)
+        except (TypeError, ValueError):
+            limit = 150
+        limit = max(1, min(limit, 500))
+
+        base_qs = AuditLog.objects.all()
+
+        # Global summary metrics before filters
+        total_count = base_qs.count()
+        logins_count = base_qs.filter(event_type="login").count()
+        failed_logins_count = base_qs.filter(event_type="login_failed").count()
+        activities_count = base_qs.exclude(event_type__in=["login", "login_failed", "logout"]).count()
+
+        # Distinct actors list for filter dropdown
+        raw_actors = (
+            base_qs.exclude(actor_username="", actor_name="")
+            .values("actor_username", "actor_name", "actor_type", "actor_role")
+            .distinct()
+        )
+        seen_actors = {}
+        for row in raw_actors:
+            key = (row.get("actor_username") or row.get("actor_name") or "").lower()
+            if not key or key in seen_actors:
+                continue
+            seen_actors[key] = {
+                "username": row.get("actor_username") or "",
+                "name": row.get("actor_name") or row.get("actor_username") or "Unknown",
+                "actor_type": row.get("actor_type") or "",
+                "actor_role": row.get("actor_role") or "",
+            }
+        actors_list = sorted(seen_actors.values(), key=lambda x: (x["name"] or x["username"]).lower())
+
+        qs = base_qs
+        if event_type and event_type != "all":
+            if event_type in self.EVENT_GROUP_MAP:
+                qs = qs.filter(event_type__in=self.EVENT_GROUP_MAP[event_type])
+            else:
+                qs = qs.filter(event_type=event_type)
+
+        if actor_type and actor_type != "all":
+            qs = qs.filter(actor_type=actor_type)
+
+        if actor and actor != "all":
+            qs = qs.filter(
+                Q(actor_username__iexact=actor)
+                | Q(actor_name__icontains=actor)
+                | Q(actor_id__iexact=actor)
+            )
+
+        if category and category != "all":
+            qs = qs.filter(category_key=category)
+
+        if q:
+            qs = qs.filter(
+                Q(action__icontains=q)
+                | Q(target__icontains=q)
+                | Q(actor_username__icontains=q)
+                | Q(actor_name__icontains=q)
+                | Q(actor_role__icontains=q)
+                | Q(ip_address__icontains=q)
+                | Q(category_key__icontains=q)
+            )
+
+        filtered_total = qs.count()
+        logs = [item.to_dict() for item in qs[:limit]]
+
+        return Response({
+            "status": "success",
+            "logs": logs,
+            "filtered_count": filtered_total,
+            "summary": {
+                "total_count": total_count,
+                "logins_count": logins_count,
+                "failed_logins_count": failed_logins_count,
+                "activities_count": activities_count,
+                "unique_actors_count": len(actors_list),
+            },
+            "actors": actors_list,
+        })
+
 
 
 

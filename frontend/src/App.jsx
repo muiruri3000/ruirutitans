@@ -92,7 +92,9 @@ function collectOrderedCategoryFixtures(catObj) {
 function computeCategorySuspensions(catObj) {
   if (!catObj?.teams) return {};
   const orderedFixtures = collectOrderedCategoryFixtures(catObj);
-  if (orderedFixtures.length === 0) return {};
+  const upcomingUnplayed = orderedFixtures.filter(
+    (f) => !(f.played || f.walkover || (Array.isArray(f.events) && f.events.length > 0))
+  );
 
   const teamsMap = {};
   const playerState = {};
@@ -199,6 +201,129 @@ function computeCategorySuspensions(catObj) {
       } else if (e.type === 'red') {
         st.pendingRed = true;
         if (isInterf) st.redInterference = true;
+      }
+    });
+  });
+
+  // Remaining unserved card suspensions when no upcoming fixture is scheduled yet
+  Object.values(playerState).forEach((st) => {
+    if (st.pendingRed || st.pendingYellows >= 4) {
+      const isInterf = st.pendingRed ? st.redInterference : st.yellowInterference;
+      const srcFix = st.lastCardFixtureId;
+      let reason = '';
+      if (st.pendingRed && st.pendingYellows >= 4) {
+        reason = `Red Card & ${st.pendingYellows} Yellow Cards Accumulation`;
+      } else if (st.pendingRed) {
+        reason = isInterf
+          ? `Red Card (Sideline Interference${srcFix ? ` in ${srcFix}` : ''})`
+          : 'Red Card — Misses Next Match';
+      } else {
+        reason = isInterf
+          ? `${st.pendingYellows} Yellow Cards Accumulation (incl. Interference${srcFix ? ` in ${srcFix}` : ''})`
+          : `${st.pendingYellows} Yellow Cards Accumulation — Misses Next Match`;
+      }
+      if (!byFixture.__unscheduled__) byFixture.__unscheduled__ = [];
+      byFixture.__unscheduled__.push({
+        teamId: st.teamId,
+        teamName: st.teamName,
+        playerId: st.playerId,
+        playerName: st.playerName,
+        reason,
+        interference: Boolean(isInterf),
+        sourceFixtureId: srcFix,
+      });
+    }
+  });
+
+  // Active disciplinary bans from official PlayerBan records
+  const rawBans = [];
+  const seenBanKeys = new Set();
+  const collectBan = (b) => {
+    if (!b || b.is_active === false) return;
+    const key = b.id ? `id:${b.id}` : `p:${b.player?.id || b.player_id || b.player?.name || ''}`;
+    if (seenBanKeys.has(key)) return;
+    seenBanKeys.add(key);
+    rawBans.push(b);
+  };
+  (catObj.activeBans || []).forEach(collectBan);
+  (catObj.teams || []).forEach((t) => {
+    (t.players || []).forEach((p) => {
+      if (p?.activeBan) collectBan(p.activeBan);
+    });
+  });
+
+  rawBans.forEach((b) => {
+    const bPid = b.player?.id || b.player_id || '';
+    const bPname = (b.player?.name || b.player?.displayName || '').trim().toLowerCase();
+    const bTid = b.team?.id || b.team_id || '';
+    const bTname = (b.team?.name || '').trim().toLowerCase();
+
+    let matchedTeam = null;
+    let matchedPlayer = null;
+    (catObj.teams || []).forEach((t) => {
+      if (matchedPlayer) return;
+      const byPid = (t.players || []).find((p) => bPid && (p.id === bPid || p.permanentId === bPid));
+      if (byPid) {
+        matchedTeam = t;
+        matchedPlayer = byPid;
+        return;
+      }
+      const sameTeam = (bTid && t.id === bTid) || (bTname && (t.name || '').trim().toLowerCase() === bTname);
+      if (sameTeam) {
+        matchedTeam = t;
+        if (bPname) {
+          matchedPlayer = (t.players || []).find(
+            (p) =>
+              (p.name || '').trim().toLowerCase() === bPname ||
+              (p.firstName || '').trim().toLowerCase() === bPname
+          ) || null;
+        }
+      }
+    });
+
+    if (!matchedTeam && bTid && teamsMap[bTid]) {
+      matchedTeam = teamsMap[bTid];
+    }
+    if (!matchedTeam) return;
+
+    const effPid = matchedPlayer ? matchedPlayer.id : (bPid || b.player?.name);
+    const effPname = matchedPlayer ? matchedPlayer.name : (b.player?.displayName || b.player?.name || `${matchedTeam.name} squad member`);
+    const gamesBannedNum = parseInt(b.games_banned, 10) || 1;
+    const durationLabel =
+      b.duration_label ||
+      (b.ban_type === 'games'
+        ? `${gamesBannedNum} Match${gamesBannedNum !== 1 ? 'es' : ''}`
+        : (b.period_description || 'Period Suspension'));
+    const reason = b.reason
+      ? `Disciplinary Ban (${durationLabel}): ${b.reason}`
+      : `Disciplinary Ban — ${durationLabel}`;
+
+    const teamUpcoming = upcomingUnplayed.filter((f) => f.home === matchedTeam.id || f.away === matchedTeam.id);
+    const targetFixtures =
+      b.ban_type === 'games'
+        ? teamUpcoming.slice(0, Math.max(1, gamesBannedNum))
+        : teamUpcoming;
+    const targetKeys = targetFixtures.length > 0 ? targetFixtures.map((f) => f.id) : ['__unscheduled__'];
+
+    targetKeys.forEach((fKey) => {
+      if (!byFixture[fKey]) byFixture[fKey] = [];
+      const alreadyExists = byFixture[fKey].some(
+        (item) => (b.id && item.banId === b.id) || (effPid && item.playerId === effPid)
+      );
+      if (!alreadyExists) {
+        byFixture[fKey].push({
+          teamId: matchedTeam.id,
+          teamName: matchedTeam.name,
+          playerId: effPid,
+          playerName: effPname,
+          reason,
+          interference: false,
+          sourceFixtureId: null,
+          isBan: true,
+          banId: b.id,
+          durationLabel,
+          expectedFixtureReturn: b.expected_fixture_return || '',
+        });
       }
     });
   });
@@ -4437,6 +4562,19 @@ export default function App() {
             leaderboards={leaderboards}
             activeCategoryKey={activeCategoryKey}
             isCmsMode={Boolean(cmsUser)}
+            onOpenTeamModal={(tId, cKey) => setTeamModalState({ open: true, teamId: tId, categoryKey: cKey || activeCategoryKey })}
+            onRefreshState={async () => {
+              try {
+                const serverState = await api.getState();
+                if (serverState && serverState.categories) {
+                  const sanitizedState = sanitizeExMilitaryFixtures(serverState);
+                  setData(sanitizedState);
+                  try {
+                    localStorage.setItem('ruiru_titans_react_state', JSON.stringify(sanitizedState));
+                  } catch {}
+                }
+              } catch {}
+            }}
           />
         )}
 
