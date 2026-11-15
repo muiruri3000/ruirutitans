@@ -639,7 +639,16 @@ export default function TacticsView({
   // 12. Drawing Tools, Annotations, Boxes, Text, Ball & Custom Player Colors
   const [activeTool, setActiveTool] = useState('select'); // 'select' | 'curve' | 'line' | 'pass' | 'box' | 'text' | 'paint'
   const [drawColor, setDrawColor] = useState('#FF9F0A'); // Active color for drawing, boxes, text and painting
-  const [drawings, setDrawings] = useState([]); // Array of { id, type, color, points?, x?, y?, width?, height?, text?, fontSize? }
+  const [drawings, setDrawings] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_drawings`);
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }); // Array of { id, type, color, points?, x?, y?, width?, height?, text?, fontSize? }
+  const [defaultBoxSize, setDefaultBoxSize] = useState({ width: 22, height: 16 });
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentDrawing, setCurrentDrawing] = useState(null);
   const [selectedBoxId, setSelectedBoxId] = useState(null);
@@ -658,6 +667,13 @@ export default function TacticsView({
   const ballDragStartRef = useRef({ startX: 0, startY: 0, ballX: 50, ballY: 50 });
   const svgRef = useRef(null);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(`${STORAGE_KEY}_drawings`, JSON.stringify(drawings));
+    } catch {}
+  }, [drawings]);
+
+  const BOX_SWATCH_COLORS = ['#FACC15', '#EF4444', '#38BDF8', '#FFFFFF', '#4ADE80', '#FF9F0A', '#A855F7', '#F43F5E'];
   const effectiveDrawColor = drawColor === 'reset' ? '#FF9F0A' : drawColor;
   const isDrawingToolActive =
     activeTool === 'curve' || activeTool === 'line' || activeTool === 'pass' || activeTool === 'box' || activeTool === 'text';
@@ -671,6 +687,12 @@ export default function TacticsView({
     () => drawings.find((d) => d.type === 'text' && d.id === selectedTextId) || null,
     [drawings, selectedTextId]
   );
+
+  const activeBoxWidth = selectedBox ? selectedBox.width : defaultBoxSize.width;
+  const activeBoxHeight = selectedBox ? selectedBox.height : defaultBoxSize.height;
+  const activeBoxColor = selectedBox ? selectedBox.color : effectiveDrawColor;
+
+  const clampBoxDimension = (val) => Math.max(4, Math.min(96, Math.round(val * 10) / 10));
 
   const hexToRgba = (hex, alpha = 0.2) => {
     if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) {
@@ -694,13 +716,33 @@ export default function TacticsView({
       prev.map((d) => {
         if (d.id !== selectedBoxId || d.type !== 'box') return d;
         const next = { ...d, ...updates };
-        next.width = Math.max(4, Math.min(96, Math.round(next.width * 10) / 10));
-        next.height = Math.max(4, Math.min(96, Math.round(next.height * 10) / 10));
+        next.width = clampBoxDimension(next.width);
+        next.height = clampBoxDimension(next.height);
         next.x = Math.max(0, Math.min(100 - next.width, Math.round(next.x * 10) / 10));
         next.y = Math.max(0, Math.min(100 - next.height, Math.round(next.y * 10) / 10));
         return next;
       })
     );
+  };
+
+  const handleBoxWidthChange = (newW) => {
+    const numeric = typeof newW === 'number' ? newW : parseFloat(newW);
+    if (isNaN(numeric)) return;
+    const clamped = clampBoxDimension(numeric);
+    setDefaultBoxSize((prev) => ({ ...prev, width: clamped }));
+    if (selectedBoxId) {
+      updateSelectedBox({ width: clamped });
+    }
+  };
+
+  const handleBoxHeightChange = (newH) => {
+    const numeric = typeof newH === 'number' ? newH : parseFloat(newH);
+    if (isNaN(numeric)) return;
+    const clamped = clampBoxDimension(numeric);
+    setDefaultBoxSize((prev) => ({ ...prev, height: clamped }));
+    if (selectedBoxId) {
+      updateSelectedBox({ height: clamped });
+    }
   };
 
   const updateSelectedText = (updates) => {
@@ -731,20 +773,157 @@ export default function TacticsView({
   };
 
   const handleAddPresetBox = () => {
+    const w = clampBoxDimension(defaultBoxSize.width);
+    const h = clampBoxDimension(defaultBoxSize.height);
     const newBox = {
       id: Date.now(),
       type: 'box',
       color: effectiveDrawColor,
-      x: 38,
-      y: 40,
-      width: 24,
-      height: 18,
+      x: Math.round(Math.max(0, Math.min(100 - w, 50 - w / 2)) * 10) / 10,
+      y: Math.round(Math.max(0, Math.min(100 - h, 50 - h / 2)) * 10) / 10,
+      width: w,
+      height: h,
     };
     setDrawings((prev) => [...prev, newBox]);
     setSelectedBoxId(newBox.id);
     setSelectedTextId(null);
     showStatusNotice('⬜ Box added — drag handles or use Width / Height / Color controls to adjust');
   };
+
+  const handleDeleteSelectedBox = () => {
+    if (!selectedBoxId) return;
+    setDrawings((prev) => prev.filter((d) => d.id !== selectedBoxId));
+    setSelectedBoxId(null);
+    showStatusNotice('🗑️ Box deleted from pitch');
+  };
+
+  /**
+   * Renders a shared Width/Height control group (slider, -/+ step buttons, and % readout or input).
+   */
+  const renderBoxDimensionControl = ({ label, fullName, value, onChange, compact = false, showNumberInput = false }) => (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: compact ? '3px' : '4px', flexShrink: 0 }}>
+      <span style={{ fontSize: compact ? '10px' : '10.5px', fontWeight: 800, color: compact ? '#FF9F0A' : '#8E8E93' }}>
+        {label}
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(value - 2)}
+        style={{
+          background: '#1C1C1E',
+          color: compact ? '#FFFFFF' : '#FF9F0A',
+          border: '1px solid rgba(255,255,255,0.15)',
+          borderRadius: '4px',
+          padding: compact ? '1px 5px' : '1px 6px',
+          fontSize: compact ? '10px' : '11px',
+          fontWeight: 800,
+          cursor: 'pointer',
+        }}
+        title={`Decrease ${fullName}`}
+      >
+        −
+      </button>
+      <input
+        type="range"
+        min="4"
+        max="96"
+        step="1"
+        value={Math.round(value)}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        style={{ width: compact ? '48px' : '68px', accentColor: '#FF9500', cursor: 'pointer' }}
+        title={`${fullName}: ${Math.round(value)}%`}
+      />
+      <button
+        type="button"
+        onClick={() => onChange(value + 2)}
+        style={{
+          background: '#1C1C1E',
+          color: compact ? '#FFFFFF' : '#FF9F0A',
+          border: '1px solid rgba(255,255,255,0.15)',
+          borderRadius: '4px',
+          padding: compact ? '1px 5px' : '1px 6px',
+          fontSize: compact ? '10px' : '11px',
+          fontWeight: 800,
+          cursor: 'pointer',
+        }}
+        title={`Increase ${fullName}`}
+      >
+        +
+      </button>
+      {showNumberInput ? (
+        <>
+          <input
+            type="number"
+            min="4"
+            max="96"
+            value={Math.round(value)}
+            onChange={(e) => {
+              const parsed = parseFloat(e.target.value);
+              if (!isNaN(parsed)) onChange(parsed);
+            }}
+            style={{
+              width: '40px',
+              background: '#000000',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: '4px',
+              color: '#FFFFFF',
+              fontSize: '10.5px',
+              fontWeight: 800,
+              textAlign: 'center',
+              padding: '1px 2px',
+            }}
+            title={`${fullName} %`}
+          />
+          <span style={{ fontSize: '10px', color: '#8E8E93' }}>%</span>
+        </>
+      ) : (
+        <span style={{ fontSize: '10px', fontWeight: 800, color: '#FFFFFF', minWidth: '28px', textAlign: 'right' }}>
+          {Math.round(value)}%
+        </span>
+      )}
+    </div>
+  );
+
+  /**
+   * Renders shared box color swatches and custom color input.
+   */
+  const renderBoxColorControls = ({ showSwatches = true, label = null }) => (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+      {label && <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#8E8E93' }}>{label}</span>}
+      {showSwatches &&
+        BOX_SWATCH_COLORS.map((c) => (
+          <div
+            key={c}
+            onClick={() => handleSelectDrawColor(c)}
+            style={{
+              width: '15px',
+              height: '15px',
+              borderRadius: '4px',
+              background: c,
+              border: activeBoxColor === c ? '2px solid #FFFFFF' : '1px solid rgba(255,255,255,0.25)',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+            title={`Set box color ${c}`}
+          />
+        ))}
+      <input
+        type="color"
+        value={activeBoxColor}
+        onChange={(e) => handleSelectDrawColor(e.target.value)}
+        style={{
+          width: '20px',
+          height: '20px',
+          padding: 0,
+          border: 'none',
+          borderRadius: '4px',
+          background: 'transparent',
+          cursor: 'pointer',
+          flexShrink: 0,
+        }}
+        title="Pick custom box color"
+      />
+    </div>
+  );
 
   const handleAddTextAt = (x = 50, y = 50, customText = null) => {
     const rawText = customText !== null ? customText : newTextDraft.trim();
@@ -1313,6 +1492,8 @@ export default function TacticsView({
         y: pt.y,
         width: 0,
         height: 0,
+        defaultWidth: defaultBoxSize.width,
+        defaultHeight: defaultBoxSize.height,
       };
       currentDrawingRef.current = initialBox;
       setCurrentDrawing(initialBox);
@@ -1369,6 +1550,8 @@ export default function TacticsView({
       if (!finished) return;
 
       if (finished.type === 'box') {
+        const tapW = clampBoxDimension(finished.defaultWidth || 22);
+        const tapH = clampBoxDimension(finished.defaultHeight || 16);
         const boxCoords =
           finished.width >= 2 && finished.height >= 2
             ? {
@@ -1378,10 +1561,10 @@ export default function TacticsView({
                 height: finished.height,
               }
             : {
-                x: Math.round(Math.max(0, Math.min(78, finished.startX - 11)) * 10) / 10,
-                y: Math.round(Math.max(0, Math.min(84, finished.startY - 8)) * 10) / 10,
-                width: 22,
-                height: 16,
+                x: Math.round(Math.max(0, Math.min(100 - tapW, finished.startX - tapW / 2)) * 10) / 10,
+                y: Math.round(Math.max(0, Math.min(100 - tapH, finished.startY - tapH / 2)) * 10) / 10,
+                width: tapW,
+                height: tapH,
               };
         const newBox = {
           id: Date.now(),
@@ -2489,12 +2672,13 @@ export default function TacticsView({
                   type="button"
                   onClick={() => {
                     if (drawColor === 'reset') setDrawColor('#FF9F0A');
+                    setSelectedTextId(null);
                     setActiveTool('box');
                     showStatusNotice('⬜ Box Tool: Drag on pitch (or tap) to draw a box, then adjust width, height & color');
                   }}
                   style={{
-                    background: activeTool === 'box' ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
-                    color: activeTool === 'box' ? '#16201B' : '#E2E8F0',
+                    background: activeTool === 'box' || Boolean(selectedBox) ? '#FF9500' : 'rgba(255, 255, 255, 0.08)',
+                    color: activeTool === 'box' || Boolean(selectedBox) ? '#16201B' : '#E2E8F0',
                     border: '1px solid rgba(255, 255, 255, 0.15)',
                     borderRadius: '6px',
                     padding: '4px 8px',
@@ -2584,7 +2768,7 @@ export default function TacticsView({
                   title="Custom color picker"
                 />
 
-                {selectedBox && (
+                {(activeTool === 'box' || selectedBox) && (
                   <div
                     style={{
                       display: 'inline-flex',
@@ -2597,76 +2781,59 @@ export default function TacticsView({
                       flexShrink: 0,
                     }}
                   >
-                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#FF9F0A' }}>W:</span>
                     <button
                       type="button"
-                      onClick={() => updateSelectedBox({ width: selectedBox.width - 2 })}
-                      style={{ background: '#1C1C1E', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      −
-                    </button>
-                    <input
-                      type="range"
-                      min="4"
-                      max="96"
-                      step="1"
-                      value={Math.round(selectedBox.width)}
-                      onChange={(e) => updateSelectedBox({ width: parseFloat(e.target.value) })}
-                      style={{ width: '48px', accentColor: '#FF9500', cursor: 'pointer' }}
-                      title={`Box Width: ${Math.round(selectedBox.width)}%`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => updateSelectedBox({ width: selectedBox.width + 2 })}
-                      style={{ background: '#1C1C1E', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      +
-                    </button>
-                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#FF9F0A', marginLeft: '2px' }}>H:</span>
-                    <button
-                      type="button"
-                      onClick={() => updateSelectedBox({ height: selectedBox.height - 2 })}
-                      style={{ background: '#1C1C1E', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      −
-                    </button>
-                    <input
-                      type="range"
-                      min="4"
-                      max="96"
-                      step="1"
-                      value={Math.round(selectedBox.height)}
-                      onChange={(e) => updateSelectedBox({ height: parseFloat(e.target.value) })}
-                      style={{ width: '48px', accentColor: '#FF9500', cursor: 'pointer' }}
-                      title={`Box Height: ${Math.round(selectedBox.height)}%`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => updateSelectedBox({ height: selectedBox.height + 2 })}
-                      style={{ background: '#1C1C1E', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      +
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDrawings((prev) => prev.filter((d) => d.id !== selectedBox.id));
-                        setSelectedBoxId(null);
-                      }}
+                      onClick={handleAddPresetBox}
                       style={{
-                        background: '#231518',
-                        color: '#FF8A8A',
-                        border: '1px solid #732228',
+                        background: '#FF9500',
+                        color: '#16201B',
+                        border: 'none',
                         borderRadius: '4px',
-                        padding: '1px 5px',
+                        padding: '2px 6px',
                         fontSize: '10px',
                         fontWeight: 800,
                         cursor: 'pointer',
+                        whiteSpace: 'nowrap',
                       }}
-                      title="Delete selected box"
+                      title="Add a tactical box to center of pitch"
                     >
-                      🗑️ Box
+                      + Add Box
                     </button>
+                    {renderBoxDimensionControl({
+                      label: 'W:',
+                      fullName: 'Box Width',
+                      value: activeBoxWidth,
+                      onChange: handleBoxWidthChange,
+                      compact: true,
+                    })}
+                    {renderBoxDimensionControl({
+                      label: 'H:',
+                      fullName: 'Box Height',
+                      value: activeBoxHeight,
+                      onChange: handleBoxHeightChange,
+                      compact: true,
+                    })}
+                    {renderBoxColorControls({ showSwatches: false })}
+                    {selectedBox && (
+                      <button
+                        type="button"
+                        onClick={handleDeleteSelectedBox}
+                        style={{
+                          background: '#231518',
+                          color: '#FF8A8A',
+                          border: '1px solid #732228',
+                          borderRadius: '4px',
+                          padding: '1px 5px',
+                          fontSize: '10px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title="Delete selected box"
+                      >
+                        🗑️ Box
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -2963,6 +3130,111 @@ export default function TacticsView({
                   <span>Bench ({benchPlayers.length})</span>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Dedicated Fullscreen Box Tool Inspector Bar (Width, Height & Color Controls) */}
+          {isPitchFullscreen && !isFullscreenMenuHidden && (activeTool === 'box' || selectedBox) && (
+            <div
+              style={{
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+                background: 'rgba(10, 25, 20, 0.96)',
+                backdropFilter: 'blur(18px)',
+                WebkitBackdropFilter: 'blur(18px)',
+                border: '1px solid rgba(255, 149, 0, 0.45)',
+                borderRadius: '10px',
+                padding: '5px 10px',
+                marginBottom: '6px',
+                zIndex: 50,
+              }}
+            >
+              <div className="tactics-hud-scroll" style={{ flex: 1, gap: '10px' }}>
+                <span style={{ fontSize: '10.5px', fontWeight: 900, color: '#FF9F0A', whiteSpace: 'nowrap', letterSpacing: '0.03em' }}>
+                  ⬜ {selectedBox ? 'SELECTED BOX' : 'BOX TOOL'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAddPresetBox}
+                  style={{
+                    background: '#FF9500',
+                    color: '#16201B',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '3px 9px',
+                    fontSize: '10.5px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                  title="Add a tactical box onto the pitch"
+                >
+                  + Add Box
+                </button>
+                {renderBoxDimensionControl({
+                  label: 'W:',
+                  fullName: 'Box Width',
+                  value: activeBoxWidth,
+                  onChange: handleBoxWidthChange,
+                  compact: true,
+                })}
+                {renderBoxDimensionControl({
+                  label: 'H:',
+                  fullName: 'Box Height',
+                  value: activeBoxHeight,
+                  onChange: handleBoxHeightChange,
+                  compact: true,
+                })}
+                {renderBoxColorControls({ showSwatches: true })}
+              </div>
+
+              {selectedBox && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    onClick={handleDeleteSelectedBox}
+                    style={{
+                      background: '#231518',
+                      color: '#FF8A8A',
+                      border: '1px solid #732228',
+                      borderRadius: '6px',
+                      padding: '3px 8px',
+                      fontSize: '10.5px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title="Delete selected box"
+                  >
+                    🗑️ Delete Box
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedBoxId(null);
+                      if (activeTool === 'box') setActiveTool('select');
+                    }}
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.2)',
+                      color: '#6CE5A0',
+                      border: '1px solid rgba(16, 185, 129, 0.5)',
+                      borderRadius: '6px',
+                      padding: '3px 8px',
+                      fontSize: '10.5px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title="Finish editing box"
+                  >
+                    ✓ Done
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -3627,198 +3899,28 @@ export default function TacticsView({
                 )}
               </div>
 
-              {selectedBox && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                  {/* Width Adjuster */}
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#8E8E93' }}>Width:</span>
-                    <button
-                      type="button"
-                      onClick={() => updateSelectedBox({ width: selectedBox.width - 2 })}
-                      style={{
-                        background: '#1C1C1E',
-                        color: '#FF9F0A',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: '4px',
-                        padding: '1px 6px',
-                        fontSize: '11px',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                      }}
-                      title="Decrease box width"
-                    >
-                      −
-                    </button>
-                    <input
-                      type="range"
-                      min="4"
-                      max="96"
-                      step="1"
-                      value={Math.round(selectedBox.width)}
-                      onChange={(e) => updateSelectedBox({ width: parseFloat(e.target.value) })}
-                      style={{ width: '68px', accentColor: '#FF9500', cursor: 'pointer' }}
-                      title={`Box Width: ${Math.round(selectedBox.width)}%`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => updateSelectedBox({ width: selectedBox.width + 2 })}
-                      style={{
-                        background: '#1C1C1E',
-                        color: '#FF9F0A',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: '4px',
-                        padding: '1px 6px',
-                        fontSize: '11px',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                      }}
-                      title="Increase box width"
-                    >
-                      +
-                    </button>
-                    <input
-                      type="number"
-                      min="4"
-                      max="96"
-                      value={Math.round(selectedBox.width)}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        if (!isNaN(val)) updateSelectedBox({ width: val });
-                      }}
-                      style={{
-                        width: '40px',
-                        background: '#000000',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: '4px',
-                        color: '#FFFFFF',
-                        fontSize: '10.5px',
-                        fontWeight: 800,
-                        textAlign: 'center',
-                        padding: '1px 2px',
-                      }}
-                      title="Box width %"
-                    />
-                    <span style={{ fontSize: '10px', color: '#8E8E93' }}>%</span>
-                  </div>
-
-                  {/* Height Adjuster */}
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#8E8E93' }}>Height:</span>
-                    <button
-                      type="button"
-                      onClick={() => updateSelectedBox({ height: selectedBox.height - 2 })}
-                      style={{
-                        background: '#1C1C1E',
-                        color: '#FF9F0A',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: '4px',
-                        padding: '1px 6px',
-                        fontSize: '11px',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                      }}
-                      title="Decrease box height"
-                    >
-                      −
-                    </button>
-                    <input
-                      type="range"
-                      min="4"
-                      max="96"
-                      step="1"
-                      value={Math.round(selectedBox.height)}
-                      onChange={(e) => updateSelectedBox({ height: parseFloat(e.target.value) })}
-                      style={{ width: '68px', accentColor: '#FF9500', cursor: 'pointer' }}
-                      title={`Box Height: ${Math.round(selectedBox.height)}%`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => updateSelectedBox({ height: selectedBox.height + 2 })}
-                      style={{
-                        background: '#1C1C1E',
-                        color: '#FF9F0A',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: '4px',
-                        padding: '1px 6px',
-                        fontSize: '11px',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                      }}
-                      title="Increase box height"
-                    >
-                      +
-                    </button>
-                    <input
-                      type="number"
-                      min="4"
-                      max="96"
-                      value={Math.round(selectedBox.height)}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        if (!isNaN(val)) updateSelectedBox({ height: val });
-                      }}
-                      style={{
-                        width: '40px',
-                        background: '#000000',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: '4px',
-                        color: '#FFFFFF',
-                        fontSize: '10.5px',
-                        fontWeight: 800,
-                        textAlign: 'center',
-                        padding: '1px 2px',
-                      }}
-                      title="Box height %"
-                    />
-                    <span style={{ fontSize: '10px', color: '#8E8E93' }}>%</span>
-                  </div>
-
-                  {/* Box Color Adjuster */}
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#8E8E93' }}>Box Color:</span>
-                    {['#FF9F0A', '#EF4444', '#3B82F6', '#10B981', '#FFFFFF', '#A855F7'].map((c) => (
-                      <div
-                        key={c}
-                        onClick={() => handleSelectDrawColor(c)}
-                        style={{
-                          width: '15px',
-                          height: '15px',
-                          borderRadius: '4px',
-                          background: c,
-                          border: selectedBox.color === c ? '2px solid #FFFFFF' : '1px solid rgba(255,255,255,0.25)',
-                          cursor: 'pointer',
-                        }}
-                        title={`Set box color ${c}`}
-                      />
-                    ))}
-                    <input
-                      type="color"
-                      value={selectedBox.color}
-                      onChange={(e) => {
-                        setDrawColor(e.target.value);
-                        updateSelectedBox({ color: e.target.value });
-                      }}
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        padding: 0,
-                        border: 'none',
-                        borderRadius: '4px',
-                        background: 'transparent',
-                        cursor: 'pointer',
-                      }}
-                      title="Pick custom box color"
-                    />
-                  </div>
-
-                  {/* Delete Box */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                {renderBoxDimensionControl({
+                  label: 'Width:',
+                  fullName: 'Box Width',
+                  value: activeBoxWidth,
+                  onChange: handleBoxWidthChange,
+                  compact: false,
+                  showNumberInput: true,
+                })}
+                {renderBoxDimensionControl({
+                  label: 'Height:',
+                  fullName: 'Box Height',
+                  value: activeBoxHeight,
+                  onChange: handleBoxHeightChange,
+                  compact: false,
+                  showNumberInput: true,
+                })}
+                {renderBoxColorControls({ showSwatches: true, label: 'Box Color:' })}
+                {selectedBox && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setDrawings((prev) => prev.filter((d) => d.id !== selectedBox.id));
-                      setSelectedBoxId(null);
-                      showStatusNotice('🗑️ Box deleted from pitch');
-                    }}
+                    onClick={handleDeleteSelectedBox}
                     style={{
                       background: '#231518',
                       color: '#FF8A8A',
@@ -3833,8 +3935,8 @@ export default function TacticsView({
                   >
                     🗑️ Delete Box
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 
@@ -4100,8 +4202,8 @@ export default function TacticsView({
               style={{
                 width: isPitchFullscreen
                   ? (pitchFitMode === 'cover' || (windowDimensions.width > windowDimensions.height && windowDimensions.width <= 1024))
-                    ? `calc(max(calc(100vw - 12px), calc((100dvh - ${isFullscreenMenuHidden ? '12px' : '50px'}) * 1.4706)) * ${pitchScale})`
-                    : `calc(min(calc(100vw - 20px), calc((100dvh - ${isFullscreenMenuHidden ? '16px' : '56px'}) * 1.4705)) * ${pitchScale})`
+                    ? `calc(max(calc(100vw - 12px), calc((100dvh - ${isFullscreenMenuHidden ? '12px' : activeTool === 'box' || selectedBox ? '92px' : '50px'}) * 1.4706)) * ${pitchScale})`
+                    : `calc(min(calc(100vw - 20px), calc((100dvh - ${isFullscreenMenuHidden ? '16px' : activeTool === 'box' || selectedBox ? '98px' : '56px'}) * 1.4705)) * ${pitchScale})`
                   : `calc(100% * ${pitchScale})`,
                 maxWidth: isPitchFullscreen ? 'none' : '100%',
                 position: 'relative',
@@ -4611,7 +4713,7 @@ export default function TacticsView({
                       boxShadow: isSelected
                         ? `0 0 0 1px rgba(255,255,255,0.5), 0 0 14px ${hexToRgba(box.color, 0.45)}`
                         : 'none',
-                      zIndex: 8,
+                      zIndex: activeTool === 'box' ? (isSelected ? 34 : 28) : 8,
                       pointerEvents:
                         activeTool === 'select' || activeTool === 'paint' || activeTool === 'box'
                           ? 'auto'
@@ -4639,7 +4741,7 @@ export default function TacticsView({
                   top: `${selectedBox.y}%`,
                   width: `${selectedBox.width}%`,
                   height: `${selectedBox.height}%`,
-                  zIndex: 35,
+                  zIndex: 38,
                   pointerEvents: 'none',
                   boxSizing: 'border-box',
                 }}
