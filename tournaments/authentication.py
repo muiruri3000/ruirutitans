@@ -43,6 +43,15 @@ class PlayerUser:
             return self.pk == other.pk
         return False
 
+    @property
+    def permissions(self):
+        if hasattr(self.player, "get_effective_permissions"):
+            return self.player.get_effective_permissions()
+        return self.profile.get("permissions", {})
+
+    def has_perm(self, perm):
+        return bool(self.permissions.get(perm, False))
+
 
 class TitansCMSAuthentication(BaseAuthentication):
     """

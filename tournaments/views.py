@@ -2099,6 +2099,379 @@ class CMSUsersAPIView(views.APIView):
         })
 
 
+class GroupRolesAPIView(views.APIView):
+    """
+    API for managing Group Roles where operational powers/functions are attached.
+    Provides listing of all group roles, permission definitions, and all available
+    club players for the assignment dropdown selector.
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def _get_actor(self, request):
+        from django.contrib.auth.models import User
+        from .models import get_or_create_cms_profile
+        from .services import get_authenticated_cms_from_request
+
+        cms_info = get_authenticated_cms_from_request(request)
+        if cms_info:
+            actor_user = User.objects.filter(username__iexact=cms_info.get("username", "")).first()
+            if actor_user:
+                actor_profile = get_or_create_cms_profile(actor_user)
+                return actor_user, actor_profile, actor_profile.get_effective_permissions(), False
+
+        player = getattr(request, "player", None)
+        if player:
+            perms = player.get_effective_permissions()
+            return None, None, perms, True
+
+        return None, None, {}, False
+
+    def get(self, request):
+        from .models import GroupRole, CMS_PERMISSION_DEFINITIONS, Player
+
+        actor_user, actor_profile, actor_perms, is_player = self._get_actor(request)
+        roles = GroupRole.objects.prefetch_related(
+            "players", "players__team", "players__category", "players__team__category"
+        ).all()
+        roles_list = [r.to_dict(include_members=True) for r in roles]
+
+        # Available players for the dropdown selector
+        players_qs = (
+            Player.objects.filter(is_unknown=False, is_active=True)
+            .select_related("team", "category", "team__category")
+            .order_by("name")
+        )
+        # Available players for the dropdown selector (deduplicated by permanent player_id)
+        seen_pids = set()
+        available_players = []
+        for p in players_qs:
+            if p.player_id not in seen_pids:
+                seen_pids.add(p.player_id)
+                available_players.append({
+                    "id": p.id,
+                    "player_id": p.player_id,
+                    "name": p.name,
+                    "jersey_number": p.jersey_number,
+                    "position": p.position or "",
+                    "team_name": p.team.name if p.team else "Free Agent",
+                    "team_color": p.team.color if p.team else "#8E8E93",
+                    "category_key": p.effective_category.key if p.effective_category else "",
+                    "category_name": p.effective_category.label if (p.effective_category and hasattr(p.effective_category, "label")) else "",
+                })
+
+        can_manage = bool(
+            (actor_profile and actor_profile.user_type == "superadmin")
+            or actor_perms.get("manage_users")
+        )
+
+        return Response({
+            "status": "success",
+            "group_roles": roles_list,
+            "permission_definitions": [
+                {"key": k, "label": lbl} for k, lbl in CMS_PERMISSION_DEFINITIONS
+            ],
+            "available_players": available_players,
+            "can_manage": can_manage,
+        })
+
+    def post(self, request):
+        from .models import GroupRole, CMS_PERMISSION_KEYS
+
+        actor_user, actor_profile, actor_perms, is_player = self._get_actor(request)
+        can_manage = bool(
+            (actor_profile and actor_profile.user_type == "superadmin")
+            or actor_perms.get("manage_users")
+        )
+        if not can_manage:
+            return Response(
+                {"error": "You do not have permission to create group roles."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        payload = request.data or {}
+        name = str(payload.get("name", "")).strip()
+        description = str(payload.get("description", "")).strip()
+        raw_perms = payload.get("permissions") or {}
+
+        if not name:
+            return Response({"error": "Group role name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if GroupRole.objects.filter(name__iexact=name).exists():
+            return Response({"error": f"A group role named '{name}' already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+        perms = {}
+        if isinstance(raw_perms, dict):
+            for k in CMS_PERMISSION_KEYS:
+                if k in raw_perms:
+                    perms[k] = bool(raw_perms[k])
+
+        group_role = GroupRole.objects.create(
+            name=name,
+            description=description,
+            permissions=perms,
+            created_by=actor_user,
+        )
+
+        record_audit_log(
+            request,
+            event_type="user_management",
+            action=f"Created Group Role '{name}' with {len([k for k, v in perms.items() if v])} functions",
+            target=name,
+            details={"description": description, "permissions": perms},
+        )
+
+        return Response({
+            "status": "success",
+            "message": f"Group role '{name}' created successfully.",
+            "group_role": group_role.to_dict(include_members=True),
+        }, status=status.HTTP_201_CREATED)
+
+
+class GroupRoleDetailAPIView(views.APIView):
+    """
+    Update or delete a specific Group Role.
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def _get_actor(self, request):
+        from django.contrib.auth.models import User
+        from .models import get_or_create_cms_profile
+        from .services import get_authenticated_cms_from_request
+
+        cms_info = get_authenticated_cms_from_request(request)
+        if cms_info:
+            actor_user = User.objects.filter(username__iexact=cms_info.get("username", "")).first()
+            if actor_user:
+                actor_profile = get_or_create_cms_profile(actor_user)
+                return actor_user, actor_profile, actor_profile.get_effective_permissions(), False
+
+        player = getattr(request, "player", None)
+        if player:
+            perms = player.get_effective_permissions()
+            return None, None, perms, True
+
+        return None, None, {}, False
+
+    def patch(self, request, role_id):
+        from .models import GroupRole, CMS_PERMISSION_KEYS
+
+        actor_user, actor_profile, actor_perms, is_player = self._get_actor(request)
+        can_manage = bool(
+            (actor_profile and actor_profile.user_type == "superadmin")
+            or actor_perms.get("manage_users")
+        )
+        if not can_manage:
+            return Response(
+                {"error": "You do not have permission to update group roles."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        group_role = GroupRole.objects.filter(id=role_id).first()
+        if not group_role:
+            return Response({"error": "Group role not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        payload = request.data or {}
+        if "name" in payload:
+            new_name = str(payload.get("name", "")).strip()
+            if not new_name:
+                return Response({"error": "Role name cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
+            if GroupRole.objects.filter(name__iexact=new_name).exclude(id=role_id).exists():
+                return Response({"error": f"A group role named '{new_name}' already exists."}, status=status.HTTP_400_BAD_REQUEST)
+            group_role.name = new_name
+
+        if "description" in payload:
+            group_role.description = str(payload.get("description", "")).strip()
+
+        if "permissions" in payload:
+            raw_perms = payload.get("permissions") or {}
+            perms = dict(group_role.permissions or {})
+            if isinstance(raw_perms, dict):
+                for k in CMS_PERMISSION_KEYS:
+                    if k in raw_perms:
+                        perms[k] = bool(raw_perms[k])
+            group_role.permissions = perms
+
+        group_role.save()
+
+        record_audit_log(
+            request,
+            event_type="user_management",
+            action=f"Updated Group Role '{group_role.name}'",
+            target=group_role.name,
+            details={"description": group_role.description, "permissions": group_role.permissions},
+        )
+
+        return Response({
+            "status": "success",
+            "message": f"Group role '{group_role.name}' updated successfully.",
+            "group_role": group_role.to_dict(include_members=True),
+        })
+
+    def delete(self, request, role_id):
+        from .models import GroupRole
+
+        actor_user, actor_profile, actor_perms, is_player = self._get_actor(request)
+        can_manage = bool(
+            (actor_profile and actor_profile.user_type == "superadmin")
+            or actor_perms.get("manage_users")
+        )
+        if not can_manage:
+            return Response(
+                {"error": "You do not have permission to delete group roles."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        group_role = GroupRole.objects.filter(id=role_id).first()
+        if not group_role:
+            return Response({"error": "Group role not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        role_name = group_role.name
+        member_count = group_role.players.count()
+        group_role.delete()
+
+        record_audit_log(
+            request,
+            event_type="user_management",
+            action=f"Deleted Group Role '{role_name}' (revoked from {member_count} players)",
+            target=role_name,
+        )
+
+        return Response({
+            "status": "success",
+            "message": f"Group role '{role_name}' deleted successfully.",
+        })
+
+
+class GroupRoleMembersAPIView(views.APIView):
+    """
+    Add or remove player members from a Group Role.
+    When a player is added, they inherently assume all powers/functions of that group.
+    """
+    permission_classes = [IsCMSAdmin]
+
+    def _get_actor(self, request):
+        from django.contrib.auth.models import User
+        from .models import get_or_create_cms_profile
+        from .services import get_authenticated_cms_from_request
+
+        cms_info = get_authenticated_cms_from_request(request)
+        if cms_info:
+            actor_user = User.objects.filter(username__iexact=cms_info.get("username", "")).first()
+            if actor_user:
+                actor_profile = get_or_create_cms_profile(actor_user)
+                return actor_user, actor_profile, actor_profile.get_effective_permissions(), False
+
+        player = getattr(request, "player", None)
+        if player:
+            perms = player.get_effective_permissions()
+            return None, None, perms, True
+
+        return None, None, {}, False
+
+    def post(self, request, role_id):
+        from .models import GroupRole, Player
+
+        actor_user, actor_profile, actor_perms, is_player = self._get_actor(request)
+        can_manage = bool(
+            (actor_profile and actor_profile.user_type == "superadmin")
+            or actor_perms.get("manage_users")
+        )
+        if not can_manage:
+            return Response(
+                {"error": "You do not have permission to assign players to group roles."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        group_role = GroupRole.objects.filter(id=role_id).first()
+        if not group_role:
+            return Response({"error": "Group role not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        payload = request.data or {}
+        player_ident = str(payload.get("player_id", "")).strip()
+        if not player_ident:
+            return Response({"error": "Please select a player from the dropdown to add."}, status=status.HTTP_400_BAD_REQUEST)
+
+        player = None
+        if player_ident.isdigit():
+            player = Player.objects.filter(id=int(player_ident), is_unknown=False).first()
+        if not player:
+            player = Player.objects.filter(player_id__iexact=player_ident, is_unknown=False).first()
+
+        if not player:
+            return Response({"error": f"Player '{player_ident}' not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if group_role.players.filter(id=player.id).exists():
+            return Response(
+                {"error": f"{player.name} is already a member of {group_role.name}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        matching_players = list(Player.objects.filter(player_id=player.player_id))
+        group_role.players.add(*matching_players)
+
+        record_audit_log(
+            request,
+            event_type="user_management",
+            action=f"Added player {player.name} ({player.player_id}) to Group Role '{group_role.name}'",
+            target=group_role.name,
+            details={"player_id": player.player_id, "player_name": player.name},
+        )
+
+        return Response({
+            "status": "success",
+            "message": f"Added {player.name} to {group_role.name}. They now inherently assume its functions.",
+            "group_role": group_role.to_dict(include_members=True),
+        })
+
+    def delete(self, request, role_id, player_id=None):
+        from .models import GroupRole, Player
+
+        actor_user, actor_profile, actor_perms, is_player = self._get_actor(request)
+        can_manage = bool(
+            (actor_profile and actor_profile.user_type == "superadmin")
+            or actor_perms.get("manage_users")
+        )
+        if not can_manage:
+            return Response(
+                {"error": "You do not have permission to remove players from group roles."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        group_role = GroupRole.objects.filter(id=role_id).first()
+        if not group_role:
+            return Response({"error": "Group role not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        target_id = player_id or request.data.get("player_id") or request.query_params.get("player_id")
+        if not target_id:
+            return Response({"error": "Player identifier is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        player = None
+        if str(target_id).isdigit():
+            player = Player.objects.filter(id=int(target_id)).first()
+        if not player:
+            player = Player.objects.filter(player_id__iexact=str(target_id)).first()
+
+        if not player:
+            return Response({"error": "Player not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        matching_players = list(Player.objects.filter(player_id=player.player_id))
+        group_role.players.remove(*matching_players)
+
+        record_audit_log(
+            request,
+            event_type="user_management",
+            action=f"Removed player {player.name} ({player.player_id}) from Group Role '{group_role.name}'",
+            target=group_role.name,
+            details={"player_id": player.player_id, "player_name": player.name},
+        )
+
+        return Response({
+            "status": "success",
+            "message": f"Removed {player.name} from {group_role.name}.",
+            "group_role": group_role.to_dict(include_members=True),
+        })
+
+
 class AuthLogoutAPIView(views.APIView):
     """
     Logs out CMS Admin, Player, or both.

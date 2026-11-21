@@ -332,7 +332,20 @@ function computeCategorySuspensions(catObj) {
 }
 
 export default function App() {
-  const [data, setData] = useState(() => DEFAULT_TITANS_STATE);
+  const [data, setData] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('ruiru_titans_react_state');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.categories && Object.keys(parsed.categories).length > 0) {
+            return sanitizeExMilitaryFixtures(parsed);
+          }
+        }
+      }
+    } catch {}
+    return DEFAULT_TITANS_STATE;
+  });
   const [syncStatus, setSyncStatus] = useState('synced'); // 'synced' | 'saving' | 'error'
 
   // Theme appearance state: respects user saved choice or system preference ('dark' or 'light')
@@ -583,11 +596,14 @@ export default function App() {
         } catch (e) {}
         const saved = await api.saveState(nextData);
         if (saved && saved.homepage) {
-          const merged = { ...nextData, homepage: saved.homepage };
-          setData(merged);
-          try {
-            localStorage.setItem('ruiru_titans_react_state', JSON.stringify(merged));
-          } catch (e) {}
+          const hpDiff = JSON.stringify(saved.homepage) !== JSON.stringify(nextData.homepage);
+          if (hpDiff) {
+            const merged = { ...nextData, homepage: saved.homepage };
+            setData(merged);
+            try {
+              localStorage.setItem('ruiru_titans_react_state', JSON.stringify(merged));
+            } catch (e) {}
+          }
         }
         pendingSyncRef.current = null;
         try {
@@ -902,11 +918,12 @@ export default function App() {
 
   // Handlers for Mutations (for specific category or active category)
   const updateCategoryByKey = (catKey, mutator) => {
-    if (!data || !data.categories[catKey]) return;
-    const currentCat = data.categories[catKey];
+    const currentData = pendingSyncRef.current || data;
+    if (!currentData || !currentData.categories || !currentData.categories[catKey]) return;
+    const currentCat = currentData.categories[catKey];
     const nextCat = mutator({ ...currentCat });
-    const nextCategories = { ...data.categories, [catKey]: nextCat };
-    commitData({ ...data, categories: nextCategories });
+    const nextCategories = { ...currentData.categories, [catKey]: nextCat };
+    commitData({ ...currentData, categories: nextCategories });
   };
 
   const updateActiveCat = (mutator) => {
@@ -933,16 +950,17 @@ export default function App() {
       nextGroupFixtures[letter] = (list || []).map((gf) => {
         const updated = byId[gf.id];
         if (!updated) return gf;
-        if (isFixturePlayedOrCompleted(gf)) {
-          return {
-            ...updated,
-            played: true,
-            referee: gf.referee || updated.referee,
-            events: (gf.events && gf.events.length > 0) ? gf.events : updated.events,
-            walkover: gf.walkover || updated.walkover,
-          };
-        }
-        return updated;
+        const events = Array.isArray(updated.events) ? [...updated.events] : (gf.events || []);
+        const isPlayed = Boolean(updated.played || updated.walkover || events.length > 0);
+        return {
+          ...gf,
+          ...updated,
+          events,
+          played: isPlayed,
+          walkover: updated.walkover !== undefined ? updated.walkover : gf.walkover,
+          referee: updated.referee !== undefined ? updated.referee : gf.referee,
+          report: updated.report !== undefined ? updated.report : gf.report,
+        };
       });
     });
     return nextGroupFixtures;
@@ -976,29 +994,40 @@ export default function App() {
       const groupFixtures = syncCupGroupFixtures(c, fixtures);
       const rounds = (c.rounds || []).map((r) =>
         Array.isArray(r)
-          ? r.map((t) =>
-              t?.id === fId
-                ? {
-                    ...t,
-                    match: {
-                      ...t.match,
-                      played: true,
-                      events: [...(t.match?.events || []), event],
-                    },
-                  }
-                : t
-            )
+          ? r.map((t) => {
+              if (t?.id === fId) {
+                const nextEvents = [...(t.match?.events || t.events || []), event];
+                return {
+                  ...t,
+                  played: true,
+                  events: nextEvents,
+                  match: {
+                    ...(t.match || {}),
+                    played: true,
+                    events: nextEvents,
+                  },
+                };
+              }
+              return t;
+            })
           : {
               ...r,
-              ties: (r.ties || []).map((t) =>
-                t.id === fId
-                  ? {
-                      ...t,
+              ties: (r.ties || []).map((t) => {
+                if (t.id === fId) {
+                  const nextEvents = [...(t.events || t.match?.events || []), event];
+                  return {
+                    ...t,
+                    played: true,
+                    events: nextEvents,
+                    match: {
+                      ...(t.match || {}),
                       played: true,
-                      events: [...(t.events || []), event],
-                    }
-                  : t
-              ),
+                      events: nextEvents,
+                    },
+                  };
+                }
+                return t;
+              }),
             }
       );
       return {
@@ -1023,27 +1052,110 @@ export default function App() {
       const groupFixtures = syncCupGroupFixtures(c, fixtures);
       const rounds = (c.rounds || []).map((r) =>
         Array.isArray(r)
-          ? r.map((t) =>
-              t?.id === fId
-                ? {
-                    ...t,
-                    match: {
-                      ...t.match,
-                      events: (t.match?.events || []).filter((_, idx) => idx !== eventIndex),
-                    },
-                  }
-                : t
-            )
+          ? r.map((t) => {
+              if (t?.id === fId) {
+                const currentEvents = [...(t.match?.events || t.events || [])];
+                currentEvents.splice(eventIndex, 1);
+                return {
+                  ...t,
+                  events: currentEvents,
+                  match: {
+                    ...(t.match || {}),
+                    events: currentEvents,
+                  },
+                };
+              }
+              return t;
+            })
           : {
               ...r,
-              ties: (r.ties || []).map((t) =>
-                t.id === fId
-                  ? {
-                      ...t,
-                      events: (t.events || []).filter((_, idx) => idx !== eventIndex),
-                    }
-                  : t
-              ),
+              ties: (r.ties || []).map((t) => {
+                if (t.id === fId) {
+                  const currentEvents = [...(t.events || t.match?.events || [])];
+                  currentEvents.splice(eventIndex, 1);
+                  return {
+                    ...t,
+                    events: currentEvents,
+                    match: {
+                      ...(t.match || {}),
+                      events: currentEvents,
+                    },
+                  };
+                }
+                return t;
+              }),
+            }
+      );
+      return {
+        ...c,
+        fixtures,
+        ...(groupFixtures ? { groupFixtures } : {}),
+        ...(c.rounds ? { rounds } : {}),
+      };
+    });
+  };
+
+  const handleSetScore = (fId, homeGoals, awayGoals, targetKey = activeCategoryKey) => {
+    const hTarget = Math.max(0, parseInt(homeGoals, 10) || 0);
+    const aTarget = Math.max(0, parseInt(awayGoals, 10) || 0);
+    updateCategoryByKey(targetKey, (c) => {
+      const fixture = (c.fixtures || []).find((f) => f.id === fId);
+      if (!fixture) return c;
+      const hId = fixture.home;
+      const aId = fixture.away;
+      const currentEvents = fixture.events || [];
+      const nonGoalEvents = currentEvents.filter((e) => e.type !== 'goal' && e.type !== 'owngoal');
+
+      // Keep existing player goals up to target, adjust with squad goals if needed
+      const existingHomeGoals = currentEvents.filter((e) => (e.type === 'goal' && e.teamId === hId) || (e.type === 'owngoal' && e.teamId === aId));
+      const existingAwayGoals = currentEvents.filter((e) => (e.type === 'goal' && e.teamId === aId) || (e.type === 'owngoal' && e.teamId === hId));
+
+      const finalHomeGoals = existingHomeGoals.slice(0, hTarget);
+      while (finalHomeGoals.length < hTarget) {
+        finalHomeGoals.push({ teamId: hId, playerId: `${hId}-UNK`, type: 'goal' });
+      }
+
+      const finalAwayGoals = existingAwayGoals.slice(0, aTarget);
+      while (finalAwayGoals.length < aTarget) {
+        finalAwayGoals.push({ teamId: aId, playerId: `${aId}-UNK`, type: 'goal' });
+      }
+
+      const newEvents = [...finalHomeGoals, ...finalAwayGoals, ...nonGoalEvents];
+      const isPlayed = hTarget > 0 || aTarget > 0 || Boolean(fixture.walkover || newEvents.length > 0);
+
+      const fixtures = (c.fixtures || []).map((f) => {
+        if (f.id === fId) {
+          return { ...f, events: newEvents, played: isPlayed };
+        }
+        return f;
+      });
+      const groupFixtures = syncCupGroupFixtures(c, fixtures);
+      const rounds = (c.rounds || []).map((r) =>
+        Array.isArray(r)
+          ? r.map((t) => {
+              if (t?.id === fId) {
+                return {
+                  ...t,
+                  played: isPlayed,
+                  events: newEvents,
+                  match: { ...(t.match || {}), played: isPlayed, events: newEvents },
+                };
+              }
+              return t;
+            })
+          : {
+              ...r,
+              ties: (r.ties || []).map((t) => {
+                if (t.id === fId) {
+                  return {
+                    ...t,
+                    played: isPlayed,
+                    events: newEvents,
+                    match: { ...(t.match || {}), played: isPlayed, events: newEvents },
+                  };
+                }
+                return t;
+              }),
             }
       );
       return {
@@ -4420,6 +4532,7 @@ export default function App() {
             onTogglePlayed={(fId) => handleTogglePlayed(fId, effectiveCategoryKey)}
             onAddEvent={(fId, ev) => handleAddEvent(fId, ev, effectiveCategoryKey)}
             onRemoveEvent={(fId, idx) => handleRemoveEvent(fId, idx, effectiveCategoryKey)}
+            onSetScore={(fId, hg, ag) => handleSetScore(fId, hg, ag, effectiveCategoryKey)}
             onSetWalkover={(fId, wId) => handleSetWalkover(fId, wId, effectiveCategoryKey)}
             onSetReferee={(fId, ref) => handleSetReferee(fId, ref, effectiveCategoryKey)}
             onAddReferee={(refName) => handleAddReferee(refName, effectiveCategoryKey)}
@@ -4690,7 +4803,7 @@ export default function App() {
             6F. DEDICATED TACTICS & FORMATIONS BOARD VIEW
            ========================================================= */}
         {currentView === 'tactics' && (
-          !cmsUser ? (
+          !cmsUser && (!playerUser || !playerUser.permissions?.manage_tactics) ? (
             <div
               style={{
                 background: '#121212',
@@ -4734,7 +4847,7 @@ export default function App() {
             <TacticsView
               categories={data.categories}
               activeCategoryKey={activeCategoryKey}
-              isCmsMode={isCmsMode}
+              isCmsMode={isCmsMode || Boolean(playerUser?.permissions?.manage_tactics)}
               isStandalonePage={isDedicatedTacticsMode}
               onToggleStandalonePage={handleToggleStandaloneTactics}
             />
@@ -4801,7 +4914,7 @@ export default function App() {
             7. MANAGER DASHBOARD PORTAL VIEW (Requires Manager Sign-In)
            ========================================================= */}
         {currentView === 'manage' && (
-          playerUser ? (
+          playerUser && !playerUser.has_group_powers && !Object.values(playerUser.permissions || {}).some(Boolean) ? (
             <div
               style={{
                 background: '#121212',
@@ -4834,13 +4947,13 @@ export default function App() {
                 ⚽ Open Player Dashboard
               </button>
             </div>
-          ) : cmsUser ? (
+          ) : (cmsUser || playerUser) ? (
             <ManageView
               cat={cat}
               categories={data.categories}
               deletedCategories={data.deletedCategories || {}}
               activeCategoryKey={activeCategoryKey}
-              cmsUser={cmsUser}
+              cmsUser={cmsUser || { username: playerUser.name, user_type: 'player_role', permissions: playerUser.permissions }}
               onUpdateCmsUser={setCmsUser}
               homepageData={data.homepage}
               onUpdateHomepage={handleUpdateHomepage}

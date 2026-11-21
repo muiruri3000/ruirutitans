@@ -959,6 +959,78 @@ export const api = {
     return await res.json();
   },
 
+  async getGroupRoles() {
+    const res = await fetch(`/api/auth/group-roles/`, { headers: defaultHeaders() });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to load group roles: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async createGroupRole(payload) {
+    const res = await fetch(`/api/auth/group-roles/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to create group role: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async updateGroupRole(roleId, payload) {
+    const res = await fetch(`/api/auth/group-roles/${roleId}/`, {
+      method: "PATCH",
+      headers: defaultHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to update group role: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async deleteGroupRole(roleId) {
+    const res = await fetch(`/api/auth/group-roles/${roleId}/`, {
+      method: "DELETE",
+      headers: defaultHeaders(),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to delete group role: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async addGroupRoleMember(roleId, playerId) {
+    const res = await fetch(`/api/auth/group-roles/${roleId}/members/`, {
+      method: "POST",
+      headers: defaultHeaders(),
+      body: JSON.stringify({ player_id: playerId }),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to add player to group role: ${res.status}`);
+    }
+    return await res.json();
+  },
+
+  async removeGroupRoleMember(roleId, playerId) {
+    const res = await fetch(`/api/auth/group-roles/${roleId}/members/${encodeURIComponent(playerId)}/`, {
+      method: "DELETE",
+      headers: defaultHeaders(),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Failed to remove player from group role: ${res.status}`);
+    }
+    return await res.json();
+  },
+
   async updateDutyRoster(categoryKey, payload) {
     const url = categoryKey
       ? `/api/categories/${encodeURIComponent(categoryKey)}/duty-roster/`

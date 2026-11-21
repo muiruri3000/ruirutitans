@@ -269,6 +269,44 @@ export default function TopNav({
                   </div>
                 </button>
 
+                {/* 2b. Inherited Group Powers Portal (for players with group roles) */}
+                {playerUser && (playerUser.has_group_powers || Object.values(playerUser.permissions || {}).some(Boolean)) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsLoginOpen(false);
+                      if (onNavigate) onNavigate('manage');
+                    }}
+                    className="login-dropdown-item"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      background: 'rgba(255, 149, 0, 0.08)',
+                      border: '1px solid rgba(255, 149, 0, 0.25)',
+                      color: '#FF9500',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'background 0.12s ease',
+                    }}
+                  >
+                    <span style={{ fontSize: '18px' }}>🛡️</span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 800, color: '#FF9500' }}>
+                        Group Powers Portal
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#AEAEB2', marginTop: '1px' }}>
+                        Access your inherited management functions
+                      </span>
+                    </div>
+                  </button>
+                )}
+
                 {/* Logged in User Management / Sign Out */}
                 {(playerUser || cmsUser) && (
                   <>

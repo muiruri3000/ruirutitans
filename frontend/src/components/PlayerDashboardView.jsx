@@ -336,6 +336,148 @@ export default function PlayerDashboardView({
         </div>
       </div>
 
+      {/* ASSIGNED GROUP ROLES & INHERITED POWERS */}
+      {playerUser.group_roles && playerUser.group_roles.length > 0 && (
+        <div
+          style={{
+            background: '#1A1811',
+            border: '1px solid #FF9500',
+            borderRadius: '12px',
+            padding: '18px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>🛡️</span>
+              <span style={{ fontSize: '14px', fontWeight: 800, color: '#FF9500' }}>
+                ASSIGNED GROUP ROLES &amp; INHERITED POWERS
+              </span>
+            </div>
+            <span
+              style={{
+                fontSize: '11px',
+                color: '#6CE5A0',
+                background: 'rgba(108, 229, 160, 0.12)',
+                border: '1px solid #3F7A4E',
+                padding: '3px 8px',
+                borderRadius: '999px',
+                fontWeight: 700,
+              }}
+            >
+              ✓ Inherent Functions Active
+            </span>
+          </div>
+
+          <div style={{ fontSize: '12.5px', color: '#EBEBF5', lineHeight: 1.5 }}>
+            You have been assigned to group roles by tournament management and inherently assume all associated functions:
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            {playerUser.group_roles.map((gr) => (
+              <div
+                key={gr.id || gr.name}
+                style={{
+                  background: '#121212',
+                  border: '1px solid rgba(255, 149, 0, 0.35)',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  minWidth: '220px',
+                }}
+              >
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF', marginBottom: '2px' }}>
+                  🏅 {gr.name}
+                </div>
+                {gr.description && (
+                  <div style={{ fontSize: '11px', color: '#8E8E93', marginBottom: '6px' }}>
+                    {gr.description}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '6px' }}>
+                  {Object.entries(gr.permissions || {})
+                    .filter(([_, v]) => Boolean(v))
+                    .map(([k]) => (
+                      <span
+                        key={k}
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          color: '#6CE5A0',
+                          background: 'rgba(108, 229, 160, 0.1)',
+                          border: '1px solid rgba(108, 229, 160, 0.25)',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        ✓ {k.replace('manage_', '').replace(/_/g, ' ')}
+                      </span>
+                    ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick Action Shortcuts based on assumed powers */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <span style={{ fontSize: '11.5px', color: '#AEAEB2', fontWeight: 700, alignSelf: 'center', marginRight: '4px' }}>
+              Quick Actions:
+            </span>
+            {Boolean(playerUser.permissions?.manage_tactics) && (
+              <button
+                type="button"
+                onClick={() => onNavigate && onNavigate('tactics')}
+                style={{ background: '#FF9500', color: '#16201B', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '11.5px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                ⚽ Open Tactics Board
+              </button>
+            )}
+            {Boolean(playerUser.permissions?.manage_fixtures) && (
+              <button
+                type="button"
+                onClick={() => onNavigate && onNavigate('fixtures')}
+                style={{ background: '#FF9500', color: '#16201B', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '11.5px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                📋 Fixtures &amp; Match Reports
+              </button>
+            )}
+            {Boolean(playerUser.permissions?.manage_duty_roster) && (
+              <button
+                type="button"
+                onClick={() => onNavigate && onNavigate('duty')}
+                style={{ background: '#FF9500', color: '#16201B', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '11.5px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                🧹 Duty Roster
+              </button>
+            )}
+            {Boolean(playerUser.permissions?.manage_transfers) && (
+              <button
+                type="button"
+                onClick={() => onNavigate && onNavigate('transfers')}
+                style={{ background: '#FF9500', color: '#16201B', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '11.5px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                🔄 Squad Transfers
+              </button>
+            )}
+            {Boolean(
+              playerUser.permissions?.manage_players ||
+              playerUser.permissions?.manage_teams ||
+              playerUser.permissions?.manage_homepage ||
+              playerUser.permissions?.manage_users
+            ) && (
+              <button
+                type="button"
+                onClick={() => onNavigate && onNavigate('manage')}
+                style={{ background: '#FF9500', color: '#16201B', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '11.5px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                ⚙️ Open Manager Portal
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Season Stats Summary */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
         <div style={{ background: '#121212', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>

@@ -1345,18 +1345,27 @@ def import_state_to_db(state_dict, soft_delete_missing=True):
                         except (ValueError, TypeError):
                             pens = None
                     tie_referee = tie.get("referee") or match_obj.get("referee", "")
+                    tie_events = match_obj.get("events") if (match_obj.get("events") is not None) else tie.get("events", [])
+                    tie_played = bool(match_obj.get("played", False)) or bool(tie.get("played", False)) or (len(tie_events) > 0)
+                    tie_walkover = match_obj.get("walkover") or tie.get("walkover")
                     tie_fixture = {
                         "id": tie.get("id") or f"KO-R{r_idx+1}-T{t_idx+1}",
                         "date": tie.get("date", "TBD"),
                         "home": tie.get("home"),
                         "away": tie.get("away"),
-                        "played": bool(match_obj.get("played", False)),
-                        "walkover": match_obj.get("walkover"),
-                        "events": match_obj.get("events", []),
+                        "played": tie_played,
+                        "walkover": tie_walkover,
+                        "events": tie_events,
                         "referee": tie_referee,
                         "pens": pens,
                     }
                     raw_fixtures.append((tie_fixture, "knockout", "", r_idx, t_idx))
+
+            seen_ids = {f["id"] for f, _, _, _, _ in raw_fixtures if isinstance(f, dict) and "id" in f}
+            for f in cat_data.get("fixtures", []):
+                if isinstance(f, dict) and f.get("id") and f["id"] not in seen_ids:
+                    seen_ids.add(f["id"])
+                    raw_fixtures.append((f, f.get("phase", "cup"), f.get("groupLetter", ""), None, None))
 
         seen_fixture_ids = set()
         for f_data, phase, g_letter, r_idx, t_idx in raw_fixtures:
@@ -4097,6 +4106,13 @@ def _build_player_auth_profile(player, include_extended=True):
             "is_active": bool(getattr(player, "is_active", True)),
             "is_free_agent": player.team_id is None,
         })
+    group_roles_summary = player.get_group_roles_summary() if hasattr(player, "get_group_roles_summary") else []
+    effective_perms = player.get_effective_permissions() if hasattr(player, "get_effective_permissions") else {}
+    profile.update({
+        "group_roles": group_roles_summary,
+        "permissions": effective_perms,
+        "has_group_powers": any(effective_perms.values()) if effective_perms else False,
+    })
     return profile
 
 

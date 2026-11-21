@@ -242,7 +242,7 @@ class Category(models.Model):
                 g_list.sort(key=fixture_sort_key)
                 group_fixtures[letter] = [f.to_dict() for f in g_list]
 
-            cup_list = list(self.fixtures.filter(home_team__isnull=False, away_team__isnull=False))
+            cup_list = list(self.fixtures.all())
             cup_list.sort(key=fixture_sort_key)
             all_cup_fixtures = [f.to_dict() for f in cup_list]
 
@@ -428,6 +428,39 @@ class Player(models.Model):
         self.temp_code_created_at = None
         self.temp_code_attempts = 0
         self.must_change_password = False
+
+    def get_effective_permissions(self) -> dict:
+        """
+        Combines and returns all functional permissions/powers inherited inherently
+        from all GroupRoles this player belongs to.
+        """
+        base = {k: False for k in CMS_PERMISSION_KEYS}
+        try:
+            for gr in self.group_roles.all():
+                gr_perms = gr.permissions if isinstance(gr.permissions, dict) else {}
+                for k in CMS_PERMISSION_KEYS:
+                    if gr_perms.get(k):
+                        base[k] = True
+        except Exception:
+            pass
+        return base
+
+    def get_group_roles_summary(self) -> list:
+        """
+        Returns a serializable summary list of group roles this player belongs to.
+        """
+        try:
+            return [
+                {
+                    "id": gr.id,
+                    "name": gr.name,
+                    "description": gr.description,
+                    "permissions": gr.get_effective_permissions(),
+                }
+                for gr in self.group_roles.all()
+            ]
+        except Exception:
+            return []
 
     def save(self, *args, **kwargs):
         from django.contrib.auth.hashers import make_password
@@ -1480,6 +1513,76 @@ def get_or_create_cms_profile(user):
         permissions=get_default_permissions_for_type(u_type),
         is_blocked=not user.is_active,
     )
+
+
+class GroupRole(models.Model):
+    """
+    Represents a group role (e.g. Captains, Match Officials, Disciplinary Committee)
+    where operational powers and functions can be attached.
+    Players assigned to this group inherently assume all of its powers.
+    """
+    name = models.CharField(max_length=128, unique=True)
+    description = models.TextField(blank=True, default="")
+    permissions = models.JSONField(default=dict, blank=True)
+    players = models.ManyToManyField(
+        Player,
+        related_name="group_roles",
+        blank=True,
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_group_roles",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.players.count()} players)"
+
+    def get_effective_permissions(self) -> dict:
+        base = {k: False for k in CMS_PERMISSION_KEYS}
+        stored = self.permissions if isinstance(self.permissions, dict) else {}
+        for k in CMS_PERMISSION_KEYS:
+            if k in stored:
+                base[k] = bool(stored[k])
+        return base
+
+    def to_dict(self, include_members=True) -> dict:
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description or "",
+            "permissions": self.get_effective_permissions(),
+            "members_count": self.players.count(),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+        if include_members:
+            seen_member_pids = set()
+            members_list = []
+            for p in self.players.select_related("team", "category", "team__category").all():
+                if p.player_id not in seen_member_pids:
+                    seen_member_pids.add(p.player_id)
+                    members_list.append({
+                        "id": p.id,
+                        "player_id": p.player_id,
+                        "name": p.name,
+                        "username": p.username,
+                        "position": p.position,
+                        "jersey_number": p.jersey_number,
+                        "team_name": p.team.name if p.team else "Free Agent",
+                        "team_color": p.team.color if p.team else "#8E8E93",
+                        "category_name": p.effective_category.label if (p.effective_category and hasattr(p.effective_category, "label")) else "",
+                    })
+            data["members"] = members_list
+            data["members_count"] = len(members_list)
+        return data
 
 
 class AuditLog(models.Model):

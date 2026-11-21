@@ -142,6 +142,7 @@ export default function FixturesView({
   onTogglePlayed,
   onAddEvent,
   onRemoveEvent,
+  onSetScore = null,
   onSetWalkover,
   onSetReferee,
   onAddReferee,
@@ -2110,24 +2111,54 @@ export default function FixturesView({
                   >
                     {/* Home Team quick score */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontWeight: 800, fontSize: '13px', color: 'var(--text-primary)' }}>{home?.name || f.home}</span>
-                      <span style={{ fontSize: '20px', fontWeight: 900, color: '#FF9500', minWidth: '24px', textAlign: 'center' }}>{hs}</span>
+                      <span style={{ fontWeight: 800, fontSize: '13px', color: 'var(--text-primary)' }}>{home?.name || f.home || 'TBD'}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="99"
+                        value={hs}
+                        disabled={!f.home}
+                        onChange={(e) => {
+                          if (!f.home) return;
+                          const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                          if (onSetScore) {
+                            onSetScore(f.id, val, as);
+                          } else if (val > hs) {
+                            for (let i = hs; i < val; i++) handleQuickAddGoal(f.id, f.home);
+                          } else if (val < hs) {
+                            for (let i = hs; i > val; i--) handleQuickRemoveGoal(f.id, f.home);
+                          }
+                        }}
+                        style={{
+                          width: '46px',
+                          textAlign: 'center',
+                          padding: '3px 4px',
+                          borderRadius: '6px',
+                          background: '#141416',
+                          border: '1.5px solid rgba(255, 149, 0, 0.55)',
+                          color: '#FF9500',
+                          fontSize: '18px',
+                          fontWeight: 900,
+                          opacity: !f.home ? 0.4 : 1,
+                        }}
+                        title={!f.home ? 'Team not determined yet' : 'Enter home score directly or click - / +1 Goal'}
+                      />
                       <div style={{ display: 'flex', gap: '4px' }}>
                         <button
                           type="button"
                           onClick={() => handleQuickRemoveGoal(f.id, f.home)}
-                          disabled={hs <= 0}
+                          disabled={!f.home || hs <= 0}
                           title="Deduct 1 goal from this team"
                           style={{
-                            background: hs > 0 ? '#1C1C1E' : 'rgba(255,255,255,0.05)',
-                            color: hs > 0 ? '#FF453A' : '#555',
+                            background: f.home && hs > 0 ? '#1C1C1E' : 'rgba(255,255,255,0.05)',
+                            color: f.home && hs > 0 ? '#FF453A' : '#555',
                             border: '1px solid rgba(255,255,255,0.1)',
                             borderRadius: '4px',
                             width: '28px',
                             height: '28px',
                             fontSize: '14px',
                             fontWeight: 800,
-                            cursor: hs > 0 ? 'pointer' : 'not-allowed',
+                            cursor: f.home && hs > 0 ? 'pointer' : 'not-allowed',
                           }}
                         >
                           -
@@ -2135,17 +2166,18 @@ export default function FixturesView({
                         <button
                           type="button"
                           onClick={() => handleQuickAddGoal(f.id, f.home)}
+                          disabled={!f.home}
                           title="Quick add 1 goal for this team"
                           style={{
-                            background: '#FF9500',
-                            color: '#16201B',
+                            background: f.home ? '#FF9500' : '#444',
+                            color: f.home ? '#16201B' : '#888',
                             border: 'none',
                             borderRadius: '4px',
                             padding: '0 8px',
                             height: '28px',
                             fontSize: '11px',
                             fontWeight: 800,
-                            cursor: 'pointer',
+                            cursor: f.home ? 'pointer' : 'not-allowed',
                           }}
                         >
                           +1 Goal
@@ -2178,17 +2210,18 @@ export default function FixturesView({
                         <button
                           type="button"
                           onClick={() => handleQuickAddGoal(f.id, f.away)}
+                          disabled={!f.away}
                           title="Quick add 1 goal for this team"
                           style={{
-                            background: '#FF9500',
-                            color: '#16201B',
+                            background: f.away ? '#FF9500' : '#444',
+                            color: f.away ? '#16201B' : '#888',
                             border: 'none',
                             borderRadius: '4px',
                             padding: '0 8px',
                             height: '28px',
                             fontSize: '11px',
                             fontWeight: 800,
-                            cursor: 'pointer',
+                            cursor: f.away ? 'pointer' : 'not-allowed',
                           }}
                         >
                           +1 Goal
@@ -2196,25 +2229,55 @@ export default function FixturesView({
                         <button
                           type="button"
                           onClick={() => handleQuickRemoveGoal(f.id, f.away)}
-                          disabled={as <= 0}
+                          disabled={!f.away || as <= 0}
                           title="Deduct 1 goal from this team"
                           style={{
-                            background: as > 0 ? '#1C1C1E' : 'rgba(255,255,255,0.05)',
-                            color: as > 0 ? '#FF453A' : '#555',
+                            background: f.away && as > 0 ? '#1C1C1E' : 'rgba(255,255,255,0.05)',
+                            color: f.away && as > 0 ? '#FF453A' : '#555',
                             border: '1px solid rgba(255,255,255,0.1)',
                             borderRadius: '4px',
                             width: '28px',
                             height: '28px',
                             fontSize: '14px',
                             fontWeight: 800,
-                            cursor: as > 0 ? 'pointer' : 'not-allowed',
+                            cursor: f.away && as > 0 ? 'pointer' : 'not-allowed',
                           }}
                         >
                           -
                         </button>
                       </div>
-                      <span style={{ fontSize: '20px', fontWeight: 900, color: '#FF9500', minWidth: '24px', textAlign: 'center' }}>{as}</span>
-                      <span style={{ fontWeight: 800, fontSize: '13px', color: 'var(--text-primary)' }}>{away?.name || f.away}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="99"
+                        value={as}
+                        disabled={!f.away}
+                        onChange={(e) => {
+                          if (!f.away) return;
+                          const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                          if (onSetScore) {
+                            onSetScore(f.id, hs, val);
+                          } else if (val > as) {
+                            for (let i = as; i < val; i++) handleQuickAddGoal(f.id, f.away);
+                          } else if (val < as) {
+                            for (let i = as; i > val; i--) handleQuickRemoveGoal(f.id, f.away);
+                          }
+                        }}
+                        style={{
+                          width: '46px',
+                          textAlign: 'center',
+                          padding: '3px 4px',
+                          borderRadius: '6px',
+                          background: '#141416',
+                          border: '1.5px solid rgba(255, 149, 0, 0.55)',
+                          color: '#FF9500',
+                          fontSize: '18px',
+                          fontWeight: 900,
+                          opacity: !f.away ? 0.4 : 1,
+                        }}
+                        title={!f.away ? 'Team not determined yet' : 'Enter away score directly or click - / +1 Goal'}
+                      />
+                      <span style={{ fontWeight: 800, fontSize: '13px', color: 'var(--text-primary)' }}>{away?.name || f.away || 'TBD'}</span>
                     </div>
                   </div>
 
