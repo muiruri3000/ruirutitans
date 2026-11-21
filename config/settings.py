@@ -177,7 +177,7 @@ if DATABASE_URL:
                 "PASSWORD": parsed_db.password or "",
                 "HOST": parsed_db.hostname or "127.0.0.1",
                 "PORT": str(parsed_db.port or 5432),
-                "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "300")),
+                "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
             }
         }
     elif scheme == "mysql":
@@ -189,7 +189,7 @@ if DATABASE_URL:
                 "PASSWORD": parsed_db.password or "",
                 "HOST": parsed_db.hostname or "127.0.0.1",
                 "PORT": str(parsed_db.port or 3306),
-                "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "300")),
+                "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
                 "OPTIONS": {
                     "charset": "utf8mb4",
                     "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -203,7 +203,7 @@ if DATABASE_URL:
             "default": {
                 "ENGINE": "django.db.backends.sqlite3",
                 "NAME": BASE_DIR / sqlite_file,
-                "CONN_MAX_AGE": 0,
+                "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")) if "test" not in sys.argv else 0,
             }
         }
     else:
@@ -224,7 +224,7 @@ elif DB_ENGINE == "mysql" or USE_MYSQL:
             "PASSWORD": mysql_password,
             "HOST": mysql_host,
             "PORT": mysql_port,
-            "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "300")),
+            "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
             "OPTIONS": {
                 "charset": "utf8mb4",
                 "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -248,7 +248,7 @@ elif DB_ENGINE in ("postgres", "postgresql"):
             "PASSWORD": pg_password,
             "HOST": pg_host,
             "PORT": pg_port,
-            "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "300")),
+            "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
         }
     }
 
@@ -268,7 +268,7 @@ else:
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": sqlite_file_path,
-            "CONN_MAX_AGE": 0,
+            "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")) if "test" not in sys.argv else 0,
         }
     }
 
@@ -338,6 +338,22 @@ else:
             "http://localhost:8000",
             "http://127.0.0.1:8000",
         ])
+
+# Streamlined CORS Pre-flights & Explicit Allowed Headers
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours to prevent redundant OPTIONS preflights
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "x-tenant-slug",
+    "x-category",
+]
 
 # Trusted CSRF origins for secure form submission and API writes
 env_csrf = os.environ.get("CSRF_TRUSTED_ORIGINS", "").strip()
@@ -413,13 +429,28 @@ TRUSTED_PROXY_CIDRS = [c.strip() for c in _trusted_proxy_raw.split(",") if c.str
 # 8. STATIC, MEDIA, CACHE, LOGGING & REST FRAMEWORK
 # ==============================================================================
 
-# Shared cache backend so authentication rate limits are enforced across all Gunicorn worker processes.
-# Uses FileBasedCache on persistent storage (/app/data/cache in K3s) to avoid SQLite write-lock contention.
+# Shared multi-tier cache backend: Redis support with seamless fallback to FileBasedCache/LocMemCache.
+REDIS_URL = os.environ.get("REDIS_URL", "").strip()
 if "test" in sys.argv:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
             "LOCATION": "ruirutitans-test-cache",
+        }
+    }
+elif REDIS_URL and importlib.util.find_spec("django_redis") is not None:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "TIMEOUT": 300,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "CONNECTION_POOL_KWARGS": {"max_connections": 100},
+                "SOCKET_CONNECT_TIMEOUT": 5,
+                "SOCKET_TIMEOUT": 5,
+                "IGNORE_EXCEPTIONS": True,
+            },
         }
     }
 else:
@@ -527,5 +558,13 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.FormParser",
         "rest_framework.parsers.MultiPartParser",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": os.environ.get("THROTTLE_ANON_RATE", "120/minute" if "test" not in sys.argv else "10000/minute"),
+        "user": os.environ.get("THROTTLE_USER_RATE", "300/minute" if "test" not in sys.argv else "10000/minute"),
+    },
     "EXCEPTION_HANDLER": "tournaments.exceptions.custom_exception_handler",
 }

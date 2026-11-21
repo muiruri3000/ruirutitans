@@ -3,11 +3,18 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/static/',
   build: {
+    target: 'es2020',
+    minify: 'esbuild',
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
         entryFileNames: 'js/titans.js',
         chunkFileNames: 'js/[name].js',
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+        },
         assetFileNames: (assetInfo) => {
           if (assetInfo.name && assetInfo.name.endsWith('.css')) {
             return 'css/titans.css';

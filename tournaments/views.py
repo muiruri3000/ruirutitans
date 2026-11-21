@@ -1,5 +1,5 @@
 import json
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponse, Http404
 from rest_framework import status, views, viewsets, permissions
@@ -3105,6 +3105,21 @@ class VisitorCommentAPIView(views.APIView):
             or (hasattr(request, "session") and (request.session.get("cms_authenticated") or request.session.get("titans_cms")))
         )
 
+    @staticmethod
+    def get_comment_counts():
+        counts = VisitorComment.objects.aggregate(
+            total=Count("id"),
+            pending=Count("id", filter=Q(is_approved=False, status="pending")),
+            approved=Count("id", filter=Q(is_approved=True)),
+            rejected=Count("id", filter=Q(status="rejected")),
+        )
+        return {
+            "total": counts["total"] or 0,
+            "pending": counts["pending"] or 0,
+            "approved": counts["approved"] or 0,
+            "rejected": counts["rejected"] or 0,
+        }
+
     def get(self, request):
         ensure_initial_visitor_comments()
         is_cms = self._is_cms(request)
@@ -3122,19 +3137,11 @@ class VisitorCommentAPIView(views.APIView):
                 qs = qs.filter(status="rejected")
 
         comments = [c.to_dict() for c in qs[:150]]
-        total_count = VisitorComment.objects.count()
-        pending_count = VisitorComment.objects.filter(is_approved=False, status="pending").count()
-        approved_count = VisitorComment.objects.filter(is_approved=True).count()
-        rejected_count = VisitorComment.objects.filter(status="rejected").count()
+        counts = self.get_comment_counts()
 
         return Response({
             "comments": comments,
-            "counts": {
-                "total": total_count,
-                "pending": pending_count,
-                "approved": approved_count,
-                "rejected": rejected_count,
-            },
+            "counts": counts,
             "isCms": is_cms,
         })
 
@@ -3198,21 +3205,13 @@ class VisitorCommentAPIView(views.APIView):
                 details={"moderation_action": action, "author": comment.author_name},
             )
 
-            total_count = VisitorComment.objects.count()
-            pending_count = VisitorComment.objects.filter(is_approved=False, status="pending").count()
-            approved_count = VisitorComment.objects.filter(is_approved=True).count()
-            rejected_count = VisitorComment.objects.filter(status="rejected").count()
+            counts = self.get_comment_counts()
 
             return Response({
                 "status": "success",
                 "message": msg,
                 "comment": comment.to_dict() if action != "delete" else None,
-                "counts": {
-                    "total": total_count,
-                    "pending": pending_count,
-                    "approved": approved_count,
-                    "rejected": rejected_count,
-                },
+                "counts": counts,
             })
 
         # Public visitor submission
@@ -3291,19 +3290,11 @@ class VisitorCommentDetailAPIView(views.APIView):
             action=f"Deleted visitor comment #{pk} by {c_author}",
             target=f"Comment #{pk}",
         )
-        total_count = VisitorComment.objects.count()
-        pending_count = VisitorComment.objects.filter(is_approved=False, status="pending").count()
-        approved_count = VisitorComment.objects.filter(is_approved=True).count()
-        rejected_count = VisitorComment.objects.filter(status="rejected").count()
+        counts = VisitorCommentAPIView.get_comment_counts()
         return Response({
             "status": "success",
             "message": "Comment deleted.",
-            "counts": {
-                "total": total_count,
-                "pending": pending_count,
-                "approved": approved_count,
-                "rejected": rejected_count,
-            },
+            "counts": counts,
         })
 
 
@@ -3727,11 +3718,17 @@ class AuditLogListAPIView(views.APIView):
 
         base_qs = AuditLog.objects.all()
 
-        # Global summary metrics before filters
-        total_count = base_qs.count()
-        logins_count = base_qs.filter(event_type="login").count()
-        failed_logins_count = base_qs.filter(event_type="login_failed").count()
-        activities_count = base_qs.exclude(event_type__in=["login", "login_failed", "logout"]).count()
+        # Global summary metrics before filters via single in-database SQL aggregate
+        counts = base_qs.aggregate(
+            total=Count("id"),
+            logins=Count("id", filter=Q(event_type="login")),
+            failed_logins=Count("id", filter=Q(event_type="login_failed")),
+            activities=Count("id", filter=~Q(event_type__in=["login", "login_failed", "logout"])),
+        )
+        total_count = counts["total"] or 0
+        logins_count = counts["logins"] or 0
+        failed_logins_count = counts["failed_logins"] or 0
+        activities_count = counts["activities"] or 0
 
         # Distinct actors list for filter dropdown
         raw_actors = (

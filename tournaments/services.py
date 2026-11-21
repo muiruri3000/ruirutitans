@@ -5325,24 +5325,34 @@ def compute_team_analytics(category, team_id):
     goals_per_match = round(total_gf / total_played_count, 2) if total_played_count else 0.0
     clean_sheets = sum(1 for m in team_played if m["opponent_score"] == 0 and not m["walkover"])
 
+    players = list(
+        team.players.filter(is_unknown=False)
+        .annotate(
+            annotated_goals=Count("events", filter=Q(events__event_type="goal")),
+            annotated_yellows=Count("events", filter=Q(events__event_type="yellow")),
+            annotated_reds=Count("events", filter=Q(events__event_type="red")),
+        )
+        .order_by("name")
+    )
+
+    assist_counts = dict(
+        MatchEvent.objects.filter(assist_player__in=players)
+        .values_list("assist_player_id")
+        .annotate(total=Count("id"))
+    )
+
     roster = []
-    for p in team.players.all().order_by("name"):
-        if p.is_unknown:
-            continue
-        goals = p.events.filter(event_type="goal").count()
-        assists = MatchEvent.objects.filter(assist_player=p).count()
-        yellows = p.events.filter(event_type="yellow").count()
-        reds = p.events.filter(event_type="red").count()
+    for p in players:
         roster.append({
             "id": p.player_id,
             "name": p.name,
             "position": p.position,
             "player_class": getattr(p, "player_class", None) or "",
             "jersey_number": p.jersey_number,
-            "goals": goals,
-            "assists": assists,
-            "yellow_cards": yellows,
-            "red_cards": reds,
+            "goals": p.annotated_goals,
+            "assists": assist_counts.get(p.id, 0),
+            "yellow_cards": p.annotated_yellows,
+            "red_cards": p.annotated_reds,
         })
 
     all_susp_map = compute_category_suspensions(category)

@@ -354,6 +354,12 @@ class Player(models.Model):
     class Meta:
         unique_together = ("team", "player_id")
         ordering = ["is_unknown", "name"]
+        indexes = [
+            models.Index(fields=["category", "team"], name="player_cat_team_idx"),
+            models.Index(fields=["category", "is_unknown"], name="player_cat_unkn_idx"),
+            models.Index(fields=["team", "is_unknown"], name="player_team_unkn_idx"),
+            models.Index(fields=["category", "is_active"], name="player_cat_act_idx"),
+        ]
 
     def __str__(self):
         pos = f" [{self.position}]" if self.position else ""
@@ -620,6 +626,14 @@ class Fixture(models.Model):
     class Meta:
         unique_together = ("category", "fixture_id")
         ordering = ["id"]
+        indexes = [
+            models.Index(fields=["category", "phase"], name="fix_cat_phase_idx"),
+            models.Index(fields=["category", "played"], name="fix_cat_played_idx"),
+            models.Index(fields=["category", "date"], name="fix_cat_date_idx"),
+            models.Index(fields=["category", "group_letter"], name="fix_cat_group_idx"),
+            models.Index(fields=["home_team", "away_team"], name="fix_ht_at_idx"),
+            models.Index(fields=["category", "fixture_id"], name="fix_cat_fixid_idx"),
+        ]
 
     def __str__(self):
         h = self.home_team.team_id if self.home_team else "TBD"
@@ -697,6 +711,12 @@ class MatchEvent(models.Model):
 
     class Meta:
         ordering = ["order", "id"]
+        indexes = [
+            models.Index(fields=["fixture", "event_type"], name="me_fix_type_idx"),
+            models.Index(fields=["team", "event_type"], name="me_team_type_idx"),
+            models.Index(fields=["player", "event_type"], name="me_player_type_idx"),
+            models.Index(fields=["assist_player"], name="me_assist_p_idx"),
+        ]
 
     def __str__(self):
         p_name = self.player.name if self.player else "Unknown"
@@ -1141,6 +1161,10 @@ class VisitorComment(models.Model):
         ordering = ["-created_at"]
         verbose_name = "Visitor Comment"
         verbose_name_plural = "Visitor Comments"
+        indexes = [
+            models.Index(fields=["is_approved", "-created_at"], name="com_appr_time_idx"),
+            models.Index(fields=["status", "-created_at"], name="com_stat_time_idx"),
+        ]
 
     def __str__(self):
         status_label = "Approved" if self.is_approved else "Pending"
@@ -1282,6 +1306,10 @@ class TransferRequest(models.Model):
         ordering = ["-created_at", "-id"]
         verbose_name = "Transfer Request"
         verbose_name_plural = "Transfer Requests"
+        indexes = [
+            models.Index(fields=["category", "status"], name="tr_cat_stat_idx"),
+            models.Index(fields=["player", "status"], name="tr_player_stat_idx"),
+        ]
 
     def __str__(self):
         from_name = self.from_team.name if self.from_team else "Free Agent"
@@ -1357,6 +1385,10 @@ class PlayerBan(models.Model):
         ordering = ["-is_active", "-created_at"]
         verbose_name = "Player Disciplinary Ban"
         verbose_name_plural = "Player Disciplinary Bans"
+        indexes = [
+            models.Index(fields=["category", "is_active"], name="ban_cat_act_idx"),
+            models.Index(fields=["player", "is_active"], name="ban_player_act_idx"),
+        ]
 
     def __str__(self):
         duration = f"{self.games_banned} games" if self.ban_type == "games" else (self.period_description or "period")
@@ -1613,6 +1645,11 @@ class AuditLog(models.Model):
 
     class Meta:
         ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["category_key", "-created_at"], name="audit_cat_time_idx"),
+            models.Index(fields=["event_type", "-created_at"], name="audit_type_time_idx"),
+            models.Index(fields=["actor_type", "-created_at"], name="audit_actor_time_idx"),
+        ]
 
     def __str__(self):
         who = self.actor_name or self.actor_username or self.actor_type
