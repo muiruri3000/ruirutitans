@@ -17,5 +17,5 @@ data:
   SECURE_HSTS_SECONDS: "31536000"
   # Configure TRUSTED_PROXY_CIDRS with the K3s pod/Traefik CIDR (e.g. "10.42.0.0/16")
   # only after verifying Traefik is configured to sanitize/overwrite X-Forwarded-For from Cloudflare.
-  TRUSTED_PROXY_CIDRS: ""
+  TRUSTED_PROXY_CIDRS: "10.42.0.0/16,127.0.0.1"
 
