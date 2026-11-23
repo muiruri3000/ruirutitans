@@ -108,10 +108,19 @@ class IsCMSAdmin(permissions.BasePermission):
             if mapped_perm:
                 return bool(player_perms.get(mapped_perm, False))
 
-            # If StateAPIView (writing to tournament state), require manage_teams or manage_players
+            # If StateAPIView (writing to tournament state), require at least one functional management permission
             view_class = getattr(view, "__class__", None)
             if getattr(view_class, "__name__", "") == "StateAPIView":
-                return bool(player_perms.get("manage_teams") or player_perms.get("manage_players"))
+                return bool(
+                    player_perms.get("manage_fixtures")
+                    or player_perms.get("manage_duty_roster")
+                    or player_perms.get("manage_tactics")
+                    or player_perms.get("manage_teams")
+                    or player_perms.get("manage_players")
+                    or player_perms.get("manage_transfers")
+                    or player_perms.get("manage_homepage")
+                    or player_perms.get("manage_voting")
+                )
 
             # Fallback: if player has at least one administrative capability
             return any(player_perms.values())

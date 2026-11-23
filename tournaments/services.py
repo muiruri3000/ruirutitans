@@ -6711,12 +6711,15 @@ def resolve_audit_actor(
             uname = str(player.get("username") or "").strip()
             pname = str(player.get("name") or uname or pid or "Player").strip()
             team_name = str(player.get("team_name") or "Free Agent").strip()
+            group_roles = player.get("group_roles") or []
+            role_names = [gr.get("name") for gr in group_roles if gr.get("name")]
+            role_desc = ", ".join(role_names) if role_names else "player"
             return {
                 "actor_type": "player",
                 "actor_id": pid[:100],
                 "actor_username": uname[:150],
                 "actor_name": f"{pname} ({team_name})"[:200],
-                "actor_role": "player",
+                "actor_role": role_desc[:50],
             }
 
         # Fallback to Django session/user if available

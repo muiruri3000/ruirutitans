@@ -84,11 +84,30 @@ export default function ManageView({
     return Boolean(cmsUser.permissions[key]);
   };
 
-  const [adminSection, setAdminSection] = useState(initialSection || 'players'); // 'players' | 'balancer' | 'homepage' | 'voting' | 'teams' | 'security'
+  const getInitialOrAllowedSection = (sec) => {
+    if (sec === 'audit') return 'audit';
+    if (sec === 'security' && (cmsUser?.is_superadmin || hasPerm('manage_users'))) return 'security';
+    if (sec === 'players' && hasPerm('manage_players')) return 'players';
+    if ((sec === 'balancer' || sec === 'teams') && hasPerm('manage_teams')) return sec;
+    if (sec === 'homepage' && hasPerm('manage_homepage')) return 'homepage';
+    if (sec === 'voting' && hasPerm('manage_voting')) return 'voting';
+    if (sec === 'duty' && hasPerm('manage_duty_roster')) return 'duty';
+
+    // Fallback to first available permitted section
+    if (hasPerm('manage_players')) return 'players';
+    if (hasPerm('manage_duty_roster')) return 'duty';
+    if (hasPerm('manage_teams')) return 'balancer';
+    if (hasPerm('manage_homepage')) return 'homepage';
+    if (hasPerm('manage_voting')) return 'voting';
+    if (hasPerm('manage_users') || cmsUser?.is_superadmin) return 'security';
+    return 'duty';
+  };
+
+  const [adminSection, setAdminSection] = useState(() => getInitialOrAllowedSection(initialSection)); // 'players' | 'balancer' | 'homepage' | 'voting' | 'teams' | 'security' | 'duty' | 'audit'
 
   useEffect(() => {
-    if (initialSection) setAdminSection(initialSection);
-  }, [initialSection]);
+    setAdminSection(getInitialOrAllowedSection(initialSection));
+  }, [initialSection, cmsUser]);
 
   // Quick Player Transfer state
   const [quickTransferSourceTeam, setQuickTransferSourceTeam] = useState('');

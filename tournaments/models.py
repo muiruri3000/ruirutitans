@@ -443,7 +443,11 @@ class Player(models.Model):
         base = {k: False for k in CMS_PERMISSION_KEYS}
         try:
             for gr in self.group_roles.all():
-                gr_perms = gr.permissions if isinstance(gr.permissions, dict) else {}
+                gr_perms = (
+                    gr.get_effective_permissions()
+                    if hasattr(gr, "get_effective_permissions")
+                    else (gr.permissions if isinstance(gr.permissions, dict) else {})
+                )
                 for k in CMS_PERMISSION_KEYS:
                     if gr_perms.get(k):
                         base[k] = True
@@ -1583,6 +1587,11 @@ class GroupRole(models.Model):
         for k in CMS_PERMISSION_KEYS:
             if k in stored:
                 base[k] = bool(stored[k])
+        # Guarantee that group roles with 'coach' in their name inherit core coaching & match management functions
+        if self.name and "coach" in str(self.name).lower():
+            base["manage_fixtures"] = True
+            base["manage_duty_roster"] = True
+            base["manage_tactics"] = True
         return base
 
     def to_dict(self, include_members=True) -> dict:

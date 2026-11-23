@@ -6,10 +6,16 @@ export default function DutyRosterView({
   categories = {},
   activeCategoryKey,
   cmsUser = null,
+  playerUser = null,
   isCmsMode = false,
   onNavigate = null,
 }) {
-  const isAdmin = Boolean(cmsUser && isCmsMode);
+  const isAdmin = Boolean(
+    (cmsUser && isCmsMode) ||
+    isCmsMode ||
+    playerUser?.permissions?.manage_duty_roster ||
+    cmsUser?.permissions?.manage_duty_roster
+  );
   const targetCategoryKey = cat?.key || activeCategoryKey || 'ruiru-titans-league-oct-nov-2026';
 
   const [loading, setLoading] = useState(false);

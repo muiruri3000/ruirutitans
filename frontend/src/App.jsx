@@ -454,6 +454,20 @@ export default function App() {
   const [authModal, setAuthModal] = useState({ open: false, tab: 'cms' });
   const [manageSection, setManageSection] = useState('players');
 
+  // Operational permissions for CMS managers or players with assumed Group Roles
+  const canManageFixtures = Boolean(isCmsMode || playerUser?.permissions?.manage_fixtures);
+  const canManageDutyRoster = Boolean(isCmsMode || playerUser?.permissions?.manage_duty_roster);
+  const canManageTactics = Boolean(isCmsMode || playerUser?.permissions?.manage_tactics);
+  const canManageTeams = Boolean(isCmsMode || playerUser?.permissions?.manage_teams);
+  const canManagePlayers = Boolean(isCmsMode || playerUser?.permissions?.manage_players);
+  const canManageTransfers = Boolean(isCmsMode || playerUser?.permissions?.manage_transfers);
+  const canManageVoting = Boolean(isCmsMode || playerUser?.permissions?.manage_voting);
+  const canManageHomepage = Boolean(isCmsMode || playerUser?.permissions?.manage_homepage);
+  const canManageUsers = Boolean(isCmsMode || playerUser?.permissions?.manage_users);
+  const hasGroupPowers = Boolean(
+    playerUser && (playerUser.has_group_powers || Object.values(playerUser.permissions || {}).some(Boolean))
+  );
+
   // Category creation state (in CMS mode)
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState('');
@@ -623,7 +637,7 @@ export default function App() {
 
         if (isAuthErr) {
           // Verify with /api/auth/session/ (which refreshes a stale token if the session is still active)
-          const sess = await api.getAuthSession().catch(() => ({ cms: null }));
+          const sess = await api.getAuthSession().catch(() => ({ cms: null, player: null }));
           if (sess?.cms) {
             setCmsUser(sess.cms);
             setIsCmsMode(true);
@@ -637,6 +651,19 @@ export default function App() {
               return;
             } catch (retryErr) {
               console.error('Retry sync failed after session refresh:', retryErr);
+            }
+          } else if (sess?.player && (sess.player.has_group_powers || Object.values(sess.player.permissions || {}).some(Boolean))) {
+            setPlayerUser(sess.player);
+            try {
+              await api.saveState(nextData);
+              pendingSyncRef.current = null;
+              try {
+                localStorage.removeItem('ruiru_titans_pending_sync');
+              } catch (e) {}
+              setSyncStatus('synced');
+              return;
+            } catch (retryErr) {
+              console.error('Retry sync failed after player session refresh:', retryErr);
             }
           }
         }
@@ -3369,10 +3396,13 @@ export default function App() {
     ...(isLoggedIn ? [{ key: 'voting', label: '⭐ TOTW & TOTT (Vote)' }] : []),
     { key: 'stats', label: '📈 Player Stats' },
     { key: 'transfers', label: '🔄 Transfers' },
-    ...(isAdmin ? [{ key: 'balancer', label: '⚖️ Team Balancer' }] : []),
-    ...(isAdmin ? [{ key: 'tactics', label: '📋 Tactics' }] : []),
+    ...(isAdmin || canManageTeams ? [{ key: 'balancer', label: '⚖️ Team Balancer' }] : []),
+    ...(isAdmin || canManageTactics ? [{ key: 'tactics', label: '📋 Tactics' }] : []),
     ...(playerUser
-      ? [{ key: 'player-dashboard', label: '👤 Player Dashboard' }]
+      ? [
+          { key: 'player-dashboard', label: '👤 Player Dashboard' },
+          ...(hasGroupPowers ? [{ key: 'manage', label: '🛠️ Manager Dashboard' }] : []),
+        ]
       : isCmsMode && cmsUser
       ? [
           { key: 'manage', label: '🛠️ Manager Dashboard' },
@@ -4228,14 +4258,14 @@ export default function App() {
                             )}
                           </div>
                           <div
-                            style={{ textAlign: 'center', cursor: isCmsMode ? 'pointer' : 'default' }}
+                            style={{ textAlign: 'center', cursor: canManageFixtures ? 'pointer' : 'default' }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (isCmsMode) {
+                              if (canManageFixtures) {
                                 handleOpenFixtureInView(f.id, 'results');
                               }
                             }}
-                            title={isCmsMode ? "Click to edit score & events" : undefined}
+                            title={canManageFixtures ? "Click to edit score & events" : undefined}
                           >
                             <span
                               className="scoreboard"
@@ -4252,7 +4282,7 @@ export default function App() {
                               {hs} - {as}
                             </span>
                             <div style={{ fontSize: '9.5px', color: '#8E8E93', marginTop: '2px' }}>{f.date}</div>
-                            {isCmsMode && (
+                            {canManageFixtures && (
                               <div style={{ fontSize: '8.5px', color: '#FF9F0A', fontWeight: 700 }}>✏️ Edit Score</div>
                             )}
                           </div>
@@ -4272,7 +4302,7 @@ export default function App() {
                             )}
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: away?.color || '#2E5A8F' }} />
                           </div>
-                          {(hasReport || isCmsMode) && (
+                          {(hasReport || canManageFixtures) && (
                             <button
                               type="button"
                               onClick={() => setAppReportFixture(f)}
@@ -4333,7 +4363,7 @@ export default function App() {
                         <div
                           key={f.id}
                           onClick={(e) => {
-                            if (!isCmsMode) return;
+                            if (!canManageFixtures) return;
                             if (e.target.closest('button, a')) return;
                             handleOpenFixtureInView(f.id, 'upcoming');
                           }}
@@ -4346,10 +4376,10 @@ export default function App() {
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             gap: '8px',
-                            cursor: isCmsMode ? 'pointer' : 'default',
+                            cursor: canManageFixtures ? 'pointer' : 'default',
                             transition: 'all 0.15s ease',
                           }}
-                          title={isCmsMode ? "Click to enter match results" : undefined}
+                          title={canManageFixtures ? "Click to enter match results" : undefined}
                         >
                           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: home?.color || '#FF9500' }} />
@@ -4368,14 +4398,14 @@ export default function App() {
                             )}
                           </div>
                           <div
-                            style={{ textAlign: 'center', cursor: isCmsMode ? 'pointer' : 'default' }}
+                            style={{ textAlign: 'center', cursor: canManageFixtures ? 'pointer' : 'default' }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (isCmsMode) {
+                              if (canManageFixtures) {
                                 handleOpenFixtureInView(f.id, 'upcoming');
                               }
                             }}
-                            title={isCmsMode ? "Click to enter match results" : undefined}
+                            title={canManageFixtures ? "Click to enter match results" : undefined}
                           >
                             <span
                               className="scoreboard"
@@ -4392,7 +4422,7 @@ export default function App() {
                               VS
                             </span>
                             <div style={{ fontSize: '9.5px', color: '#FF9500', marginTop: '2px', fontWeight: 600 }}>{f.date}</div>
-                            {isCmsMode && (
+                            {canManageFixtures && (
                               <div style={{ fontSize: '8.5px', color: '#FF9F0A', fontWeight: 700 }}>⚡ Enter Result</div>
                             )}
                           </div>
@@ -4524,8 +4554,9 @@ export default function App() {
             schedule={cat?.schedule}
             activeCategoryKey={effectiveCategoryKey}
             categoryLabel={cat?.label}
-            isCmsMode={isCmsMode}
+            isCmsMode={canManageFixtures}
             cmsUser={cmsUser}
+            playerUser={playerUser}
             initialFilter={fixturesInitialFilter}
             initialOpenFixtureId={fixturesInitialOpenId}
             onRequestCmsLogin={() => setAuthModal({ open: true, tab: 'cms' })}
@@ -4560,7 +4591,8 @@ export default function App() {
             categories={data.categories}
             activeCategoryKey={effectiveCategoryKey}
             cmsUser={cmsUser}
-            isCmsMode={isCmsMode}
+            playerUser={playerUser}
+            isCmsMode={canManageDutyRoster}
             onNavigate={setCurrentView}
           />
         )}

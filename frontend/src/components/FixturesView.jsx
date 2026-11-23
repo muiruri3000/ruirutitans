@@ -136,6 +136,7 @@ export default function FixturesView({
   categoryLabel = '',
   isCmsMode = false,
   cmsUser = null,
+  playerUser = null,
   initialFilter = 'all',
   initialOpenFixtureId = null,
   onRequestCmsLogin = null,

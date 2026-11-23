@@ -98,6 +98,8 @@ const defaultHeaders = (includeContentType = true) => {
     headers["X-Titans-CMS-Token"] = cToken;
     headers["X-CMS-Token"] = cToken;
     headers["Authorization"] = `Bearer ${cToken}`;
+  } else if (pToken) {
+    headers["Authorization"] = `Bearer ${pToken}`;
   }
   return headers;
 };

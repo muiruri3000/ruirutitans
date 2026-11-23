@@ -41,6 +41,9 @@ export default function TopNav({
 
   const isAdmin = Boolean(cmsUser);
   const isLoggedIn = Boolean(playerUser || cmsUser);
+  const canAccessTactics = Boolean(isAdmin || playerUser?.permissions?.manage_tactics);
+  const canAccessBalancer = Boolean(isAdmin || playerUser?.permissions?.manage_teams);
+  const hasGroupPowers = Boolean(playerUser && (playerUser.has_group_powers || Object.values(playerUser.permissions || {}).some(Boolean)));
 
   const navItems = [
     { key: 'home', label: '🏠 Home' },
@@ -49,13 +52,13 @@ export default function TopNav({
     { key: 'fixtures', label: '⚽ Fixtures & Results' },
     { key: 'duty', label: '🧹 Duty Roster' },
     { key: 'cup', label: '🏆 Cup' },
-    ...(isAdmin ? [{ key: 'tactics', label: '📋 Tactics' }] : []),
+    ...(canAccessTactics ? [{ key: 'tactics', label: '📋 Tactics' }] : []),
     { key: 'stats', label: '📈 Stats' },
     { key: 'transfers', label: '🔄 Transfers' },
     ...(isLoggedIn ? [{ key: 'voting', label: '⭐ Voting' }] : []),
     { key: 'highlights', label: '🎥 Highlights' },
     { key: 'archives', label: '🏛️ Archives' },
-    ...(isAdmin ? [{ key: 'balancer', label: '⚖️ Balancer' }] : []),
+    ...(canAccessBalancer ? [{ key: 'balancer', label: '⚖️ Balancer' }] : []),
   ];
 
   return (
@@ -185,12 +188,12 @@ export default function TopNav({
                   zIndex: 1100,
                 }}
               >
-                {/* 1. Manager Login */}
+                {/* 1. Manager Login / Dashboard */}
                 <button
                   type="button"
                   onClick={() => {
                     setIsLoginOpen(false);
-                    if (cmsUser && isCmsMode) {
+                    if ((cmsUser && isCmsMode) || hasGroupPowers) {
                       if (onNavigate) onNavigate('manage');
                     } else {
                       if (onOpenAuthModal) onOpenAuthModal('cms');
@@ -219,10 +222,16 @@ export default function TopNav({
                   <span style={{ fontSize: '18px' }}>🔐</span>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontWeight: 800, color: '#FFFFFF' }}>
-                      {cmsUser && isCmsMode ? 'Manager Dashboard (Active)' : 'Manager Login'}
+                      {cmsUser && isCmsMode
+                        ? 'Manager Dashboard (Active)'
+                        : hasGroupPowers
+                        ? 'Manager Dashboard (Assumed Powers)'
+                        : 'Manager Login'}
                     </span>
                     <span style={{ fontSize: '11px', color: '#8E8E93', marginTop: '1px' }}>
-                      Fixtures, team rosters &amp; settings
+                      {hasGroupPowers
+                        ? 'Manage fixtures, rosters & tactics'
+                        : 'Fixtures, team rosters & settings'}
                     </span>
                   </div>
                 </button>
