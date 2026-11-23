@@ -261,12 +261,12 @@ export default function AuditLogsPanel({ categories = {} }) {
 
         <div>
           <label style={{ fontSize: '10.5px', color: '#8E8E93', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-            Search Activity, Person or IP
+            Search Activity, Person, City or IP
           </label>
           <input
             type="text"
             className="form-input"
-            placeholder="e.g. login, Brayo, ban, admin..."
+            placeholder="e.g. login, Nairobi, Kenya, Brayo, admin..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ width: '100%', fontSize: '12px', padding: '7px 10px' }}
@@ -312,13 +312,14 @@ export default function AuditLogsPanel({ categories = {} }) {
               <th style={{ padding: '10px 12px' }}>Person (By Whom)</th>
               <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>Event</th>
               <th style={{ padding: '10px 12px' }}>Activity Done &amp; Target</th>
+              <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>Location &amp; Coordinates</th>
               <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>IP / Source</th>
             </tr>
           </thead>
           <tbody>
             {logs.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ padding: '28px 16px', textAlign: 'center', color: '#8E8E93' }}>
+                <td colSpan={6} style={{ padding: '28px 16px', textAlign: 'center', color: '#8E8E93' }}>
                   {loading ? 'Loading audit logs…' : 'No audit log entries match your filters yet.'}
                 </td>
               </tr>
@@ -412,6 +413,45 @@ export default function AuditLogsPanel({ categories = {} }) {
                           </span>
                         ))}
                       </div>
+                    </td>
+
+                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', minWidth: '150px' }}>
+                      {entry.city || entry.country ? (
+                        <div style={{ color: '#FFFFFF', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '13px' }}>📍</span>
+                          <span>
+                            {[entry.city, entry.country].filter(Boolean).join(', ')}
+                          </span>
+                        </div>
+                      ) : (
+                        <div style={{ color: '#636366', fontSize: '11px' }}>—</div>
+                      )}
+                      {entry.coordinates ? (
+                        <div style={{ marginTop: '4px' }}>
+                          <a
+                            href={`https://www.google.com/maps?q=${encodeURIComponent(entry.coordinates)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              color: '#FF9500',
+                              fontSize: '10.5px',
+                              fontFamily: 'monospace',
+                              textDecoration: 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: 'rgba(255, 149, 0, 0.1)',
+                              padding: '2px 7px',
+                              borderRadius: '5px',
+                              border: '1px solid rgba(255, 149, 0, 0.28)',
+                            }}
+                            title="View coordinates on Google Maps"
+                          >
+                            <span>🌐</span>
+                            <span>{entry.coordinates}</span>
+                          </a>
+                        </div>
+                      ) : null}
                     </td>
 
                     <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#8E8E93', fontSize: '11px', fontFamily: 'monospace' }}>

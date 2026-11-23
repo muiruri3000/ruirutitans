@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import PasswordInput from './PasswordInput';
+import { getClientCoordinates } from '../utils/geolocation';
 
 export default function AuthModal({
   isOpen,
@@ -82,7 +83,9 @@ export default function AuthModal({
     setLoading(true);
     setError(null);
     try {
-      const res = await api.loginCms(username.trim(), password);
+      const geo = await getClientCoordinates(2000);
+      const extra = geo ? { coordinates: geo.coordinates, latitude: geo.latitude, longitude: geo.longitude } : {};
+      const res = await api.loginCms(username.trim(), password, extra);
       onCmsSuccess && onCmsSuccess(res.cms_user);
       onClose();
     } catch (err) {
@@ -101,7 +104,9 @@ export default function AuthModal({
     setLoading(true);
     setError(null);
     try {
-      const res = await api.loginPlayer(playerUsername.trim(), playerPassword.trim(), activeCategoryKey);
+      const geo = await getClientCoordinates(2000);
+      const extra = geo ? { coordinates: geo.coordinates, latitude: geo.latitude, longitude: geo.longitude } : {};
+      const res = await api.loginPlayer(playerUsername.trim(), playerPassword.trim(), activeCategoryKey, extra);
       if (res.player?.must_change_password) {
         setPendingPlayer(res.player);
         setIsChangePasswordStep(true);

@@ -358,7 +358,7 @@ export const api = {
     return { cms: null, player: null };
   },
 
-  async loginCms(username, password) {
+  async loginCms(username, password, extra = {}) {
     clearAuthTokens();
     const cleanUser = (username || "").trim();
     const cleanPass = (password || "").trim();
@@ -374,7 +374,11 @@ export const api = {
           "Content-Type": "application/json",
           "X-CSRFToken": getCsrfToken(),
         },
-        body: JSON.stringify({ username: cleanUser, password: cleanPass }),
+        body: JSON.stringify({
+          username: cleanUser,
+          password: cleanPass,
+          ...(extra && typeof extra === 'object' ? extra : {}),
+        }),
       });
     } catch {
       clearAuthTokens();
@@ -400,7 +404,7 @@ export const api = {
     return data;
   },
 
-  async loginPlayer(username, password, categoryKey = "") {
+  async loginPlayer(username, password, categoryKey = "", extra = {}) {
     clearAuthTokens();
     const cleanUser = (username || "").trim();
     const cleanPass = password || "";
@@ -421,6 +425,7 @@ export const api = {
           player_id: cleanUser,
           access_code: cleanPass,
           category_key: categoryKey,
+          ...(extra && typeof extra === 'object' ? extra : {}),
         }),
       });
     } catch {

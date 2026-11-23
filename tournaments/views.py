@@ -3778,6 +3778,9 @@ class AuditLogListAPIView(views.APIView):
                 | Q(actor_role__icontains=q)
                 | Q(ip_address__icontains=q)
                 | Q(category_key__icontains=q)
+                | Q(city__icontains=q)
+                | Q(country__icontains=q)
+                | Q(coordinates__icontains=q)
             )
 
         filtered_total = qs.count()

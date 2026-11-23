@@ -1641,6 +1641,9 @@ class AuditLog(models.Model):
     details = models.JSONField(default=dict, blank=True)
     ip_address = models.CharField(max_length=64, blank=True, default="")
     user_agent = models.CharField(max_length=255, blank=True, default="")
+    country = models.CharField(max_length=100, blank=True, default="")
+    city = models.CharField(max_length=100, blank=True, default="")
+    coordinates = models.CharField(max_length=64, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
@@ -1670,6 +1673,9 @@ class AuditLog(models.Model):
             "details": self.details if isinstance(self.details, dict) else {},
             "ip_address": self.ip_address,
             "user_agent": self.user_agent,
+            "country": self.country,
+            "city": self.city,
+            "coordinates": self.coordinates,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

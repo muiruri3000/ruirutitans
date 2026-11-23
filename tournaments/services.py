@@ -6736,6 +6736,134 @@ def resolve_audit_actor(
     }
 
 
+COMMON_COUNTRY_NAMES = {
+    "KE": "Kenya",
+    "UG": "Uganda",
+    "TZ": "Tanzania",
+    "RW": "Rwanda",
+    "ET": "Ethiopia",
+    "SS": "South Sudan",
+    "SO": "Somalia",
+    "NG": "Nigeria",
+    "GH": "Ghana",
+    "ZA": "South Africa",
+    "EG": "Egypt",
+    "GB": "United Kingdom",
+    "UK": "United Kingdom",
+    "US": "United States",
+    "CA": "Canada",
+    "AE": "United Arab Emirates",
+    "IN": "India",
+    "CN": "China",
+    "DE": "Germany",
+    "FR": "France",
+    "NL": "Netherlands",
+    "AU": "Australia",
+}
+
+
+def extract_request_geolocation(
+    request=None,
+    explicit_country=None,
+    explicit_city=None,
+    explicit_coords=None,
+):
+    """
+    Safely resolves country, city, and GPS coordinates from request:
+    1. Explicit keyword arguments if supplied.
+    2. Request body / JSON payload (if coordinates, lat, lng, city, country passed by frontend).
+    3. Session storage (inherits location from user's current authenticated session).
+    4. Cloudflare Edge Geolocation headers (CF-IPCountry, CF-IPCity, CF-IPLatitude, CF-IPLongitude).
+    5. Custom client headers (X-Client-Coordinates, X-Client-Geo).
+    """
+    country = str(explicit_country or "").strip()
+    city = str(explicit_city or "").strip()
+    coordinates = str(explicit_coords or "").strip()
+
+    if not request:
+        if country and len(country) == 2 and country.upper() in COMMON_COUNTRY_NAMES:
+            country = f"{COMMON_COUNTRY_NAMES[country.upper()]} ({country.upper()})"
+        return country, city, coordinates
+
+    meta = getattr(request, "META", {}) or {}
+
+    # Check request body if country / city / coordinates were sent in POST payload
+    try:
+        data = getattr(request, "data", None)
+        if isinstance(data, dict):
+            if not coordinates:
+                raw_coords = data.get("coordinates") or data.get("coords")
+                if isinstance(raw_coords, dict):
+                    lat = raw_coords.get("latitude") or raw_coords.get("lat")
+                    lng = raw_coords.get("longitude") or raw_coords.get("lng") or raw_coords.get("lon")
+                    if lat is not None and lng is not None:
+                        coordinates = f"{float(lat):.5f}, {float(lng):.5f}"
+                elif isinstance(raw_coords, str) and raw_coords.strip():
+                    coordinates = raw_coords.strip()[:64]
+                else:
+                    lat = data.get("latitude") or data.get("lat")
+                    lng = data.get("longitude") or data.get("lng") or data.get("lon")
+                    if lat is not None and lng is not None:
+                        coordinates = f"{float(lat):.5f}, {float(lng):.5f}"
+            if not city and data.get("city"):
+                city = str(data.get("city")).strip()[:100]
+            if not country and data.get("country"):
+                country = str(data.get("country")).strip()[:100]
+    except Exception:
+        pass
+
+    # Check custom headers if set
+    if not coordinates:
+        header_coords = meta.get("HTTP_X_CLIENT_COORDINATES") or meta.get("HTTP_X_GEO_COORDINATES")
+        if header_coords:
+            coordinates = str(header_coords).strip()[:64]
+
+    # Check Cloudflare Geo Headers (CF-IPCity, CF-IPCountry, CF-IPLatitude, CF-IPLongitude)
+    if not city:
+        cf_city = meta.get("HTTP_CF_IPCITY") or meta.get("HTTP_X_APPENGINE_CITY")
+        if cf_city:
+            city = str(cf_city).strip()[:100]
+
+    if not country:
+        cf_country = meta.get("HTTP_CF_IPCOUNTRY") or meta.get("HTTP_X_APPENGINE_COUNTRY")
+        if cf_country:
+            code = str(cf_country).strip().upper()
+            country = f"{COMMON_COUNTRY_NAMES.get(code, code)} ({code})" if code in COMMON_COUNTRY_NAMES else code
+
+    if not coordinates:
+        cf_lat = meta.get("HTTP_CF_IPLATITUDE") or meta.get("HTTP_X_APPENGINE_CITYLATLONG", "").split(",")[0]
+        cf_lon = meta.get("HTTP_CF_IPLONGITUDE") or (meta.get("HTTP_X_APPENGINE_CITYLATLONG", "").split(",")[1] if "," in meta.get("HTTP_X_APPENGINE_CITYLATLONG", "") else "")
+        if cf_lat and cf_lon:
+            try:
+                coordinates = f"{float(cf_lat):.4f}, {float(cf_lon):.4f}"
+            except (ValueError, TypeError):
+                pass
+
+    # Fallback to session if previously captured during login
+    session = getattr(request, "session", None)
+    if session:
+        geo_sess = session.get("client_geo") or {}
+        if isinstance(geo_sess, dict):
+            if not country and geo_sess.get("country"):
+                country = str(geo_sess.get("country")).strip()[:100]
+            if not city and geo_sess.get("city"):
+                city = str(geo_sess.get("city")).strip()[:100]
+            if not coordinates and geo_sess.get("coordinates"):
+                coordinates = str(geo_sess.get("coordinates")).strip()[:64]
+        # Or store if newly resolved
+        if country or city or coordinates:
+            session["client_geo"] = {
+                "country": country,
+                "city": city,
+                "coordinates": coordinates,
+            }
+
+    if country and len(country) == 2 and country.upper() in COMMON_COUNTRY_NAMES:
+        country = f"{COMMON_COUNTRY_NAMES[country.upper()]} ({country.upper()})"
+
+    return country[:100], city[:100], coordinates[:64]
+
+
 def record_audit_log(
     request=None,
     *,
@@ -6749,6 +6877,9 @@ def record_audit_log(
     actor_username=None,
     actor_name=None,
     actor_role=None,
+    country=None,
+    city=None,
+    coordinates=None,
 ):
     """
     Records an AuditLog row safely without ever raising exceptions back to callers.
@@ -6769,6 +6900,13 @@ def record_audit_log(
         user_agent = str(meta.get("HTTP_USER_AGENT") or "")[:255]
         clean_details = details if isinstance(details, dict) else {}
 
+        res_country, res_city, res_coords = extract_request_geolocation(
+            request,
+            explicit_country=country,
+            explicit_city=city,
+            explicit_coords=coordinates,
+        )
+
         return AuditLog.objects.create(
             actor_type=actor["actor_type"],
             actor_id=actor["actor_id"],
@@ -6782,6 +6920,9 @@ def record_audit_log(
             details=clean_details,
             ip_address=str(ip_address or "")[:64],
             user_agent=user_agent,
+            country=res_country,
+            city=res_city,
+            coordinates=res_coords,
         )
     except Exception:
         return None
