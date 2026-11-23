@@ -2423,13 +2423,14 @@ POSITION_GROUP_COMPAT = {
     "CB": ("CB",),
     "RB": ("RB",),
     "CDM": ("CDM",),
-    "CM": ("CM",),
+    "CM": ("CM", "CAM"),
+    "CAM": ("CM", "CAM"),
     "LW": ("LW",),
     "RW": ("RW",),
     "ST": ("ST",),
     # Legacy group keys map to their respective tactical positions
     "DEF": ("LB", "CB", "RB", "DEF"),
-    "MID": ("CDM", "CM", "MID"),
+    "MID": ("CDM", "CM", "CAM", "MID"),
     "WING": ("LW", "RW", "WING"),
 }
 
@@ -2511,8 +2512,7 @@ DEFAULT_PLAYER_POSITIONS = {
 def ensure_player_default_positions(category=None):
     """
     Normalizes legacy position codes (DEF, MID, WING, FWD) if already assigned,
-    but DOES NOT automatically assign positions to unassigned players.
-    Positions must be assigned manually.
+    and sets primary position from preferred_positions if position was unassigned.
     """
     legacy_fallback = {
         "DEF": "CB",
@@ -2520,13 +2520,19 @@ def ensure_player_default_positions(category=None):
         "WING": "RW",
         "FWD": "ST",
     }
-    qs = Player.objects.filter(is_unknown=False).exclude(position="").select_related("team")
+    qs = Player.objects.filter(is_unknown=False).select_related("team")
     if category:
         qs = qs.filter(team__category=category)
 
     for player in qs:
-        if player.position in legacy_fallback:
+        changed = False
+        if not player.position and isinstance(player.preferred_positions, list) and player.preferred_positions:
+            player.position = player.preferred_positions[0]
+            changed = True
+        elif player.position in legacy_fallback:
             player.position = legacy_fallback[player.position]
+            changed = True
+        if changed:
             player.save(update_fields=["position"])
 
 
@@ -2899,32 +2905,70 @@ def get_category_voting_data(category, voter_id=None, round_id=None):
                 if v.player.position and v.player.position in my_votes and v.player.position != v.position:
                     my_votes[v.player.position].append(entry)
 
-    players_qs = Player.objects.filter(team__category=category, is_unknown=False).select_related("team").order_by("name")
+    players_qs = (
+        Player.objects.filter(is_unknown=False)
+        .filter(Q(team__category=category) | Q(category=category))
+        .select_related("team")
+        .order_by("name")
+    )
     candidates = {pos: [] for pos, _ in PositionVote.POSITION_CHOICES}
 
     all_players = []
     for p in players_qs:
+        p_team_id = p.team.team_id if p.team else ""
+        p_team_name = p.team.name if p.team else "Free Agent"
+        p_team_color = p.team.color if p.team else "#8E8E93"
+        pref_list = p.preferred_positions if isinstance(p.preferred_positions, list) else ([p.position] if p.position else [])
+
         p_data = {
             "id": p.id,
             "player_id": p.player_id,
             "name": p.name,
-            "position": p.position or "",
-            "team_id": p.team.team_id,
-            "team_name": p.team.name,
-            "team_color": p.team.color,
+            "position": p.position or (pref_list[0] if pref_list else ""),
+            "preferred_positions": pref_list,
+            "team_id": p_team_id,
+            "team_name": p_team_name,
+            "team_color": p_team_color,
         }
         all_players.append(p_data)
-        if p.position == "GK" and not include_gk:
-            continue
-        if p.position in candidates:
-            candidates[p.position].append(p_data)
-        # Also populate tactical group aliases (DEF, MID, WING)
-        if p.position in ("LB", "CB", "RB"):
-            candidates["DEF"].append(p_data)
-        elif p.position in ("CDM", "CM"):
-            candidates["MID"].append(p_data)
-        elif p.position in ("LW", "RW"):
-            candidates["WING"].append(p_data)
+
+        # Collect all active positions for this player: preferred_positions + primary position
+        assigned_positions = set()
+        if p.position:
+            assigned_positions.add(p.position.strip().upper())
+        if isinstance(p.preferred_positions, list):
+            for item in p.preferred_positions:
+                if item and isinstance(item, str):
+                    assigned_positions.add(item.strip().upper())
+
+        # Expand aliases (e.g. CAM -> CM, DEF -> LB, CB, RB, etc.)
+        effective_positions = set()
+        for pos_item in assigned_positions:
+            effective_positions.add(pos_item)
+            if pos_item == "CAM":
+                effective_positions.add("CM")
+            elif pos_item == "DEF":
+                effective_positions.update(["LB", "CB", "RB"])
+            elif pos_item == "MID":
+                effective_positions.update(["CDM", "CM"])
+            elif pos_item == "WING":
+                effective_positions.update(["LW", "RW"])
+
+        def _add_candidate(pos_key):
+            if pos_key in candidates and not any(c["player_id"] == p.player_id for c in candidates[pos_key]):
+                candidates[pos_key].append(p_data)
+
+        for pos in effective_positions:
+            if pos == "GK" and not include_gk:
+                continue
+            _add_candidate(pos)
+            # Group aliases:
+            if pos in ("LB", "CB", "RB"):
+                _add_candidate("DEF")
+            elif pos in ("CDM", "CM", "CAM"):
+                _add_candidate("MID")
+            elif pos in ("LW", "RW"):
+                _add_candidate("WING")
 
     if not include_gk:
         candidates.pop("GK", None)
@@ -3035,14 +3079,30 @@ def submit_voter_ballot(category, round_id, voter_id, voter_name, votes_dict, al
 
         pos_saved = []
         for pid in p_ids:
-            player = Player.objects.filter(team__category=category, player_id=pid).first()
+            player = (
+                Player.objects.filter(is_unknown=False)
+                .filter(Q(team__category=category) | Q(category=category))
+                .filter(player_id=pid)
+                .first()
+            )
             if not player:
                 continue
 
-            if player.position not in allowed_player_positions:
+            # Check primary position or any preferred position configured by the player
+            player_positions = set()
+            if player.position:
+                player_positions.add(player.position.strip().upper())
+            if isinstance(player.preferred_positions, list):
+                for p_pos in player.preferred_positions:
+                    if p_pos and isinstance(p_pos, str):
+                        player_positions.add(p_pos.strip().upper())
+            if "CAM" in player_positions:
+                player_positions.update(["CM", "MID"])
+
+            if not any(pp in allowed_player_positions for pp in player_positions):
                 pos_label = valid_positions.get(pos, pos)
                 raise ValueError(
-                    f"{player.name} cannot be voted as {pos_label} ({pos}) because their registered position is '{player.position or 'Unassigned'}'."
+                    f"{player.name} cannot be voted as {pos_label} ({pos}) because their registered positions are '{', '.join(sorted(player_positions)) or 'Unassigned'}'."
                 )
 
             PositionVote.objects.create(
@@ -4070,6 +4130,29 @@ def update_player_profile(player_record, data):
             player_record.username = norm_uname
 
     player_record.save()
+
+    # Sync profile and positions to any linked records for the same player across other categories
+    linked_players = Player.objects.filter(is_unknown=False).filter(
+        Q(player_id=player_record.player_id) | Q(username__iexact=player_record.username)
+    ).exclude(pk=player_record.pk)
+    for lp in linked_players:
+        if first_name or surname:
+            lp.first_name = player_record.first_name
+            lp.surname = player_record.surname
+            lp.name = player_record.name
+        if dob_raw and player_record.date_of_birth:
+            lp.date_of_birth = player_record.date_of_birth
+        if active_foot:
+            lp.active_foot = player_record.active_foot
+        if isinstance(pref_positions, list):
+            lp.preferred_positions = player_record.preferred_positions
+            lp.position = player_record.position
+        elif player_pos:
+            lp.position = player_record.position
+        if new_username and player_record.username:
+            lp.username = player_record.username
+        lp.save()
+
     return player_record
 
 

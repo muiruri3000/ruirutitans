@@ -146,7 +146,12 @@ export default function VotingView({
   useEffect(() => {
     setSelectedRoundId(null);
     loadVotingData(null);
-  }, [activeCategoryKey, playerUser?.player_id]);
+  }, [
+    activeCategoryKey,
+    playerUser?.player_id,
+    JSON.stringify(playerUser?.preferred_positions || playerUser?.preferredPositions || []),
+    subTab,
+  ]);
 
   const handleVoteSelect = (posKey, slotIdx, playerId) => {
     setBallotByPos((prev) => {
@@ -411,13 +416,57 @@ export default function VotingView({
     const apiCandidates = votingData?.candidates || {};
     const catTeams = activeCategoryObj?.teams || [];
 
+    // Helper to get all effective positions for a player (including aliases)
+    const getPlayerPositions = (p) => {
+      const positions = new Set();
+      if (p.position) positions.add(String(p.position).trim().toUpperCase());
+      const prefs = p.preferred_positions || p.preferredPositions;
+      if (Array.isArray(prefs)) {
+        prefs.forEach((pos) => {
+          if (pos) positions.add(String(pos).trim().toUpperCase());
+        });
+      }
+      if (positions.has('CAM')) positions.add('CM');
+      return Array.from(positions);
+    };
+
     // Check if apiAll matches the current category's teams
     const catTeamIds = new Set(catTeams.map((t) => t.id));
     const apiMatchesCategory =
       apiAll.length > 0 && (catTeamIds.size === 0 || apiAll.some((p) => catTeamIds.has(p.team_id)));
 
     if (apiMatchesCategory) {
-      return { candidates: apiCandidates, allPlayers: apiAll };
+      // Build an augmented candidate list that guarantees any preferred positions
+      // assigned by players in dashboard are present in their respective dropdowns
+      const augmentedCandidates = {};
+      POSITIONS.forEach((pos) => {
+        augmentedCandidates[pos.key] = [...(apiCandidates[pos.key] || [])];
+      });
+
+      apiAll.forEach((p) => {
+        const isCurrent = playerUser && (
+          p.player_id === playerUser.player_id ||
+          p.id === playerUser.id ||
+          p.name === playerUser.name
+        );
+        const pObj = isCurrent
+          ? {
+              ...p,
+              position: playerUser.position || p.position,
+              preferred_positions: playerUser.preferred_positions || playerUser.preferredPositions || p.preferred_positions,
+            }
+          : p;
+
+        const effectivePos = getPlayerPositions(pObj);
+        effectivePos.forEach((posKey) => {
+          if (posKey === 'GK' && !includeGk) return;
+          if (augmentedCandidates[posKey] && !augmentedCandidates[posKey].some((cand) => cand.player_id === pObj.player_id)) {
+            augmentedCandidates[posKey].push(pObj);
+          }
+        });
+      });
+
+      return { candidates: augmentedCandidates, allPlayers: apiAll };
     }
 
     // Build directly from activeCategoryObj.teams so newly generated competitions work immediately
@@ -428,23 +477,41 @@ export default function VotingView({
     });
 
     catTeams.forEach((team) => {
-      (team.players || []).forEach((p, idx) => {
+      (team.players || []).forEach((p) => {
         if (p.unknown) return;
-        const pos = p.position || '';
+        const isCurrent = playerUser && (
+          p.id === playerUser.player_id ||
+          p.permanentId === playerUser.player_id ||
+          p.id === playerUser.id ||
+          p.name === playerUser.name
+        );
+        const pObj = isCurrent
+          ? {
+              ...p,
+              position: playerUser.position || p.position,
+              preferredPositions: playerUser.preferred_positions || playerUser.preferredPositions || p.preferredPositions,
+            }
+          : p;
+
         const pEntry = {
-          id: p.id,
-          player_id: p.permanentId || p.id,
-          name: p.name,
-          position: pos,
+          id: pObj.id,
+          player_id: pObj.permanentId || pObj.id,
+          name: pObj.name,
+          position: pObj.position || '',
+          preferred_positions: pObj.preferredPositions || pObj.preferred_positions || [],
           team_id: team.id,
           team_name: team.name,
           team_color: team.color,
         };
         fallbackAll.push(pEntry);
-        if (pos === 'GK' && !includeGk) return;
-        if (pos && fallbackCandidates[pos]) {
-          fallbackCandidates[pos].push(pEntry);
-        }
+
+        const effectivePos = getPlayerPositions(pObj);
+        effectivePos.forEach((posKey) => {
+          if (posKey === 'GK' && !includeGk) return;
+          if (fallbackCandidates[posKey] && !fallbackCandidates[posKey].some((cand) => cand.player_id === pEntry.player_id)) {
+            fallbackCandidates[posKey].push(pEntry);
+          }
+        });
       });
     });
 
@@ -452,7 +519,7 @@ export default function VotingView({
       candidates: fallbackAll.length > 0 ? fallbackCandidates : apiCandidates,
       allPlayers: fallbackAll.length > 0 ? fallbackAll : apiAll,
     };
-  }, [votingData, activeCategoryObj, includeGk]);
+  }, [votingData, activeCategoryObj, includeGk, playerUser]);
 
   const ballotPositions = POSITIONS.filter((pos) => includeGk || pos.key !== 'GK');
   const categoryEntries = Object.entries(categories || {});

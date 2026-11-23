@@ -4903,6 +4903,46 @@ export default function App() {
               onPlayerUpdated={(updated) => {
                 setPlayerUser(updated);
                 api.setPlayerToken(api.getPlayerToken(), updated);
+                setData((prev) => {
+                  if (!prev?.categories) return prev;
+                  let hasChanges = false;
+                  const nextCategories = { ...prev.categories };
+                  Object.keys(nextCategories).forEach((catKey) => {
+                    const c = nextCategories[catKey];
+                    if (!c?.teams) return;
+                    let catChanged = false;
+                    const nextTeams = c.teams.map((t) => {
+                      if (!t?.players) return t;
+                      let teamChanged = false;
+                      const nextPlayers = t.players.map((p) => {
+                        const isMatch =
+                          (updated.player_id && (p.id === updated.player_id || p.permanentId === updated.player_id)) ||
+                          (updated.id && p.id === updated.id) ||
+                          (updated.username && p.username && p.username.toLowerCase() === updated.username.toLowerCase()) ||
+                          (updated.name && p.name && p.name.trim().toLowerCase() === updated.name.trim().toLowerCase());
+                        if (isMatch) {
+                          catChanged = true;
+                          teamChanged = true;
+                          hasChanges = true;
+                          return {
+                            ...p,
+                            position: updated.position || p.position,
+                            preferredPositions: updated.preferred_positions || updated.preferredPositions || p.preferredPositions,
+                            preferred_positions: updated.preferred_positions || updated.preferredPositions || p.preferred_positions,
+                            name: updated.name || p.name,
+                            username: updated.username || p.username,
+                          };
+                        }
+                        return p;
+                      });
+                      return teamChanged ? { ...t, players: nextPlayers } : t;
+                    });
+                    if (catChanged) {
+                      nextCategories[catKey] = { ...c, teams: nextTeams };
+                    }
+                  });
+                  return hasChanges ? { ...prev, categories: nextCategories } : prev;
+                });
               }}
               onNavigate={(view) => setCurrentView(view)}
             />

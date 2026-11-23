@@ -1383,7 +1383,11 @@ class PlayerUpdateProfileAPIView(views.APIView):
             p_dict["dob"] = str(updated_player.date_of_birth) if updated_player.date_of_birth else ""
             p_dict["date_of_birth"] = str(updated_player.date_of_birth) if updated_player.date_of_birth else ""
             p_dict["active_foot"] = updated_player.active_foot
+            p_dict["position"] = updated_player.position or (
+                updated_player.preferred_positions[0] if (isinstance(updated_player.preferred_positions, list) and updated_player.preferred_positions) else ""
+            )
             p_dict["preferred_positions"] = updated_player.preferred_positions
+            p_dict["preferredPositions"] = updated_player.preferred_positions
             # Update session if player is logged in
             if hasattr(request, "session") and "titans_player" in request.session:
                 request.session["titans_player"] = p_dict
