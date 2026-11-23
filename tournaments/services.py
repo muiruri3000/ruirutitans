@@ -3723,8 +3723,10 @@ def get_client_ip(request):
     Extracts the client IP address safely for rate limiting.
     Never trusts client-supplied X-Forwarded-For or CF-Connecting-IP headers unless
     the direct peer (REMOTE_ADDR) is in settings.TRUSTED_PROXY_CIDRS.
-    When trusted, walks X-Forwarded-For from right to left and returns the first
-    valid IP address that is not itself a trusted proxy (preventing spoofed left-side XFF values).
+    When trusted:
+    1. Checks CF-Connecting-IP if valid and non-trusted (authoritative edge header from Cloudflare).
+    2. Walks X-Forwarded-For from right to left and returns the first
+       valid IP address that is not itself a trusted proxy (preventing spoofed left-side XFF values).
     """
     import ipaddress
 
@@ -3734,6 +3736,18 @@ def get_client_ip(request):
     remote_addr = (meta.get("REMOTE_ADDR") or "").strip()
 
     if _is_trusted_proxy_peer(remote_addr):
+        # 1. Authoritative Cloudflare edge client IP header
+        cf_ip = (meta.get("HTTP_CF_CONNECTING_IP") or "").strip()
+        if cf_ip:
+            candidate = cf_ip.split(",")[0].strip()
+            try:
+                ipaddress.ip_address(candidate)
+                if not _is_trusted_proxy_peer(candidate):
+                    return candidate
+            except ValueError:
+                pass
+
+        # 2. Walk X-Forwarded-For from right to left
         xff = (meta.get("HTTP_X_FORWARDED_FOR") or "").strip()
         if xff:
             parts = [p.strip() for p in xff.split(",") if p.strip()]
@@ -3750,15 +3764,6 @@ def get_client_ip(request):
                     return parts[0]
                 except ValueError:
                     pass
-
-        cf_ip = (meta.get("HTTP_CF_CONNECTING_IP") or "").strip()
-        if cf_ip:
-            candidate = cf_ip.split(",")[0].strip()
-            try:
-                ipaddress.ip_address(candidate)
-                return candidate
-            except ValueError:
-                pass
 
     return remote_addr or "unknown"
 
@@ -6762,6 +6767,59 @@ COMMON_COUNTRY_NAMES = {
 }
 
 
+def _lookup_ip_geolocation(ip_str: str) -> dict:
+    """
+    Cached fallback to resolve city, country, and coordinates from public IP.
+    Uses Django cache with 24h TTL and 1.5s timeout so requests are never slowed down.
+    Ignores private and loopback IPs.
+    """
+    import ipaddress
+    import urllib.request
+    import json
+    from django.core.cache import cache
+
+    clean_ip = str(ip_str or "").strip()
+    if not clean_ip or clean_ip in ("127.0.0.1", "localhost", "unknown"):
+        return {}
+    try:
+        ip_obj = ipaddress.ip_address(clean_ip)
+        if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved:
+            return {}
+    except ValueError:
+        return {}
+
+    cache_key = f"ip_geo_{clean_ip.replace(':', '_')}"
+    try:
+        cached = cache.get(cache_key)
+        if isinstance(cached, dict):
+            return cached
+    except Exception:
+        cached = None
+
+    result = {}
+    try:
+        req = urllib.request.Request(
+            f"http://ip-api.com/json/{clean_ip}?fields=status,country,countryCode,city,lat,lon",
+            headers={"User-Agent": "RuiruTitansApp/1.0"},
+        )
+        with urllib.request.urlopen(req, timeout=1.5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            if data.get("status") == "success":
+                result = {
+                    "city": data.get("city") or "",
+                    "country": f"{data.get('country')} ({data.get('countryCode')})" if data.get("countryCode") else data.get("country") or "",
+                    "coordinates": f"{float(data.get('lat')):.5f}, {float(data.get('lon')):.5f}" if data.get("lat") and data.get("lon") else "",
+                }
+    except Exception:
+        pass
+
+    try:
+        cache.set(cache_key, result, timeout=86400)
+    except Exception:
+        pass
+    return result
+
+
 def extract_request_geolocation(
     request=None,
     explicit_country=None,
@@ -6775,6 +6833,7 @@ def extract_request_geolocation(
     3. Session storage (inherits location from user's current authenticated session).
     4. Cloudflare Edge Geolocation headers (CF-IPCountry, CF-IPCity, CF-IPLatitude, CF-IPLongitude).
     5. Custom client headers (X-Client-Coordinates, X-Client-Geo).
+    6. Cached IP Geolocation lookup fallback (using public client IP).
     """
     country = str(explicit_country or "").strip()
     city = str(explicit_city or "").strip()
@@ -6850,13 +6909,29 @@ def extract_request_geolocation(
                 city = str(geo_sess.get("city")).strip()[:100]
             if not coordinates and geo_sess.get("coordinates"):
                 coordinates = str(geo_sess.get("coordinates")).strip()[:64]
-        # Or store if newly resolved
-        if country or city or coordinates:
+
+    # Fallback to IP Geolocation if city or coordinates are still empty
+    if not city or not coordinates or not country:
+        client_ip = get_client_ip(request)
+        geo_info = _lookup_ip_geolocation(client_ip)
+        if geo_info:
+            if not country and geo_info.get("country"):
+                country = geo_info["country"]
+            if not city and geo_info.get("city"):
+                city = geo_info["city"]
+            if not coordinates and geo_info.get("coordinates"):
+                coordinates = geo_info["coordinates"]
+
+    # Store in session for subsequent actions
+    if session and (country or city or coordinates):
+        try:
             session["client_geo"] = {
                 "country": country,
                 "city": city,
                 "coordinates": coordinates,
             }
+        except Exception:
+            pass
 
     if country and len(country) == 2 and country.upper() in COMMON_COUNTRY_NAMES:
         country = f"{COMMON_COUNTRY_NAMES[country.upper()]} ({country.upper()})"
