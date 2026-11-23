@@ -308,12 +308,12 @@ export default function AuditLogsPanel({ categories = {} }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
           <thead>
             <tr style={{ background: '#1C1C1E', borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', color: '#8E8E93', fontSize: '11px', textTransform: 'uppercase' }}>
-              <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>When</th>
-              <th style={{ padding: '10px 12px' }}>Person (By Whom)</th>
-              <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>Event</th>
-              <th style={{ padding: '10px 12px' }}>Activity Done &amp; Target</th>
-              <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>Location &amp; Coordinates</th>
-              <th style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>IP / Source</th>
+              <th style={{ padding: '10px 12px', whiteSpace: 'nowrap', width: '110px' }}>When</th>
+              <th style={{ padding: '10px 12px', width: '160px' }}>Person (By Whom)</th>
+              <th style={{ padding: '10px 12px', whiteSpace: 'nowrap', width: '90px' }}>Event</th>
+              <th style={{ padding: '10px 12px', maxWidth: '280px' }}>Activity &amp; Target</th>
+              <th style={{ padding: '10px 12px', whiteSpace: 'nowrap', minWidth: '150px' }}>Location &amp; Coordinates</th>
+              <th style={{ padding: '10px 12px', whiteSpace: 'nowrap', width: '120px' }}>IP / Source</th>
             </tr>
           </thead>
           <tbody>
@@ -391,23 +391,25 @@ export default function AuditLogsPanel({ categories = {} }) {
                       </span>
                     </td>
 
-                    <td style={{ padding: '10px 12px', minWidth: '240px' }}>
-                      <div style={{ color: '#FFFFFF', fontWeight: 700, lineHeight: 1.4 }}>{entry.action}</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '5px' }}>
-                        {entry.target && (
-                          <span style={{ background: '#1C1C1E', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '2px 7px', fontSize: '10.5px', color: '#EBEBF5' }}>
-                            Target: <strong>{entry.target}</strong>
+                    <td style={{ padding: '8px 10px', maxWidth: '280px' }}>
+                      <div style={{ color: '#FFFFFF', fontWeight: 700, lineHeight: 1.35, fontSize: '11.5px', wordBreak: 'break-word' }}>
+                        {entry.action}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                        {entry.target && !entry.action.toLowerCase().includes(entry.target.toLowerCase()) && (
+                          <span style={{ background: '#1C1C1E', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', color: '#D1D1D6' }}>
+                            {entry.target}
                           </span>
                         )}
                         {entry.category_key && (
-                          <span style={{ background: 'rgba(255, 149, 0, 0.1)', border: '1px solid rgba(255, 149, 0, 0.35)', borderRadius: '6px', padding: '2px 7px', fontSize: '10.5px', color: '#FFB340' }}>
-                            {categories?.[entry.category_key]?.label || entry.category_key}
+                          <span style={{ background: 'rgba(255, 149, 0, 0.1)', border: '1px solid rgba(255, 149, 0, 0.25)', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', color: '#FFB340' }}>
+                            {categories?.[entry.category_key]?.label ? categories[entry.category_key].label.split('—')[0].trim() : entry.category_key}
                           </span>
                         )}
-                        {detailPairs.slice(0, 4).map(([dk, dv]) => (
+                        {detailPairs.slice(0, 2).map(([dk, dv]) => (
                           <span
                             key={dk}
-                            style={{ background: '#1C1C1E', borderRadius: '6px', padding: '2px 7px', fontSize: '10.5px', color: '#AEAEB2' }}
+                            style={{ background: '#1C1C1E', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', color: '#8E8E93' }}
                           >
                             {dk}: {Array.isArray(dv) ? dv.join(', ') : typeof dv === 'object' ? JSON.stringify(dv) : String(dv)}
                           </span>
