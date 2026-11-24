@@ -1879,11 +1879,12 @@ class CMSUsersAPIView(views.APIView):
                 if k in raw_perms:
                     base[k] = bool(raw_perms[k])
 
-        # Only superadmin can grant admin-control permissions
+        # Only superadmin can grant admin-control permissions or user management
         if not actor_is_superadmin:
             base["downgrade_admin"] = False
             base["delete_admin"] = False
             base["block_admin"] = False
+            base["manage_users"] = False
         return base
 
     def get(self, request):
@@ -1899,6 +1900,11 @@ class CMSUsersAPIView(views.APIView):
         actor_user, actor_profile, actor_perms = self._get_actor(request)
         if not actor_user:
             return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        is_superadmin = bool(
+            (actor_user and getattr(actor_user, "is_superuser", False))
+            or (actor_profile and getattr(actor_profile, "user_type", "") == "superadmin")
+        )
 
         users_qs = (
             User.objects.filter(Q(is_staff=True) | Q(is_superuser=True) | Q(cms_profile__isnull=False))
@@ -1921,7 +1927,7 @@ class CMSUsersAPIView(views.APIView):
             "permission_definitions": [
                 {"key": k, "label": lbl} for k, lbl in CMS_PERMISSION_DEFINITIONS
             ],
-            "actor_is_superadmin": actor_profile.user_type == "superadmin",
+            "actor_is_superadmin": is_superadmin,
             "actor_permissions": actor_perms,
         })
 
@@ -1933,9 +1939,12 @@ class CMSUsersAPIView(views.APIView):
         if not actor_user:
             return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        actor_is_superadmin = actor_profile.user_type == "superadmin"
-        if not actor_is_superadmin and not actor_perms.get("manage_users"):
-            return Response({"error": "You do not have permission to add users."}, status=status.HTTP_403_FORBIDDEN)
+        actor_is_superadmin = bool(
+            (actor_user and getattr(actor_user, "is_superuser", False))
+            or (actor_profile and getattr(actor_profile, "user_type", "") == "superadmin")
+        )
+        if not actor_is_superadmin:
+            return Response({"error": "Only a Superadmin can create users."}, status=status.HTTP_403_FORBIDDEN)
 
         payload = request.data or {}
         username = str(payload.get("username", "")).strip()
@@ -1992,9 +2001,12 @@ class CMSUsersAPIView(views.APIView):
         if not actor_user:
             return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        actor_is_superadmin = actor_profile.user_type == "superadmin"
-        if not actor_is_superadmin and not actor_perms.get("manage_users"):
-            return Response({"error": "You do not have permission to manage users."}, status=status.HTTP_403_FORBIDDEN)
+        actor_is_superadmin = bool(
+            (actor_user and getattr(actor_user, "is_superuser", False))
+            or (actor_profile and getattr(actor_profile, "user_type", "") == "superadmin")
+        )
+        if not actor_is_superadmin:
+            return Response({"error": "Only a Superadmin can assign or modify user privileges."}, status=status.HTTP_403_FORBIDDEN)
 
         target_user = User.objects.filter(id=user_id).first()
         if not target_user:
@@ -2074,7 +2086,13 @@ class CMSUsersAPIView(views.APIView):
         if not actor_user:
             return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        actor_is_superadmin = actor_profile.user_type == "superadmin"
+        actor_is_superadmin = bool(
+            (actor_user and getattr(actor_user, "is_superuser", False))
+            or (actor_profile and getattr(actor_profile, "user_type", "") == "superadmin")
+        )
+        if not actor_is_superadmin:
+            return Response({"error": "Only a Superadmin can delete users."}, status=status.HTTP_403_FORBIDDEN)
+
         target_user = User.objects.filter(id=user_id).first()
         if not target_user:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -2163,10 +2181,11 @@ class GroupRolesAPIView(views.APIView):
                     "category_name": p.effective_category.label if (p.effective_category and hasattr(p.effective_category, "label")) else "",
                 })
 
-        can_manage = bool(
-            (actor_profile and actor_profile.user_type == "superadmin")
-            or actor_perms.get("manage_users")
+        is_superadmin = bool(
+            (actor_user and getattr(actor_user, "is_superuser", False))
+            or (actor_profile and getattr(actor_profile, "user_type", "") == "superadmin")
         )
+        can_manage = is_superadmin
 
         return Response({
             "status": "success",
@@ -2182,13 +2201,13 @@ class GroupRolesAPIView(views.APIView):
         from .models import GroupRole, CMS_PERMISSION_KEYS
 
         actor_user, actor_profile, actor_perms, is_player = self._get_actor(request)
-        can_manage = bool(
-            (actor_profile and actor_profile.user_type == "superadmin")
-            or actor_perms.get("manage_users")
+        is_superadmin = bool(
+            (actor_user and getattr(actor_user, "is_superuser", False))
+            or (actor_profile and getattr(actor_profile, "user_type", "") == "superadmin")
         )
-        if not can_manage:
+        if not is_superadmin:
             return Response(
-                {"error": "You do not have permission to create group roles."},
+                {"error": "Only a Superadmin can create group roles."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -2260,13 +2279,13 @@ class GroupRoleDetailAPIView(views.APIView):
         from .models import GroupRole, CMS_PERMISSION_KEYS
 
         actor_user, actor_profile, actor_perms, is_player = self._get_actor(request)
-        can_manage = bool(
-            (actor_profile and actor_profile.user_type == "superadmin")
-            or actor_perms.get("manage_users")
+        is_superadmin = bool(
+            (actor_user and getattr(actor_user, "is_superuser", False))
+            or (actor_profile and getattr(actor_profile, "user_type", "") == "superadmin")
         )
-        if not can_manage:
+        if not is_superadmin:
             return Response(
-                {"error": "You do not have permission to update group roles."},
+                {"error": "Only a Superadmin can modify group roles and privileges."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -2315,13 +2334,13 @@ class GroupRoleDetailAPIView(views.APIView):
         from .models import GroupRole
 
         actor_user, actor_profile, actor_perms, is_player = self._get_actor(request)
-        can_manage = bool(
-            (actor_profile and actor_profile.user_type == "superadmin")
-            or actor_perms.get("manage_users")
+        is_superadmin = bool(
+            (actor_user and getattr(actor_user, "is_superuser", False))
+            or (actor_profile and getattr(actor_profile, "user_type", "") == "superadmin")
         )
-        if not can_manage:
+        if not is_superadmin:
             return Response(
-                {"error": "You do not have permission to delete group roles."},
+                {"error": "Only a Superadmin can delete group roles."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -2376,13 +2395,13 @@ class GroupRoleMembersAPIView(views.APIView):
         from .models import GroupRole, Player
 
         actor_user, actor_profile, actor_perms, is_player = self._get_actor(request)
-        can_manage = bool(
-            (actor_profile and actor_profile.user_type == "superadmin")
-            or actor_perms.get("manage_users")
+        is_superadmin = bool(
+            (actor_user and getattr(actor_user, "is_superuser", False))
+            or (actor_profile and getattr(actor_profile, "user_type", "") == "superadmin")
         )
-        if not can_manage:
+        if not is_superadmin:
             return Response(
-                {"error": "You do not have permission to assign players to group roles."},
+                {"error": "Only a Superadmin can assign players to group roles."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -2431,13 +2450,13 @@ class GroupRoleMembersAPIView(views.APIView):
         from .models import GroupRole, Player
 
         actor_user, actor_profile, actor_perms, is_player = self._get_actor(request)
-        can_manage = bool(
-            (actor_profile and actor_profile.user_type == "superadmin")
-            or actor_perms.get("manage_users")
+        is_superadmin = bool(
+            (actor_user and getattr(actor_user, "is_superuser", False))
+            or (actor_profile and getattr(actor_profile, "user_type", "") == "superadmin")
         )
-        if not can_manage:
+        if not is_superadmin:
             return Response(
-                {"error": "You do not have permission to remove players from group roles."},
+                {"error": "Only a Superadmin can remove players from group roles."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 

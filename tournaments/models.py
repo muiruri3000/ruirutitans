@@ -1473,7 +1473,7 @@ def get_default_permissions_for_type(user_type: str) -> dict:
         return {k: True for k in CMS_PERMISSION_KEYS}
     if user_type == "admin":
         return {
-            k: (k not in ("downgrade_admin", "delete_admin", "block_admin"))
+            k: (k not in ("downgrade_admin", "delete_admin", "block_admin", "manage_users"))
             for k in CMS_PERMISSION_KEYS
         }
     presets = {

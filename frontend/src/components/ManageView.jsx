@@ -86,7 +86,7 @@ export default function ManageView({
 
   const getInitialOrAllowedSection = (sec) => {
     if (sec === 'audit') return 'audit';
-    if (sec === 'security' && (cmsUser?.is_superadmin || hasPerm('manage_users'))) return 'security';
+    if (sec === 'security' && (cmsUser?.is_superadmin || hasPerm('manage_users') || cmsUser?.user_type === 'admin')) return 'security';
     if (sec === 'players' && hasPerm('manage_players')) return 'players';
     if ((sec === 'balancer' || sec === 'teams') && hasPerm('manage_teams')) return sec;
     if (sec === 'homepage' && hasPerm('manage_homepage')) return 'homepage';
@@ -99,7 +99,7 @@ export default function ManageView({
     if (hasPerm('manage_teams')) return 'balancer';
     if (hasPerm('manage_homepage')) return 'homepage';
     if (hasPerm('manage_voting')) return 'voting';
-    if (hasPerm('manage_users') || cmsUser?.is_superadmin) return 'security';
+    if (hasPerm('manage_users') || cmsUser?.is_superadmin || cmsUser?.user_type === 'admin') return 'security';
     return 'duty';
   };
 

@@ -11,7 +11,7 @@ const USER_TYPE_LABELS = {
   custom: '⚙️ Custom User',
 };
 
-const ADMIN_CONTROL_KEYS = new Set(['downgrade_admin', 'delete_admin', 'block_admin']);
+const ADMIN_CONTROL_KEYS = new Set(['downgrade_admin', 'delete_admin', 'block_admin', 'manage_users']);
 
 export default function UserPermissionsPanel({ cmsUser }) {
   // Active Subtab: 'roles' (Group Roles) or 'users' (Staff User Accounts)
@@ -67,7 +67,7 @@ export default function UserPermissionsPanel({ cmsUser }) {
   const [addingMemberRole, setAddingMemberRole] = useState(null);
   const [removingMemberKey, setRemovingMemberKey] = useState(null);
 
-  const canManageUsers = actorIsSuperadmin || Boolean(actorPerms?.manage_users);
+  const canManageUsers = actorIsSuperadmin || Boolean(actorPerms?.manage_users) || cmsUser?.user_type === 'admin';
 
   const loadUsers = async () => {
     try {
@@ -389,6 +389,28 @@ export default function UserPermissionsPanel({ cmsUser }) {
         </div>
       )}
 
+      {/* READ-ONLY NOTICE FOR NON-SUPERADMIN */}
+      {!actorIsSuperadmin && (
+        <div
+          style={{
+            background: 'rgba(255, 149, 0, 0.08)',
+            border: '1px solid rgba(255, 149, 0, 0.28)',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            fontSize: '12px',
+            color: '#FF9F0A',
+            fontWeight: 600,
+            marginBottom: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span>ℹ️</span>
+          <span><strong>Read-Only Mode:</strong> Only a Superadmin can create groups or assign/remove privileges to users and groups.</span>
+        </div>
+      )}
+
       {/* SUBTABS SWITCHER */}
       <div
         style={{
@@ -457,29 +479,31 @@ export default function UserPermissionsPanel({ cmsUser }) {
             <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF' }}>
               Active Group Roles ({groupRoles.length})
             </div>
-            <button
-              type="button"
-              onClick={() => setShowCreateRoleForm((prev) => !prev)}
-              style={{
-                background: showCreateRoleForm ? 'rgba(255, 255, 255, 0.12)' : '#FF9500',
-                color: showCreateRoleForm ? '#FFFFFF' : '#16201B',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '12px',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              {showCreateRoleForm ? '✖ Cancel' : '➕ Create New Group Role'}
-            </button>
+            {actorIsSuperadmin && (
+              <button
+                type="button"
+                onClick={() => setShowCreateRoleForm((prev) => !prev)}
+                style={{
+                  background: showCreateRoleForm ? 'rgba(255, 255, 255, 0.12)' : '#FF9500',
+                  color: showCreateRoleForm ? '#FFFFFF' : '#16201B',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                {showCreateRoleForm ? '✖ Cancel' : '➕ Create New Group Role'}
+              </button>
+            )}
           </div>
 
           {/* CREATE GROUP ROLE FORM */}
-          {showCreateRoleForm && (
+          {showCreateRoleForm && actorIsSuperadmin && (
             <form
               onSubmit={handleCreateGroupRole}
               style={{
@@ -647,22 +671,24 @@ export default function UserPermissionsPanel({ cmsUser }) {
               <div style={{ fontSize: '12.5px', color: '#8E8E93', maxWidth: '420px', margin: '0 auto 16px' }}>
                 Group roles allow attaching management functions (like Tactics, Scores, Duty Roster) and assigning club players so they inherently assume those functions.
               </div>
-              <button
-                type="button"
-                onClick={() => setShowCreateRoleForm(true)}
-                style={{
-                  background: '#FF9500',
-                  color: '#16201B',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '8px 18px',
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                }}
-              >
-                ➕ Create First Group Role
-              </button>
+              {actorIsSuperadmin && (
+                <button
+                  type="button"
+                  onClick={() => setShowCreateRoleForm(true)}
+                  style={{
+                    background: '#FF9500',
+                    color: '#16201B',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 18px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  ➕ Create First Group Role
+                </button>
+              )}
             </div>
           )}
 
@@ -729,44 +755,46 @@ export default function UserPermissionsPanel({ cmsUser }) {
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                      type="button"
-                      onClick={() => (isEditing ? setEditingRoleId(null) : startEditGroupRole(role))}
-                      style={{
-                        background: isEditing ? '#FF9500' : 'rgba(255,255,255,0.08)',
-                        color: isEditing ? '#16201B' : '#FFFFFF',
-                        border: 'none',
-                        borderRadius: '7px',
-                        padding: '6px 11px',
-                        fontSize: '11.5px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {isEditing ? 'Close' : '✏️ Edit Powers'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteGroupRole(role)}
-                      style={{
-                        background: 'rgba(255, 69, 58, 0.14)',
-                        color: '#FF6961',
-                        border: '1px solid rgba(255, 69, 58, 0.3)',
-                        borderRadius: '7px',
-                        padding: '6px 11px',
-                        fontSize: '11.5px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      🗑️ Delete Role
-                    </button>
-                  </div>
+                  {actorIsSuperadmin && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => (isEditing ? setEditingRoleId(null) : startEditGroupRole(role))}
+                        style={{
+                          background: isEditing ? '#FF9500' : 'rgba(255,255,255,0.08)',
+                          color: isEditing ? '#16201B' : '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '7px',
+                          padding: '6px 11px',
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {isEditing ? 'Close' : '✏️ Edit Powers'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteGroupRole(role)}
+                        style={{
+                          background: 'rgba(255, 69, 58, 0.14)',
+                          color: '#FF6961',
+                          border: '1px solid rgba(255, 69, 58, 0.3)',
+                          borderRadius: '7px',
+                          padding: '6px 11px',
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🗑️ Delete Role
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* EDIT ROLE INLINE FORM */}
-                {isEditing && (
+                {isEditing && actorIsSuperadmin && (
                   <div
                     style={{
                       background: '#121212',
@@ -929,66 +957,70 @@ export default function UserPermissionsPanel({ cmsUser }) {
                     </span>
                   </div>
 
-                  {/* DROP DOWN SELECTOR FOR PLAYERS */}
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                    <select
-                      value={selectedPlayerByRole[role.id] || ''}
-                      onChange={(e) =>
-                        setSelectedPlayerByRole((prev) => ({ ...prev, [role.id]: e.target.value }))
-                      }
-                      style={{
-                        flex: 1,
-                        minWidth: '220px',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        background: '#1C1C1E',
-                        border: '1px solid rgba(255, 255, 255, 0.14)',
-                        color: '#FFFFFF',
-                        fontSize: '12.5px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <option value="">
-                        -- Select a player to add to {role.name} ({selectablePlayers.length} available) --
-                      </option>
-                      {selectablePlayers.map((p) => {
-                        const jersey = p.jersey_number ? `#${p.jersey_number} ` : '';
-                        const team = p.team_name ? `[${p.team_name}] ` : '';
-                        const pos = p.position ? `(${p.position}) ` : '';
-                        return (
-                          <option key={p.id} value={p.id}>
-                            {team}{p.name} {jersey}{pos}- ID: {p.player_id}
-                          </option>
-                        );
-                      })}
-                    </select>
+                  {/* DROP DOWN SELECTOR FOR PLAYERS (SUPERADMIN ONLY) */}
+                  {actorIsSuperadmin && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                      <select
+                        value={selectedPlayerByRole[role.id] || ''}
+                        onChange={(e) =>
+                          setSelectedPlayerByRole((prev) => ({ ...prev, [role.id]: e.target.value }))
+                        }
+                        style={{
+                          flex: 1,
+                          minWidth: '220px',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          background: '#1C1C1E',
+                          border: '1px solid rgba(255, 255, 255, 0.14)',
+                          color: '#FFFFFF',
+                          fontSize: '12.5px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <option value="">
+                          -- Select a player to add to {role.name} ({selectablePlayers.length} available) --
+                        </option>
+                        {selectablePlayers.map((p) => {
+                          const jersey = p.jersey_number ? `#${p.jersey_number} ` : '';
+                          const team = p.team_name ? `[${p.team_name}] ` : '';
+                          const pos = p.position ? `(${p.position}) ` : '';
+                          return (
+                            <option key={p.id} value={p.id}>
+                              {team}{p.name} {jersey}{pos}- ID: {p.player_id}
+                            </option>
+                          );
+                        })}
+                      </select>
 
-                    <button
-                      type="button"
-                      disabled={addingMemberRole === role.id || !selectedPlayerByRole[role.id]}
-                      onClick={() => handleAddPlayerToRole(role.id)}
-                      style={{
-                        background: selectedPlayerByRole[role.id] ? '#FF9500' : 'rgba(255, 149, 0, 0.3)',
-                        color: '#16201B',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '8px 16px',
-                        fontSize: '12px',
-                        fontWeight: 800,
-                        cursor: selectedPlayerByRole[role.id] && addingMemberRole !== role.id ? 'pointer' : 'not-allowed',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      {addingMemberRole === role.id ? 'Adding…' : '➕ Add Player to Group'}
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        disabled={addingMemberRole === role.id || !selectedPlayerByRole[role.id]}
+                        onClick={() => handleAddPlayerToRole(role.id)}
+                        style={{
+                          background: selectedPlayerByRole[role.id] ? '#FF9500' : 'rgba(255, 149, 0, 0.3)',
+                          color: '#16201B',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '8px 16px',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          cursor: selectedPlayerByRole[role.id] && addingMemberRole !== role.id ? 'pointer' : 'not-allowed',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        {addingMemberRole === role.id ? 'Adding…' : '➕ Add Player to Group'}
+                      </button>
+                    </div>
+                  )}
 
                   {/* CURRENT MEMBERS CHIPS */}
                   {members.length === 0 ? (
                     <div style={{ fontSize: '11.5px', color: '#6E6E73', fontStyle: 'italic', padding: '4px 0' }}>
-                      No players currently assigned. Use the dropdown above to add players to {role.name}.
+                      {actorIsSuperadmin
+                        ? `No players currently assigned. Use the dropdown above to add players to ${role.name}.`
+                        : `No players currently assigned to ${role.name}.`}
                     </div>
                   ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '8px' }}>
@@ -1038,25 +1070,27 @@ export default function UserPermissionsPanel({ cmsUser }) {
                               </div>
                             </div>
 
-                            <button
-                              type="button"
-                              disabled={isRemoving}
-                              onClick={() => handleRemovePlayerFromRole(role.id, m.id || m.player_id, m.name)}
-                              title="Remove player and revoke inherited powers"
-                              style={{
-                                background: 'rgba(255, 69, 58, 0.12)',
-                                color: '#FF6961',
-                                border: '1px solid rgba(255, 69, 58, 0.25)',
-                                borderRadius: '6px',
-                                padding: '4px 8px',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                cursor: isRemoving ? 'not-allowed' : 'pointer',
-                                flexShrink: 0,
-                              }}
-                            >
-                              {isRemoving ? '…' : '❌ Remove'}
-                            </button>
+                            {actorIsSuperadmin && (
+                              <button
+                                type="button"
+                                disabled={isRemoving}
+                                onClick={() => handleRemovePlayerFromRole(role.id, m.id || m.player_id, m.name)}
+                                title="Remove player and revoke inherited powers"
+                                style={{
+                                  background: 'rgba(255, 69, 58, 0.12)',
+                                  color: '#FF6961',
+                                  border: '1px solid rgba(255, 69, 58, 0.25)',
+                                  borderRadius: '6px',
+                                  padding: '4px 8px',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: isRemoving ? 'not-allowed' : 'pointer',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {isRemoving ? '…' : '❌ Remove'}
+                              </button>
+                            )}
                           </div>
                         );
                       })}
@@ -1074,138 +1108,140 @@ export default function UserPermissionsPanel({ cmsUser }) {
          ========================================================= */}
       {activeTab === 'users' && (
         <div>
-          {/* ADD NEW USER FORM */}
-          <form
-            onSubmit={handleCreateUser}
-            style={{
-              background: '#1C1C1E',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '12px',
-              padding: '18px',
-              marginBottom: '22px',
-            }}
-          >
-            <div style={{ fontSize: '14px', fontWeight: 800, color: '#FFFFFF', marginBottom: '12px' }}>
-              ➕ Add New Staff Account
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '14px' }}>
-              <div>
-                <label style={{ fontSize: '11.5px', color: '#AEAEB2', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  Username *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. coach_john"
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', background: '#121212', border: '1px solid rgba(255,255,255,0.14)', color: '#FFFFFF', fontSize: '12.5px', boxSizing: 'border-box' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '11.5px', color: '#AEAEB2', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  Email (Optional)
-                </label>
-                <input
-                  type="email"
-                  placeholder="user@ruirutitans.com"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', background: '#121212', border: '1px solid rgba(255,255,255,0.14)', color: '#FFFFFF', fontSize: '12.5px', boxSizing: 'border-box' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '11.5px', color: '#AEAEB2', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  Password (min 4 chars) *
-                </label>
-                <input
-                  type="password"
-                  required
-                  minLength={4}
-                  placeholder="Initial password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', background: '#121212', border: '1px solid rgba(255,255,255,0.14)', color: '#FFFFFF', fontSize: '12.5px', boxSizing: 'border-box' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '11.5px', color: '#AEAEB2', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  User Type *
-                </label>
-                <select
-                  value={newType}
-                  onChange={(e) => handleSelectNewType(e.target.value)}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', background: '#121212', border: '1px solid rgba(255,255,255,0.14)', color: '#FFFFFF', fontSize: '12.5px', boxSizing: 'border-box' }}
-                >
-                  {userTypes
-                    .filter((t) => actorIsSuperadmin || t.key !== 'superadmin')
-                    .map((t) => (
-                      <option key={t.key} value={t.key}>
-                        {USER_TYPE_LABELS[t.key] || t.label}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            </div>
-
-            {/* CAPABILITY CHECKBOXES */}
-            <div style={{ marginBottom: '14px' }}>
-              <div style={{ fontSize: '11.5px', color: '#AEAEB2', fontWeight: 700, marginBottom: '8px' }}>
-                What this user can do (tick/untick capabilities):
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '8px' }}>
-                {permDefs.map((p) => {
-                  const isAdminCtrl = ADMIN_CONTROL_KEYS.has(p.key);
-                  const disabled = newType === 'superadmin' || (isAdminCtrl && !actorIsSuperadmin);
-                  const checked = newType === 'superadmin' ? true : Boolean(newPerms[p.key]);
-                  return (
-                    <label
-                      key={p.key}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '7px 10px',
-                        borderRadius: '8px',
-                        background: checked ? 'rgba(255, 149, 0, 0.08)' : 'rgba(255,255,255,0.02)',
-                        border: checked ? '1px solid rgba(255, 149, 0, 0.35)' : '1px solid rgba(255,255,255,0.06)',
-                        fontSize: '12px',
-                        color: disabled ? '#6E6E73' : '#EBEBF5',
-                        cursor: disabled ? 'not-allowed' : 'pointer',
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        disabled={disabled}
-                        onChange={(e) => setNewPerms((prev) => ({ ...prev, [p.key]: e.target.checked }))}
-                        style={{ accentColor: '#FF9500', width: '15px', height: '15px' }}
-                      />
-                      <span>{p.label}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={creating}
+          {/* ADD NEW USER FORM (SUPERADMIN ONLY) */}
+          {actorIsSuperadmin && (
+            <form
+              onSubmit={handleCreateUser}
               style={{
-                background: '#FF9500',
-                color: '#16201B',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '9px 18px',
-                fontSize: '12.5px',
-                fontWeight: 800,
-                cursor: creating ? 'not-allowed' : 'pointer',
+                background: '#1C1C1E',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '12px',
+                padding: '18px',
+                marginBottom: '22px',
               }}
             >
-              {creating ? 'Creating User…' : '➕ Create User'}
-            </button>
-          </form>
+              <div style={{ fontSize: '14px', fontWeight: 800, color: '#FFFFFF', marginBottom: '12px' }}>
+                ➕ Add New Staff Account
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '14px' }}>
+                <div>
+                  <label style={{ fontSize: '11.5px', color: '#AEAEB2', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    Username *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. coach_john"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', background: '#121212', border: '1px solid rgba(255,255,255,0.14)', color: '#FFFFFF', fontSize: '12.5px', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', color: '#AEAEB2', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    Email (Optional)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="user@ruirutitans.com"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', background: '#121212', border: '1px solid rgba(255,255,255,0.14)', color: '#FFFFFF', fontSize: '12.5px', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', color: '#AEAEB2', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    Password (min 4 chars) *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={4}
+                    placeholder="Initial password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', background: '#121212', border: '1px solid rgba(255,255,255,0.14)', color: '#FFFFFF', fontSize: '12.5px', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', color: '#AEAEB2', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    User Type *
+                  </label>
+                  <select
+                    value={newType}
+                    onChange={(e) => handleSelectNewType(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', background: '#121212', border: '1px solid rgba(255,255,255,0.14)', color: '#FFFFFF', fontSize: '12.5px', boxSizing: 'border-box' }}
+                  >
+                    {userTypes
+                      .filter((t) => actorIsSuperadmin || t.key !== 'superadmin')
+                      .map((t) => (
+                        <option key={t.key} value={t.key}>
+                          {USER_TYPE_LABELS[t.key] || t.label}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* CAPABILITY CHECKBOXES */}
+              <div style={{ marginBottom: '14px' }}>
+                <div style={{ fontSize: '11.5px', color: '#AEAEB2', fontWeight: 700, marginBottom: '8px' }}>
+                  What this user can do (tick/untick capabilities):
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '8px' }}>
+                  {permDefs.map((p) => {
+                    const isAdminCtrl = ADMIN_CONTROL_KEYS.has(p.key);
+                    const disabled = newType === 'superadmin' || (isAdminCtrl && !actorIsSuperadmin);
+                    const checked = newType === 'superadmin' ? true : Boolean(newPerms[p.key]);
+                    return (
+                      <label
+                        key={p.key}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '7px 10px',
+                          borderRadius: '8px',
+                          background: checked ? 'rgba(255, 149, 0, 0.08)' : 'rgba(255,255,255,0.02)',
+                          border: checked ? '1px solid rgba(255, 149, 0, 0.35)' : '1px solid rgba(255,255,255,0.06)',
+                          fontSize: '12px',
+                          color: disabled ? '#6E6E73' : '#EBEBF5',
+                          cursor: disabled ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={disabled}
+                          onChange={(e) => setNewPerms((prev) => ({ ...prev, [p.key]: e.target.checked }))}
+                          style={{ accentColor: '#FF9500', width: '15px', height: '15px' }}
+                        />
+                        <span>{p.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={creating}
+                style={{
+                  background: '#FF9500',
+                  color: '#16201B',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '9px 18px',
+                  fontSize: '12.5px',
+                  fontWeight: 800,
+                  cursor: creating ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {creating ? 'Creating User…' : '➕ Create User'}
+              </button>
+            </form>
+          )}
 
           {/* EXISTING USERS LIST */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1220,10 +1256,9 @@ export default function UserPermissionsPanel({ cmsUser }) {
             {users.map((u) => {
               const isSelf = u.username?.toLowerCase() === cmsUser?.username?.toLowerCase();
               const isTargetSuper = u.user_type === 'superadmin';
-              const isTargetAdmin = u.user_type === 'admin';
-              const canBlockThis = !isSelf && (!isTargetSuper && (!isTargetAdmin || actorIsSuperadmin || actorPerms?.block_admin));
-              const canDeleteThis = !isSelf && (!isTargetSuper && (!isTargetAdmin || actorIsSuperadmin || actorPerms?.delete_admin));
-              const canEditThis = !isTargetSuper || actorIsSuperadmin;
+              const canBlockThis = actorIsSuperadmin && !isSelf && !isTargetSuper;
+              const canDeleteThis = actorIsSuperadmin && !isSelf && !isTargetSuper;
+              const canEditThis = actorIsSuperadmin;
               const enabledCount = Object.values(u.permissions || {}).filter(Boolean).length;
               const isEditing = editingUserId === u.id;
 
@@ -1328,7 +1363,7 @@ export default function UserPermissionsPanel({ cmsUser }) {
                   </div>
 
                   {/* INLINE EDIT FORM */}
-                  {isEditing && (
+                  {isEditing && actorIsSuperadmin && (
                     <div
                       style={{
                         marginTop: '14px',

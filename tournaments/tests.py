@@ -2962,7 +2962,7 @@ class CMSUserRolesAndPermissionsTests(TestCase):
         sub_admin_obj = create_admin.json()["user"]
         self.assertEqual(sub_admin_obj["user_type"], "admin")
         self.assertTrue(sub_admin_obj["permissions"]["manage_players"])
-        self.assertTrue(sub_admin_obj["permissions"]["manage_users"])
+        self.assertFalse(sub_admin_obj["permissions"]["manage_users"])
         self.assertFalse(sub_admin_obj["permissions"]["downgrade_admin"])
         self.assertFalse(sub_admin_obj["permissions"]["delete_admin"])
         self.assertFalse(sub_admin_obj["permissions"]["block_admin"])
@@ -2998,10 +2998,41 @@ class CMSUserRolesAndPermissionsTests(TestCase):
         self.assertTrue(rep_perms["manage_tactics"])
         self.assertFalse(rep_perms["manage_players"])
 
-        # 4. sub_admin logs in and tries to downgrade, block, or delete other_admin -> 403 Forbidden
+        # 4. sub_admin logs in and tries to create user, create group, modify or delete other_admin -> 403 Forbidden
         sub_login = self._login("sub_admin", "pass1234")
         self.assertEqual(sub_login.status_code, 200)
         sub_token = sub_login.json()["token"]
+
+        user_create_attempt = self.client.post(
+            "/api/auth/cms-users/",
+            data=json.dumps({
+                "username": "sub_created_user",
+                "password": "pass1234",
+                "user_type": "custom",
+            }),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=sub_token,
+        )
+        self.assertEqual(user_create_attempt.status_code, 403)
+
+        group_create_attempt = self.client.post(
+            "/api/auth/group-roles/",
+            data=json.dumps({
+                "name": "Sub Created Group",
+                "permissions": {"manage_fixtures": True},
+            }),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=sub_token,
+        )
+        self.assertEqual(group_create_attempt.status_code, 403)
+
+        perm_update_attempt = self.client.patch(
+            f"/api/auth/cms-users/{other_admin_id}/",
+            data=json.dumps({"permissions": {"manage_fixtures": True}}),
+            content_type="application/json",
+            HTTP_X_TITANS_CMS_TOKEN=sub_token,
+        )
+        self.assertEqual(perm_update_attempt.status_code, 403)
 
         downgrade_attempt = self.client.patch(
             f"/api/auth/cms-users/{other_admin_id}/",
