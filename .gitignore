@@ -1,11 +1,13 @@
 # Python
 __pycache__/
+cache/
 *.py[cod]
 *$py.class
 *.so
 .Python
 env/
 venv/
+.venv/
 ENV/
 build/
 develop-eggs/

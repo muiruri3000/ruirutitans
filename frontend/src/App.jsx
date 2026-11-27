@@ -20,6 +20,7 @@ import AIWeeklyReportModal from './components/AIWeeklyReportModal';
 import TacticsView from './components/TacticsView';
 import DutyRosterView from './components/DutyRosterView';
 import TransfersView from './components/TransfersView';
+import AIChatView from './components/ai/AIChatView';
 import ThemeFloatingToggle from './components/ThemeFloatingToggle';
 import { openCategoryFixturesResultsPDF } from './utils/pdfExport';
 import { api, sanitizeExMilitaryFixtures } from './api/client';
@@ -4748,6 +4749,13 @@ export default function App() {
               } catch {}
             }}
           />
+        )}
+
+        {/* =========================================================
+            6A-3. AI ASSISTANT VIEW (MCP Grounding & Multi-Model Chat)
+           ========================================================= */}
+        {currentView === 'ai_assistant' && (
+          <AIChatView />
         )}
 
         {/* =========================================================

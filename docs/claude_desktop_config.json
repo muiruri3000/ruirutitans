@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "ruirutitans": {
+      "command": "/home/muiruri/ruirutitans/.venv/bin/python",
+      "args": [
+        "-m",
+        "mcp_server.cli"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/muiruri/ruirutitans",
+        "TITANS_MCP_URL": "http://127.0.0.1:8000/api/mcp/",
+        "TITANS_MCP_API_KEY": "rt_mcp_live_REPLACE_WITH_GENERATED_API_KEY"
+      }
+    }
+  }
+}

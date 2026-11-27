@@ -1242,5 +1242,57 @@ export const api = {
     }
     return await res.json();
   },
+
+  ai: {
+    async listProviders() {
+      const res = await fetch("/api/ai/providers/", { headers: defaultHeaders() });
+      if (!res.ok) throw new Error(`Failed to load AI providers: ${res.status}`);
+      return await res.json();
+    },
+    async listConversations() {
+      const res = await fetch("/api/ai/conversations/", { headers: defaultHeaders() });
+      if (!res.ok) throw new Error(`Failed to load AI conversations: ${res.status}`);
+      return await res.json();
+    },
+    async createConversation(payload = {}) {
+      const res = await fetch("/api/ai/conversations/", {
+        method: "POST",
+        headers: defaultHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Failed to create conversation: ${res.status}`);
+      }
+      return await res.json();
+    },
+    async getConversation(id) {
+      const res = await fetch(`/api/ai/conversations/${encodeURIComponent(id)}/`, {
+        headers: defaultHeaders(),
+      });
+      if (!res.ok) throw new Error(`Failed to load conversation: ${res.status}`);
+      return await res.json();
+    },
+    async deleteConversation(id) {
+      const res = await fetch(`/api/ai/conversations/${encodeURIComponent(id)}/`, {
+        method: "DELETE",
+        headers: defaultHeaders(),
+      });
+      if (!res.ok && res.status !== 204) throw new Error(`Failed to delete conversation: ${res.status}`);
+      return true;
+    },
+    async sendMessage(id, payload) {
+      const res = await fetch(`/api/ai/conversations/${encodeURIComponent(id)}/messages/`, {
+        method: "POST",
+        headers: defaultHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Failed to send message: ${res.status}`);
+      }
+      return await res.json();
+    },
+  },
 };
 

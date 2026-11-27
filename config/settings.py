@@ -118,6 +118,8 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "tournaments.apps.TournamentsConfig",
+    "mcp_server.apps.McpServerConfig",
+    "ai_assistant.apps.AiAssistantConfig",
 ]
 
 MIDDLEWARE = [
@@ -568,3 +570,38 @@ REST_FRAMEWORK = {
     },
     "EXCEPTION_HANDLER": "tournaments.exceptions.custom_exception_handler",
 }
+
+
+# ==============================================================================
+# 9. MCP SERVER & AI ASSISTANT CONFIGURATION
+# ==============================================================================
+
+MCP_RESOURCE_URL = os.environ.get("MCP_RESOURCE_URL", "http://127.0.0.1:8000/api/mcp/").strip()
+MCP_ACTOR_TOKEN_SECRET = os.environ.get("MCP_ACTOR_TOKEN_SECRET", "").strip()
+
+# AI Model Providers (Gemini, Claude, Fallback Pool)
+AI_PROVIDER = os.environ.get("AI_PROVIDER", "pool").strip().lower()
+
+# Google Gemini Settings
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
+GEMINI_API_BASE_URL = os.environ.get(
+    "GEMINI_API_BASE_URL", "https://generativelanguage.googleapis.com/v1beta"
+).strip()
+
+# Anthropic Claude Settings (Cross AI Model Integration)
+ANTHROPIC_API_KEY = os.environ.get(
+    "ANTHROPIC_API_KEY", os.environ.get("CLAUDE_API_KEY", "")
+).strip()
+CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-3-5-sonnet-20241022").strip()
+CLAUDE_API_BASE_URL = os.environ.get("CLAUDE_API_BASE_URL", "https://api.anthropic.com").strip()
+
+# AI Orchestration & Guardrail Thresholds
+AI_MAX_TOOL_ROUNDS = int(os.environ.get("AI_MAX_TOOL_ROUNDS", "5"))
+AI_MAX_TOOL_CALLS_PER_TURN = int(os.environ.get("AI_MAX_TOOL_CALLS_PER_TURN", "10"))
+AI_MAX_OUTPUT_TOKENS = int(os.environ.get("AI_MAX_OUTPUT_TOKENS", "2048"))
+AI_TIMEOUT_SECONDS = float(os.environ.get("AI_TIMEOUT_SECONDS", "30.0"))
+AI_DAILY_TOKEN_LIMIT = int(os.environ.get("AI_DAILY_TOKEN_LIMIT", "100000"))
+AI_RATE_LIMIT_COOLDOWN_SECONDS = float(os.environ.get("AI_RATE_LIMIT_COOLDOWN_SECONDS", "60.0"))
+AI_ERROR_COOLDOWN_SECONDS = float(os.environ.get("AI_ERROR_COOLDOWN_SECONDS", "30.0"))
+

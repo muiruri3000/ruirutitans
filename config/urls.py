@@ -22,6 +22,8 @@ from django.views.static import serve
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/mcp/', include('mcp_server.urls', namespace='mcp_server')),
+    path('api/ai/', include('ai_assistant.urls', namespace='ai_assistant')),
     path('', include('tournaments.urls', namespace='tournaments')),
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
