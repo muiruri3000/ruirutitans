@@ -71,6 +71,12 @@ from mcp_server.schemas import (
     GetPlatformAuditLogsInput,
     GetPlatformAuditLogsOutput,
     AuditLogEntry,
+    GetCleanSheetsAndCardsInput,
+    GetCleanSheetsAndCardsOutput,
+    TeamCleanSheetItem,
+    GoalkeeperCleanSheetItem,
+    PlayerCardItem,
+    TeamCardItem,
     sanitize_untrusted_text,
 )
 
@@ -413,6 +419,11 @@ def get_active_bans_handler(actor: VerifiedActor, params: GetActiveBansInput) ->
                 matches_left=b.games_banned,
                 reason=sanitize_untrusted_text(b.reason, max_length=200),
                 issued_date=b.created_at.strftime("%Y-%m-%d"),
+                period_description=b.period_description or "",
+                start_date=b.start_date.isoformat() if b.start_date else None,
+                return_date=b.return_date.isoformat() if b.return_date else None,
+                expected_fixture_return=b.expected_fixture_return or "",
+                imposed_by=b.imposed_by or "",
             )
         )
     return GetActiveBansOutput(active_bans_count=len(items), bans=items)
@@ -758,3 +769,156 @@ def get_platform_audit_logs_handler(actor: VerifiedActor, params: GetPlatformAud
         )
 
     return GetPlatformAuditLogsOutput(total_count=total_count, entries=entries)
+
+
+def get_clean_sheets_and_cards_handler(
+    actor: VerifiedActor, params: GetCleanSheetsAndCardsInput
+) -> GetCleanSheetsAndCardsOutput:
+    """Retrieve clean sheet leaderboards, team and player disciplinary card totals, and ban flags."""
+    cat = Category.objects.filter(key=params.category_key, is_deleted=False).first()
+    if not cat:
+        return GetCleanSheetsAndCardsOutput(
+            category_key=params.category_key,
+            category_label="Not Found",
+            team_clean_sheets=[],
+            goalkeeper_clean_sheets=[],
+            player_cards=[],
+            team_cards=[],
+            active_bans_summary=0,
+        )
+
+    # Active bans set for cross-referencing
+    active_banned_player_ids = set(
+        PlayerBan.objects.filter(category=cat, is_active=True).values_list("player_id", flat=True)
+    )
+
+    # Initialize team statistics
+    teams = list(cat.teams.all())
+    team_stats: dict[int, dict[str, Any]] = {
+        t.id: {
+            "name": t.name,
+            "clean_sheets": 0,
+            "matches_played": 0,
+            "goals_conceded": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+        }
+        for t in teams
+    }
+
+    # Process played fixtures for clean sheets & goals conceded
+    fixtures = cat.fixtures.filter(played=True).select_related("home_team", "away_team", "walkover_winner")
+    for f in fixtures:
+        h_score, a_score = f.score
+        if f.home_team_id and f.home_team_id in team_stats:
+            team_stats[f.home_team_id]["matches_played"] += 1
+            team_stats[f.home_team_id]["goals_conceded"] += a_score
+            if a_score == 0 and not f.walkover_winner_id:
+                team_stats[f.home_team_id]["clean_sheets"] += 1
+
+        if f.away_team_id and f.away_team_id in team_stats:
+            team_stats[f.away_team_id]["matches_played"] += 1
+            team_stats[f.away_team_id]["goals_conceded"] += h_score
+            if h_score == 0 and not f.walkover_winner_id:
+                team_stats[f.away_team_id]["clean_sheets"] += 1
+
+    # Process disciplinary events (cards)
+    card_events = (
+        MatchEvent.objects.filter(fixture__category=cat, event_type__in=["yellow", "red"])
+        .select_related("player", "team", "player__team")
+    )
+
+    player_card_stats: dict[int, dict[str, Any]] = {}
+    for ev in card_events:
+        # Team card tally
+        if ev.team_id and ev.team_id in team_stats:
+            if ev.event_type == "yellow":
+                team_stats[ev.team_id]["yellow_cards"] += 1
+            elif ev.event_type == "red":
+                team_stats[ev.team_id]["red_cards"] += 1
+
+        # Player card tally
+        if ev.player:
+            pid = ev.player.id
+            if pid not in player_card_stats:
+                t_name = ev.team.name if ev.team else (ev.player.team.name if ev.player.team else "Free Agent")
+                player_card_stats[pid] = {
+                    "player_name": ev.player.name,
+                    "team_name": t_name,
+                    "yellow_cards": 0,
+                    "red_cards": 0,
+                    "is_banned": pid in active_banned_player_ids,
+                }
+            if ev.event_type == "yellow":
+                player_card_stats[pid]["yellow_cards"] += 1
+            elif ev.event_type == "red":
+                player_card_stats[pid]["red_cards"] += 1
+
+    # Goalkeepers clean sheets
+    gk_items: list[GoalkeeperCleanSheetItem] = []
+    goalkeepers = (
+        cat.players.filter(is_unknown=False)
+        .filter(Q(position__iexact="GK") | Q(position__iexact="Goalkeeper"))
+        .select_related("team")
+    )
+    for gk in goalkeepers:
+        if gk.team_id and gk.team_id in team_stats:
+            cs = team_stats[gk.team_id]["clean_sheets"]
+            if cs > 0:
+                gk_items.append(
+                    GoalkeeperCleanSheetItem(
+                        player_name=gk.name,
+                        team_name=gk.team.name if gk.team else "Free Agent",
+                        clean_sheets=cs,
+                    )
+                )
+    gk_items.sort(key=lambda x: -x.clean_sheets)
+
+    # Build Team Clean Sheets list
+    team_cs_items: list[TeamCleanSheetItem] = []
+    team_card_items: list[TeamCardItem] = []
+    for t_id, data in team_stats.items():
+        team_cs_items.append(
+            TeamCleanSheetItem(
+                team_name=data["name"],
+                clean_sheets=data["clean_sheets"],
+                matches_played=data["matches_played"],
+                goals_conceded=data["goals_conceded"],
+            )
+        )
+        team_card_items.append(
+            TeamCardItem(
+                team_name=data["name"],
+                yellow_cards=data["yellow_cards"],
+                red_cards=data["red_cards"],
+                total_cards=data["yellow_cards"] + data["red_cards"],
+            )
+        )
+
+    team_cs_items.sort(key=lambda x: (-x.clean_sheets, x.goals_conceded, -x.matches_played))
+    team_card_items.sort(key=lambda x: (-x.red_cards, -x.yellow_cards, -x.total_cards))
+
+    # Build Player Cards list
+    player_card_items: list[PlayerCardItem] = []
+    for pid, data in player_card_stats.items():
+        player_card_items.append(
+            PlayerCardItem(
+                player_name=data["player_name"],
+                team_name=data["team_name"],
+                yellow_cards=data["yellow_cards"],
+                red_cards=data["red_cards"],
+                total_cards=data["yellow_cards"] + data["red_cards"],
+                is_banned=data["is_banned"],
+            )
+        )
+    player_card_items.sort(key=lambda x: (-x.red_cards, -x.yellow_cards, -x.total_cards))
+
+    return GetCleanSheetsAndCardsOutput(
+        category_key=cat.key,
+        category_label=cat.label,
+        team_clean_sheets=team_cs_items[:params.limit],
+        goalkeeper_clean_sheets=gk_items[:params.limit],
+        player_cards=player_card_items[:params.limit],
+        team_cards=team_card_items[:params.limit],
+        active_bans_summary=len(active_banned_player_ids),
+    )

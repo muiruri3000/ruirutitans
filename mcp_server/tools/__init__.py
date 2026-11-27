@@ -45,6 +45,8 @@ from mcp_server.schemas import (
     ListRefereesOutput,
     GetPlatformAuditLogsInput,
     GetPlatformAuditLogsOutput,
+    GetCleanSheetsAndCardsInput,
+    GetCleanSheetsAndCardsOutput,
 )
 from mcp_server.tools.tournaments_tools import (
     list_categories_handler,
@@ -63,6 +65,7 @@ from mcp_server.tools.tournaments_tools import (
     list_highlights_handler,
     list_referees_handler,
     get_platform_audit_logs_handler,
+    get_clean_sheets_and_cards_handler,
 )
 
 
@@ -371,6 +374,25 @@ def register_readonly_tools(server: MCPServer) -> None:
             GetPlatformAuditLogsInput,
             {"category_key": category_key, "action": action, "limit": limit},
             get_platform_audit_logs_handler,
+            allowed_roles=STAFF_MCP_ROLES,
+        )
+
+    @server.tool(
+        name="get_clean_sheets_and_cards",
+        title="Get Clean Sheets & Disciplinary Card Totals",
+        description="Retrieve clean-sheet leaderboards, team and player yellow/red card totals, and active bans status.",
+        annotations=READONLY_TOOL_ANNOTATIONS,
+    )
+    async def get_clean_sheets_and_cards_tool(
+        ctx: Context,
+        category_key: str = Field(..., description="Tournament category key."),
+        limit: int = Field(default=10, ge=1, le=50, description="Max leaderboard rows to return."),
+    ) -> GetCleanSheetsAndCardsOutput:
+        return await run_scoped_sync_tool(
+            "get_clean_sheets_and_cards",
+            GetCleanSheetsAndCardsInput,
+            {"category_key": category_key, "limit": limit},
+            get_clean_sheets_and_cards_handler,
             allowed_roles=STAFF_MCP_ROLES,
         )
 

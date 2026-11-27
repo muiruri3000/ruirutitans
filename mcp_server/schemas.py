@@ -191,6 +191,11 @@ class BanItem(BaseModel):
     matches_left: int
     reason: str
     issued_date: str
+    period_description: str = ""
+    start_date: str | None = None
+    return_date: str | None = None
+    expected_fixture_return: str = ""
+    imposed_by: str = ""
 
 
 class GetActiveBansOutput(BaseModel):
@@ -366,4 +371,48 @@ class AuditLogEntry(BaseModel):
 class GetPlatformAuditLogsOutput(BaseModel):
     total_count: int
     entries: list[AuditLogEntry]
+
+
+class GetCleanSheetsAndCardsInput(BaseModel):
+    category_key: str = Field(..., description="Tournament category key.")
+    limit: int = Field(default=10, ge=1, le=50, description="Max leaderboard entries to return.")
+
+
+class TeamCleanSheetItem(BaseModel):
+    team_name: str
+    clean_sheets: int
+    matches_played: int
+    goals_conceded: int
+
+
+class GoalkeeperCleanSheetItem(BaseModel):
+    player_name: str
+    team_name: str
+    clean_sheets: int
+
+
+class PlayerCardItem(BaseModel):
+    player_name: str
+    team_name: str
+    yellow_cards: int
+    red_cards: int
+    total_cards: int
+    is_banned: bool = False
+
+
+class TeamCardItem(BaseModel):
+    team_name: str
+    yellow_cards: int
+    red_cards: int
+    total_cards: int
+
+
+class GetCleanSheetsAndCardsOutput(BaseModel):
+    category_key: str
+    category_label: str
+    team_clean_sheets: list[TeamCleanSheetItem] = Field(default_factory=list)
+    goalkeeper_clean_sheets: list[GoalkeeperCleanSheetItem] = Field(default_factory=list)
+    player_cards: list[PlayerCardItem] = Field(default_factory=list)
+    team_cards: list[TeamCardItem] = Field(default_factory=list)
+    active_bans_summary: int = 0
 

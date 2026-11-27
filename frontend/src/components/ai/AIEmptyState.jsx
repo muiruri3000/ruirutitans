@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Sparkles, Trophy, Users, ShieldAlert, Calendar, Swords, Video } from 'lucide-react';
+import { Bot, Sparkles, Trophy, Users, ShieldAlert, ShieldCheck, Calendar, Swords, Video } from 'lucide-react';
 
 const SUGGESTIONS = [
   {
@@ -8,29 +8,29 @@ const SUGGESTIONS = [
     prompt: "Show me the current standings for the championship league with points and goal differences.",
   },
   {
+    icon: ShieldCheck,
+    title: "Clean Sheets & Cards",
+    prompt: "Show the clean-sheet leaderboard and disciplinary yellow and red card totals.",
+  },
+  {
     icon: Swords,
     title: "Head-to-Head Analysis",
     prompt: "Compare head-to-head records and past encounters between Titans Red and Titans Blue.",
   },
   {
+    icon: ShieldAlert,
+    title: "Active Bans",
+    prompt: "Are there any active player suspensions or bans in effect?",
+  },
+  {
     icon: Sparkles,
-    title: "Team of the Week (TOTW)",
+    title: "Team of the Week",
     prompt: "Who are the leaders in the Team of the Week voting and what is the current lineup?",
   },
   {
     icon: Calendar,
     title: "Upcoming Fixtures",
     prompt: "What are the upcoming scheduled fixtures this week?",
-  },
-  {
-    icon: Video,
-    title: "Match Highlights",
-    prompt: "Show me the latest match highlights and video clips.",
-  },
-  {
-    icon: ShieldAlert,
-    title: "Disciplinary Bans",
-    prompt: "Are there any active player suspensions or bans in effect?",
   },
 ];
 

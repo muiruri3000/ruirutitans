@@ -35,6 +35,7 @@ from mcp_server.schemas import (
     ListHighlightsInput,
     ListRefereesInput,
     GetPlatformAuditLogsInput,
+    GetCleanSheetsAndCardsInput,
 )
 from mcp_server.tools.tournaments_tools import (
     list_categories_handler,
@@ -53,6 +54,7 @@ from mcp_server.tools.tournaments_tools import (
     list_highlights_handler,
     list_referees_handler,
     get_platform_audit_logs_handler,
+    get_clean_sheets_and_cards_handler,
 )
 
 User = get_user_model()
@@ -273,3 +275,49 @@ class McpToolsTestCase(TestCase):
         self.assertEqual(out.total_count, 1)
         self.assertEqual(out.entries[0].actor_username, "admin_staff")
         self.assertEqual(out.entries[0].action, "Updated category rules")
+
+    def test_get_clean_sheets_and_cards(self):
+        # Create events: yellow card on player_a
+        MatchEvent.objects.create(
+            fixture=self.fixture,
+            team=self.team_a,
+            player=self.player_a,
+            event_type="yellow",
+        )
+        # Create PlayerBan for player_a
+        PlayerBan.objects.create(
+            category=self.category,
+            player=self.player_a,
+            team=self.team_a,
+            games_banned=2,
+            reason="Accumulation of cards",
+            is_active=True,
+            period_description="2 matchdays",
+            expected_fixture_return="GW 4",
+        )
+        # Test clean sheets and cards
+        out = get_clean_sheets_and_cards_handler(
+            self.actor,
+            GetCleanSheetsAndCardsInput(category_key="test_league", limit=10),
+        )
+        self.assertEqual(out.category_key, "test_league")
+        self.assertEqual(out.active_bans_summary, 1)
+        # Titans Red won 1-0 against Titans Blue, so Titans Red has 1 clean sheet
+        top_cs = [t for t in out.team_clean_sheets if t.team_name == "Titans Red"]
+        self.assertTrue(len(top_cs) > 0)
+        self.assertEqual(top_cs[0].clean_sheets, 1)
+        # Check player card
+        p_cards = [p for p in out.player_cards if p.player_name == "Victor Wanyama"]
+        self.assertTrue(len(p_cards) > 0)
+        self.assertEqual(p_cards[0].yellow_cards, 1)
+        self.assertTrue(p_cards[0].is_banned)
+
+        # Test active bans
+        bans_out = get_active_bans_handler(
+            self.actor,
+            GetActiveBansInput(category_key="test_league"),
+        )
+        self.assertEqual(bans_out.active_bans_count, 1)
+        self.assertEqual(bans_out.bans[0].player_name, "Victor Wanyama")
+        self.assertEqual(bans_out.bans[0].period_description, "2 matchdays")
+        self.assertEqual(bans_out.bans[0].expected_fixture_return, "GW 4")
