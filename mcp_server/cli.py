@@ -66,6 +66,7 @@ def forward_request(
         "Content-Type": "application/json",
         "Accept": "application/json",
         "Authorization": f"Bearer {api_key}",
+        "User-Agent": "ClaudeDesktopMCP/1.0 (RuiruTitansBridge)",
     }
     if session_id:
         headers["mcp-session-id"] = session_id
