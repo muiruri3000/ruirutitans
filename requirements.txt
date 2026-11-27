@@ -7,3 +7,13 @@ gunicorn==23.0.0
 PyMySQL>=1.1.0,<2.0.0
 sqlparse==0.6.0
 whitenoise==6.9.0
+httpx>=0.28.0
+httpx2>=2.16.2
+jsonschema>=4.23.0
+mcp>=2.3.0
+mcp-types>=2.3.0
+pydantic>=2.10.0
+PyJWT>=2.9.0
+sse-starlette>=3.0.0
+starlette>=0.40.0
+
