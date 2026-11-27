@@ -160,6 +160,14 @@ def run_stdio_bridge(url: str, api_key: str) -> int:
                         if line_out.startswith("data: "):
                             line_out = line_out[6:].strip()
                         if line_out.startswith("{"):
+                            try:
+                                json_out = json.loads(line_out)
+                                if isinstance(json_out, dict) and not is_notification:
+                                    if "id" not in json_out or json_out["id"] is None:
+                                        json_out["id"] = msg_id
+                                    line_out = json.dumps(json_out)
+                            except Exception:
+                                pass
                             sys.stdout.write(line_out + "\n")
                             sys.stdout.flush()
                         elif line_out:

@@ -88,6 +88,15 @@ def mcp_gateway_view(request: HttpRequest) -> HttpResponse:
         response["Allow"] = "POST, GET, DELETE, HEAD, OPTIONS"
         return response
 
+    req_id = None
+    if request.method == "POST" and request.body:
+        try:
+            body_check = json.loads(request.body.decode("utf-8"))
+            if isinstance(body_check, dict):
+                req_id = body_check.get("id")
+        except Exception:
+            pass
+
     raw_key = _extract_api_key(request)
     if not raw_key:
         return JsonResponse(
@@ -97,6 +106,7 @@ def mcp_gateway_view(request: HttpRequest) -> HttpResponse:
                     "code": -32000,
                     "message": "Unauthorized: Missing API key. Provide 'Authorization: Bearer <key>'.",
                 },
+                "id": req_id,
             },
             status=401,
         )
@@ -110,6 +120,7 @@ def mcp_gateway_view(request: HttpRequest) -> HttpResponse:
                     "code": -32000,
                     "message": "Unauthorized: Invalid, expired, or revoked API key.",
                 },
+                "id": req_id,
             },
             status=401,
         )
@@ -122,6 +133,7 @@ def mcp_gateway_view(request: HttpRequest) -> HttpResponse:
                     "code": -32000,
                     "message": "Too Many Requests: Rate limit exceeded. Try again in 60 seconds.",
                 },
+                "id": req_id,
             },
             status=429,
         )
