@@ -246,6 +246,26 @@ class McpToolsTestCase(TestCase):
         self.assertEqual(len(out.highlights), 1)
         self.assertIn("Goal of the season", out.highlights[0].title)
 
+    def test_get_weekly_mvp(self):
+        WeeklyMVP.objects.create(
+            category=self.category,
+            week_number=1,
+            week_title="Gameweek 1 Stars",
+            player=self.player_a,
+            team=self.team_a,
+            points=14.5,
+            rationale="Scored opening goal and dictated midfield tempo",
+        )
+        out = get_weekly_mvp_handler(
+            self.actor,
+            GetWeeklyMvpInput(category_key="test_league", week_number=1),
+        )
+        self.assertEqual(out.category_key, "test_league")
+        self.assertEqual(len(out.mvps), 1)
+        self.assertEqual(out.mvps[0].player_name, "Victor Wanyama")
+        self.assertEqual(out.mvps[0].points, 14.5)
+        self.assertIn("tempo", out.mvps[0].headline)
+
     def test_list_referees(self):
         Referee.objects.create(
             category=self.category,

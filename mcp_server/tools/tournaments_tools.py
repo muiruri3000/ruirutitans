@@ -437,14 +437,17 @@ def get_weekly_mvp_handler(actor: VerifiedActor, params: GetWeeklyMvpInput) -> G
 
     items: list[WeeklyMvpItem] = []
     for mvp in qs.order_by("-week_number")[:10]:
+        c_date = getattr(mvp, "computed_at", None) or getattr(mvp, "week_ending_date", None)
+        created_str = c_date.strftime("%Y-%m-%d") if c_date else ""
+        headline_text = getattr(mvp, "rationale", "") or getattr(mvp, "week_title", "") or "Matchweek MVP"
         items.append(
             WeeklyMvpItem(
                 week_number=mvp.week_number,
                 player_name=mvp.player.name if mvp.player else "Unknown",
                 team_name=mvp.team.name if mvp.team else "Free Agent",
                 points=float(getattr(mvp, "points", 0.0) or 0.0),
-                headline=sanitize_untrusted_text(getattr(mvp, "headline", "") or "", max_length=150),
-                created_at=mvp.created_at.strftime("%Y-%m-%d") if mvp.created_at else "",
+                headline=sanitize_untrusted_text(headline_text, max_length=150),
+                created_at=created_str,
             )
         )
     return GetWeeklyMvpOutput(category_key=params.category_key, mvps=items)
